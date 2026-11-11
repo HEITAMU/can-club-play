@@ -1,8 +1,8 @@
-import {CATS} from './core.mjs?v=0.4.0';
-import {actorArt,setPose} from './art.mjs?v=0.4.0';
-import {actionTiming,poseFor} from './motion.mjs?v=0.4.0';
+import {CATS} from './core.mjs?v=0.5.0';
+import {actorArt,setPose} from './art.mjs?v=0.5.0';
+import {actionTiming,poseFor} from './motion.mjs?v=0.5.0';
 const types=['dust','box','mop','battery','bag','drone','vacuum','fridge','sign','boxBoss','clock','vendor'],names=['灰尘团','纸箱怪','拖把怪','电池怪','纸袋怪','小无人机','吸尘器首领','冰柜首领','招牌首领','纸箱首领','闹钟首领','售货机首领'];
 const actors=[...CATS.map((c,i)=>({id:'p'+i,side:'p',catId:c.id,name:c.name,desc:c.skill,hp:1})),...types.map((type,i)=>({id:'e'+i,side:'e',type,boss:i>5,name:names[i],desc:i>5?'蓄力 · 重击':'准备 · 出手',hp:1}))];
 for(const a of actors){const card=document.createElement('article');card.className='card';card.innerHTML=`<div class="sprite" id="${a.id}">${actorArt(a)}</div><b>${a.name}</b><small>${a.desc}</small>`;document.querySelector(a.side==='p'?'#crew':'#foes').appendChild(card);}
 let kind='normal',paused=false,time=0,last=0;document.querySelectorAll('[data-kind]').forEach(b=>b.onclick=()=>{kind=b.dataset.kind;time=0;document.querySelectorAll('[data-kind]').forEach(n=>n.setAttribute('aria-pressed',String(n===b)));});document.querySelector('#pause').onclick=e=>{paused=!paused;e.currentTarget.textContent=paused?'继续播放':'暂停';};
-function draw(now){const dt=last?Math.min(.06,(now-last)/1000):0;last=now;if(!paused&&!document.hidden)time+=dt;for(const a of actors){const cycle=time%2.2;a.action=null;a.hitUntil=kind==='hit'&&cycle<.5?time+1:0;if(['normal','skill'].includes(kind)&&cycle<.9){const timing=actionTiming(a,kind);if(cycle<timing.duration)a.action={kind,elapsed:cycle,...timing};}const pose=poseFor(a,time);const el=document.getElementById(a.id);setPose(el,pose.frame);el.dataset.phase=pose.phase;}requestAnimationFrame(draw);}requestAnimationFrame(draw);
+function draw(now){const dt=last?Math.min(.06,(now-last)/1000):0;last=now;if(!paused&&!document.hidden)time+=dt;for(const a of actors){const cycle=time%2.2;a.action=null;a.hitUntil=kind==='hit'&&cycle<.5?time+1:0;if(['normal','skill'].includes(kind)&&cycle<.9){const timing=actionTiming(a,kind);if(cycle<timing.duration)a.action={kind,elapsed:cycle,...timing};}const pose=poseFor(a,time);const el=document.getElementById(a.id);setPose(el,pose.frame,{actor:a,time});el.dataset.phase=pose.phase;}requestAnimationFrame(draw);}requestAnimationFrame(draw);
