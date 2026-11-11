@@ -24,3 +24,17 @@ button{transition:background-color .15s,transform .15s}button:active:not(:disabl
 @media(max-width:800px){body{background:var(--paper)}.game-shell{border:0;border-radius:0;padding-bottom:76px}.topbar{padding-top:max(14px,env(safe-area-inset-top))}.arena{height:365px}.bottom-nav{position:fixed;bottom:0;width:min(480px,100%);left:50%;transform:translateX(-50%)}.cat-card .cat-figure{height:160px}.hotkey{display:none}}
 @media(max-width:390px){.topbar{padding-left:16px;padding-right:16px}.resourcebar{padding-left:16px;padding-right:16px}.brand b{font-size:19px}.chapterbar{padding:13px 16px 10px}.chapterbar h2{font-size:25px}.chapter-track{padding:0 16px 12px}.arena{height:360px}.actor .actor-body,.actor.frontline .actor-body{width:104px;height:104px;margin-left:calc((100% - 104px)/2)}.actor.enemy .actor-body{width:87px;height:87px;margin-left:calc((100% - 87px)/2)}.actor.boss .actor-body{width:107px;height:107px;margin-left:calc((100% - 107px)/2)}.actor .nameplate{font-size:9px}.actor,.actor.enemy{width:85px}.hp-track,.energy-track{width:53px}.arena-sides{top:30px}.actionbar{padding:12px 12px 0;gap:6px}.battle-start{width:80px;font-size:11px}.can-button b{font-size:18px}.can-button small{font-size:8px}.speed-button{width:36px}.rescue-tip{margin:8px 12px 0}.party-portrait{height:78px}.party-portrait svg{height:92px}.party-meta{padding:4px 7px}.party-meta span{font-size:8px}.party-empty{min-height:153px}.cat-card .cat-figure{height:146px}}
 @media(prefers-reduced-motion:reduce){.actor,.actor .actor-body{transition:none}.combat-shot,.impact-ring,.heal-particles,.rescue-wave,.boss-shockwave{display:none}}
+
+/* Small-screen finishing: a quiet header lane and readable helper copy. */
+.arena-sides{top:15px}.arena-sides span{visibility:hidden}
+.view-sub{color:#687B74}.view-heading>span{color:#718679}
+.inherit-summary span{color:#60775D}.inherit-summary small{color:#73866A}
+.rescue-tip{color:#70796B}.rescue-tip b{color:#536A58}
+.battle-options label,.battle-options .text-btn{color:#697F71}
+.formation-strip small{color:#678171}.front-mark{color:#678171}
+.cat-card p{color:#6F8179}.cat-card .level-tag{color:#708579}
+.party-meta span{color:#73856F}.front-card .party-meta span{color:#8D7958}
+.idle-description small{color:#71866F}.idle-strip strong{border:0}
+.modal p{color:#70816C}.skill-box{color:#6F8365}.skill-box em{color:#858B62}
+.settings-row{color:#6E8265}.intro-small{color:#819271}
+@media(max-width:390px){.arena-sides{top:15px}}

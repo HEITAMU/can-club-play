@@ -1,6 +1,6 @@
-import {CATS,RELICS,CHAPTERS,QUESTS,MAX_STAGE,MAX_LEVEL,initialState,normalizeState,unlocked,inheritanceFor,inheritTraining,upgrade,upgradeCost,catStats,power,idleRate,accrueIdle,claimIdle,claimQuests,questValue,chooseRelic,prestigeGain,prestige,setParty,chapterOf,Battle,settleBattle,encodeSave,decodeSave,rewardFor} from './core.mjs?v=0.6.0';
-import {icon,catSVG,enemySVG,relicSVG,sceneSVG,actorArt,setPose} from './art.mjs?v=0.6.0';
-import {poseFor,attackStyle} from './motion.mjs?v=0.6.0';
+import {CATS,RELICS,CHAPTERS,QUESTS,MAX_STAGE,MAX_LEVEL,initialState,normalizeState,unlocked,inheritanceFor,inheritTraining,upgrade,upgradeCost,catStats,power,idleRate,accrueIdle,claimIdle,claimQuests,questValue,chooseRelic,prestigeGain,prestige,setParty,chapterOf,Battle,settleBattle,encodeSave,decodeSave,rewardFor} from './core.mjs?v=0.6.1';
+import {icon,catSVG,enemySVG,relicSVG,sceneSVG,actorArt,setPose} from './art.mjs?v=0.6.1';
+import {poseFor,attackStyle} from './motion.mjs?v=0.6.1';
 let endElapsed=0;const visualFX=[];const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $=q=>document.querySelector(q), $$=q=>[...document.querySelectorAll(q)],KEY='can-club-save-v1',BACKUP=KEY+'-backup';
 let state,saveOK=true,recovery='',tab='battle',battle=null,running=false,farming=false,nextDelay=0,modalType=null,queue=[],lastStamp=0,renderStamp=0,idleStamp=0,saveStamp=0,toastTimer,offlineNote=0,audioContext=null,swReady=false;
@@ -22,7 +22,7 @@ function train(id,count=1){const n=upgrade(state,id,count);if(!n){toast('鱼币�
 function renderStageHeader(){const stage=battle?.stage||state.stage,ci=Math.min(5,Math.floor((stage-1)/20)),c=CHAPTERS[ci];$('#chapter-kicker').textContent=`CHAPTER 0${ci+1} / 06`;$('#chapter-name').textContent=c.name;$('#stage-number').textContent=stage;$('#scene-caption').textContent=c.sub;$('#chapter-track').innerHTML=Array.from({length:20},(_,i)=>{const k=ci*20+i+1;return `<span class="${k<=state.runCleared?'done':k===stage?'now':''} ${k%5===0?'boss':''}"></span>`;}).join('');$('#scene').innerHTML=sceneSVG(ci);$('#battle-label').textContent=farming?'旧关练习 · 鱼币 ×60%':stage%20===0?'街区首领':stage%5===0?'首领出没':'街区巡逻';}
 // Flat side-on composition: the leading hero is nearest the enemy column.
 function positions(b){const result={},front=b.frontline(),back=b.heroes.filter(a=>a.hp>0&&a!==front);
- b.heroes.forEach((a,i)=>{result[a.id]=a.hp<=0?{x:10+i*13,y:93}:a===front?{x:39,y:55}:{x:18,y:back.length===1?73:back.indexOf(a)===0?28:81};});
+ b.heroes.forEach((a,i)=>{result[a.id]=a.hp<=0?{x:10+i*13,y:93}:a===front?{x:39,y:55}:{x:18,y:back.length===1?73:back.indexOf(a)===0?31:81};});
  b.enemies.forEach((a,i)=>{result[a.id]={x:81,y:b.enemies.length===1?55:b.enemies.length===2?[34,75][i]:[26,53,80][i]};});return result;}
 
 function renderActors(){if(!battle)return;endElapsed=0;clearEffects();const ps=positions(battle);$('#actors').innerHTML=[...battle.enemies,...battle.heroes].map(a=>`<div id="actor-${a.id}" class="actor ${a.side==='e'?'enemy':''} ${a.boss?'boss':''}" style="left:${ps[a.id].x}%;top:${ps[a.id].y}%"><div class="nameplate">${a.side==='p'?cat(a.catId).name+' · Lv.'+a.level:a.name.split(' · ')[0]}</div><div class="hp-track"><div class="hp-fill" style="width:100%"></div><div class="shield-fill"></div></div>${a.side==='p'?'<div class="energy-track"><div class="energy-fill"></div></div>':''}<div class="actor-body">${actorArt(a)}</div>${a.side==='p'?'<span class="front-mark"></span>':'<span class="target-mark"></span>'}<span class="actor-tag" hidden></span>${a.boss?'<div class="charge-track" hidden><div class="charge-fill"></div></div>':''}</div>`).join('');renderVitals();}

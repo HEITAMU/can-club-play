@@ -1,5 +1,5 @@
-import {cartoonCat,cartoonEnemy,poseRig} from './cartoon-art.mjs?v=0.6.0';
-import {CATS,CHAPTERS} from './core.mjs?v=0.6.0';
+import {cartoonCat,cartoonEnemy,poseRig} from './cartoon-art.mjs?v=0.6.1';
+import {CATS,CHAPTERS} from './core.mjs?v=0.6.1';
 const INK='#30384c';let serial=0;
 export function actorArt(a){return a.side==='p'?cartoonCat(a.catId):cartoonEnemy(a.type,a.boss);}
 export function setPose(svg,frame,context){poseRig(svg,frame,context);}
@@ -18,5 +18,5 @@ export function sceneSVG(index){
  `<path d="M25 40h126m-126 9h126"/><path d="M42 24v48m34-48v48m34-48v48m34-48v48"/>`,
  `<path d="M26 35h128v29H26z"/><path d="M37 45h24m13 0h24m13 0h24m-98 9h24m13 0h24m13 0h24"/>`
  ];
- return `<svg class="scene-art" viewBox="0 0 480 390" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="480" height="390" fill="${paper}"/><g fill="none" stroke="${ink}" stroke-width="1.6" opacity=".35">${motifs[index%6]}</g><circle cx="411" cy="56" r="22" fill="${accent}" opacity=".42"/><path d="M345 66h86q-6-11-18-8-14-17-30-4-20-6-38 12z" fill="${soft}"/><path d="M240 94v208" fill="none" stroke="${ink}" stroke-width="1" stroke-dasharray="3 9" opacity=".18"/><g fill="${soft}"><path d="M0 367v-29h24v-15h37v44h27v-19h43v19h33v-34h27v34h38v-13h31v13h36v-25h33v25h37v-40h39v40h31v-18h44v41H0z"/></g><g fill="${paper}"><path d="M34 335h7v10h-7zm14 0h7v10h-7zm129 10h7v10h-7zm199-7h8v10h-8zm15 0h8v10h-8z"/></g><g stroke="${ink}" stroke-width="1.4" opacity=".35"><path d="M20 186h8m-4-4v8m420 78h8m-4-4v8"/></g></svg>`;
+ return `<svg class="scene-art" viewBox="0 0 480 390" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="480" height="390" fill="${paper}"/><g fill="none" stroke="${ink}" stroke-width="1.6" opacity=".28" transform="translate(0 -17)">${motifs[index%6]}</g><circle cx="411" cy="56" r="22" fill="${accent}" opacity=".42"/><path d="M345 66h86q-6-11-18-8-14-17-30-4-20-6-38 12z" fill="${soft}"/><path d="M240 94v208" fill="none" stroke="${ink}" stroke-width="1" stroke-dasharray="3 9" opacity=".18"/><g fill="${soft}"><path d="M0 367v-29h24v-15h37v44h27v-19h43v19h33v-34h27v34h38v-13h31v13h36v-25h33v25h37v-40h39v40h31v-18h44v41H0z"/></g><g fill="${paper}"><path d="M34 335h7v10h-7zm14 0h7v10h-7zm129 10h7v10h-7zm199-7h8v10h-8zm15 0h8v10h-8z"/></g><g stroke="${ink}" stroke-width="1.4" opacity=".35"><path d="M20 186h8m-4-4v8m420 78h8m-4-4v8"/></g></svg>`;
 }
