@@ -1,5 +1,5 @@
-const CACHE='can-club-0.5.0';
-const ASSETS=['./','./index.html','./style.css?v=0.5.0','./core.mjs?v=0.5.0','./motion.mjs?v=0.5.0','./cartoon-art.mjs?v=0.5.0','./art.mjs?v=0.5.0','./app.mjs?v=0.5.0','./motion.html','./motion-gallery.mjs?v=0.5.0','./icon.svg','./manifest.webmanifest'];
+const CACHE='can-club-0.5.1';
+const ASSETS=['./','./index.html','./style.css?v=0.5.1','./core.mjs?v=0.5.1','./motion.mjs?v=0.5.1','./cartoon-art.mjs?v=0.5.1','./art.mjs?v=0.5.1','./app.mjs?v=0.5.1','./motion.html','./motion-gallery.mjs?v=0.5.1','./icon.svg','./manifest.webmanifest'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('can-club-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{if(event.request.method!=='GET'||new URL(event.request.url).origin!==self.location.origin)return;event.respondWith(fetch(event.request).then(response=>{if(response.ok){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy));}return response;}).catch(()=>caches.match(event.request).then(hit=>hit||(event.request.mode==='navigate'?caches.match('./index.html'):Response.error()))));});

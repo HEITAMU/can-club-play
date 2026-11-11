@@ -1,6 +1,6 @@
-import {CATS,RELICS,CHAPTERS,QUESTS,MAX_STAGE,MAX_LEVEL,initialState,normalizeState,unlocked,inheritanceFor,inheritTraining,upgrade,upgradeCost,catStats,power,idleRate,accrueIdle,claimIdle,claimQuests,questValue,chooseRelic,prestigeGain,prestige,setParty,chapterOf,Battle,settleBattle,encodeSave,decodeSave,rewardFor} from './core.mjs?v=0.5.0';
-import {icon,catSVG,enemySVG,relicSVG,sceneSVG,actorArt,setPose} from './art.mjs?v=0.5.0';
-import {poseFor,attackStyle} from './motion.mjs?v=0.5.0';
+import {CATS,RELICS,CHAPTERS,QUESTS,MAX_STAGE,MAX_LEVEL,initialState,normalizeState,unlocked,inheritanceFor,inheritTraining,upgrade,upgradeCost,catStats,power,idleRate,accrueIdle,claimIdle,claimQuests,questValue,chooseRelic,prestigeGain,prestige,setParty,chapterOf,Battle,settleBattle,encodeSave,decodeSave,rewardFor} from './core.mjs?v=0.5.1';
+import {icon,catSVG,enemySVG,relicSVG,sceneSVG,actorArt,setPose} from './art.mjs?v=0.5.1';
+import {poseFor,attackStyle} from './motion.mjs?v=0.5.1';
 let endElapsed=0;const visualFX=[];const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $=q=>document.querySelector(q), $$=q=>[...document.querySelectorAll(q)],KEY='can-club-save-v1',BACKUP=KEY+'-backup';
 let state,saveOK=true,recovery='',tab='battle',battle=null,running=false,farming=false,nextDelay=0,modalType=null,queue=[],lastStamp=0,renderStamp=0,idleStamp=0,saveStamp=0,toastTimer,offlineNote=0,audioContext=null,swReady=false;
