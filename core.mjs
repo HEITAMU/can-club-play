@@ -1,3 +1,4 @@
+import {actionTiming,attackStyle} from './motion.mjs?v=0.4.0';
 export const VERSION=1, MAX_STAGE=120, MAX_LEVEL=100;
 export const CATS=[
  {id:'orange',name:'橘座',job:'前排守护',tag:'守护',color:'#edab62',accent:'#c8793b',unlock:0,hp:205,atk:17,interval:1.5,skill:'锅盖护体',desc:'举起锅盖：获得自身生命 45% 的护盾，并为队友提供 12% 护盾。',passive:'5 级：受到伤害降低 15%。',quote:'这条街的罐头，我罩了。',gear:'pan'},
@@ -105,17 +106,33 @@ export class Battle {
  harm(target,raw,source,{crit=false,pierce=0,reflect=true,dot=false}={}){
   if(!target||target.hp<=0)return 0;const ramp=this.time>40?1+(this.time-40)*.025:1;
   let amount=raw*(1-Math.max(0,(target.armor||0)-pierce))*ramp;
-  if(source?.side==='e'&&target===this.frontline()&&!dot){this.emit('guard',source,target,amount*.2);amount*=.8;}
   if(target.catId==='orange'&&target.level>=5)amount*=.85;
   if(source?.side==='p'&&target.boss)amount*=this.buff.boss;
   const shield=Math.min(target.shield,amount);target.shield-=shield;amount-=shield;const hit=Math.min(target.hp,amount);target.hp=Math.max(0,target.hp-amount);
   this.emit(dot?'burn':'hit',source,target,hit+shield,{crit,shield:shield>0});
-  if(target.hp<=0){this.emit('down',source,target);if(target.side==='e')this.kills++;}
+  if(!dot)target.hitUntil=this.time+.18;
+  if(target.hp<=0){target.action=null;this.emit('down',source,target);if(target.side==='e')this.kills++;}
   if(source?.catId==='pudding'&&source.level>=5&&hit>0)this.heal(source,hit*.22,source);
   if(reflect&&target.side==='p'&&source?.side==='e'&&source.hp>0&&this.buff.reflect>0)this.harm(source,(hit+shield)*this.buff.reflect,target,{reflect:false});return hit;
  }
  heal(target,amount,source){if(target.hp<=0)return;const n=Math.min(target.maxHp-target.hp,amount);target.hp+=n;if(n>1)this.emit('heal',source,target,n);}
  shield(target,amount,source){target.shield=Math.min(target.maxHp,target.shield+amount);this.emit('shield',source,target,amount);}
+ targetFor(actor,kind='normal'){
+  if(kind==='skill'&&['orange','milk','star'].includes(actor.catId))return actor;
+  const foes=this.alive(actor.side==='p'?'e':'p');if(!foes.length)return null;
+  if(actor.catId==='ink')return foes.reduce((a,b)=>a.hp<b.hp?a:b);
+  if(kind==='skill'&&actor.catId==='mint')return foes.reduce((a,b)=>a.hp>b.hp?a:b);
+  return foes[0];
+ }
+ beginAction(actor,kind){const target=this.targetFor(actor,kind);if(!target)return;
+  actor.action={kind,...actionTiming(actor,kind),elapsed:Math.max(0,-actor.wait),released:false,impacted:false,targetId:target.id};
+  actor.wait=actor.interval+Math.min(0,actor.wait);this.emit('windup',actor,target,0,{kind,style:attackStyle(actor)});this.advanceAction(actor,0);
+ }
+ advanceAction(actor,dt){const a=actor.action;if(!a)return;a.elapsed+=dt;
+  if(!a.released&&a.elapsed>=a.windup){a.released=true;const target=this.targetFor(actor,a.kind);if(target)a.targetId=target.id;this.emit('release',actor,target,0,{kind:a.kind,style:attackStyle(actor),travel:a.travel});}
+  if(!a.impacted&&a.elapsed>=a.impactAt){a.impacted=true;const target=this.targetFor(actor,a.kind);if(target)a.targetId=target.id;if(a.kind==='skill')this.skill(actor);else this.normal(actor);}
+  if(a.elapsed>=a.duration)actor.action=null;
+ }
  normal(actor){const foes=this.alive(actor.side==='p'?'e':'p');if(!foes.length)return;let target=foes[0];if(actor.side==='p'&&actor.catId==='ink')target=foes.reduce((a,b)=>a.hp<b.hp?a:b);const crit=actor.side==='p'&&this.rng()<actor.crit;this.harm(target,actor.atk*(crit?1.8:1),actor,{crit});
   if(actor.side==='p'){actor.energy=Math.min(100,actor.energy+(actor.catId==='milk'&&actor.level>=5?32:22));if(crit&&this.buff.burn>0){target.burn=Math.max(target.burn,actor.atk*this.buff.burn);target.burnTime=2;}}
   else {actor.attacks++;if(actor.type==='mop'){target.wait+=.28;this.emit('status',actor,target,0,{text:'迟缓'});}if(actor.type==='bag'&&actor.attacks%3===0){const ally=this.alive('e').reduce((a,b)=>a.hp/a.maxHp<b.hp/b.maxHp?a:b);this.heal(ally,actor.maxHp*.12,actor);}}
@@ -134,9 +151,9 @@ export class Battle {
  syncStats(s,{preserveHealthRatio=false}={}){this.buff=buffs(s);for(const h of this.heroes){const n=catStats(s,h.catId),oldMax=h.maxHp,ratio=h.hp/oldMax,add=n.hp-oldMax;h.maxHp=n.hp;if(h.hp>0)h.hp=preserveHealthRatio?ratio*n.hp:clamp(h.hp+Math.max(0,add),1,h.maxHp);h.shield=Math.min(n.hp,h.shield*(preserveHealthRatio?n.hp/oldMax:1));h.atk=n.atk;h.interval=n.interval;h.crit=n.crit;h.level=n.level;}}
  checkEnd(){if(!this.alive('e').length)this.result='win';else if(!this.alive('p').length||this.time>=75)this.result='lose';return this.result;}
  tick(dt){if(this.result)return this.events.splice(0);dt=clamp(dt,0,.25);this.time+=dt;this.canCd=Math.max(0,this.canCd-dt);
-  for(const a of [...this.heroes,...this.enemies]){if(a.hp<=0)continue;a.stun=Math.max(0,a.stun-dt);if(a.burnTime>0){a.burnTime-=dt;this.harm(a,a.burn*dt,this.heroes[0],{dot:true,reflect:false});}if(a.side==='p'&&this.buff.regen>0)a.hp=Math.min(a.maxHp,a.hp+a.maxHp*this.buff.regen*dt);if(a.hp<=0||a.stun>0)continue;
-   if(a.side==='e'&&a.boss){a.skillWait-=dt;if(a.charge>0){a.charge-=dt;if(a.charge<=0){for(const p of this.alive('p'))this.harm(p,a.atk*1.55,a);a.skillWait=7;this.emit('burst',a,a);}continue;}if(a.skillWait<=0){a.charge=2;this.emit('charge',a,a,0,{text:'正在蓄力'});continue;}}
-   a.wait-=dt;if(a.wait<=0){if(a.side==='p'&&a.energy>=100)this.skill(a);else this.normal(a);a.wait=a.interval;}
+  for(const a of [...this.heroes,...this.enemies]){if(a.hp<=0)continue;a.stun=Math.max(0,a.stun-dt);if(a.burnTime>0){a.burnTime-=dt;this.harm(a,a.burn*dt,this.heroes[0],{dot:true,reflect:false});}if(a.side==='p'&&this.buff.regen>0)a.hp=Math.min(a.maxHp,a.hp+a.maxHp*this.buff.regen*dt);if(a.hp<=0)continue;if(a.stun>0){if(a.action){a.action=null;this.emit('cancel',a,a);}continue;}
+   if(a.side==='e'&&a.boss){a.skillWait-=dt;if(a.charge>0){a.charge-=dt;if(a.charge<=0){for(const p of this.alive('p'))this.harm(p,a.atk*1.55,a);a.skillWait=7;a.burstUntil=this.time+.24;this.emit('burst',a,a);}continue;}if(a.skillWait<=0){a.action=null;a.charge=2;this.emit('charge',a,a,0,{text:'正在蓄力'});continue;}}
+   a.wait-=dt;if(a.action)this.advanceAction(a,dt);else if(a.wait<=0)this.beginAction(a,a.side==='p'&&a.energy>=100?'skill':'normal');
   }this.checkEnd();return this.events.splice(0);
  }
 }
