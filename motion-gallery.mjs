@@ -1,6 +1,6 @@
-import {CATS} from './core.mjs?v=0.6.1';
-import {actorArt,setPose} from './art.mjs?v=0.6.1';
-import {actionTiming,poseFor} from './motion.mjs?v=0.6.1';
+import {CATS} from './core.mjs?v=0.8.0';
+import {actorArt,setPose} from './art.mjs?v=0.8.0';
+import {actionTiming,poseFor} from './motion.mjs?v=0.8.0';
 const types=['dust','box','mop','battery','bag','drone','vacuum','fridge','sign','boxBoss','clock','vendor'],names=['灰尘团','纸箱怪','拖把怪','电池怪','纸袋怪','小无人机','吸尘器首领','冰柜首领','招牌首领','纸箱首领','闹钟首领','售货机首领'];
 const actors=[...CATS.map((c,i)=>({id:'p'+i,side:'p',catId:c.id,name:c.name,desc:c.skill,hp:1})),...types.map((type,i)=>({id:'e'+i,side:'e',type,boss:i>5,name:names[i],desc:i>5?'蓄力 · 重击':'准备 · 出手',hp:1}))];
 for(const a of actors){const card=document.createElement('article');card.className='card';card.innerHTML=`<div class="sprite" id="${a.id}">${actorArt(a)}</div><b>${a.name}</b><small>${a.desc}</small>`;document.querySelector(a.side==='p'?'#crew':'#foes').appendChild(card);}
