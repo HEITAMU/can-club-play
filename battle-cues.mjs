@@ -1,5 +1,5 @@
-import {attackStyle} from './motion.mjs?v=0.11.0';
-import {CATS} from './core.mjs?v=0.11.0';
+import {attackStyle} from './motion.mjs?v=0.12.0';
+import {CATS} from './core.mjs?v=0.12.0';
 export const cueColors={attack:'#edc581',enemy:'#ee9f8c',support:'#b3d9ba',energy:'#d2b9eb'};
 const skillEffect={orange:'全队护盾',ink:'穿甲三连',milk:'全队治疗',spark:'群攻灼烧',mint:'眩晕打断',bolt:'破甲',pudding:'群攻＋全队护盾',star:'治疗＋回能'};
 // Coordinates are foot contacts on the painted ground, not sprite centers.
@@ -32,45 +32,45 @@ export class BattleCues{
    this.log('开罐啦','全队救援','全体敌我',events.some(e=>e.type==='interrupt')?'回血20% · 伤敌 · 打断成功':'回血20% · 伤敌','support',b.time,true);return;
   }
   for(const e of events){
-   const a=byId(e.from);if(!a)continue;const tone=a.side==='e'?'enemy':'attack';
+   const a=byId(e.from);if(!a)continue;const at=e.at??b.time,tone=a.side==='e'?'enemy':'attack';
    if(e.type==='cancel'||e.type==='down'){
     const id=e.type==='down'?e.to:e.from;
     for(const [key,r] of this.routes)if(r.from===id&&r.phase!=='impact')this.routes.delete(key);
    }
    if(e.type==='windup'||e.type==='release'){
-    const duration=e.type==='windup'?.5:(e.travel||.22)+.05,extra={style:attackStyle(a),travel:e.travel||.22};
-    if(e.kind==='normal')this.addRoute(a.id,a.id,[e.to],'普攻',tone,b.time,positions,e.type,duration,extra);
+    const duration=e.type==='windup'?(e.windup||.4)+.06:(e.travel||.29)+.05,extra={style:attackStyle(a),travel:e.travel||.29,kind:e.kind};
+    if(e.kind==='normal')this.addRoute(a.id,a.id,[e.to],'普攻',tone,at,positions,e.type,duration,extra);
     else {
      const targets=b.skillTargets(a).map(t=>t.id),friends=targets.filter(id=>id.startsWith('p')),foes=targets.filter(id=>id.startsWith('e')),label=CATS.find(c=>c.id===a.catId)?.skill||'技能';
-     if(foes.length)this.addRoute(a.id,a.id,foes,label,tone,b.time,positions,e.type,duration,extra);
-     if(friends.length)this.addRoute(a.id+'-support',a.id,friends,label,a.catId==='star'?'energy':'support',b.time,positions,e.type,duration,{...extra,style:['orange','pudding'].includes(a.catId)?'shield':a.catId==='star'?'star':'heal'});
+     if(foes.length)this.addRoute(a.id,a.id,foes,label,tone,at,positions,e.type,duration,extra);
+     if(friends.length)this.addRoute(a.id+'-support',a.id,friends,label,a.catId==='star'?'energy':'support',at,positions,e.type,duration,{...extra,style:['orange','pudding'].includes(a.catId)?'shield':a.catId==='star'?'star':'heal'});
     }
    }
    if(e.type==='hit'&&!bursts.has(e.from)&&!casters.has(e.from)&&e.cause!=='skill'){
-    const reflected=e.cause==='reflect';this.addRoute(reflected?a.id+'-reflect':a.id,a.id,[e.to],reflected?'反伤':'普攻',tone,b.time,positions,'impact',.32,{style:attackStyle(a)});
-    this.log(name(e.from),reflected?'反伤':'普攻',name(e.to),(e.crit?'暴击 ':'')+e.value+(e.shield?' · 护盾承受':''),tone,b.time);
+    const reflected=e.cause==='reflect';this.addRoute(reflected?a.id+'-reflect':a.id,a.id,[e.to],reflected?'反伤':'普攻',tone,at,positions,'impact',.32,{style:e.shield?'shield':attackStyle(a),kind:'normal'});
+    this.log(name(e.from),reflected?'反伤':'普攻',name(e.to),(e.crit?'暴击 ':'')+e.value+(e.shield?' · 护盾承受':''),tone,at);
    }
    if(e.type==='skill'){
     const info=CATS.find(c=>c.id===a.catId),targets=e.targets||[],friends=targets.filter(id=>id.startsWith('p')),foes=targets.filter(id=>id.startsWith('e'));
     this.routes.delete(a.id);
-    if(foes.length)this.addRoute(a.id,a.id,foes,e.text,tone,b.time,positions,'impact',1.25,{style:attackStyle(a)});
-    if(friends.length)this.addRoute(a.id+'-support',a.id,friends,e.text,a.catId==='star'?'energy':'support',b.time,positions,'impact',1.25,{style:['orange','pudding'].includes(a.catId)?'shield':a.catId==='star'?'star':'heal'});
-    this.log(a.name,info.skill,targets.length===1?name(targets[0]):friends.length&&foes.length?'敌方＋全队':friends.length?'我方全队':'敌方全体',skillEffect[a.catId],friends.length?'support':'attack',b.time,true);
+    if(foes.length)this.addRoute(a.id,a.id,foes,e.text,tone,at,positions,'impact',1.25,{style:attackStyle(a),kind:e.type==='skill'?'skill':'normal'});
+    if(friends.length)this.addRoute(a.id+'-support',a.id,friends,e.text,a.catId==='star'?'energy':'support',at,positions,'impact',1.25,{kind:'skill',style:['orange','pudding'].includes(a.catId)?'shield':a.catId==='star'?'star':'heal'});
+    this.log(a.name,info.skill,targets.length===1?name(targets[0]):friends.length&&foes.length?'敌方＋全队':friends.length?'我方全队':'敌方全体',skillEffect[a.catId],friends.length?'support':'attack',at,true);
    }
    if(e.type==='heal'&&!casters.has(e.from)&&a.side==='e'){
-    this.addRoute(a.id+'-support',a.id,[e.to],'纸袋修补','support',b.time,positions,'impact',.7,{style:'heal'});
-    this.log(name(a.id),'纸袋修补',name(e.to),'治疗 +'+e.value,'support',b.time,true);
+    this.addRoute(a.id+'-support',a.id,[e.to],'纸袋修补','support',at,positions,'impact',.7,{style:'heal'});
+    this.log(name(a.id),'纸袋修补',name(e.to),'治疗 +'+e.value,'support',at,true);
    }
    if(e.type==='charge'){
-    this.addRoute(a.id,a.id,b.heroes.filter(h=>h.hp>0).map(h=>h.id),'蓄力群攻','enemy',b.time,positions,'windup',2.1,{style:'warning'});
-    this.log(name(a.id),'蓄力群攻','我方全队','开罐啦可打断','enemy',b.time,true);
+    this.addRoute(a.id,a.id,b.heroes.filter(h=>h.hp>0).map(h=>h.id),'蓄力群攻','enemy',at,positions,'windup',2.1,{style:'warning'});
+    this.log(name(a.id),'蓄力群攻','我方全队','开罐啦可打断','enemy',at,true);
    }
    if(e.type==='interrupt'){
-    this.routes.delete(e.to);this.log(name(e.from),'打断',name(e.to),'群攻已取消','support',b.time,true);
+    this.routes.delete(e.to);this.log(name(e.from),'打断',name(e.to),'群攻已取消','support',at,true);
    }
    if(e.type==='burst'){
     const targets=events.filter(h=>h.type==='hit'&&h.from===a.id&&h.to?.startsWith('p')).map(h=>h.to);
-    this.addRoute(a.id,a.id,targets,'群攻','enemy',b.time,positions,'impact',.7,{style:'burst'});this.log(name(a.id),'蓄力群攻','我方全队','全队受击','enemy',b.time,true);
+    this.addRoute(a.id,a.id,targets,'群攻','enemy',at,positions,'impact',.7,{style:'burst'});this.log(name(a.id),'蓄力群攻','我方全队','全队受击','enemy',at,true);
    }
   }
  }

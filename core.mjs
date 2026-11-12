@@ -1,4 +1,4 @@
-import {actionTiming,attackStyle} from './motion.mjs?v=0.11.0';
+import {actionTiming,attackStyle} from './motion.mjs?v=0.12.0';
 export const VERSION=1, MAX_STAGE=120, MAX_LEVEL=100, MAX_PARTY=5;
 export const CATS=[
  {id:'orange',name:'橘座',job:'前排守护',tag:'守护',color:'#edab62',accent:'#c8793b',unlock:0,hp:205,atk:17,interval:1.5,skill:'锅盖护体',desc:'举起锅盖：获得自身生命 45% 的护盾，并为队友提供 12% 护盾。',passive:'5 级：受到伤害降低 15%。',quote:'这条街的罐头，我罩了。',gear:'pan'},
@@ -103,7 +103,7 @@ export class Battle {
  alive(side){return (side==='p'?this.heroes:this.enemies).filter(x=>x.hp>0);}
  frontlines(){return this.alive('p').slice(0,2);}
  frontline(){return this.frontlines()[0]||null;}
- emit(type,from,to,value=0,extra={}){this.events.push({type,from:from?.id,to:to?.id,value:Math.round(value),serial:++this.fxSerial,...extra});}
+ emit(type,from,to,value=0,extra={}){this.events.push({type,at:this.eventAt??this.time,from:from?.id,to:to?.id,value:Math.round(value),serial:++this.fxSerial,...extra});}
  harm(target,raw,source,{crit=false,pierce=0,reflect=true,dot=false}={}){
   if(!target||target.hp<=0)return 0;const ramp=this.time>40?1+(this.time-40)*.025:1;
   let amount=raw*(1-Math.max(0,(target.armor||0)-pierce))*ramp;
@@ -111,7 +111,7 @@ export class Battle {
   if(source?.side==='p'&&target.boss)amount*=this.buff.boss;
   const shield=Math.min(target.shield,amount);target.shield-=shield;amount-=shield;const hit=Math.min(target.hp,amount);target.hp=Math.max(0,target.hp-amount);
   this.emit(dot?'burn':'hit',source,target,hit+shield,{crit,shield:shield>0,cause:dot?'burn':!reflect?'reflect':source?.action?.kind||'normal'});
-  if(!dot)target.hitUntil=this.time+.18;
+  if(!dot)target.hitUntil=(this.eventAt??this.time)+.22;
   if(target.hp<=0){target.action=null;this.emit('down',source,target);if(target.side==='e')this.kills++;}
   if(source?.catId==='pudding'&&source.level>=5&&hit>0)this.heal(source,hit*.22,source);
   if(reflect&&target.side==='p'&&source?.side==='e'&&source.hp>0&&this.buff.reflect>0)this.harm(source,(hit+shield)*this.buff.reflect,target,{reflect:false});return hit;
@@ -134,11 +134,11 @@ export class Battle {
  }
  beginAction(actor,kind){const target=this.targetFor(actor,kind);if(!target)return;
   actor.action={kind,...actionTiming(actor,kind),elapsed:Math.max(0,-actor.wait),released:false,impacted:false,targetId:target.id};
-  actor.wait=actor.interval+Math.min(0,actor.wait);this.emit('windup',actor,target,0,{kind,style:attackStyle(actor)});this.advanceAction(actor,0);
+  actor.wait=actor.interval+Math.min(0,actor.wait);this.emit('windup',actor,target,0,{kind,style:attackStyle(actor),at:this.time-actor.action.elapsed,windup:actor.action.windup});this.advanceAction(actor,0);
  }
  advanceAction(actor,dt){const a=actor.action;if(!a)return;a.elapsed+=dt;
-  if(!a.released&&a.elapsed>=a.windup){a.released=true;const target=this.targetFor(actor,a.kind);if(target)a.targetId=target.id;this.emit('release',actor,target,0,{kind:a.kind,style:attackStyle(actor),travel:a.travel});}
-  if(!a.impacted&&a.elapsed>=a.impactAt){a.impacted=true;const target=this.targetFor(actor,a.kind);if(target)a.targetId=target.id;if(a.kind==='skill')this.skill(actor);else this.normal(actor);}
+  if(!a.released&&a.elapsed>=a.windup){a.released=true;const target=this.targetFor(actor,a.kind);if(target)a.targetId=target.id;this.emit('release',actor,target,0,{kind:a.kind,style:attackStyle(actor),travel:a.travel,at:this.time-Math.max(0,a.elapsed-a.windup)});}
+  if(!a.impacted&&a.elapsed>=a.impactAt){a.impacted=true;const target=this.targetFor(actor,a.kind);if(target)a.targetId=target.id;this.eventAt=this.time-Math.max(0,a.elapsed-a.impactAt);if(a.kind==='skill')this.skill(actor);else this.normal(actor);this.eventAt=null;}
   if(a.elapsed>=a.duration)actor.action=null;
  }
  normal(actor){const target=this.targetFor(actor);if(!target)return;const crit=actor.side==='p'&&this.rng()<actor.crit;this.harm(target,actor.atk*(crit?1.8:1),actor,{crit});

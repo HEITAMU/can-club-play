@@ -8,7 +8,7 @@ const action=()=>({...actionTiming(actor),kind:'normal',elapsed:0});
 
 test('melee travel remains continuous through windup, strike, and return',()=>{
  const a={...actor,action:action()};
- for(const boundary of [a.action.windup,a.action.impactAt,a.action.impactAt+.06,a.action.duration]){
+ for(const boundary of [a.action.windup,a.action.impactAt,a.action.impactAt+a.action.hold,a.action.duration]){
   a.action.elapsed=boundary-1e-7;const before=poseFor(a,0).move;
   a.action.elapsed=boundary+1e-7;const after=poseFor(a,0).move;
   assert.ok(Math.abs(before-after)<.00001);
