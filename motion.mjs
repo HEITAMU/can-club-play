@@ -10,6 +10,17 @@ export function actionTiming(a,kind='normal'){
 }
 export const unit=n=>Math.min(1,Math.max(0,n));
 const smooth=n=>{const t=unit(n);return t*t*(3-2*t);};
+// A cancelled attack settles back from its current position rather than snapping home.
+export class MotionOffsets{
+ constructor(){this.points=new Map();}
+ clear(){this.points.clear();}
+ value(actor,target,time){let p=this.points.get(actor.id);if(!p||time<p.time)p={x:target.x,y:target.y,acting:!!actor.action,time};
+  if(!actor.action&&p.acting&&Math.hypot(p.x,p.y)>1)p.returning={x:p.x,y:p.y,at:time};
+  let next=target;if(actor.action)p.returning=null;
+  else if(p.returning){const k=smooth((time-p.returning.at)/.20);next={x:p.returning.x*(1-k)+target.x*k,y:p.returning.y*(1-k)+target.y*k};if(k>=1)p.returning=null;}
+  Object.assign(p,next,{acting:!!actor.action,time});this.points.set(actor.id,p);return {x:p.x,y:p.y};
+ }
+}
 export function poseFor(a,time){
  const hero=a.side==='p',action=a.action;
  if(a.hp<=0)return {frame:hero?5:3,phase:'down',move:0};

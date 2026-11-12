@@ -1,0 +1,8 @@
+.painted-fx{display:block;position:absolute;inset:0;width:100%;height:100%;background-image:url('./assets/cutout/effects.webp');background-repeat:no-repeat;background-size:400% 400%;pointer-events:none}
+.painted-cue{position:absolute;inset:0;pointer-events:none}.fx-origin,.fx-warning,.fx-impact,.fx-projectile,.painted-burst{position:absolute;display:block;pointer-events:none;transform-origin:center}.fx-origin,.fx-impact{width:50px;height:50px}.fx-warning{width:54px;height:54px}.fx-projectile{left:0;top:0;width:28px;height:28px}.fx-projectile .fx-trail{opacity:.24;transform:translate(-9px,3px) scale(.70)}.fx-impact .fx-secondary{opacity:.5}.fx-mote{opacity:0}.painted-burst{width:55px;height:55px}
+.painted-guard{position:absolute;left:50%;top:48%;width:131%;height:117%;z-index:3;pointer-events:none;transform:translate(-50%,-50%)}.painted-guard[hidden]{display:none}.guard-back{opacity:.20}.guard-front{opacity:.4;clip-path:polygon(0 55%,100% 55%,100% 100%,0 100%)}.guard-sheen{opacity:.25}.actor.has-shield .actor-body:after{display:none!important}
+.actor-body .painted-sprite>.rig-canvas,.painted-sprite>.rig-canvas{left:-22%;top:-20%;width:144%;height:138%}
+.actor-body.impact-flash{filter:none!important}.fx-support{z-index:1}.fx-secondary,.fx-main,.fx-mote{transform-origin:center}
+@media(prefers-reduced-motion:reduce){.fx-projectile .fx-trail,.guard-sheen,.fx-mote{display:none}}
+
+.painted-status{position:absolute;inset:0;pointer-events:none;z-index:4}.status-burn,.status-stun{position:absolute;inset:0;pointer-events:none}.status-burn .painted-fx{inset:auto;left:32%;bottom:4%;width:38%;height:45%;opacity:.62}.status-stun .painted-fx{inset:auto;left:39%;top:3%;width:22%;height:22%;opacity:.85}

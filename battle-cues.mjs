@@ -1,5 +1,5 @@
-import {attackStyle} from './motion.mjs?v=0.13.0';
-import {CATS} from './core.mjs?v=0.13.0';
+import {attackStyle} from './motion.mjs?v=0.14.0';
+import {CATS} from './core.mjs?v=0.14.0';
 export const cueColors={attack:'#edc581',enemy:'#ee9f8c',support:'#b3d9ba',energy:'#d2b9eb'};
 const skillEffect={orange:'全队护盾',ink:'穿甲三连',milk:'全队治疗',spark:'群攻灼烧',mint:'眩晕打断',bolt:'破甲',pudding:'群攻＋全队护盾',star:'治疗＋回能'};
 // Coordinates are foot contacts on the painted ground, not sprite centers.
@@ -57,9 +57,10 @@ export class BattleCues{
     if(friends.length)this.addRoute(a.id+'-support',a.id,friends,e.text,a.catId==='star'?'energy':'support',at,positions,'impact',1.25,{kind:'skill',style:['orange','pudding'].includes(a.catId)?'shield':a.catId==='star'?'star':'heal'});
     this.log(a.name,info.skill,targets.length===1?name(targets[0]):friends.length&&foes.length?'敌方＋全队':friends.length?'我方全队':'敌方全体',skillEffect[a.catId],friends.length?'support':'attack',at,true);
    }
-   if(e.type==='heal'&&!casters.has(e.from)&&a.side==='e'){
-    this.addRoute(a.id+'-support',a.id,[e.to],'纸袋修补','support',at,positions,'impact',.7,{style:'heal'});
-    this.log(name(a.id),'纸袋修补',name(e.to),'治疗 +'+e.value,'support',at,true);
+   if(e.type==='heal'&&!casters.has(e.from)){
+    const label=a.side==='e'?'纸袋修补':'吸血回复';
+    this.addRoute(a.id+'-support',a.id,[e.to],label,'support',at,positions,'impact',.7,{style:'heal'});
+    this.log(name(a.id),label,name(e.to),'治疗 +'+e.value,'support',at,true);
    }
    if(e.type==='charge'){
     this.addRoute(a.id,a.id,b.heroes.filter(h=>h.hp>0).map(h=>h.id),'蓄力群攻','enemy',at,positions,'windup',2.1,{style:'warning'});

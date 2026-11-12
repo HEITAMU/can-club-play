@@ -21,11 +21,10 @@ test('normal and skill motion is continuous at anticipation, release, hold and r
   actor.action.elapsed=timing.duration;const end=rigPose(a.id,actor,3+timing.duration,8+timing.duration);actor.action=null;const idle=rigPose(a.id,actor,3+timing.duration,8+timing.duration);for(const k of Object.keys(end))assert.ok(Math.abs(end[k]-idle[k])<1e-12);
  }
 });
-test('deformation stays finite and locally bounded through every actor action',()=>{
- for(const a of actors)for(const kind of ['normal','skill']){const timing=actionTiming(a,kind);
-  for(let t=0;t<timing.duration+.04;t+=1/60){const pose=rigPose(a.id,{...a,action:{...timing,kind,elapsed:t}},t);
-   for(let y=0;y<=8;y++)for(let x=0;x<=8;x++){const p=deformPoint(a.id,preparePoint(a.id,x/8,y/8),pose);assert.ok(Number.isFinite(p.x)&&Number.isFinite(p.y));assert.ok(p.x>-.12&&p.x<1.12&&p.y>-.1&&p.y<1.06,a.id+' deformation stays inside padded canvas');}
-  }
+test('all action channels remain finite and follow through after impact',()=>{
+ for(const a of actors)for(const kind of ['normal','skill']){const timing=actionTiming(a,kind),poses=[];
+  for(let t=0;t<timing.duration+.04;t+=1/60){const pose=rigPose(a.id,{...a,action:{...timing,kind,elapsed:t}},t);assert.ok(Object.values(pose).every(Number.isFinite));poses.push(pose);}
+  const before=rigPose(a.id,{...a,action:{...timing,kind,elapsed:timing.impactAt}},3),after=rigPose(a.id,{...a,action:{...timing,kind,elapsed:timing.impactAt+timing.hold*.75}},3+timing.hold*.75);assert.notDeepEqual(before,after);
  }
 });
 test('hit reaction rises and recovers continuously instead of selecting a still frame',()=>{

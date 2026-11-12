@@ -1,4 +1,4 @@
-// Continuous flat 2D deformation of the original painting. No pose-frame swapping.
+// Continuous motion for painted cutout parts. No pose-frame swapping.
 const clamp=n=>Math.max(0,Math.min(1,n));
 export const ease=n=>{const t=clamp(n);return t*t*(3-2*t);};
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -18,20 +18,33 @@ const keys=['breath','lean','head','hand','tail','reach','sink','alpha'];
 const neutral={breath:0,lean:0,head:0,hand:0,tail:0,reach:0,sink:0,alpha:1};
 const mix=(a,b,t)=>Object.fromEntries(keys.map(k=>[k,lerp(a[k],b[k],t)]));
 export function blendRigPose(previous,next,dt){return !previous||dt<0?{...next}:mix(previous,next,1-Math.exp(-Math.max(0,dt)/.026));}
+export const animationClock=(actor,time,idleTime)=>actor&&time>0?time:idleTime;
+// Monotone cubic interpolation: position and velocity meet at each key, without overshoot.
+export function flowTrack(time,points){
+ if(time<=points[0][0])return points[0][1];if(time>=points.at(-1)[0])return points.at(-1)[1];
+ let i=0;while(time>points[i+1][0])i++;
+ const slope=k=>{if(k===0||k===points.length-1)return 0;const left=(points[k][1]-points[k-1][1])/(points[k][0]-points[k-1][0]),right=(points[k+1][1]-points[k][1])/(points[k+1][0]-points[k][0]);return left*right<=0?0:2*left*right/(left+right);};
+ const [x0,y0]=points[i],[x1,y1]=points[i+1],h=x1-x0,u=(time-x0)/h,u2=u*u,u3=u2*u;
+ return (2*u3-3*u2+1)*y0+(u3-2*u2+u)*h*slope(i)+(-2*u3+3*u2)*y1+(u3-u2)*h*slope(i+1);
+}
 function resting(id,time){const r=rigFor(id),q=time*Math.PI*2/r.period+r.phase,hero=!!RIGS[id];return {...neutral,breath:Math.sin(q)*.035,lean:Math.sin(q+.6)*.026,head:hero?Math.sin(q*.73+1)*.045:Math.sin(q)*.025,hand:hero?Math.sin(q+.9)*.055:0,tail:hero?Math.sin(q*1.22+r.phase)*.18:0};}
 export function rigPose(id,actor,time,idleTime=time){
  const r=rigFor(id),idle=resting(id,idleTime);let p=idle;
  if(actor?.action){
-  const a=actor.action,t=a.elapsed,k=a.kind==='skill'?1.28:1,first=resting(id,idleTime-t),support=['milk','star','orange'].includes(id)&&a.kind==='skill';
-  const prepare={...neutral,breath:.025,lean:-.075,head:-.10,hand:-(support?.48:r.swing*.65)*k,tail:-.16,reach:-.025};
-  const strike={...neutral,breath:-.026,lean:.09*k,head:.07,hand:(support?-.20:r.swing)*k,tail:.16,reach:.035*k};
-  if(t<a.windup)p=mix(first,prepare,ease(t/a.windup));
-  else if(t<a.impactAt)p=mix(prepare,strike,ease((t-a.windup)/a.travel));
-  else if(t<a.impactAt+(a.hold||0))p=strike;
-  else p=mix(strike,idle,ease((t-a.impactAt-(a.hold||0))/(a.duration-a.impactAt-(a.hold||0))));
+  const a=actor.action,t=a.elapsed,k=a.kind==='skill'?1.18:1,support=['milk','star','orange'].includes(id)&&a.kind==='skill',w=a.windup,hit=a.impactAt,end=a.duration,follow=Math.min(end-.09,hit+(a.hold||0)+.055),archer=id==='ink';
+  const offset=(prepare,strike,carry,lag=0)=>flowTrack(t,[[0,0],[w+lag,prepare],[hit+lag,strike],[follow+lag*.3,carry],[end,0]]);
+  const bash=['orange','pudding'].includes(id)&&!support,arm=({spark:[-.40,.22,.29],mint:[-.43,.33,.40],bolt:[-.64,.37,.46]})[id];
+  p={...idle,
+   breath:idle.breath+offset(.023,-.027,-.009,-.025),
+   lean:idle.lean+offset(-.085,.13*k,.10*k,-.018),
+   head:idle.head+offset(-.065,.075,.11,.018),
+   hand:idle.hand+offset(support?-.77:archer?-.19:bash?-.18:arm?arm[0]*k:-r.swing*.75*k,support?-.54:archer?.10:bash?-.04:arm?arm[1]*k:r.swing*.9*k,support?-.39:archer?.16:bash?.03:arm?arm[2]*k:r.swing*k),
+   tail:idle.tail+offset(-.15,.12,.25,.035),
+   reach:offset(-.018,bash?.09:archer?.065:.035,bash?.07:.043)
+  };
  }else if(actor?.charge>0){
-  const progress=clamp((2-actor.charge)/.32),shake=Math.sin(time*26)*.008;
-  p=mix(idle,{...neutral,breath:-.06,lean:-.07+shake,head:-.08,hand:-.22,tail:-.18},ease(progress));
+  const progress=clamp((2-actor.charge)/.45),sway=Math.sin(time*5.5)*.008;
+  p=mix(idle,{...idle,breath:-.045+Math.sin(time*4)*.008,lean:-.07+sway,head:-.08,hand:-.32,tail:-.18+Math.sin(time*4)*.03},ease(progress));
  }else if((actor?.burstUntil||0)>time){
   const elapsed=.38-(actor.burstUntil-time),charged={...neutral,breath:-.06,lean:-.07,head:-.08,hand:-.22,tail:-.18},strike={...neutral,breath:.055,lean:.16,head:.1,hand:.32,reach:.045};p=elapsed<.12?mix(charged,strike,ease(elapsed/.12)):mix(strike,idle,ease((elapsed-.12)/.26));
  }
