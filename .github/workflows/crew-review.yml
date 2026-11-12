@@ -1,0 +1,42 @@
+name: Formation and batch upgrade review
+on:
+  push:
+    branches: [codex/formation-v0210]
+    paths-ignore: ['review-artifacts/**']
+permissions:
+  contents: write
+jobs:
+  review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Existing game checks
+        run: |
+          mkdir -p review-artifacts
+          node --check app.mjs
+          node --check crew-profile.mjs
+          node --test tests/*.test.mjs > review-artifacts/unit-tests.log
+          tail -n 10 review-artifacts/unit-tests.log
+      - name: Browser dependencies
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+          sudo apt-get install -y fonts-noto-cjk
+      - name: Mobile character flows
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/can-club-http.log 2>&1 &
+          node scripts/check-crew-ui.mjs
+      - name: Save review evidence on this review branch
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f review-artifacts
+          if ! git diff --cached --quiet; then
+            git commit -m "Record v0.21.0 formation and incapacitation checks [skip ci]"
+            git push origin HEAD:codex/formation-v0210
+          fi

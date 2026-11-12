@@ -1,5 +1,5 @@
-import {CATS,MAX_LEVEL,MAX_PARTY,catStats,upgradeCost,unlocked,inheritanceFor} from './core.mjs?v=0.20.0';
-import {catSVG,icon,relicSVG} from './art.mjs?v=0.20.0';
+import {CATS,MAX_LEVEL,catStats,upgradeCost,upgradeQuote,unlocked} from './core.mjs?v=0.21.0';
+import {catSVG,icon,relicSVG} from './art.mjs?v=0.21.0';
 
 const palettes={
  orange:['#aa875d','#dec394','#f0cd89'],ink:['#738a99','#b4c1c4','#c2d8e3'],
@@ -30,25 +30,17 @@ export function crewPosition(state,id){
  const slot=state.party.indexOf(id);
  return slot<0?'未出战':slot<2?'前排 '+(slot+1):'后排 '+(slot-1);
 }
+export function crewUpgradeHTML(state,id){
+ const c=CATS.find(c=>c.id===id),level=state.levels[id],open=state.highest>=c.unlock,quote=upgradeQuote(level);
+ return '<button class="crew-quick-upgrade" data-upgrade="'+id+'" data-upgrade-count="10" '+(!open||!quote.levels||state.gold<quote.cost?'disabled':'')+' aria-label="'+c.name+'升'+quote.levels+'级，花费'+quote.cost+'鱼币"><small>'+ (quote.levels?'＋'+quote.levels+'级':'升级')+'</small><span>'+(!open?'未结识':!quote.levels?'已满级':number(quote.cost)+' 鱼币')+'</span></button>';
+}
 export function crewRosterHTML(state,selected){
  return CATS.map(c=>{
   const open=state.highest>=c.unlock;
-  return '<button class="crew-pick'+(open?'':' is-locked')+'" data-crew="'+c.id+'" aria-pressed="'+(selected===c.id)+'" aria-label="查看'+c.name+(open?'':'，第 '+c.unlock+' 关结识')+'">'+
-   '<span class="crew-pick-art">'+catSVG(c.id,true)+'</span><b>'+c.name+'</b>'+
-   '<small>'+(open?'Lv.'+state.levels[c.id]:'未结识')+'</small>'+
-   (state.party.includes(c.id)?'<i class="crew-in-party" aria-label="出战中"></i>':'')+'</button>';
+  return '<article class="crew-roster-card"><button class="crew-pick'+(open?'':' is-locked')+'" data-crew="'+c.id+'" aria-pressed="'+(selected===c.id)+'" aria-label="查看'+c.name+(open?'':'，第 '+c.unlock+' 关结识')+'">'+
+   '<span class="crew-pick-art">'+catSVG(c.id,true)+'</span><b>'+c.name+'</b><small>'+(open?'Lv.'+state.levels[c.id]:'未结识')+'</small>'+
+   (state.party.includes(c.id)?'<i class="crew-in-party" aria-label="出战中"></i>':'')+'</button>'+crewUpgradeHTML(state,c.id)+'</article>';
  }).join('');
-}
-function deploymentHTML(state,id){
- const inParty=state.party.includes(id),level=state.levels[id];
- return '<details class="crew-deployment"><summary><b>调整阵容</b><span>'+crewPosition(state,id)+' <i aria-hidden="true">⌄</i></span></summary>'+
- '<div class="crew-slots">'+Array.from({length:MAX_PARTY},(_,i)=>{
-  const old=state.party[i],transfer=inheritanceFor(state,i,id),label=i<2?'前排 '+(i+1):'后排 '+(i-1);
-  return '<button data-equip="'+i+'" '+(old===id||i>state.party.length?'disabled':'')+'>'+
-   '<small>'+label+'</small><b>'+(old?CATS.find(c=>c.id===old).name:'空位')+'</b>'+
-   '<span>'+(old===id?'当前':inParty?'移到这里':old?'替换':'上阵')+'</span>'+
-   (transfer?'<em>继承 Lv.'+transfer.fromLevel+'</em><small>'+CATS.find(c=>c.id===old).name+' → Lv.'+level+'</small>':'')+'</button>';
- }).join('')+'</div><p class="crew-deploy-note">调整后重新挑战当前关卡</p></details>';
 }
 export function crewProfileHTML(state,id,{modal=false}={}){
  const c=CATS.find(c=>c.id===id),open=state.highest>=c.unlock,level=state.levels[id],stats=catStats(state,id);
@@ -68,6 +60,6 @@ export function crewProfileHTML(state,id,{modal=false}={}){
   '<p class="crew-skill-description">'+skill.description+'</p></div>'+
   '<div class="crew-passive '+(awake?'is-awake':'is-dormant')+'"><span class="crew-passive-mark" aria-hidden="true">'+icon(awake?'star':'paw',23)+'</span><div><div class="crew-passive-title"><b>'+passiveNames[id]+'</b><span>'+(awake?'被动 · 已觉醒':'被动 · Lv.5 解锁')+'</span></div><p>'+skill.passive+'</p></div></div></section>'+
   (open?'<div class="crew-actions"><button class="primary crew-upgrade" data-upgrade="'+id+'" data-profile-upgrade aria-label="'+(level>=MAX_LEVEL?c.name+'已满级':'升级'+c.name+'，花费'+cost+'鱼币')+'" '+(level>=MAX_LEVEL||state.gold<cost?'disabled':'')+'>'+icon('coin',23)+'<span>'+(level>=MAX_LEVEL?'已满级':'升级 · '+number(cost))+'</span></button>'+
-   (canInherit?'<button class="secondary crew-inherit" data-inherit-open="'+id+'">培养继承</button>':'')+'</div>'+deploymentHTML(state,id):
+   (canInherit?'<button class="secondary crew-inherit" data-inherit-open="'+id+'">培养继承</button>':'')+'</div><button class="crew-deployment-open" data-open-formation>调整阵容 <span>拖动换位 ›</span></button>':
    '<div class="crew-locked-note">通过第 <b>'+c.unlock+'</b> 关后加入</div>')+'</article>';
 }

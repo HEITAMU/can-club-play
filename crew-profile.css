@@ -62,22 +62,6 @@
 .crew-actions .crew-upgrade{display:flex;align-items:center;justify-content:center;gap:8px;flex:1;min-width:0;min-height:47px;padding:10px 12px;background:#dfb36e;border:1px solid #f0d29a;border-bottom:3px solid #a17d49;color:#31474a;border-radius:12px 8px 13px 8px;font-size:16px;font-weight:800}
 .crew-actions .crew-upgrade:disabled{background:#7d8c7a;color:#dce2c9;border-color:#a3b29b;opacity:1}
 .crew-actions .crew-inherit{flex:0 0 95px;min-height:47px;padding:10px 9px;background:#5a7378;border:1px solid #8ca6a3;color:#e9e6c9;border-radius:10px 7px;font-size:12px}
-.crew-deployment{margin-top:10px;border-top:1px solid #82978c80}
-.crew-deployment summary{list-style:none;cursor:pointer;min-height:43px;display:flex;justify-content:space-between;align-items:center;color:#dce7d5;gap:12px;font-size:12px;touch-action:manipulation}
-.crew-deployment summary::-webkit-details-marker{display:none}
-.crew-deployment summary:focus-visible{outline:2px solid #f7d697;outline-offset:2px}
-.crew-deployment summary span{color:#c0d1c3;font-size:11px}
-.crew-deployment summary i{display:inline-block;font-style:normal;font-size:18px;padding-left:8px}
-.crew-deployment[open] summary i{transform:rotate(180deg);padding-left:0;padding-right:8px}
-.crew-slots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
-.crew-slots button{min-width:0;padding:8px 2px;background:#526b77;border:1px solid #8ba5a7;border-radius:8px 5px;color:#e7e9d6;line-height:1.6}
-.crew-slots button:disabled{opacity:.6;background:#476957}
-.crew-slots button>*{display:block}
-.crew-slots small{font-size:9px;white-space:normal}
-.crew-slots b{font-size:13px}
-.crew-slots span{font-size:10px;color:#f2d294}
-.crew-slots em{font-size:9px;font-style:normal;color:#f4dfa4;white-space:nowrap}
-.crew-deploy-note,.modal .crew-deploy-note{font-size:10px;line-height:1.5;color:#bfd0c3;margin:8px 0 0;text-align:center}
 .crew-locked-note{margin-top:12px;padding:12px;text-align:center;background:#54616f;border:1px dashed #9babb0;color:#dbe3d5;border-radius:10px;font-size:12px}
 .crew-locked-note b{color:#ffdfa3;font-size:17px}
 .modal[data-kind="cat"]{padding:16px;width:440px}
@@ -91,3 +75,35 @@
 
 .modal .crew-recruit-skill .crew-skill-description{font-size:12px;line-height:1.85;margin:8px 0;color:#e4ece0}
 @media(max-width:350px){.crew-active-skill>.crew-skill-description,.modal .crew-active-skill>.crew-skill-description{font-size:11.5px;line-height:1.8}}
+
+/* The archive keeps its large portrait; formation has its own direct editor. */
+.crew-modes{display:flex;gap:6px;margin:0 0 13px;padding:4px;background:#294b54;border:1px solid #789491;border-radius:11px}
+.crew-modes button{flex:1;min-height:36px;border-radius:8px;background:transparent;color:#d4e2d7;font-size:12px;font-weight:750}
+.crew-modes button[aria-pressed="true"]{background:#b39465;color:#fff0c9;box-shadow:inset 0 0 0 1px #e3c794}
+.crew-roster-card{flex:0 0 65px;min-width:0;scroll-snap-align:center}
+.crew-roster-card .crew-pick{width:100%;scroll-snap-align:none}
+.crew-quick-upgrade{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:100%;min-height:43px;margin-top:5px;border:1px solid #dbc38c;border-bottom:2px solid #9f8052;border-radius:8px 5px;background:#bd9e67;color:#fff1c9;font-size:10px;font-weight:800;white-space:nowrap;touch-action:manipulation}
+.crew-quick-upgrade:disabled{background:#516b68;color:#b4c4b6;border-color:#788e7f;opacity:1}
+.crew-deployment-open{display:flex;justify-content:space-between;align-items:center;width:100%;min-height:46px;margin-top:12px;padding:8px 10px;background:#416369;border:1px solid #92aaa0;border-radius:8px;color:#f0e6c8;font-size:12px;font-weight:700}
+.crew-deployment-open span{font-size:11px;color:#c5d7c5;font-weight:400}
+.formation-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 9px;color:#f5dfb8}
+.formation-heading h3{font-size:15px;line-height:22px;margin:0}.formation-heading h3 small{font-size:10px;color:#cad7c2;font-weight:400;margin-left:4px}.formation-heading>span{font-size:10px;color:#c7d7cc}
+.formation-board{position:relative;height:324px;border:1px solid #9cae8c;border-radius:23px 14px 23px 14px;overflow:hidden;background:radial-gradient(ellipse at 28% 65%,#73948255,transparent 66%),repeating-linear-gradient(174deg,transparent 0 32px,#b4bc9b12 33px,transparent 35px),#456b69}
+.formation-board:before{content:"";position:absolute;left:50%;top:38px;bottom:20px;width:1px;background:#bac4a64d;transform:rotate(-6deg)}
+.formation-column{position:absolute;top:10px;transform:translateX(-50%);font-size:11px;letter-spacing:.18em;color:#d9dfbb}.formation-column.back{left:27%}.formation-column.front{left:71%;color:#ffe2a8}
+.formation-slot{position:absolute;transform:translate(-50%,-50%);width:98px;height:98px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;background:transparent;color:#fff0d1;border:1px solid transparent;border-radius:20px 13px;touch-action:none;user-select:none;-webkit-touch-callout:none;cursor:grab;padding:0 4px 3px;isolation:isolate}
+.formation-slot:before{content:"";position:absolute;z-index:-1;left:10%;right:10%;height:21px;bottom:20px;border:1px solid #becaa272;background:#8fa58940;border-radius:50%}
+.formation-slot-art{position:relative;width:73px;height:73px;display:block;pointer-events:none}.formation-slot-art .painted-sprite{width:73px;height:73px}.formation-slot b{font-size:11px;line-height:14px;text-shadow:0 1px #284d53}.formation-slot small{font-size:9px;line-height:12px;color:#dae5cd}
+.formation-slot-art>i{display:grid;place-items:center;height:100%;font-size:28px;font-style:normal;color:#bbcbae}.formation-slot.is-empty{border:1px dashed #bdc8a766;background:#b0be9a0c}.formation-slot:disabled{opacity:.4;cursor:default}
+.formation-hint{min-height:28px;margin:8px 0 12px;font-size:11px;line-height:1.6;color:#e7d6ac;text-align:center}
+.bench-heading{margin-top:10px}.formation-bench{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 8px}
+.formation-card{min-width:0}.formation-bench-pick{position:relative;display:flex;flex-direction:column;align-items:center;width:100%;border:1px solid #8ea69a;border-radius:13px 8px;padding:3px 2px 6px;background:#526f70;color:#f4e6c6;touch-action:none;user-select:none;-webkit-touch-callout:none;cursor:grab}
+.formation-card-art{width:65px;height:65px;position:relative;pointer-events:none}.formation-card-art .painted-sprite{width:65px;height:65px}.formation-bench-pick b{font-size:11px;line-height:17px}.formation-bench-pick small{font-size:9px;line-height:13px;color:#d4decb}.formation-bench-pick>i{position:absolute;right:3px;top:4px;font-style:normal;font-size:7px;color:#e8f2d7;background:#47604c;border:1px solid #9db58f;border-radius:4px;padding:1px 3px}
+.formation-card.is-locked .formation-card-art{opacity:.55;filter:saturate(.45)}.formation-card.is-locked .formation-bench-pick{border-style:dashed;cursor:default;opacity:.65}
+.formation-bench .crew-quick-upgrade{min-height:44px;font-size:10px}
+.crew-formation .is-selected,.crew-formation .is-drop-target{outline:2px solid #ffe1a5;outline-offset:1px;background:#af955d66}.formation-slot.is-drop-target:before{background:#e3c78066;border-color:#ffe8ad}
+.formation-ghost{position:fixed;z-index:190;pointer-events:none;transform:translate(-50%,-80%) rotate(-6deg);width:96px;display:flex;flex-direction:column;align-items:center;padding:5px;background:#567976e8;border:2px solid #ffe1a5;border-radius:16px;box-shadow:0 10px 22px #132c3766;color:#fff0cf}.formation-ghost b{font-size:12px}.formation-ghost small{font-size:10px}.formation-ghost>i{display:none}.formation-ghost .formation-slot-art,.formation-ghost .formation-card-art{display:block;position:relative;pointer-events:none}.formation-ghost .painted-sprite{pointer-events:none}
+.crew-formation.is-dragging [data-drag-cat]{cursor:grabbing}
+@media(max-width:350px){.formation-board{height:300px}.formation-slot{width:86px;height:90px}.formation-slot-art,.formation-slot-art .painted-sprite{width:65px;height:65px}.formation-card-art,.formation-card-art .painted-sprite{width:56px;height:56px}.formation-bench{gap:8px 6px}.formation-heading>span{font-size:9px}.formation-hint{font-size:10px}.crew-roster-card{flex-basis:62px}}
+
+.crew-quick-upgrade>small{font-size:11px;line-height:13px;font-weight:800}.crew-quick-upgrade>span{font-size:9px;line-height:12px;color:#f0e5c9}.crew-quick-upgrade:disabled>span{color:#bac8b9}

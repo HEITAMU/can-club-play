@@ -1,16 +1,16 @@
-import {attackStyle} from './motion.mjs?v=0.20.0';
-import {CATS} from './core.mjs?v=0.20.0';
-import {catAction} from './action-profiles.mjs?v=0.20.0';
+import {attackStyle} from './motion.mjs?v=0.21.0';
+import {CATS} from './core.mjs?v=0.21.0';
+import {catAction} from './action-profiles.mjs?v=0.21.0';
 export const cueColors={attack:'#edc581',enemy:'#ee9f8c',support:'#b3d9ba',energy:'#d2b9eb'};
 const skillEffect={orange:'全队护盾',ink:'穿甲三连',milk:'全队治疗',spark:'群攻灼烧',mint:'眩晕打断',bolt:'破甲',pudding:'群攻＋全队护盾',star:'治疗＋回能'};
 // Coordinates are foot contacts on the painted ground, not sprite centers.
 export function formationPositions(b){
  const result={};
  for(const [side,actors] of [['p',b.heroes],['e',b.enemies]]){
-  const living=actors.filter(a=>a.hp>0),front=living.slice(0,2),back=living.slice(2),mirror=x=>side==='p'?x:100-x;
+  const front=actors.slice(0,2),back=actors.slice(2),mirror=x=>side==='p'?x:100-x;
   for(const [i,a] of actors.entries()){
    const fi=front.indexOf(a),bi=back.indexOf(a);
-   result[a.id]=a.hp<=0?{x:mirror(8+i*7),y:98}:fi>=0?{x:mirror(36),y:front.length===1?76:[59,89][fi]}:{x:mirror(bi===1?22:16),y:back.length===1?75:back.length===2?[57,94][bi]:[51,73,95][bi]};
+   result[a.id]=fi>=0?{x:mirror(36),y:front.length===1?76:[59,89][fi]}:{x:mirror(bi===1?22:16),y:back.length===1?75:back.length===2?[57,94][bi]:[51,73,95][bi]};
   }
  }
  return result;
