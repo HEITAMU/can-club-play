@@ -1,7 +1,7 @@
-import {poseFor} from './motion.mjs?v=0.18.0';
-import {rigPose,rigFor,blendRigPose,animationClock} from './rig-motion.mjs?v=0.18.0';
-import {drawRig} from './rig-renderer.mjs?v=0.18.0';
-import {EXPRESSIONS,expressionFor,faceTransition,bowNock} from './expressions.mjs?v=0.18.0';
+import {poseFor} from './motion.mjs?v=0.19.0';
+import {rigPose,rigFor,blendRigPose,animationClock} from './rig-motion.mjs?v=0.19.0';
+import {drawRig} from './rig-renderer.mjs?v=0.19.0';
+import {EXPRESSIONS,expressionFor,faceTransition,bowNock} from './expressions.mjs?v=0.19.0';
 // Loading portraits are assembled from the same corrected parts as the live characters.
 const heroIds=['orange','ink','milk','spark','mint','bolt','pudding','star'];
 const foeSheets={dust:['a',0],box:['a',1],mop:['a',2],battery:['a',3],bag:['b',0],drone:['b',1],vacuum:['b',2],fridge:['b',3],sign:['c',0],boxBoss:['c',1],clock:['c',2],vendor:['c',3]};
@@ -24,4 +24,8 @@ export function paintedPose(root,frame,{actor,time=0,idleTime=time,outcome,previ
  el.dataset.pose='0';el.dataset.phase=phase;el.dataset.expression=face.to;
 }
 export function paintedItem(index,size){return `<span class="painted-item" style="background-position:${index%4/3*100}% ${Math.floor(index/4)/3*100}%;${size?`width:${size}px;height:${size}px;`:''}" aria-hidden="true"></span>`;}
-export function paintedScene(index){return `<div class="scene-art painted-scene" data-street="${index}" style="background-position:${index%3*50}% ${Math.floor(index/3)*100}%" aria-hidden="true"></div>`;}
+// Portrait cells are 418 x 627. The SVG viewport crops uniformly on every screen.
+export function paintedScene(index){
+ const cell=Math.max(0,Math.min(5,Math.floor(Number(index)||0))),x=cell%3*418,y=Math.floor(cell/3)*627;
+ return `<svg class="scene-art stage-scene" data-street="${cell}" viewBox="${x} ${y} 418 627" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><image href="./assets/scenes/streets-v019.webp" width="1254" height="1254"/></svg>`;
+}

@@ -1,6 +1,6 @@
-import {VFX_ATLAS} from './vfx-atlas.mjs?v=0.18.0';
-import {FX_CELLS,sampleRoute,sampleImpact,sampleGuard,sampleStatus,shieldTransition} from './vfx-motion.mjs?v=0.18.0';
-export {effectEnvelope,impactStyle,shieldTransition} from './vfx-motion.mjs?v=0.18.0';
+import {VFX_ATLAS} from './vfx-atlas.mjs?v=0.19.0';
+import {FX_CELLS,sampleRoute,sampleImpact,sampleGuard,sampleStatus,shieldTransition} from './vfx-motion.mjs?v=0.19.0';
+export {effectEnvelope,impactStyle,shieldTransition} from './vfx-motion.mjs?v=0.19.0';
 let image;
 function atlas(){if(!image&&typeof Image!=='undefined'){image=new Image();image.src=VFX_ATLAS.url;}return image;}
 // Same painter is used by the browser and the offline review renderer.

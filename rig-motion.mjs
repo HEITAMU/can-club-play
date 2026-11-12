@@ -1,4 +1,4 @@
-import {catAction} from './action-profiles.mjs?v=0.18.0';
+import {catAction} from './action-profiles.mjs?v=0.19.0';
 // Continuous motion for painted cutout parts. No pose-frame swapping.
 const clamp=n=>Math.max(0,Math.min(1,n));
 export const ease=n=>{const t=clamp(n);return t*t*(3-2*t);};
