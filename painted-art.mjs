@@ -1,7 +1,7 @@
-import {poseFor} from './motion.mjs?v=0.19.2';
-import {rigPose,rigFor,blendRigPose,animationClock} from './rig-motion.mjs?v=0.19.2';
-import {drawRig} from './rig-renderer.mjs?v=0.19.2';
-import {EXPRESSIONS,expressionFor,faceTransition,bowNock} from './expressions.mjs?v=0.19.2';
+import {poseFor} from './motion.mjs?v=0.20.0';
+import {rigPose,rigFor,blendRigPose,animationClock} from './rig-motion.mjs?v=0.20.0';
+import {drawRig} from './rig-renderer.mjs?v=0.20.0';
+import {EXPRESSIONS,expressionFor,faceTransition,bowNock} from './expressions.mjs?v=0.20.0';
 // Loading portraits are assembled from the same corrected parts as the live characters.
 const heroIds=['orange','ink','milk','spark','mint','bolt','pudding','star'];
 const foeSheets={dust:['a',0],box:['a',1],mop:['a',2],battery:['a',3],bag:['b',0],drone:['b',1],vacuum:['b',2],fridge:['b',3],sign:['c',0],boxBoss:['c',1],clock:['c',2],vendor:['c',3]};
@@ -10,7 +10,7 @@ const poses=new WeakMap();
 function sprite(kind,sheet,row,rows,id){
  return `<span class="painted-sprite" data-art="${id}" data-atlas="./assets/painted/${kind}-${sheet}.webp" data-hero="${kind==='heroes'}" data-row="${row}" data-rows="${rows}" data-pose="0" style="--atlas:url('./assets/painted/${kind}-${sheet}.webp');--sheet-rows:${rows};background-position:0% ${row/(rows-1)*100}%" aria-hidden="true"><canvas class="rig-canvas" aria-hidden="true"></canvas></span>`;
 }
-export function paintedCat(id){const i=Math.max(0,heroIds.indexOf(id)),row=Math.floor(i/4),atlas='./assets/anatomy/portraits.webp';return `<span class="painted-sprite" data-art="${heroIds[i]}" data-atlas="${atlas}" data-hero="true" data-row="${row}" data-rows="2" data-pose="0" style="--atlas:url('${atlas}');--sheet-rows:2" aria-hidden="true"><span class="anatomy-fallback" style="background-position:${i%4/3*100}% ${row*100}%"></span><canvas class="rig-canvas" aria-hidden="true"></canvas></span>`;}
+export function paintedCat(id){const i=Math.max(0,heroIds.indexOf(id)),row=Math.floor(i/4),atlas='./assets/anatomy/portraits-v0200.webp';return `<span class="painted-sprite" data-art="${heroIds[i]}" data-atlas="${atlas}" data-hero="true" data-row="${row}" data-rows="2" data-pose="0" style="--atlas:url('${atlas}');--sheet-rows:2" aria-hidden="true"><span class="anatomy-fallback" style="background-position:${i%4/3*100}% ${row*100}%"></span><canvas class="rig-canvas" aria-hidden="true"></canvas></span>`;}
 export function paintedEnemy(type,boss=false){const id=boss&&type==='box'?'boxBoss':type;const [sheet,row]=foeSheets[id]||foeSheets.dust;return sprite('enemies',sheet,row,4,id);}
 export function paintedPose(root,frame,{actor,time=0,idleTime=time,outcome,preview,renderSize}={}){
  const el=root.matches('.painted-sprite')?root:root.querySelector('.painted-sprite');if(!el)return;

@@ -63,3 +63,5 @@ html[data-gallery] .card{background:#6e604f;border-color:#b09a7d}html[data-galle
 
 /* Keep moving character canvases on a single compositing surface. */
 #arena .actor .actor-body,#arena .actor.enemy .actor-body,#arena .actor .painted-sprite{filter:none}
+
+.float-text.magic{color:#d9ceff;text-shadow:1px 1px 0 #393654,-1px -1px 0 #393654}.float-text.magic.crit{color:#ffe46b}
