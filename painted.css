@@ -46,3 +46,4 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{
 
 /* A continuous 2D mesh, with overscan for hands and tails; cached textures and continuous per-part deformation. */
 .painted-sprite>.rig-canvas{position:absolute;left:-12%;top:-10%;width:124%;height:116%;pointer-events:none;display:block;max-width:none}.painted-sprite.rig-ready{background-image:none}.painted-sprite[data-pose="0"]{clip-path:none}
+.painted-sprite[data-hero="true"]{background-image:none}.anatomy-fallback{position:absolute;left:-22%;top:-20%;width:144%;height:138%;background-image:var(--atlas);background-size:400% 200%;background-repeat:no-repeat}.rig-ready>.anatomy-fallback{display:none}

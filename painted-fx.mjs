@@ -1,4 +1,4 @@
-import {projectilePose,unit} from './motion.mjs?v=0.14.1';
+import {projectilePose,unit} from './motion.mjs?v=0.15.0';
 export const FX_CELLS={shield:0,break:1,heal:2,milk:3,fire:4,ice:5,electric:6,melee:7,sweep:7,fish:8,arrow:8,star:9,burst:10,dust:11,guard:12,heart:13,energy:14,block:15,flare:14};
 export function fxArt(style,extra=''){const i=FX_CELLS[style]??10;return `<i class="painted-fx ${extra}" style="background-position:${i%4/3*100}% ${Math.floor(i/4)/3*100}%" aria-hidden="true"></i>`;}
 export const impactStyle=r=>r.style==='shield'?(r.tone==='support'?'guard':'block'):r.style==='heal'?'heal':r.style==='star'&&r.tone==='energy'?'energy':r.style==='sweep'?'melee':['arrow','fish','milk'].includes(r.style)?'burst':r.style;
