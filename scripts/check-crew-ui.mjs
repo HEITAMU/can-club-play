@@ -16,7 +16,7 @@ async function cats(page){await page.locator('[data-tab="cats"]').click();await 
 async function formation(page){await page.locator('[data-crew-mode="formation"]').click();await page.waitForFunction(()=>[...document.querySelectorAll('.formation-slot[data-drag-cat] .painted-sprite')].every(e=>e.classList.contains('rig-ready')));}
 async function center(locator){const r=await locator.boundingBox();assert.ok(r);return {x:r.x+r.width/2,y:r.y+r.height/2};}
 async function drag(page,source,target){const a=await center(source),b=await center(target);await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y,{steps:16});await page.mouse.up();await page.waitForTimeout(400);}
-async function touchDrag(page,source,target,{cancel=false}={}){const a=await center(source),b=await center(target),cdp=await page.context().newCDPSession();await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{...a,id:1}]});for(let i=1;i<=12;i++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:a.x+(b.x-a.x)*i/12,y:a.y+(b.y-a.y)*i/12,id:1}]});await cdp.send('Input.dispatchTouchEvent',{type:cancel?'touchCancel':'touchEnd',touchPoints:[]});await page.waitForTimeout(400);await cdp.detach();}
+async function touchDrag(page,source,target,{cancel=false}={}){const a=await center(source),b=await center(target),cdp=await page.context().newCDPSession(page);await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{...a,id:1}]});for(let i=1;i<=12;i++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:a.x+(b.x-a.x)*i/12,y:a.y+(b.y-a.y)*i/12,id:1}]});await cdp.send('Input.dispatchTouchEvent',{type:cancel?'touchCancel':'touchEnd',touchPoints:[]});await page.waitForTimeout(400);await cdp.detach();}
 try{
  for(const [w,h] of [[390,844],[375,667],[320,568],[1280,900]]){
   const {page,context}=await open(w,h);await cats(page);
@@ -81,7 +81,7 @@ try{
   await page.waitForFunction(()=>document.querySelectorAll('#actors .rig-ready').length===10);
   assert.equal(await page.locator('#actors .nameplate').count(),0);
   const positions=await page.locator('#actors .actor').evaluateAll(els=>Object.fromEntries(els.map(e=>[e.id,{left:e.style.left,top:e.style.top,size:parseFloat(e.style.getPropertyValue('--actor-size'))}])));
-  await page.locator('#battle-start').click();await page.locator('#actors .downed').first().waitFor({timeout:15000});
+  await page.locator('#battle-start').click();await page.locator('#actors .downed').first().waitFor({timeout:15000});await page.waitForTimeout(650);
   if(await page.locator('#battle-start').textContent()==='暂停战斗')await page.locator('#battle-start').click();
   const fallen=await page.locator('#actors .downed').evaluateAll(els=>els.map(e=>({id:e.id,left:e.style.left,top:e.style.top,size:parseFloat(e.style.getPropertyValue('--actor-size')),text:e.querySelector('.actor-tag').textContent,canvas:e.querySelector('canvas').width,visible:getComputedStyle(e).opacity})));
   for(const a of fallen){assert.equal(a.left,positions[a.id].left);assert.equal(a.top,positions[a.id].top);assert.ok(Math.abs(a.size-positions[a.id].size)<.1);assert.equal(a.text,'无法战斗');assert.ok(a.canvas>60);assert.equal(a.visible,'1');}
