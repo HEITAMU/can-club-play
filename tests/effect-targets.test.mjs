@@ -4,20 +4,21 @@ import {Battle,initialState} from '../core.mjs';
 import {BattleCues,formationPositions} from '../battle-cues.mjs';
 import {CombatEffects} from '../painted-fx.mjs';
 import {sampleProjectile} from '../vfx-motion.mjs';
+import {canHitAt} from '../can-timing.mjs';
 
 test('rescue removes unfinished attacks from defeated enemies while retaining completed impacts',()=>{
  for(const phase of ['windup','release']){
  const b=new Battle(initialState(),{stage:2}),c=new BattleCues(),enemy=b.enemies[0],positions=formationPositions(b);
- enemy.wait=0;enemy.hp=1;b.beginAction(enemy,'normal');
+ enemy.wait=0;enemy.hp=1;b.openCan();c.consume(b.events.splice(0),b,positions);b.time=canHitAt(0)-.03;b.beginAction(enemy,'normal');
  if(phase==='release')b.advanceAction(enemy,enemy.action.windup);
  c.consume(b.events.splice(0),b,positions);
  c.addRoute('finished-hit',enemy.id,['p0'],'普攻','enemy',b.time,positions,'impact',.32,{style:'melee'});
  assert.ok(c.active(b.time).some(r=>r.from===enemy.id&&r.phase===phase));
- b.openCan();c.consume(b.events.splice(0),b,positions);
+ b.time=canHitAt(0);b.advanceCan();c.consume(b.events.splice(0),b,positions);
  assert.equal(enemy.hp,0);
  assert.ok(!c.active(b.time).some(r=>r.from===enemy.id&&r.phase!=='impact'));
  assert.ok(c.active(b.time).some(r=>r.from===enemy.id&&r.phase==='impact'));
- assert.ok(c.active(b.time).some(r=>r.from==='can'&&r.style==='heal'));
+ assert.ok(c.active(b.time).some(r=>r.from==='can'&&r.style==='can-rescue'));
  assert.equal(c.entries[0].from,'开罐啦');
  }
 });

@@ -1,4 +1,5 @@
-import {actionTiming,attackStyle} from './motion.mjs?v=0.19.1';
+import {actionTiming,attackStyle} from './motion.mjs?v=0.19.2';
+import {CAN_TIMING,canHitAt,canDuration,canTargetOrder} from './can-timing.mjs?v=0.19.2';
 export const VERSION=1, MAX_STAGE=120, MAX_LEVEL=100, MAX_PARTY=5;
 export const CATS=[
  {id:'orange',name:'橘座',job:'前排守护',tag:'守护',color:'#edab62',accent:'#c8793b',unlock:0,hp:205,atk:17,interval:1.5,skill:'锅盖护体',desc:'举起锅盖：获得自身生命 45% 的护盾，并为队友提供 12% 护盾。',passive:'5 级：受到伤害降低 15%。',quote:'这条街的罐头，我罩了。',gear:'pan'},
@@ -103,7 +104,7 @@ export class Battle {
  alive(side){return (side==='p'?this.heroes:this.enemies).filter(x=>x.hp>0);}
  frontlines(){return this.alive('p').slice(0,2);}
  frontline(){return this.frontlines()[0]||null;}
- emit(type,from,to,value=0,extra={}){this.events.push({type,at:this.eventAt??this.time,from:from?.id,to:to?.id,value:Math.round(value),serial:++this.fxSerial,...extra});}
+ emit(type,from,to,value=0,extra={}){this.events.push({type,at:this.eventAt??this.time,from:from?.id,to:to?.id,value:Math.round(value),serial:++this.fxSerial,...extra,...(this.canEvent?{rescue:true}: {})});}
  harm(target,raw,source,{crit=false,pierce=0,reflect=true,dot=false}={}){
   if(!target||target.hp<=0)return 0;const ramp=this.time>40?1+(this.time-40)*.025:1;
   let amount=raw*(1-Math.max(0,(target.armor||0)-pierce))*ramp;
@@ -155,10 +156,28 @@ export class Battle {
   if(h.catId==='pudding'){for(const e of es)this.harm(e,h.atk*1.4,h);for(const p of ps)this.shield(p,p.maxHp*.18,h);}
   if(h.catId==='star')for(const p of ps){if(p!==h)p.energy=Math.min(100,p.energy+48);this.heal(p,h.atk*1.6,h);}
  }
- openCan(){if(this.result||this.canCd>0)return false;this.canCd=this.buff.canCd;const ps=this.alive('p'),es=this.alive('e');if(!ps.length||!es.length)return false;const atk=ps.reduce((n,p)=>n+p.atk,0);for(const p of ps){this.heal(p,p.maxHp*.2,p);p.energy=Math.min(100,p.energy+18);}for(const e of es){this.harm(e,atk*.8,ps[0]);if(e.charge>0){e.charge=0;e.skillWait=6;e.stun=.7;this.emit('interrupt',ps[0],e,0,{text:'打断蓄力'});}}this.emit('can',ps[0],es[0]);this.checkEnd();return true;}
+ openCan(){
+  if(this.result||this.canCd>0||this.canSequence)return false;
+  const ps=this.alive('p'),es=this.alive('e');if(!ps.length||!es.length)return false;
+  this.canCd=this.buff.canCd;const targets=canTargetOrder(es),duration=canDuration(targets.length);
+  this.canSequence={born:this.time,until:this.time+duration,source:ps[0],friends:ps.map(p=>p.id),targets,attack:ps.reduce((n,p)=>n+p.atk,0)*.8,healed:false,next:0};
+  // Emergency interrupt remains immediate; damage and healing follow the artwork.
+  for(const e of es)if(e.charge>0){e.charge=0;e.skillWait=6;e.stun=.7;this.emit('interrupt',ps[0],e,0,{text:'打断蓄力'});}
+  this.emit('can',ps[0],es[0],0,{targets,friends:this.canSequence.friends,duration});return true;
+ }
+ advanceCan(){
+  const c=this.canSequence;if(!c)return;
+  const age=this.time-c.born;this.canEvent=true;
+  if(!c.healed&&age+1e-9>=CAN_TIMING.heal){c.healed=true;this.eventAt=c.born+CAN_TIMING.heal;for(const id of c.friends){const p=this.heroes.find(p=>p.id===id);if(p?.hp>0){this.heal(p,p.maxHp*.2,c.source);p.energy=Math.min(100,p.energy+18);}}}
+  while(c.next<c.targets.length&&age+1e-9>=canHitAt(c.next)){this.eventAt=c.born+canHitAt(c.next);const id=c.targets[c.next++],e=this.enemies.find(e=>e.id===id);if(e?.hp>0)this.harm(e,c.attack,c.source);}
+  this.eventAt=null;this.canEvent=false;if(this.time+1e-9>=c.until)this.canSequence=null;
+ }
  syncStats(s,{preserveHealthRatio=false}={}){this.buff=buffs(s);for(const h of this.heroes){const n=catStats(s,h.catId),oldMax=h.maxHp,ratio=h.hp/oldMax,add=n.hp-oldMax;h.maxHp=n.hp;if(h.hp>0)h.hp=preserveHealthRatio?ratio*n.hp:clamp(h.hp+Math.max(0,add),1,h.maxHp);h.shield=Math.min(n.hp,h.shield*(preserveHealthRatio?n.hp/oldMax:1));h.atk=n.atk;h.interval=n.interval;h.crit=n.crit;h.level=n.level;}}
- checkEnd(){if(!this.alive('e').length)this.result='win';else if(!this.alive('p').length||this.time>=75)this.result='lose';return this.result;}
+ checkEnd(){if(!this.alive('e').length){if(!this.canSequence)this.result='win';}else if(!this.alive('p').length||this.time>=75)this.result='lose';return this.result;}
  tick(dt){if(this.result)return this.events.splice(0);dt=clamp(dt,0,.25);this.time+=dt;this.canCd=Math.max(0,this.canCd-dt);
+  this.advanceCan();
+  // Let the lid leave the screen before loot or the next wave can cover it.
+  if(!this.alive('e').length){this.checkEnd();return this.events.splice(0);}
   for(const a of [...this.heroes,...this.enemies]){if(a.hp<=0)continue;a.stun=Math.max(0,a.stun-dt);if(a.burnTime>0){a.burnTime-=dt;this.harm(a,a.burn*dt,this.heroes[0],{dot:true,reflect:false});}if(a.side==='p'&&this.buff.regen>0)a.hp=Math.min(a.maxHp,a.hp+a.maxHp*this.buff.regen*dt);if(a.hp<=0)continue;if(a.stun>0){if(a.action){a.action=null;this.emit('cancel',a,a);}continue;}
    if(a.side==='e'&&a.boss){a.skillWait-=dt;if(a.charge>0){a.charge-=dt;if(a.charge<=0){for(const p of this.alive('p'))this.harm(p,a.atk*1.55,a);a.skillWait=7;a.burstUntil=this.time+.38;this.emit('burst',a,a);}continue;}if(a.skillWait<=0){a.action=null;a.charge=2;this.emit('charge',a,a,0,{text:'正在蓄力'});continue;}}
    a.wait-=dt;if(a.action)this.advanceAction(a,dt);else if(a.wait<=0)this.beginAction(a,a.side==='p'&&a.energy>=100?'skill':'normal');

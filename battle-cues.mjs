@@ -1,6 +1,6 @@
-import {attackStyle} from './motion.mjs?v=0.19.1';
-import {CATS} from './core.mjs?v=0.19.1';
-import {catAction} from './action-profiles.mjs?v=0.19.1';
+import {attackStyle} from './motion.mjs?v=0.19.2';
+import {CATS} from './core.mjs?v=0.19.2';
+import {catAction} from './action-profiles.mjs?v=0.19.2';
 export const cueColors={attack:'#edc581',enemy:'#ee9f8c',support:'#b3d9ba',energy:'#d2b9eb'};
 const skillEffect={orange:'全队护盾',ink:'穿甲三连',milk:'全队治疗',spark:'群攻灼烧',mint:'眩晕打断',bolt:'破甲',pudding:'群攻＋全队护盾',star:'治疗＋回能'};
 // Coordinates are foot contacts on the painted ground, not sprite centers.
@@ -30,15 +30,17 @@ export class BattleCues{
   if(can){
    // Rescue has its own combined readout, but deaths and interrupts still retire pending attacks.
    for(const e of events)if(e.type==='down'||e.type==='interrupt')this.cancelPending(e.to);else if(e.type==='cancel')this.cancelPending(e.from);
-   const enemies=events.filter(e=>e.type==='hit'&&e.to?.startsWith('e')).map(e=>e.to),friends=b.heroes.filter(h=>h.hp>0).map(h=>h.id),p={...positions,can:{x:50,y:99}};
-   this.addRoute('can-attack','can',enemies,'伤敌','attack',b.time,p,'impact',.7,{style:'melee'});this.addRoute('can-heal','can',friends,'回血','support',b.time,p,'impact',1.15,{style:'heal'});
-   this.log('开罐啦','全队救援','全体敌我',events.some(e=>e.type==='interrupt')?'回血20% · 伤敌 · 打断成功':'回血20% · 伤敌','support',b.time,true);return;
+   const event=events.find(e=>e.type==='can'),p={...positions,can:{x:26,y:26}};
+   this.addRoute('can-rescue','can',event.targets,'开罐啦','support',event.at??b.time,p,'impact',event.duration,{style:'can-rescue',friends:event.friends,contacts:{}});
+   this.log('开罐啦','全队救援','全体敌我',events.some(e=>e.type==='interrupt')?'回血20% · 伤敌 · 打断成功':'回血20% · 伤敌','support',b.time,true);
   }
   for(const e of events){
+   if(e.type==='can'||(can&&e.type==='interrupt'))continue;
    if(e.type==='cancel'||e.type==='down'){
     const id=e.type==='down'?e.to:e.from;
     this.cancelPending(id);
    }
+   if(e.rescue){const r=this.routes.get('can-rescue');if(r&&e.type==='hit'&&positions[e.to])r.contacts[e.to]={...positions[e.to]};continue;}
    const a=byId(e.from);if(!a)continue;const at=e.at??b.time,tone=a.side==='e'?'enemy':'attack';
    if(e.type==='windup'||e.type==='release'){
     const duration=e.type==='windup'?(e.windup||.4)+.06:(e.travel||.29)+.05,extra={style:attackStyle(a),travel:e.travel||.29,kind:e.kind,profile:catAction(a.catId,e.kind)?.id};

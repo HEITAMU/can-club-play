@@ -45,8 +45,8 @@ test('actual impact replaces an obsolete windup target; cues are read-only and f
 });
 test('can rescue clears interrupted boss routes and is attributed to the button rather than the front cat',()=>{
  const b=new Battle(ready(),{stage:20}),c=new BattleCues(),p=formationPositions(b);c.consume([{type:'charge',from:'e0',to:'e0'}],b,p);
- c.consume([{type:'hit',from:'p0',to:'e0',value:42},{type:'interrupt',from:'p0',to:'e0'},{type:'can',from:'p0',to:'e0'}],b,p);
- assert.ok(!c.active(0).some(r=>r.from==='e0'));assert.equal(c.entries[0].from,'开罐啦');assert.ok(c.entries[0].effect.includes('打断成功'));assert.equal(c.routes.get('can-heal').targets.length,5);
+ b.enemies[0].charge=2;b.openCan();c.consume(b.events.splice(0),b,p);
+ assert.ok(!c.active(0).some(r=>r.from==='e0'));assert.equal(c.entries[0].from,'开罐啦');assert.ok(c.entries[0].effect.includes('打断成功'));assert.equal(c.routes.get('can-rescue').friends.length,5);
 });
 test('skill captions remain attributable when several allies cast in one tick',()=>{
  const b=new Battle(ready()),c=new BattleCues();for(const h of [b.heroes[0],b.heroes[2],b.heroes[3]])b.skill(h);c.consume(b.events,b,formationPositions(b));
