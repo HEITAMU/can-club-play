@@ -1,4 +1,11 @@
-# v0.16 painted combat effects
+# Painted combat effects
+
+v0.17.1: The crescent was authored with its convex leading edge facing left.
+`FX_FORWARD_X.slash` corrects this at draw time before the travel rotation and
+team-facing transform. Fish, flames and other right-facing art remain unchanged.
+Impact crescents also advance in the attack direction instead of drifting back.
+
+Original v0.16 atlas:
 
 Runtime atlas: `effects.webp` (455,896 bytes); original generated alpha PNG: `source.png`.
 The 16 independent painted primitives are cropped by the rectangles in `vfx-atlas.mjs`.

@@ -30,9 +30,9 @@ export function sheet(){
  return c;
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){
- fs.mkdirSync('qa',{recursive:true});fs.writeFileSync('qa/attacks-v017.png',sheet().toBuffer('image/png'));
+ fs.mkdirSync('qa',{recursive:true});fs.writeFileSync('qa/attacks-v0171.png',sheet().toBuffer('image/png'));
  const faces=createCanvas(1020,8*155),ctx=faces.getContext('2d');ctx.fillStyle='#293e46';ctx.fillRect(0,0,faces.width,faces.height);
  ids.forEach((id,i)=>['neutral','attack','blink','skill','hurt','victory','down'].forEach((face,j)=>{ctx.drawImage(actorFrame(id,-1,138,'normal',face),j*145,i*155+18);ctx.fillStyle='#d9c9a6';ctx.font='11px sans-serif';ctx.fillText(face,j*145+42,i*155+14);}));
- fs.writeFileSync('qa/faces-v017.png',faces.toBuffer('image/png'));
- console.log('qa/attacks-v017.png; qa/faces-v017.png');
+ fs.writeFileSync('qa/faces-v0171.png',faces.toBuffer('image/png'));
+ console.log('qa/attacks-v0171.png; qa/faces-v0171.png');
 }

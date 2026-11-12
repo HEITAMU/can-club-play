@@ -1,4 +1,4 @@
-import {projectilePose,unit} from './motion.mjs?v=0.17.0';
+import {projectilePose,unit} from './motion.mjs?v=0.17.1';
 
 // All samples depend on simulation time, never frame count or Math.random().
 export const FX_CELLS={slash:0,flash:1,dust:2,ember:3,fire:4,flame:5,ice:6,shard:7,heal:8,heart:9,milk:10,fish:11,shield:12,glass:13,star:14,electric:15};
@@ -78,7 +78,7 @@ export function sampleImpact(style,p,size,age,duration,seed=1,direction=1,skill=
   for(let i=0;i<3;i++)sprite(out,'dust',x+(i-1)*size*k*.3,y-k*size*.07,size*(.3+k*.6),fade*.50,(i-1)*.15,1,.55,0);
  }else{
   const slash=style==='melee'||style==='sweep',heavy=style==='burst'&&skill;
-  if(slash){const arc=sprite(out,'slash',x+direction*size*(.18-.3*k),y-size*.03,size*(skill?1.25:1.02),effectEnvelope(age,Math.min(duration,.25),.02,.14),direction*(-.7+k*1.4),direction,1,1);if(arc){arc.reveal=unit(age/.10);arc.deform={axis:'y',phase:age*12,amplitude:.04};}}
+  if(slash){const arc=sprite(out,'slash',x+direction*size*(-.16+.32*k),y-size*.03,size*(skill?1.25:1.02),effectEnvelope(age,Math.min(duration,.25),.02,.14),direction*(-.7+k*1.4),direction,1,1);if(arc){arc.reveal=unit(age/.10);arc.deform={axis:'y',phase:age*12,amplitude:.04};}}
   sprite(out,'flash',x,y,size*(heavy?.88:.62)*(1+.3*k),effectEnvelope(age,.22,.012,.17),seed*.6,1,.85,2);
   scatter(out,'ember',x,y,size,age,duration,seed,skill?9:5,{gravity:.23,spread:skill?1:.7,scale:.13});
   sprite(out,'dust',x,y+size*.37,size*(.35+k*.65),fade*.45,0,1,.38,0);

@@ -1,6 +1,6 @@
-import {VFX_ATLAS} from './vfx-atlas.mjs?v=0.17.0';
-import {FX_CELLS,sampleRoute,sampleImpact,sampleGuard,sampleStatus,shieldTransition} from './vfx-motion.mjs?v=0.17.0';
-export {effectEnvelope,impactStyle,shieldTransition} from './vfx-motion.mjs?v=0.17.0';
+import {VFX_ATLAS,FX_FORWARD_X} from './vfx-atlas.mjs?v=0.17.1';
+import {FX_CELLS,sampleRoute,sampleImpact,sampleGuard,sampleStatus,shieldTransition} from './vfx-motion.mjs?v=0.17.1';
+export {effectEnvelope,impactStyle,shieldTransition} from './vfx-motion.mjs?v=0.17.1';
 let image;
 function atlas(){if(!image&&typeof Image!=='undefined'){image=new Image();image.src=VFX_ATLAS.url;}return image;}
 // Same painter is used by the browser and the offline review renderer.
@@ -8,7 +8,7 @@ export function paintVFX(ctx,img,particles){
  for(const p of particles){
   const rect=VFX_ATLAS.rects[FX_CELLS[p.art]];if(!rect)continue;
   const aspect=rect[2]/rect[3],width=p.width,height=p.height/aspect;
-  ctx.save();ctx.globalAlpha=p.alpha;ctx.translate(p.x,p.y);ctx.rotate(p.angle);ctx.scale(width<0?-1:1,1);
+  ctx.save();ctx.globalAlpha=p.alpha;ctx.translate(p.x,p.y);ctx.rotate(p.angle);ctx.scale((width<0?-1:1)*(FX_FORWARD_X[p.art]||1),1);
   const dw=Math.abs(width),dh=height;
   if(p.reveal!==undefined){ctx.beginPath();ctx.rect(-dw/2,-dh/2,dw*p.reveal,dh);ctx.clip();}
   if(p.deform){

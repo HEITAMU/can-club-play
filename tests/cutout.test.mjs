@@ -21,7 +21,7 @@ test('every cat visibly swings its painted weapon or drawing hand at a 48px batt
   const actor={id,side:'p',catId:id,hp:1},timing=actionTiming(actor,kind),support=kind==='skill'&&['orange','milk','star'].includes(id),melee=['orange','pudding','bolt'].includes(id)&&!support;
   const times=[melee?timing.windup:timing.windup*.5,melee?timing.impactAt:timing.windup],part=id==='ink'?'rightArm':'leftArm',uv=id==='ink'?[.82,.18]:['orange','pudding'].includes(id)?[.52,.52]:[.80,.20];
   const points=times.map(t=>{const ctx=context();renderPuppetFrame(ctx,id,rigPose(id,{...actor,action:{...timing,kind,elapsed:t}},t,0),{},69.12,66.24);const draw=ctx.draws.find(d=>String(d.src)===String(kit.parts[part])),[tl,tr,bl]=draw.points;return [tl[0]+(tr[0]-tl[0])*uv[0]+(bl[0]-tl[0])*uv[1],tl[1]+(tr[1]-tl[1])*uv[0]+(bl[1]-tl[1])*uv[1]];});
-  assert.ok(Math.hypot(points[1][0]-points[0][0],points[1][1]-points[0][1])>=7,id+' '+kind+' must swing at least 7 screen pixels');
+  assert.ok(Math.hypot(points[1][0]-points[0][0],points[1][1]-points[0][1])>=10,id+' '+kind+' must swing at least 10 screen pixels');
  }
 });
 test('prepared battle idles advance on the ambient clock, active battle pauses freeze them',()=>{const a={hp:1};assert.equal(animationClock(a,0,2),2);assert.equal(animationClock(a,0,3),3);assert.equal(animationClock(a,4,20),4);assert.equal(animationClock(a,4,21),4);assert.equal(animationClock(null,4,21),21);});

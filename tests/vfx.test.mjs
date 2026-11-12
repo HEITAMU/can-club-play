@@ -1,12 +1,36 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {CombatEffects,GuardEffects,StatusEffects} from '../painted-fx.mjs';
+import {CombatEffects,GuardEffects,StatusEffects,paintVFX} from '../painted-fx.mjs';
 import {sampleImpact,sampleRoute,FX_CELLS} from '../vfx-motion.mjs';
 import {Battle,initialState,CATS} from '../core.mjs';
 import {BattleCues,formationPositions} from '../battle-cues.mjs';
 
 const positions={p0:{x:20,y:70},e0:{x:75,y:70}},sizes={p0:50,e0:60};
 const route={id:1,from:'p0',targets:['e0'],phase:'release',style:'fire',kind:'skill',born:1,until:1.34,travel:.29,positions};
+// Capture the actual painter's transform of the source texture's +X axis.
+function textureAxis(p){
+ let angle=0,sx=1,result;
+ const ctx={save(){},restore(){},translate(){},rotate(a){angle+=a;},scale(x){sx*=x;},beginPath(){},rect(){},clip(){},drawImage(){result={x:Math.cos(angle)*sx,y:Math.sin(angle)*sx};}};
+ paintVFX(ctx,{},[p]);return result;
+}
+test('the crescent convex edge leads its flight, including enemy and diagonal attacks',()=>{
+ for(const [from,to] of [[{x:20,y:50},{x:75,y:50}],[{x:75,y:50},{x:20,y:50}],[{x:20,y:75},{x:75,y:30}],[{x:75,y:30},{x:20,y:75}]]){
+  const p={p0:from,e0:to},r={...route,style:'sweep',positions:p};
+  for(const t of [1.08,1.15,1.23])for(const slash of sampleRoute(r,t,390,300,p,sizes).filter(p=>p.art==='slash')){
+   const axis=textureAxis(slash),dx=(to.x-from.x)*3.9,dy=(to.y-from.y)*3;
+   // In the original art the leading convex edge is at -X, not +X.
+   assert.ok((-axis.x*dx-axis.y*dy)/Math.hypot(dx,dy)>.98);
+  }
+ }
+ const fish=textureAxis({art:'fish',x:0,y:0,width:20,height:20,angle:0,alpha:1});assert.equal(fish.x,1,'fish already faces forward');
+});
+test('melee crescents face and advance through the target in either attack direction',()=>{
+ for(const direction of [-1,1]){
+  const frames=[.04,.12,.21].map(age=>sampleImpact('melee',{x:200,y:150},52,age,.44,1,direction).find(p=>p.art==='slash'));
+  for(const arc of frames){const axis=textureAxis(arc);assert.ok(-axis.x*direction>0,'convex edge faces the target');}
+  assert.ok((frames[1].x-frames[0].x)*direction>0);assert.ok((frames[2].x-frames[1].x)*direction>0);
+ }
+});
 test('cancelled projectiles vanish immediately while completed impacts finish and clean up',()=>{
  const fx=new CombatEffects(null);
  assert.ok(fx.render([route],1.1,390,300,positions,sizes).length>0);

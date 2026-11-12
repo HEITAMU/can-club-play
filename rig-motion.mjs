@@ -36,7 +36,7 @@ export function rigPose(id,actor,time,idleTime=time){
   // A readable shoulder swing, including on the small battle sprites. Ranged
   // hands finish the throw when the projectile leaves, not when it lands.
   const melee=['orange','pudding','bolt'].includes(id)&&!support;
-  const arm=({orange:[-.58,.46,.31],ink:[-.48,.38,.22],milk:[-.72,.50,.32],spark:[-.74,.55,.34],mint:[-.60,.61,.39],bolt:[-.76,.72,.44],pudding:[-.56,.48,.31],star:[-.66,.58,.36]})[id];
+  const arm=({orange:[-.84,.72,.46],ink:[-.72,.58,.33],milk:[-1.02,.82,.48],spark:[-1.05,.88,.51],mint:[-.86,.96,.58],bolt:[-1.06,1.16,.66],pudding:[-.82,.74,.46],star:[-.94,.92,.54]})[id];
   const swingAt=melee?hit:w,prepareAt=melee?w:w*.5,carryAt=Math.min(end-.12,swingAt+.10);
   const hand=arm?flowTrack(t,[[0,0],[prepareAt,arm[0]],[swingAt,arm[1]],[carryAt,arm[2]],[end,0]]):offset(-r.swing*.75*k,r.swing*.9*k,r.swing*k);
   p={...idle,
