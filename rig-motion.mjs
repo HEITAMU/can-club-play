@@ -1,3 +1,4 @@
+import {catAction} from './action-profiles.mjs?v=0.18.0';
 // Continuous motion for painted cutout parts. No pose-frame swapping.
 const clamp=n=>Math.max(0,Math.min(1,n));
 export const ease=n=>{const t=clamp(n);return t*t*(3-2*t);};
@@ -31,17 +32,17 @@ function resting(id,time){const r=rigFor(id),q=time*Math.PI*2/r.period+r.phase,h
 export function rigPose(id,actor,time,idleTime=time){
  const r=rigFor(id),idle=resting(id,idleTime);let p=idle;
  if(actor?.action){
-  const a=actor.action,t=a.elapsed,k=a.kind==='skill'?1.18:1,support=['milk','star','orange'].includes(id)&&a.kind==='skill',w=a.windup,hit=a.impactAt,end=a.duration,follow=Math.min(end-.09,hit+(a.hold||0)+.055),archer=id==='ink';
+  const a=actor.action,t=a.elapsed,k=a.kind==='skill'?1.18:1,w=a.windup,hit=a.impactAt,end=a.duration,follow=Math.min(end-.09,hit+(a.hold||0)+.055),archer=id==='ink';
   const offset=(prepare,strike,carry,lag=0)=>flowTrack(t,[[0,0],[w+lag,prepare],[hit+lag,strike],[follow+lag*.3,carry],[end,0]]);
   // A readable shoulder swing, including on the small battle sprites. Ranged
   // hands finish the throw when the projectile leaves, not when it lands.
-  const melee=['orange','pudding','bolt'].includes(id)&&!support;
-  const arm=({orange:[-.84,.72,.46],ink:[-.72,.58,.33],milk:[-1.02,.82,.48],spark:[-1.05,.88,.51],mint:[-.86,.96,.58],bolt:[-1.06,1.16,.66],pudding:[-.82,.74,.46],star:[-.94,.92,.54]})[id];
+  const performance=catAction(id,a.kind),melee=performance?.delivery==='melee';
+  const arm=performance?.hand,body=performance?.body||1;
   const swingAt=melee?hit:w,prepareAt=melee?w:w*.5,carryAt=Math.min(end-.12,swingAt+.10);
   const hand=arm?flowTrack(t,[[0,0],[prepareAt,arm[0]],[swingAt,arm[1]],[carryAt,arm[2]],[end,0]]):offset(-r.swing*.75*k,r.swing*.9*k,r.swing*k);
   p={...idle,
-   breath:idle.breath+offset(.023,-.027,-.009,-.025),
-   lean:idle.lean+offset(-.085,.13*k,.10*k,-.018),
+   breath:idle.breath+offset(.023,-.027*body,-.009,-.025),
+   lean:idle.lean+offset(-.085*body,.13*k*body,.10*k*body,-.018),
    head:idle.head+offset(-.065,.075,.11,.018),
    hand:idle.hand+hand,
    tail:idle.tail+offset(-.15,.12,.25,.035),

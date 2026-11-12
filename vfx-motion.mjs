@@ -1,9 +1,10 @@
-import {projectilePose,unit} from './motion.mjs?v=0.17.1';
+import {projectilePose,unit} from './motion.mjs?v=0.18.0';
+import {ACTION_BY_ID} from './action-profiles.mjs?v=0.18.0';
 
 // All samples depend on simulation time, never frame count or Math.random().
-export const FX_CELLS={slash:0,flash:1,dust:2,ember:3,fire:4,flame:5,ice:6,shard:7,heal:8,heart:9,milk:10,fish:11,shield:12,glass:13,star:14,electric:15};
+export const FX_CELLS={flash:1,dust:2,ember:3,fire:4,flame:5,ice:6,shard:7,heal:8,heart:9,milk:10,fish:11,shield:12,glass:13,star:14,electric:15};
 export const effectEnvelope=(age,duration,fadeIn=.035,fadeOut=.22)=>Math.min(unit(age/fadeIn),unit((duration-age)/fadeOut));
-export const impactStyle=r=>r.style==='shield'?(r.tone==='support'?'guard':'block'):r.style==='heal'?'heal':r.style==='star'&&r.tone==='energy'?'energy':r.style==='sweep'?'melee':['arrow','fish','milk'].includes(r.style)?'burst':r.style;
+export const impactStyle=r=>r.style==='shield'?(r.tone==='support'?'guard':'block'):r.style==='heal'?'heal':r.style==='star'&&r.tone==='energy'?'energy':ACTION_BY_ID[r.profile]?.impact||(['arrow','fish','milk'].includes(r.style)?'burst':r.style);
 export const shieldTransition=(previous,next)=>next>previous?'raise':next<previous?(next<=0?'break':'block'):'steady';
 const tau=Math.PI*2,rand=n=>{const v=Math.sin(n*127.1+311.7)*43758.5453;return v-Math.floor(v);};
 const point=(p,w,h)=>({x:p.x*w/100,y:p.y*h/100});
@@ -46,7 +47,41 @@ export function sampleImpact(style,p,size,age,duration,seed=1,direction=1,skill=
   }
   return out;
  }
- if(style==='fire'){
+ if(['melee','shield-bash','wrench-hit','armor-break','shield-thump','ground-smash'].includes(style)){
+  // Short, textured contact marks grow across the hit point. No flying blade,
+  // circular slash silhouette or full-size crescent covers the characters.
+  const wrench=style==='wrench-hit'||style==='armor-break',slam=style==='shield-thump'||style==='ground-smash',heavy=style==='armor-break'||style==='ground-smash';
+  const t=unit(age/.20),pop=Math.sin(t*Math.PI),contact=effectEnvelope(age,heavy?.28:.22,.014,.14);
+  sprite(out,'flash',x-direction*size*.12*(1-t),y+size*(slam?.12:0),size*(.30+.26*pop)*(heavy?1.15:1),contact,wrench?direction*.65:0,wrench?1.4:1.1,slam?.55:.75,2);
+  if(wrench)sprite(out,'flash',x+direction*size*.07,y-size*.04,size*(.18+.37*pop),effectEnvelope(age-.022,.22,.025,.13)*.72,-direction*.62,1.3,.32,2);
+  scatter(out,style==='armor-break'?'glass':'ember',x,y,size,age,heavy?.55:.34,seed,heavy?7:style==='shield-bash'?6:4,{gravity:.30,spread:heavy?.75:.46,scale:style==='armor-break'?.19:.10});
+  if(slam){
+   const count=heavy?7:3,dustTime=heavy?.60:.38,u=unit(age/dustTime);
+   for(let i=0;i<count;i++){const a=i*tau/count,spread=size*(.12+.57*(1-(1-u)**2));sprite(out,'dust',x+Math.cos(a)*spread,y+size*.34+Math.sin(a)*spread*.23,size*(.16+.30*u),effectEnvelope(age,dustTime,.04,.29)*.63,Math.sin(a)*.24,1,.65,0);}
+  }else sprite(out,'dust',x,y+size*.34,size*(.25+unit(age/.42)*.4),effectEnvelope(age,.42,.035,.25)*.36,0,1,.35,0);
+ }else if(style==='pierce'||style==='pierce-volley'){
+  const count=style==='pierce-volley'?3:1;
+  for(let i=0;i<count;i++){const delay=i*.027,offset=(i-(count-1)/2)*size*.15;
+   sprite(out,'flash',x+direction*offset,y-offset*.75,size*(count>1?.38:.32),effectEnvelope(age-delay,.24,.012,.16),direction*-.25,1.5,.40,2);
+  }
+  scatter(out,'ember',x,y,size,age,.38,seed,count*2+1,{spread:.48,scale:.09});
+ }else if(style==='splash'){
+  const t=unit(age/.32);sprite(out,'milk',x,y,size*(.32+.24*t),effectEnvelope(age,.30,.025,.19),-.7,1,.72,1);
+  scatter(out,'milk',x,y,size,age,.45,seed,6,{gravity:.55,spread:.60,scale:.15});
+ }else if(style==='fire-hit'){
+  const t=unit(age/.38),flame=sprite(out,'flame',x,y-size*t*.12,size*(.35+.17*Math.sin(t*Math.PI)),effectEnvelope(age,.38,.025,.24),direction*.15,1,.9,1);
+  if(flame)flame.deform={axis:'y',phase:age*17,amplitude:.15};
+  scatter(out,'ember',x,y,size,age,.38,seed,4,{rise:.35,scale:.10,spread:.5});
+ }else if(style==='ice-hit'){
+  sprite(out,'shard',x,y,size*.42,effectEnvelope(age,.28,.018,.18),-.3,1,.9,1);
+  scatter(out,'ice',x,y,size,age,.36,seed,4,{gravity:.25,spread:.55,scale:.20});
+ }else if(style==='star-hit'){
+  sprite(out,'star',x,y,size*(.30+.20*Math.sin(unit(age/.34)*Math.PI)),effectEnvelope(age,.34,.018,.23),age*2.5,1,1,1);
+  scatter(out,'star',x,y,size,age,.42,seed,3,{rise:.14,spread:.53,scale:.16});
+ }else if(style==='ranged'){
+  sprite(out,'flash',x,y,size*.32,effectEnvelope(age,.21,.012,.14),0,1,.78,2);
+  scatter(out,'ember',x,y,size,age,.30,seed,4,{spread:.45,scale:.09});
+ }else if(style==='fire'){
   sprite(out,'flash',x,y,size*.60,effectEnvelope(age,.20,.012,.16),0,1,.8,2);
   for(let i=0;i<3;i++){
    const delay=i*.035,t=unit((age-delay)/(duration-delay));
@@ -77,8 +112,7 @@ export function sampleImpact(style,p,size,age,duration,seed=1,direction=1,skill=
  }else if(style==='dust'){
   for(let i=0;i<3;i++)sprite(out,'dust',x+(i-1)*size*k*.3,y-k*size*.07,size*(.3+k*.6),fade*.50,(i-1)*.15,1,.55,0);
  }else{
-  const slash=style==='melee'||style==='sweep',heavy=style==='burst'&&skill;
-  if(slash){const arc=sprite(out,'slash',x+direction*size*(-.16+.32*k),y-size*.03,size*(skill?1.25:1.02),effectEnvelope(age,Math.min(duration,.25),.02,.14),direction*(-.7+k*1.4),direction,1,1);if(arc){arc.reveal=unit(age/.10);arc.deform={axis:'y',phase:age*12,amplitude:.04};}}
+  const heavy=style==='burst'&&skill;
   sprite(out,'flash',x,y,size*(heavy?.88:.62)*(1+.3*k),effectEnvelope(age,.22,.012,.17),seed*.6,1,.85,2);
   scatter(out,'ember',x,y,size,age,duration,seed,skill?9:5,{gravity:.23,spread:skill?1:.7,scale:.13});
   sprite(out,'dust',x,y+size*.37,size*(.35+k*.65),fade*.45,0,1,.38,0);
@@ -91,23 +125,23 @@ export function sampleRoute(r,time,w,h,centers={},sizes={}){
  if(age<0||age>=duration)return out;
  const origin=centers[r.from]||r.positions?.[r.from],size=sizes[r.from]||50;
  if(!origin)return out;
- const source=point(origin,w,h),support=r.tone==='support'||r.tone==='energy';
+ const source=point(origin,w,h),support=r.tone==='support'||r.tone==='energy',performance=ACTION_BY_ID[r.profile];
  if(r.phase==='windup'){
   if(r.kind==='skill'||r.style==='warning'){
    const art=support?'star':({fire:'ember',ice:'shard',electric:'electric',warning:'ember'})[r.style]||'star';
    for(let i=0;i<4;i++){const a=i*tau/4+k*.8,dist=size*(.75-.48*k);sprite(out,art,source.x+Math.cos(a)*dist,source.y+Math.sin(a)*dist*.65,size*(.10+.12*k),effectEnvelope(age,duration,.08,.05)*.65,a,1,1,1);}
-   if(r.style==='warning')for(const id of r.targets){const p=centers[id]||r.positions?.[id];if(!p)continue;const q=point(p,w,h),s=sizes[id]||50;sprite(out,'slash',q.x,q.y+s*.43,s*(.8+.25*k),(.24+.16*Math.sin(age*8)**2),0,1,.22,0);}
+   if(r.style==='warning')for(const id of r.targets){const p=centers[id]||r.positions?.[id];if(!p)continue;const q=point(p,w,h),s=sizes[id]||50;for(let i=0;i<3;i++)sprite(out,'dust',q.x+(i-1)*s*.22,q.y+s*.43,s*(.36+.1*k),(.18+.10*Math.sin(age*8)**2),0,1,.30,0);}
   }
  }else if(r.phase==='release'){
   if(r.style==='melee'||r.style==='warning'||r.style==='shield')return out;
   for(const id of r.targets){if(id===r.from)continue;
-   const count=r.kind==='skill'&&r.style==='arrow'?3:1;
+   const shot=performance?.projectile,count=shot?.count||(r.kind==='skill'&&r.style==='arrow'?3:1);
    for(let i=0;i<count;i++){
     const flight=sampleProjectile(r,id,time,w,h,centers,sizes,i,count);if(!flight?.visible)continue;
-    const art=({arrow:'fish',sweep:'slash',heal:'milk',energy:'star'})[r.style]||r.style;
-    const head=(r.kind==='skill'?31:23)*(r.style==='ice'?1.15:1);
+    const art=shot?.art||({arrow:'fish',ranged:'ember',heal:'milk',energy:'star'})[r.style]||r.style;
+    const head=shot?.size||(r.style==='ranged'?16:(r.kind==='skill'?31:23)*(r.style==='ice'?1.15:1));
     // A flowing wake follows past trajectory samples. The head art is drawn once.
-    const trailArt=({fire:'fire',milk:'milk',heal:'milk',ice:'ice',electric:'electric',star:'star',arrow:'ember',sweep:'slash'})[r.style]||'ember';
+    const trailArt=shot?.trail||({fire:'fire',milk:'milk',heal:'milk',ice:'ice',electric:'electric',star:'star',arrow:'ember',ranged:'ember'})[r.style]||'ember';
     for(let j=8;j>=1;j--){
      const past=sampleProjectile(r,id,time-j*.012,w,h,centers,sizes,i,count),next=sampleProjectile(r,id,time-(j-1)*.012,w,h,centers,sizes,i,count);if(!past?.visible||!next?.visible)continue;
      const dx=next.x-past.x,dy=next.y-past.y,len=Math.hypot(dx,dy),taper=1-j/10;

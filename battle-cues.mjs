@@ -1,5 +1,6 @@
-import {attackStyle} from './motion.mjs?v=0.17.1';
-import {CATS} from './core.mjs?v=0.17.1';
+import {attackStyle} from './motion.mjs?v=0.18.0';
+import {CATS} from './core.mjs?v=0.18.0';
+import {catAction} from './action-profiles.mjs?v=0.18.0';
 export const cueColors={attack:'#edc581',enemy:'#ee9f8c',support:'#b3d9ba',energy:'#d2b9eb'};
 const skillEffect={orange:'全队护盾',ink:'穿甲三连',milk:'全队治疗',spark:'群攻灼烧',mint:'眩晕打断',bolt:'破甲',pudding:'群攻＋全队护盾',star:'治疗＋回能'};
 // Coordinates are foot contacts on the painted ground, not sprite centers.
@@ -40,7 +41,7 @@ export class BattleCues{
    }
    const a=byId(e.from);if(!a)continue;const at=e.at??b.time,tone=a.side==='e'?'enemy':'attack';
    if(e.type==='windup'||e.type==='release'){
-    const duration=e.type==='windup'?(e.windup||.4)+.06:(e.travel||.29)+.05,extra={style:attackStyle(a),travel:e.travel||.29,kind:e.kind};
+    const duration=e.type==='windup'?(e.windup||.4)+.06:(e.travel||.29)+.05,extra={style:attackStyle(a),travel:e.travel||.29,kind:e.kind,profile:catAction(a.catId,e.kind)?.id};
     if(e.kind==='normal')this.addRoute(a.id,a.id,[e.to],'普攻',tone,at,positions,e.type,duration,extra);
     else {
      const targets=b.skillTargets(a).map(t=>t.id),friends=targets.filter(id=>id.startsWith('p')),foes=targets.filter(id=>id.startsWith('e')),label=CATS.find(c=>c.id===a.catId)?.skill||'技能';
@@ -49,14 +50,14 @@ export class BattleCues{
     }
    }
    if(e.type==='hit'&&!bursts.has(e.from)&&!casters.has(e.from)&&e.cause!=='skill'){
-    const reflected=e.cause==='reflect';this.addRoute(reflected?a.id+'-reflect':a.id,a.id,[e.to],reflected?'反伤':'普攻',tone,at,positions,'impact',.44,{style:e.shield?'shield':attackStyle(a),kind:'normal'});
+    const reflected=e.cause==='reflect';this.addRoute(reflected?a.id+'-reflect':a.id,a.id,[e.to],reflected?'反伤':'普攻',tone,at,positions,'impact',.44,{style:e.shield?'shield':attackStyle(a),kind:'normal',profile:e.shield?undefined:catAction(a.catId,'normal')?.id});
     this.log(name(e.from),reflected?'反伤':'普攻',name(e.to),(e.crit?'暴击 ':'')+e.value+(e.shield?' · 护盾承受':''),tone,at);
    }
    if(e.type==='skill'){
     const info=CATS.find(c=>c.id===a.catId),targets=e.targets||[],friends=targets.filter(id=>id.startsWith('p')),foes=targets.filter(id=>id.startsWith('e'));
     this.routes.delete(a.id);
-    if(foes.length)this.addRoute(a.id,a.id,foes,e.text,tone,at,positions,'impact',.82,{style:attackStyle(a),kind:e.type==='skill'?'skill':'normal'});
-    if(friends.length)this.addRoute(a.id+'-support',a.id,friends,e.text,a.catId==='star'?'energy':'support',at,positions,'impact',1.05,{kind:'skill',style:['orange','pudding'].includes(a.catId)?'shield':a.catId==='star'?'star':'heal'});
+    if(foes.length)this.addRoute(a.id,a.id,foes,e.text,tone,at,positions,'impact',.82,{style:attackStyle(a),kind:'skill',profile:catAction(a.catId,'skill')?.id});
+    if(friends.length)this.addRoute(a.id+'-support',a.id,friends,e.text,a.catId==='star'?'energy':'support',at,positions,'impact',1.05,{kind:'skill',profile:catAction(a.catId,'skill')?.id,style:['orange','pudding'].includes(a.catId)?'shield':a.catId==='star'?'star':'heal'});
     this.log(a.name,info.skill,targets.length===1?name(targets[0]):friends.length&&foes.length?'敌方＋全队':friends.length?'我方全队':'敌方全体',skillEffect[a.catId],friends.length?'support':'attack',at,true);
    }
    if(e.type==='heal'&&!casters.has(e.from)){

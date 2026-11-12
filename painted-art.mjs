@@ -1,7 +1,7 @@
-import {poseFor} from './motion.mjs?v=0.17.1';
-import {rigPose,rigFor,blendRigPose,animationClock} from './rig-motion.mjs?v=0.17.1';
-import {drawRig} from './rig-renderer.mjs?v=0.17.1';
-import {EXPRESSIONS,expressionFor,faceTransition,bowNock} from './expressions.mjs?v=0.17.1';
+import {poseFor} from './motion.mjs?v=0.18.0';
+import {rigPose,rigFor,blendRigPose,animationClock} from './rig-motion.mjs?v=0.18.0';
+import {drawRig} from './rig-renderer.mjs?v=0.18.0';
+import {EXPRESSIONS,expressionFor,faceTransition,bowNock} from './expressions.mjs?v=0.18.0';
 // Loading portraits are assembled from the same corrected parts as the live characters.
 const heroIds=['orange','ink','milk','spark','mint','bolt','pudding','star'];
 const foeSheets={dust:['a',0],box:['a',1],mop:['a',2],battery:['a',3],bag:['b',0],drone:['b',1],vacuum:['b',2],fridge:['b',3],sign:['c',0],boxBoss:['c',1],clock:['c',2],vendor:['c',3]};

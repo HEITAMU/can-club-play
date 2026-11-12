@@ -1,7 +1,8 @@
+import {enemyAttackType} from './action-profiles.mjs?v=0.18.0';
 // Combat and rendering share a simulation clock. x1 is a deliberate, calmer pace.
 export const battleRate=speed=>speed===2?1.8:.9;
 export function attackStyle(a){
- if(a.side==='e')return ['drone','battery'].includes(a.type)?'electric':['mop','vacuum'].includes(a.type)?'sweep':'melee';
+ if(a.side==='e')return enemyAttackType(a.type);
  return ({orange:'melee',ink:'arrow',milk:'milk',spark:'fire',mint:'ice',bolt:'melee',pudding:'melee',star:'star'})[a.catId];
 }
 export function actionTiming(a,kind='normal'){

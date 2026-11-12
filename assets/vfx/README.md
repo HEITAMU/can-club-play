@@ -1,5 +1,13 @@
 # Painted combat effects
 
+v0.18.0: Cell 0 (the rejected crescent) is retired and absent from `FX_CELLS`.
+All physical hits use local contact marks, fragments and dust. Monster normal
+attacks share just melee/ranged visuals; each companion normal and skill has an
+independent profile in `action-profiles.mjs`. The original atlas is retained so
+this change does not require another image download.
+
+Historical notes:
+
 v0.17.1: The crescent was authored with its convex leading edge facing left.
 `FX_FORWARD_X.slash` corrects this at draw time before the travel rotation and
 team-facing transform. Fish, flames and other right-facing art remain unchanged.
