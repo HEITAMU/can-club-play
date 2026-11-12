@@ -1,4 +1,4 @@
-import {actionTiming,attackStyle} from './motion.mjs?v=0.12.0';
+import {actionTiming,attackStyle} from './motion.mjs?v=0.13.0';
 export const VERSION=1, MAX_STAGE=120, MAX_LEVEL=100, MAX_PARTY=5;
 export const CATS=[
  {id:'orange',name:'橘座',job:'前排守护',tag:'守护',color:'#edab62',accent:'#c8793b',unlock:0,hp:205,atk:17,interval:1.5,skill:'锅盖护体',desc:'举起锅盖：获得自身生命 45% 的护盾，并为队友提供 12% 护盾。',passive:'5 级：受到伤害降低 15%。',quote:'这条街的罐头，我罩了。',gear:'pan'},
@@ -112,7 +112,7 @@ export class Battle {
   const shield=Math.min(target.shield,amount);target.shield-=shield;amount-=shield;const hit=Math.min(target.hp,amount);target.hp=Math.max(0,target.hp-amount);
   this.emit(dot?'burn':'hit',source,target,hit+shield,{crit,shield:shield>0,cause:dot?'burn':!reflect?'reflect':source?.action?.kind||'normal'});
   if(!dot)target.hitUntil=(this.eventAt??this.time)+.22;
-  if(target.hp<=0){target.action=null;this.emit('down',source,target);if(target.side==='e')this.kills++;}
+  if(target.hp<=0){target.downAt=this.eventAt??this.time;target.action=null;this.emit('down',source,target);if(target.side==='e')this.kills++;}
   if(source?.catId==='pudding'&&source.level>=5&&hit>0)this.heal(source,hit*.22,source);
   if(reflect&&target.side==='p'&&source?.side==='e'&&source.hp>0&&this.buff.reflect>0)this.harm(source,(hit+shield)*this.buff.reflect,target,{reflect:false});return hit;
  }
@@ -160,7 +160,7 @@ export class Battle {
  checkEnd(){if(!this.alive('e').length)this.result='win';else if(!this.alive('p').length||this.time>=75)this.result='lose';return this.result;}
  tick(dt){if(this.result)return this.events.splice(0);dt=clamp(dt,0,.25);this.time+=dt;this.canCd=Math.max(0,this.canCd-dt);
   for(const a of [...this.heroes,...this.enemies]){if(a.hp<=0)continue;a.stun=Math.max(0,a.stun-dt);if(a.burnTime>0){a.burnTime-=dt;this.harm(a,a.burn*dt,this.heroes[0],{dot:true,reflect:false});}if(a.side==='p'&&this.buff.regen>0)a.hp=Math.min(a.maxHp,a.hp+a.maxHp*this.buff.regen*dt);if(a.hp<=0)continue;if(a.stun>0){if(a.action){a.action=null;this.emit('cancel',a,a);}continue;}
-   if(a.side==='e'&&a.boss){a.skillWait-=dt;if(a.charge>0){a.charge-=dt;if(a.charge<=0){for(const p of this.alive('p'))this.harm(p,a.atk*1.55,a);a.skillWait=7;a.burstUntil=this.time+.24;this.emit('burst',a,a);}continue;}if(a.skillWait<=0){a.action=null;a.charge=2;this.emit('charge',a,a,0,{text:'正在蓄力'});continue;}}
+   if(a.side==='e'&&a.boss){a.skillWait-=dt;if(a.charge>0){a.charge-=dt;if(a.charge<=0){for(const p of this.alive('p'))this.harm(p,a.atk*1.55,a);a.skillWait=7;a.burstUntil=this.time+.38;this.emit('burst',a,a);}continue;}if(a.skillWait<=0){a.action=null;a.charge=2;this.emit('charge',a,a,0,{text:'正在蓄力'});continue;}}
    a.wait-=dt;if(a.action)this.advanceAction(a,dt);else if(a.wait<=0)this.beginAction(a,a.side==='p'&&a.energy>=100?'skill':'normal');
   }this.checkEnd();return this.events.splice(0);
  }

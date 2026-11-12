@@ -23,7 +23,7 @@ html,body{height:100%;overflow:hidden}body{min-height:0;padding:0 22px;align-ite
 #arena #scene{top:-45%;bottom:auto;height:145%}
 #arena .actor{--actor-size:var(--unit-size,52px);width:58px;transform:translate(-50%,-100%) translateY(calc(var(--actor-size)*.08))}
 #arena .actor.boss{--actor-size:calc(var(--unit-size,52px)*1.3);width:65px}
-#arena .actor.dead{--actor-size:23px}
+#arena .actor.dead{opacity:1;filter:none}
 #arena .actor .actor-body{width:var(--actor-size);height:var(--actor-size);margin-left:calc((100% - var(--actor-size))/2);z-index:1}
 #arena .actor .painted-sprite{transform-origin:50% 92%}
 #arena .ground-shadow{position:absolute;left:50%;bottom:calc(var(--actor-size)*.04);width:calc(var(--actor-size)*.58);height:calc(var(--actor-size)*.085);background:#18303880;border-radius:50%;transform:translateX(-50%);pointer-events:none;z-index:0}

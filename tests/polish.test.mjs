@@ -11,7 +11,11 @@ test('all eight idle performances move distinctly while keeping the foot anchor 
  for(const c of CATS){
   const samples=Array.from({length:120},(_,i)=>idlePose(c.id,i/10));
   assert.ok(new Set(samples.map(p=>p.angle.toFixed(3))).size>80,c.id);
-  for(const p of samples){assert.equal(p.y,0);assert.ok(Math.abs(p.angle)<2.1);assert.ok(p.sx>.98&&p.sx<1.02);assert.ok(p.sy>.97&&p.sy<1.03);}
+  for(const p of samples){assert.equal(p.y,0);assert.ok(Math.abs(p.angle)<3.9);assert.ok(p.sx>.98&&p.sx<1.02);assert.ok(p.sy>.935&&p.sy<1.065);}
+  // At mobile battle size, the ear/top must visibly move rather than less than a pixel.
+  const tops=samples.map(p=>({x:Math.sin(p.angle*Math.PI/180)*48*.7,y:p.sy*48*.7}));
+  const range=k=>Math.max(...tops.map(p=>p[k]))-Math.min(...tops.map(p=>p[k]));
+  assert.ok(range('x')>2.4&&range('y')>2.5,c.id+' must be readable at 48px');
   signatures.push(JSON.stringify(samples));
  }
  assert.equal(new Set(signatures).size,8);

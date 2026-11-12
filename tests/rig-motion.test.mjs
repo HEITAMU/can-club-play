@@ -1,0 +1,46 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {CATS,Battle,initialState} from '../core.mjs';
+import {actionTiming} from '../motion.mjs';
+import {rigPose,rigFor,preparePoint,deformPoint,blendRigPose} from '../rig-motion.mjs';
+import {FormationMotion,retiringSize} from '../formation-motion.mjs';
+const enemies=['dust','box','mop','battery','bag','drone','vacuum','fridge','sign','boxBoss','clock','vendor'];
+const actors=[...CATS.map(c=>({id:c.id,catId:c.id,side:'p',hp:100,interval:1.5})),...enemies.map(id=>({id,type:id,side:'e',hp:100,interval:1.5}))];
+test('all actors keep planted feet and have moving head, hand, or body points',()=>{
+ for(const a of actors){const foot=rigFor(a.id).foot,p=preparePoint(a.id,.4,foot),upper=preparePoint(a.id,.52,.3),head=[];
+  for(let i=0;i<240;i++){const pose=rigPose(a.id,a,i/60),f=deformPoint(a.id,p,pose),h=deformPoint(a.id,upper,pose);assert.ok(Math.abs(f.x-.4)<1e-8&&Math.abs(f.y-foot)<1e-8,a.id);head.push(h.x);}
+  assert.ok(Math.max(...head)-Math.min(...head)>.015,a.id+' has readable continuous motion');
+ }
+});
+test('normal and skill motion is continuous at anticipation, release, hold and recovery boundaries',()=>{
+ for(const a of actors)for(const kind of ['normal','skill']){const timing=actionTiming(a,kind),actor={...a,action:{...timing,kind,elapsed:0}};
+  for(const edge of [0,timing.windup,timing.impactAt,timing.impactAt+timing.hold,timing.duration]){
+   const sample=t=>{actor.action.elapsed=Math.max(0,t);return rigPose(a.id,actor,3+t,8+t);};
+   const before=sample(edge-1e-7),after=sample(edge+1e-7);for(const k of Object.keys(before))assert.ok(Math.abs(before[k]-after[k])<1e-5,a.id+' '+kind+' '+edge+' '+k);
+  }
+  actor.action.elapsed=timing.duration;const end=rigPose(a.id,actor,3+timing.duration,8+timing.duration);actor.action=null;const idle=rigPose(a.id,actor,3+timing.duration,8+timing.duration);for(const k of Object.keys(end))assert.ok(Math.abs(end[k]-idle[k])<1e-12);
+ }
+});
+test('deformation stays finite and locally bounded through every actor action',()=>{
+ for(const a of actors)for(const kind of ['normal','skill']){const timing=actionTiming(a,kind);
+  for(let t=0;t<timing.duration+.04;t+=1/60){const pose=rigPose(a.id,{...a,action:{...timing,kind,elapsed:t}},t);
+   for(let y=0;y<=8;y++)for(let x=0;x<=8;x++){const p=deformPoint(a.id,preparePoint(a.id,x/8,y/8),pose);assert.ok(Number.isFinite(p.x)&&Number.isFinite(p.y));assert.ok(p.x>-.12&&p.x<1.12&&p.y>-.1&&p.y<1.06,a.id+' deformation stays inside padded canvas');}
+  }
+ }
+});
+test('hit reaction rises and recovers continuously instead of selecting a still frame',()=>{
+ for(const a of actors){const at=3,hit={...a,hitUntil:at+.22};const start=rigPose(a.id,hit,at),idle=rigPose(a.id,a,at);assert.deepEqual(start,idle);
+  const peak=rigPose(a.id,hit,at+.11);assert.notEqual(peak.head,rigPose(a.id,a,at+.11).head);
+  assert.deepEqual(rigPose(a.id,hit,at+.22),rigPose(a.id,a,at+.22));
+ }
+});
+test('render blending freezes on pause and eases interruptions without overshoot',()=>{
+ const before=rigPose('orange',actors[0],1),after={...before,lean:.15,hand:.5};assert.deepEqual(blendRigPose(before,after,0),before);
+ const mid=blendRigPose(before,after,1/60);assert.ok(mid.lean>Math.min(before.lean,after.lean)&&mid.lean<Math.max(before.lean,after.lean));assert.deepEqual(blendRigPose(null,after,0),after);
+});
+test('retirement starts on the ground, then shrinks and moves without teleporting',()=>{
+ const s=initialState();s.party=['orange','ink','milk'];const b=new Battle(s),motion=new FormationMotion(),before=motion.update(b,0);b.heroes[0].hp=0;b.heroes[0].downAt=1;
+ assert.deepEqual(motion.update(b,1).p0,before.p0);assert.deepEqual(motion.update(b,1.44).p0,before.p0);
+ const mid=motion.update(b,1.6).p0,last=motion.update(b,2).p0;assert.ok(mid.y>before.p0.y&&mid.y<last.y);assert.equal(last.y,98);
+ assert.equal(retiringSize(52,b.heroes[0],1),52);assert.equal(retiringSize(52,b.heroes[0],2),23);assert.deepEqual(motion.update(b,2),motion.update(b,2));
+});

@@ -40,6 +40,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{
 .level-grid button.done{background:#405b4d;color:#cad9b8;border-color:#779273}
 
 /* The idle pivot is the painted feet; the image itself never bobs upward. */
-.painted-sprite{position:relative}.pose-ghost{position:absolute;inset:0;background-image:inherit;background-size:inherit;background-repeat:no-repeat;opacity:0;pointer-events:none}.painted-sprite>svg.idle-accent{position:absolute;width:16%;height:16%;opacity:0;pointer-events:none;overflow:visible;color:#d8c08e}.idle-accent.ember{color:#d7a06e}.idle-accent.crystal{color:#b4d2ce}.idle-accent.star{color:#d7bfdf}
+.painted-sprite{position:relative}.pose-ghost{position:absolute;inset:0;background-image:inherit;background-size:inherit;background-repeat:no-repeat;opacity:0;pointer-events:none}.painted-sprite>svg.idle-accent{position:absolute;width:16%;height:16%;opacity:0;pointer-events:none;overflow:visible;color:#d8c08e}.painted-sprite>svg.idle-accent.ember{color:#d7a06e}.painted-sprite>svg.idle-accent.crystal{color:#b4d2ce}.painted-sprite>svg.idle-accent.star{color:#d7bfdf}
 
 .cat-figure .painted-sprite{left:0;right:0;margin-inline:auto;transform:none}
+
+/* A continuous 2D mesh, with overscan for hands and tails; cached textures and continuous per-part deformation. */
+.painted-sprite>.rig-canvas{position:absolute;left:-12%;top:-10%;width:124%;height:116%;pointer-events:none;display:block;max-width:none}.painted-sprite.rig-ready{background-image:none}.painted-sprite[data-pose="0"]{clip-path:none}
