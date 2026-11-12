@@ -4,7 +4,7 @@ import {poseFor} from '../motion.mjs';
 const checks=[];const test=(name,fn)=>{fn();checks.push(name);};
 function ready(){const s=initialState();s.highest=120;s.party=['orange','ink','milk'];const b=new Battle(s,{stage:12});for(const a of [...b.heroes,...b.enemies])a.wait=99;return b;}
 test('windup and release cause no damage; impact damages exactly once',()=>{
- const b=ready(),h=b.heroes[1],e=b.enemies[0];e.hp=e.maxHp=10000;b.enemies[1].hp=b.enemies[1].maxHp=20000;h.crit=0;
+ const b=ready(),h=b.heroes[1],e=b.enemies[0];e.hp=e.maxHp=10000;for(const other of b.enemies.slice(1))other.hp=other.maxHp=20000;h.crit=0;
  b.beginAction(h,'normal');const before=e.hp;assert.equal(poseFor(h,b.time).frame,1);
  b.tick(.2);assert.equal(e.hp,before);assert.equal(poseFor(h,b.time).frame,2);
  b.tick(.1);assert.equal(e.hp,before);b.tick(.12);assert.equal(e.hp,before-h.atk);
