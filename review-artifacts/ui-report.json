@@ -1,0 +1,39 @@
+{
+  "viewports": [
+    {
+      "w": 390,
+      "h": 844,
+      "pageWidth": 390,
+      "overflow": false,
+      "occupied": 5
+    },
+    {
+      "w": 375,
+      "h": 667,
+      "pageWidth": 375,
+      "overflow": false,
+      "occupied": 5
+    },
+    {
+      "w": 320,
+      "h": 568,
+      "pageWidth": 320,
+      "overflow": false,
+      "occupied": 5
+    },
+    {
+      "w": 1280,
+      "h": 900,
+      "pageWidth": 1280,
+      "overflow": false,
+      "occupied": 5
+    }
+  ],
+  "checks": [
+    "Every unlocked card buys exactly ten levels for the summed cost; archive selection and formation values stay in sync",
+    "Mouse drag swaps allies, replacement preserves training, invalid drops do nothing, and formation survives reload"
+  ],
+  "result": "failed",
+  "error": "Error: page: expected Page or Frame\n    at BrowserContext.newCDPSession (/home/runner/work/can-club-play/can-club-play/node_modules/playwright-core/lib/client/browserContext.js:406:13)\n    at touchDrag (file:///home/runner/work/can-club-play/can-club-play/scripts/check-crew-ui.mjs:19:141)\n    at async file:///home/runner/work/can-club-play/can-club-play/scripts/check-crew-ui.mjs:58:3",
+  "browserErrors": []
+}
