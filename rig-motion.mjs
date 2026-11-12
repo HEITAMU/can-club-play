@@ -33,14 +33,19 @@ export function rigPose(id,actor,time,idleTime=time){
  if(actor?.action){
   const a=actor.action,t=a.elapsed,k=a.kind==='skill'?1.18:1,support=['milk','star','orange'].includes(id)&&a.kind==='skill',w=a.windup,hit=a.impactAt,end=a.duration,follow=Math.min(end-.09,hit+(a.hold||0)+.055),archer=id==='ink';
   const offset=(prepare,strike,carry,lag=0)=>flowTrack(t,[[0,0],[w+lag,prepare],[hit+lag,strike],[follow+lag*.3,carry],[end,0]]);
-  const bash=['orange','pudding'].includes(id)&&!support,arm=({spark:[-.40,.22,.29],mint:[-.43,.33,.40],bolt:[-.64,.37,.46]})[id];
+  // A readable shoulder swing, including on the small battle sprites. Ranged
+  // hands finish the throw when the projectile leaves, not when it lands.
+  const melee=['orange','pudding','bolt'].includes(id)&&!support;
+  const arm=({orange:[-.58,.46,.31],ink:[-.48,.38,.22],milk:[-.72,.50,.32],spark:[-.74,.55,.34],mint:[-.60,.61,.39],bolt:[-.76,.72,.44],pudding:[-.56,.48,.31],star:[-.66,.58,.36]})[id];
+  const swingAt=melee?hit:w,prepareAt=melee?w:w*.5,carryAt=Math.min(end-.12,swingAt+.10);
+  const hand=arm?flowTrack(t,[[0,0],[prepareAt,arm[0]],[swingAt,arm[1]],[carryAt,arm[2]],[end,0]]):offset(-r.swing*.75*k,r.swing*.9*k,r.swing*k);
   p={...idle,
    breath:idle.breath+offset(.023,-.027,-.009,-.025),
    lean:idle.lean+offset(-.085,.13*k,.10*k,-.018),
    head:idle.head+offset(-.065,.075,.11,.018),
-   hand:idle.hand+offset(support?-.77:archer?-.19:bash?-.18:arm?arm[0]*k:-r.swing*.75*k,support?-.54:archer?.10:bash?-.04:arm?arm[1]*k:r.swing*.9*k,support?-.39:archer?.16:bash?.03:arm?arm[2]*k:r.swing*k),
+   hand:idle.hand+hand,
    tail:idle.tail+offset(-.15,.12,.25,.035),
-   reach:offset(-.018,bash?.09:archer?.065:.035,bash?.07:.043)
+   reach:offset(-.018,melee?.09:archer?.065:.035,melee?.07:.043)
   };
  }else if(actor?.charge>0){
   const progress=clamp((2-actor.charge)/.45),sway=Math.sin(time*5.5)*.008;

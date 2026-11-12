@@ -1,11 +1,11 @@
-import {idleLabel} from './idle-motion.mjs?v=0.16.0';
-import {CATS} from './core.mjs?v=0.16.0';
-import {actorArt,setPose} from './art.mjs?v=0.16.0';
-import {actionTiming,poseFor,battleRate} from './motion.mjs?v=0.16.0';
+import {idleLabel} from './idle-motion.mjs?v=0.17.0';
+import {CATS} from './core.mjs?v=0.17.0';
+import {actorArt,setPose} from './art.mjs?v=0.17.0';
+import {actionTiming,poseFor,battleRate} from './motion.mjs?v=0.17.0';
 const types=['dust','box','mop','battery','bag','drone','vacuum','fridge','sign','boxBoss','clock','vendor'],names=['灰尘团','纸箱怪','拖把怪','电池怪','纸袋怪','小无人机','吸尘器首领','冰柜首领','招牌首领','纸箱首领','闹钟首领','售货机首领'];
 const actors=[...CATS.map((c,i)=>({id:'p'+i,side:'p',catId:c.id,name:c.name,desc:c.skill,hp:1})),...types.map((type,i)=>({id:'e'+i,side:'e',type,boss:i>5,name:names[i],desc:i>5?'蓄力 · 重击':'准备 · 出手',hp:1}))];
-for(const a of actors){const card=document.createElement('article');card.className='card';card.innerHTML=`<div class="sprite" id="${a.id}">${actorArt(a)}</div><b>${a.name}</b><small class="motion-caption">${a.side==='p'?idleLabel(a.catId):'安静呼吸'}</small>`;document.querySelector(a.side==='p'?'#crew':'#foes').appendChild(card);a.element=document.getElementById(a.id);}
-let kind='idle',paused=false,time=0,last=0,preview;
+for(const a of actors){const card=document.createElement('article');card.className='card';card.innerHTML=`<div class="sprite" id="${a.id}">${actorArt(a)}</div><b>${a.name}</b><small class="motion-caption">${a.side==='p'?'抬手 · 挥出 · 收回':'准备 · 出手'}</small>`;document.querySelector(a.side==='p'?'#crew':'#foes').appendChild(card);a.element=document.getElementById(a.id);}
+let kind='normal',paused=false,time=0,last=0,preview;
 document.querySelector('#face-preview').onchange=e=>{preview=e.target.value||undefined;};
 const status=document.querySelector('#motion-status');
 document.querySelectorAll('[data-kind]').forEach(b=>b.onclick=()=>{kind=b.dataset.kind;time=0;for(const a of actors)a.element.parentElement.querySelector('.motion-caption').textContent=kind==='idle'?(a.side==='p'?idleLabel(a.catId):'安静呼吸'):kind==='charge'?'蓄力 · 释放 · 归位':kind==='down'?'受击 · 缓缓退场':a.desc;document.querySelectorAll('[data-kind]').forEach(n=>n.setAttribute('aria-pressed',String(n===b)));});

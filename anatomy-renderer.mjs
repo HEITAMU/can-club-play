@@ -1,5 +1,5 @@
-import {ANATOMY} from './anatomy-data.mjs?v=0.16.0';
-import {rigFor} from './rig-motion.mjs?v=0.16.0';
+import {ANATOMY} from './anatomy-data.mjs?v=0.17.0';
+import {rigFor} from './rig-motion.mjs?v=0.17.0';
 
 // Sockets are anatomical shoulders, not image-box centers. Each arm appears exactly once.
 const arm=(height,anchor,socket)=>({height,anchor,socket});
@@ -21,6 +21,15 @@ export function placedPoint(placement,uv,angle){
  const {rect:[x,y,w,h],pivot:[px,py]}=placement,dx=x+w*uv[0]-px,dy=y+h*uv[1]-py,c=Math.cos(angle),s=Math.sin(angle);
  return [px+dx*c-dy*s,py+dx*s+dy*c];
 }
+export function armAngles(id,pose){
+ // The bow hand aims while the string hand pulls and releases. Other weapon
+ // hands use the full swing; the free hand follows gently without crossing it.
+ const bow=ANATOMY_LAYOUT[id].bow;
+ return {left:pose.hand*(bow?.26:1),right:bow?pose.hand:pose.lean*.3-pose.hand*.20};
+}
+// Keep the calm, confident face for attacks: no separate angry head, palette
+// shift, clenching teeth or steep eyebrows. Other expression states remain.
+export const expressionArt=name=>name==='attack'?'neutral':name;
 function piece(ctx,img,src,placement,angle=0){
  const {rect,pivot}=placement;ctx.save();ctx.translate(...pivot);ctx.rotate(angle);ctx.translate(-pivot[0],-pivot[1]);ctx.drawImage(img,...src,...rect);ctx.restore();
 }
@@ -28,7 +37,7 @@ const at=(src,cx,bottom,height)=>({rect:[cx-height*src[2]/src[3]/2,bottom-height
 export function drawAnatomy(ctx,id,pose,atlas,face={from:'neutral',to:'neutral',mix:1}){
  const kit=ANATOMY[id],l=ANATOMY_LAYOUT[id],p=kit.parts,foot=rigFor(id).foot;
  const left=partPlacement(p.leftArm,l.left),right=partPlacement(p.rightArm,l.right);
- const la=pose.hand*(l.bow?.15:l.shield?.35:.60),ra=l.bow?pose.hand*.50:pose.lean*.3-pose.hand*.10;
+ const {left:la,right:ra}=armAngles(id,pose);
  const tail=partPlacement(p.tail,{height:l.tail,anchor:[.86,.84],socket:[.30,foot-.13]});
  piece(ctx,atlas,p.tail,tail,pose.tail*.55);
  if(!l.shield)piece(ctx,atlas,p.leftArm,left,la);
@@ -37,7 +46,11 @@ export function drawAnatomy(ctx,id,pose,atlas,face={from:'neutral',to:'neutral',
  if(!l.bow)piece(ctx,atlas,p.rightArm,right,ra);
  const headScale=l.head/kit.faces.neutral[2];
  const head=(name,alpha)=>{if(alpha<=0)return;const src=kit.faces[name]||kit.faces.neutral;ctx.save();ctx.globalAlpha*=alpha;piece(ctx,atlas,src,at(src,.49,l.chin,src[3]*headScale),pose.head*.65);ctx.restore();};
- if(face.from!==face.to&&face.mix<1){head(face.from,1-face.mix);head(face.to,face.mix);}else head(face.to,1);
+ const from=expressionArt(face.from),to=expressionArt(face.to);
+ // Source-over crossfading two translucent heads used to drop opacity to 75%
+ // halfway through a change, tinting the fur with the background. Keep the
+ // outgoing head opaque beneath the incoming expression.
+ if(from!==to&&face.mix<1){head(from,1);head(to,face.mix);}else head(to,1);
  if(l.bow){
   const top=placedPoint(left,[.66,.04],la),bottom=placedPoint(left,[.68,.97],la),grip=placedPoint(right,[.82,.18],ra);
   const release=pose.nock??1,chord=[(top[0]+bottom[0])/2,(top[1]+bottom[1])/2];
