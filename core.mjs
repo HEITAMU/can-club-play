@@ -1,14 +1,15 @@
-import {actionTiming,attackStyle} from './motion.mjs?v=0.19.2';
-import {CAN_TIMING,canHitAt,canDuration,canTargetOrder} from './can-timing.mjs?v=0.19.2';
+import {actionTiming,attackStyle} from './motion.mjs?v=0.20.0';
+import {CAN_TIMING,canHitAt,canDuration,canTargetOrder} from './can-timing.mjs?v=0.20.0';
+import {heroCombatStats,enemyCombatStats,mitigatedDamage} from './combat-stats.mjs?v=0.20.0';
 export const VERSION=1, MAX_STAGE=120, MAX_LEVEL=100, MAX_PARTY=5;
 export const CATS=[
  {id:'orange',name:'橘座',job:'前排守护',tag:'守护',color:'#edab62',accent:'#c8793b',unlock:0,hp:205,atk:17,interval:1.5,skill:'锅盖护体',desc:'举起锅盖：获得自身生命 45% 的护盾，并为队友提供 12% 护盾。',passive:'5 级：受到伤害降低 15%。',quote:'这条街的罐头，我罩了。',gear:'pan'},
- {id:'ink',name:'阿墨',job:'单体输出',tag:'突袭',color:'#42465c',accent:'#929db5',unlock:0,hp:116,atk:25,interval:1.25,skill:'飞鱼三连',desc:'连续命中生命最低的敌人，合计造成 330% 攻击伤害，穿透部分护甲。',passive:'5 级：暴击率额外提高 15%。',quote:'别眨眼，鱼已经到了。',gear:'scarf'},
+ {id:'ink',name:'阿墨',job:'单体输出',tag:'突袭',color:'#42465c',accent:'#929db5',unlock:0,hp:116,atk:25,interval:1.25,skill:'飞鱼三连',desc:'连续命中生命最低的敌人，合计造成 330% 攻击力的物理伤害，本次攻击额外获得 25 点护甲穿透。',passive:'5 级：暴击率额外提高 15 个百分点。',quote:'别眨眼，鱼已经到了。',gear:'scarf'},
  {id:'milk',name:'奶盖',job:'全队治疗',tag:'支援',color:'#f8ead8',accent:'#c6a2bf',unlock:3,hp:145,atk:13,interval:1.6,skill:'热牛奶时间',desc:'治疗全体队友，数值相当于奶盖最大生命的 28%。',passive:'5 级：普攻回复的能量从 22 提高到 32。',quote:'打完这一架，记得吃饭。',gear:'nurse'},
- {id:'spark',name:'火花',job:'群体灼烧',tag:'爆发',color:'#d98f75',accent:'#8f494b',unlock:8,hp:112,atk:27,interval:1.55,skill:'辣椒罐头',desc:'对全体敌人造成 160% 攻击伤害，并施加每秒 30% 攻击的灼烧。',passive:'5 级：灼烧持续时间从 4 秒提高到 6 秒。',quote:'微辣。猫猫的微辣。',gear:'goggles'},
- {id:'mint',name:'薄荷',job:'眩晕控制',tag:'控制',color:'#a9d4c1',accent:'#4a8d83',unlock:15,hp:133,atk:22,interval:1.3,skill:'冰镇气泡',desc:'对生命最多的敌人造成 230% 攻击伤害，眩晕 1.8 秒并打断蓄力。',passive:'5 级：眩晕时间提高到 2.6 秒。',quote:'别急，先冷静一下。',gear:'hood'},
- {id:'bolt',name:'螺丝',job:'破甲专家',tag:'破甲',color:'#adbacb',accent:'#636e8b',unlock:25,hp:162,atk:24,interval:1.5,skill:'扳手大修',desc:'造成 300% 攻击伤害，并永久降低当前目标 50% 的护甲。',passive:'5 级：护甲降低幅度提高到 75%。',quote:'修不好，就再拧一下。',gear:'helmet'},
- {id:'pudding',name:'布丁',job:'吸血守护',tag:'守护',color:'#d6bb98',accent:'#876555',unlock:40,hp:235,atk:22,interval:1.65,skill:'软乎乎重击',desc:'重击全部敌人，造成 140% 攻击伤害；为全队提供各自生命 18% 的护盾。',passive:'5 级：攻击伤害的 22% 转为自身治疗。',quote:'胖不是问题，站得住才是。',gear:'cape'},
+ {id:'spark',name:'火花',job:'群体灼烧',tag:'爆发',color:'#d98f75',accent:'#8f494b',unlock:8,hp:112,atk:27,interval:1.55,skill:'辣椒罐头',desc:'对全体敌人造成 160% 攻击力的法术伤害，并施加每秒 30% 攻击力的法术灼烧。',passive:'5 级：灼烧持续时间从 4 秒提高到 6 秒。',quote:'微辣。猫猫的微辣。',gear:'goggles'},
+ {id:'mint',name:'薄荷',job:'眩晕控制',tag:'控制',color:'#a9d4c1',accent:'#4a8d83',unlock:15,hp:133,atk:22,interval:1.3,skill:'冰镇气泡',desc:'对生命最多的敌人造成 230% 攻击力的法术伤害，眩晕 1.8 秒并打断蓄力。',passive:'5 级：眩晕时间提高到 2.6 秒。',quote:'别急，先冷静一下。',gear:'hood'},
+ {id:'bolt',name:'螺丝',job:'破甲专家',tag:'破甲',color:'#adbacb',accent:'#636e8b',unlock:25,hp:162,atk:24,interval:1.5,skill:'扳手大修',desc:'先永久降低目标 50% 当前护甲，再造成 300% 攻击力的物理伤害。',passive:'5 级：护甲降低幅度提高到 75%。',quote:'修不好，就再拧一下。',gear:'helmet'},
+ {id:'pudding',name:'布丁',job:'吸血守护',tag:'守护',color:'#d6bb98',accent:'#876555',unlock:40,hp:235,atk:22,interval:1.65,skill:'软乎乎重击',desc:'重击全部敌人，造成 140% 攻击力的物理伤害；为全队提供各自生命 18% 的护盾。',passive:'5 级：攻击伤害的 22% 转为自身治疗。',quote:'胖不是问题，站得住才是。',gear:'cape'},
  {id:'star',name:'星斑',job:'能量辅助',tag:'支援',color:'#c4b1df',accent:'#78669f',unlock:60,hp:150,atk:19,interval:1.4,skill:'今晚有星星',desc:'为其他队友回复 48 能量，并治疗相当于星斑攻击 160% 的生命。',passive:'5 级：开场拥有 40 点能量。',quote:'许个愿，然后自己去实现。',gear:'wizard'}
 ];
 export const RELICS=[
@@ -75,8 +76,8 @@ export function upgradeCost(level){return Math.round(22+level*12+Math.pow(level,
 export function upgrade(s,id,count=1){const c=CATS.find(c=>c.id===id);if(!c||s.highest<c.unlock)return 0;let done=0;for(let i=0;i<clamp(count,1,10);i++){const l=s.levels[id],cost=upgradeCost(l);if(l>=MAX_LEVEL||s.gold<cost)break;s.gold-=cost;s.levels[id]++;s.upgrades++;done++;}return done;}
 export function setParty(s,slot,id){if(!unlocked(s).some(c=>c.id===id)||!Number.isInteger(slot)||slot<0||slot>=MAX_PARTY)return false;const inheritance=inheritanceFor(s,slot,id);if(inheritance)inheritTraining(s,inheritance.from,id);const p=[...s.party],old=p.indexOf(id);if(old>=0){if(p[slot])p[old]=p[slot];else p.splice(old,1);}p[slot]=id;s.party=p.filter(Boolean).slice(0,MAX_PARTY);return true;}
 export function buffs(s){const r=s.relics;return {atk:1+.12*(r.claw||0),hp:1+.15*(r.coat||0),speed:1+.08*(r.bell||0),crit:.1+.05*(r.scope||0),regen:.008*(r.bowl||0),canCd:12-.8*(r.can||0),gold:1+.12*(r.magnet||0),idle:1+.2*(r.thermos||0),reflect:.1*(r.thorn||0),shield:.1*(r.charm||0),energy:5*(r.charm||0),burn:.35*(r.match||0),boss:1+.15*(r.badge||0)};}
-export function catStats(s,id){const c=CATS.find(c=>c.id===id),l=s.levels[id]||1,b=buffs(s),m=(1+.18*(l-1))*(1+.08*Math.floor(l/10))*(1+.08*s.bones);return {hp:Math.round(c.hp*m*b.hp),atk:Math.round(c.atk*m*b.atk),interval:c.interval/b.speed,crit:Math.min(.8,b.crit+(id==='ink'&&l>=5?.15:0)),level:l};}
-export function power(s){return s.party.reduce((n,id)=>{const c=catStats(s,id);return n+Math.round(c.hp*.3+c.atk/c.interval*5);},0);}
+export function catStats(s,id){const c=CATS.find(c=>c.id===id),l=s.levels[id]||1,b=buffs(s),m=(1+.18*(l-1))*(1+.08*Math.floor(l/10))*(1+.08*s.bones);return {...heroCombatStats(id,l),hp:Math.round(c.hp*m*b.hp),atk:Math.round(c.atk*m*b.atk),interval:c.interval/b.speed,crit:Math.min(.8,b.crit+(id==='ink'&&l>=5?.15:0)),level:l};}
+export function power(s){return s.party.reduce((n,id)=>{const c=catStats(s,id);return n+Math.round(c.hp*.3*(1+(c.armor+c.magicResist)/200)+c.atk/c.interval*5*(1+(c.armorPen+c.magicPen)/200));},0);}
 export function idleRate(s){return Math.round((18+Math.max(s.highest,1)*3)*buffs(s).idle);}
 export function accrueIdle(s,now=Date.now()){const elapsed=clamp(now-s.lastAccrued,0,4*3600e3);const amount=elapsed/60000*idleRate(s);s.idle=Math.min(idleRate(s)*240,s.idle+amount);s.lastAccrued=now;return amount;}
 export function claimIdle(s,now=Date.now()){accrueIdle(s,now);const n=Math.floor(s.idle);s.gold+=n;s.idle-=n;return n;}
@@ -90,35 +91,36 @@ export function prestigeGain(s){return s.runCleared>=20?Math.floor(s.runCleared/
 export function prestige(s){const gain=prestigeGain(s);if(!gain||s.pending)return 0;s.bones+=gain;s.prestiges++;s.runCleared=0;s.stage=1;s.relics={};s.pending=null;s.gold+=200;return gain;}
 export function chapterOf(stage){return CHAPTERS[Math.min(5,Math.floor((stage-1)/20))];}
 export function enemiesFor(stage){const boss=stage%5===0,ch=chapterOf(stage),m=1+.14*(stage-1)+.0046*(stage-1)**2,ci=Math.floor((stage-1)/20);const list=[];
- const mob=(type,index)=>({id:'e'+index,type,name:names[type],maxHp:Math.round((type==='box'?115:type==='bag'?78:90)*m),atk:Math.round((type==='battery'?13:9)*m),interval:type==='drone'?1.45:2.1,armor:type==='box'?.35:0,boss:false});
- if(boss){const chapterBoss=stage%20===0;list.push({id:'e0',type:ch.type,name:chapterBoss?ch.boss:['扫街队长','捣蛋头目','罐头大盗'][Math.floor((stage%20)/5)-1]+' · '+ch.boss,maxHp:Math.round((chapterBoss?345:275)*m),atk:Math.round((chapterBoss?16:13)*m),interval:2.15,armor:ch.type==='box'?.25:ch.type==='fridge'?.15:0,boss:true});if(stage>=15){const count=chapterBoss?4:1;for(let i=1;i<=count;i++){const escort=mob(MOB_TYPES[(ci+i)%6],i);if(count===4){escort.maxHp=Math.round(escort.maxHp*.38);escort.atk=Math.max(1,Math.round(escort.atk*.38));}list.push(escort);}}}
+ const mob=(type,index)=>({id:'e'+index,type,name:names[type],maxHp:Math.round((type==='box'?115:type==='bag'?78:90)*m),atk:Math.round((type==='battery'?13:9)*m),interval:type==='drone'?1.45:2.1,boss:false});
+ if(boss){const chapterBoss=stage%20===0;list.push({id:'e0',type:ch.type,name:chapterBoss?ch.boss:['扫街队长','捣蛋头目','罐头大盗'][Math.floor((stage%20)/5)-1]+' · '+ch.boss,maxHp:Math.round((chapterBoss?345:275)*m),atk:Math.round((chapterBoss?16:13)*m),interval:2.15,boss:true});if(stage>=15){const count=chapterBoss?4:1;for(let i=1;i<=count;i++){const escort=mob(MOB_TYPES[(ci+i)%6],i);if(count===4){escort.maxHp=Math.round(escort.maxHp*.38);escort.atk=Math.max(1,Math.round(escort.atk*.38));}list.push(escort);}}}
  else {const count=stage===1?1:stage>=16&&stage%4===0?5:stage>=12&&stage%3===0?3:2;for(let i=0;i<count;i++){const e=mob(MOB_TYPES[(stage+ci-1+i)%6],i);if(count===5){e.maxHp=Math.round(e.maxHp*.48);e.atk=Math.max(1,Math.round(e.atk*.48));}list.push(e);}}
- return list;
+ return list.map(e=>({...e,...enemyCombatStats(e.type,stage,e.boss)}));
 }
 export class Battle {
  constructor(s,{stage=s.stage,farm=false,seed=stage*173+s.wins*29+37}={}){
   this.stage=stage;this.farm=farm;this.time=0;this.result=null;this.resolved=false;this.rng=seeded(seed);this.events=[];this.kills=0;this.canCd=0;this.buff=buffs(s);this.fxSerial=0;
-  this.heroes=s.party.map((id,i)=>{const c=CATS.find(c=>c.id===id),st=catStats(s,id);return {id:'p'+i,catId:id,name:c.name,side:'p',maxHp:st.hp,hp:st.hp,atk:st.atk,interval:st.interval,crit:st.crit,level:st.level,energy:Math.min(99,this.buff.energy+(id==='star'&&st.level>=5?40:0)),shield:st.hp*this.buff.shield,armor:0,wait:.3+i*.15,stun:0,burn:0,burnTime:0};});
+  this.heroes=s.party.map((id,i)=>{const c=CATS.find(c=>c.id===id),st=catStats(s,id);return {...st,id:'p'+i,catId:id,name:c.name,side:'p',maxHp:st.hp,hp:st.hp,energy:Math.min(99,this.buff.energy+(id==='star'&&st.level>=5?40:0)),shield:st.hp*this.buff.shield,wait:.3+i*.15,stun:0,burn:0,burnTime:0,burnSource:null};});
   this.enemies=enemiesFor(stage).map((e,i)=>({...e,hp:e.maxHp,side:'e',energy:0,shield:e.type==='fridge'?e.maxHp*.2:0,wait:1.3+i*.4,skillWait:e.boss?6:99,charge:0,stun:0,burn:0,burnTime:0,attacks:0}));
  }
  alive(side){return (side==='p'?this.heroes:this.enemies).filter(x=>x.hp>0);}
  frontlines(){return this.alive('p').slice(0,2);}
  frontline(){return this.frontlines()[0]||null;}
  emit(type,from,to,value=0,extra={}){this.events.push({type,at:this.eventAt??this.time,from:from?.id,to:to?.id,value:Math.round(value),serial:++this.fxSerial,...extra,...(this.canEvent?{rescue:true}: {})});}
- harm(target,raw,source,{crit=false,pierce=0,reflect=true,dot=false}={}){
+ harm(target,raw,source,{crit=false,type=source?.normalDamageType||'physical',bonusPen=0,reflect=true,dot=false}={}){
   if(!target||target.hp<=0)return 0;const ramp=this.time>40?1+(this.time-40)*.025:1;
-  let amount=raw*(1-Math.max(0,(target.armor||0)-pierce))*ramp;
+  let amount=mitigatedDamage(raw,target,source,type,bonusPen)*ramp;
   if(target.catId==='orange'&&target.level>=5)amount*=.85;
   if(source?.side==='p'&&target.boss)amount*=this.buff.boss;
   const shield=Math.min(target.shield,amount);target.shield-=shield;amount-=shield;const hit=Math.min(target.hp,amount);target.hp=Math.max(0,target.hp-amount);
-  this.emit(dot?'burn':'hit',source,target,hit+shield,{crit,shield:shield>0,cause:dot?'burn':!reflect?'reflect':source?.action?.kind||'normal'});
+  this.emit(dot?'burn':'hit',source,target,hit+shield,{crit,shield:shield>0,damageType:type,cause:dot?'burn':!reflect?'reflect':source?.action?.kind||'normal'});
   if(!dot)target.hitUntil=(this.eventAt??this.time)+.22;
   if(target.hp<=0){target.downAt=this.eventAt??this.time;target.action=null;this.emit('down',source,target);if(target.side==='e')this.kills++;}
   if(source?.catId==='pudding'&&source.level>=5&&hit>0)this.heal(source,hit*.22,source);
-  if(reflect&&target.side==='p'&&source?.side==='e'&&source.hp>0&&this.buff.reflect>0)this.harm(source,(hit+shield)*this.buff.reflect,target,{reflect:false});return hit;
+  if(reflect&&target.side==='p'&&source?.side==='e'&&source.hp>0&&this.buff.reflect>0)this.harm(source,(hit+shield)*this.buff.reflect,target,{reflect:false,type});return hit;
  }
  heal(target,amount,source){if(target.hp<=0)return;const n=Math.min(target.maxHp-target.hp,amount);target.hp+=n;if(n>1)this.emit('heal',source,target,n);}
  shield(target,amount,source){target.shield=Math.min(target.maxHp,target.shield+amount);this.emit('shield',source,target,amount);}
+ applyBurn(target,damage,seconds,source){if(target.burnTime<=0||damage>=target.burn){target.burn=damage;target.burnSource=source;}target.burnTime=Math.max(target.burnTime,seconds);}
  targetFor(actor,kind='normal'){
   if(kind==='skill'&&['orange','milk','star'].includes(actor.catId))return actor;
   const foes=this.alive(actor.side==='p'?'e':'p');if(!foes.length)return null;
@@ -142,18 +144,18 @@ export class Battle {
   if(!a.impacted&&a.elapsed>=a.impactAt){a.impacted=true;const target=this.targetFor(actor,a.kind);if(target)a.targetId=target.id;this.eventAt=this.time-Math.max(0,a.elapsed-a.impactAt);if(a.kind==='skill')this.skill(actor);else this.normal(actor);this.eventAt=null;}
   if(a.elapsed>=a.duration)actor.action=null;
  }
- normal(actor){const target=this.targetFor(actor);if(!target)return;const crit=actor.side==='p'&&this.rng()<actor.crit;this.harm(target,actor.atk*(crit?1.8:1),actor,{crit});
-  if(actor.side==='p'){actor.energy=Math.min(100,actor.energy+(actor.catId==='milk'&&actor.level>=5?32:22));if(crit&&this.buff.burn>0){target.burn=Math.max(target.burn,actor.atk*this.buff.burn);target.burnTime=2;}}
+ normal(actor){const target=this.targetFor(actor);if(!target)return;const crit=actor.side==='p'&&this.rng()<actor.crit;this.harm(target,actor.atk*(crit?1.8:1),actor,{crit,type:actor.normalDamageType});
+  if(actor.side==='p'){actor.energy=Math.min(100,actor.energy+(actor.catId==='milk'&&actor.level>=5?32:22));if(crit&&this.buff.burn>0)this.applyBurn(target,actor.atk*this.buff.burn,2,actor);}
   else {actor.attacks++;if(actor.type==='mop'){target.wait+=.28;this.emit('status',actor,target,0,{text:'迟缓'});}if(actor.type==='bag'&&actor.attacks%3===0){const ally=this.alive('e').reduce((a,b)=>a.hp/a.maxHp<b.hp/b.maxHp?a:b);this.heal(ally,actor.maxHp*.12,actor);}}
  }
  skill(h){h.energy=0;this.emit('skill',h,h,0,{text:CATS.find(c=>c.id===h.catId).skill,targets:this.skillTargets(h).map(a=>a.id)});const es=this.alive('e'),ps=this.alive('p');if(!es.length)return;let t=es[0];
   if(h.catId==='orange'){this.shield(h,h.maxHp*.45,h);for(const p of ps.filter(x=>x!==h))this.shield(p,p.maxHp*.12,h);}
-  if(h.catId==='ink'){t=es.reduce((a,b)=>a.hp<b.hp?a:b);this.harm(t,h.atk*3.3,h,{pierce:.25});}
+  if(h.catId==='ink'){t=es.reduce((a,b)=>a.hp<b.hp?a:b);this.harm(t,h.atk*3.3,h,{type:'physical',bonusPen:25});}
   if(h.catId==='milk')for(const p of ps)this.heal(p,h.maxHp*.28,h);
-  if(h.catId==='spark')for(const e of es){this.harm(e,h.atk*1.6,h);e.burn=Math.max(e.burn,h.atk*.3);e.burnTime=h.level>=5?6:4;}
-  if(h.catId==='mint'){t=es.reduce((a,b)=>a.hp>b.hp?a:b);this.harm(t,h.atk*2.3,h);t.stun=h.level>=5?2.6:1.8;if(t.charge>0){t.charge=0;t.skillWait=5;this.emit('interrupt',h,t,0,{text:'已打断'});}}
-  if(h.catId==='bolt'){t.armor*=h.level>=5?.25:.5;this.harm(t,h.atk*3,h);this.emit('status',h,t,0,{text:'破甲'});}
-  if(h.catId==='pudding'){for(const e of es)this.harm(e,h.atk*1.4,h);for(const p of ps)this.shield(p,p.maxHp*.18,h);}
+  if(h.catId==='spark')for(const e of es){this.harm(e,h.atk*1.6,h,{type:'magic'});this.applyBurn(e,h.atk*.3,h.level>=5?6:4,h);}
+  if(h.catId==='mint'){t=es.reduce((a,b)=>a.hp>b.hp?a:b);this.harm(t,h.atk*2.3,h,{type:'magic'});t.stun=h.level>=5?2.6:1.8;if(t.charge>0){t.charge=0;t.skillWait=5;this.emit('interrupt',h,t,0,{text:'已打断'});}}
+  if(h.catId==='bolt'){t.armor*=h.level>=5?.25:.5;this.harm(t,h.atk*3,h,{type:'physical'});this.emit('status',h,t,0,{text:'破甲'});}
+  if(h.catId==='pudding'){for(const e of es)this.harm(e,h.atk*1.4,h,{type:'physical'});for(const p of ps)this.shield(p,p.maxHp*.18,h);}
   if(h.catId==='star')for(const p of ps){if(p!==h)p.energy=Math.min(100,p.energy+48);this.heal(p,h.atk*1.6,h);}
  }
  openCan(){
@@ -169,17 +171,17 @@ export class Battle {
   const c=this.canSequence;if(!c)return;
   const age=this.time-c.born;this.canEvent=true;
   if(!c.healed&&age+1e-9>=CAN_TIMING.heal){c.healed=true;this.eventAt=c.born+CAN_TIMING.heal;for(const id of c.friends){const p=this.heroes.find(p=>p.id===id);if(p?.hp>0){this.heal(p,p.maxHp*.2,c.source);p.energy=Math.min(100,p.energy+18);}}}
-  while(c.next<c.targets.length&&age+1e-9>=canHitAt(c.next)){this.eventAt=c.born+canHitAt(c.next);const id=c.targets[c.next++],e=this.enemies.find(e=>e.id===id);if(e?.hp>0)this.harm(e,c.attack,c.source);}
+  while(c.next<c.targets.length&&age+1e-9>=canHitAt(c.next)){this.eventAt=c.born+canHitAt(c.next);const id=c.targets[c.next++],e=this.enemies.find(e=>e.id===id);if(e?.hp>0)this.harm(e,c.attack,c.source,{type:'physical'});}
   this.eventAt=null;this.canEvent=false;if(this.time+1e-9>=c.until)this.canSequence=null;
  }
- syncStats(s,{preserveHealthRatio=false}={}){this.buff=buffs(s);for(const h of this.heroes){const n=catStats(s,h.catId),oldMax=h.maxHp,ratio=h.hp/oldMax,add=n.hp-oldMax;h.maxHp=n.hp;if(h.hp>0)h.hp=preserveHealthRatio?ratio*n.hp:clamp(h.hp+Math.max(0,add),1,h.maxHp);h.shield=Math.min(n.hp,h.shield*(preserveHealthRatio?n.hp/oldMax:1));h.atk=n.atk;h.interval=n.interval;h.crit=n.crit;h.level=n.level;}}
+ syncStats(s,{preserveHealthRatio=false}={}){this.buff=buffs(s);for(const h of this.heroes){const n=catStats(s,h.catId),oldMax=h.maxHp,ratio=h.hp/oldMax,add=n.hp-oldMax;h.maxHp=n.hp;if(h.hp>0)h.hp=preserveHealthRatio?ratio*n.hp:clamp(h.hp+Math.max(0,add),1,h.maxHp);h.shield=Math.min(n.hp,h.shield*(preserveHealthRatio?n.hp/oldMax:1));for(const key of ['atk','interval','crit','level','armor','magicResist','armorPen','magicPen','normalDamageType','skillDamageType'])h[key]=n[key];}}
  checkEnd(){if(!this.alive('e').length){if(!this.canSequence)this.result='win';}else if(!this.alive('p').length||this.time>=75)this.result='lose';return this.result;}
  tick(dt){if(this.result)return this.events.splice(0);dt=clamp(dt,0,.25);this.time+=dt;this.canCd=Math.max(0,this.canCd-dt);
   this.advanceCan();
   // Let the lid leave the screen before loot or the next wave can cover it.
   if(!this.alive('e').length){this.checkEnd();return this.events.splice(0);}
-  for(const a of [...this.heroes,...this.enemies]){if(a.hp<=0)continue;a.stun=Math.max(0,a.stun-dt);if(a.burnTime>0){a.burnTime-=dt;this.harm(a,a.burn*dt,this.heroes[0],{dot:true,reflect:false});}if(a.side==='p'&&this.buff.regen>0)a.hp=Math.min(a.maxHp,a.hp+a.maxHp*this.buff.regen*dt);if(a.hp<=0)continue;if(a.stun>0){if(a.action){a.action=null;this.emit('cancel',a,a);}continue;}
-   if(a.side==='e'&&a.boss){a.skillWait-=dt;if(a.charge>0){a.charge-=dt;if(a.charge<=0){for(const p of this.alive('p'))this.harm(p,a.atk*1.55,a);a.skillWait=7;a.burstUntil=this.time+.38;this.emit('burst',a,a);}continue;}if(a.skillWait<=0){a.action=null;a.charge=2;this.emit('charge',a,a,0,{text:'正在蓄力'});continue;}}
+  for(const a of [...this.heroes,...this.enemies]){if(a.hp<=0)continue;a.stun=Math.max(0,a.stun-dt);if(a.burnTime>0){const burnDt=Math.min(dt,a.burnTime);a.burnTime-=burnDt;this.harm(a,a.burn*burnDt,a.burnSource,{type:'magic',dot:true,reflect:false});}if(a.side==='p'&&this.buff.regen>0)a.hp=Math.min(a.maxHp,a.hp+a.maxHp*this.buff.regen*dt);if(a.hp<=0)continue;if(a.stun>0){if(a.action){a.action=null;this.emit('cancel',a,a);}continue;}
+   if(a.side==='e'&&a.boss){a.skillWait-=dt;if(a.charge>0){a.charge-=dt;if(a.charge<=0){for(const p of this.alive('p'))this.harm(p,a.atk*1.55,a,{type:a.skillDamageType});a.skillWait=7;a.burstUntil=this.time+.38;this.emit('burst',a,a);}continue;}if(a.skillWait<=0){a.action=null;a.charge=2;this.emit('charge',a,a,0,{text:'正在蓄力'});continue;}}
    a.wait-=dt;if(a.action)this.advanceAction(a,dt);else if(a.wait<=0)this.beginAction(a,a.side==='p'&&a.energy>=100?'skill':'normal');
   }this.checkEnd();return this.events.splice(0);
  }

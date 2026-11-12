@@ -19,7 +19,7 @@ test('new recruits fill the fourth and fifth free places at level one',()=>{
  s.highest=s.runCleared=14;s.stage=15;b=new Battle(s);b.result='win';settleBattle(s,b);assert.equal(s.party[4],'mint');assert.equal(s.levels.mint,1);assert.equal(s.levels.orange,20);
 });
 test('five-cat ordinary hits follow the living front, with no position buff; boss burst hits all five',()=>{
- const b=new Battle(ready(),{stage:20}),enemy=b.enemies[0];enemy.atk=10;
+ const b=new Battle(ready(),{stage:20}),enemy=b.enemies[0];enemy.atk=10;for(const h of b.heroes){h.armor=0;h.magicResist=0;}
  for(let i=0;i<5;i++){enemy.attacks=0;const h=b.heroes[i],hp=h.hp;b.normal(enemy);assert.equal(hp-h.hp,10);h.hp=0;}
  const full=new Battle(ready(),{stage:20});const before=full.heroes.map(h=>h.hp);full.enemies[0].charge=.01;const events=full.tick(.1);
  assert.equal(events.filter(e=>e.type==='hit'&&e.from==='e0').length,5);full.heroes.forEach((h,i)=>assert.ok(h.hp<before[i]));
