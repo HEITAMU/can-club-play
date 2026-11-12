@@ -1,6 +1,7 @@
-/* Painted effects share one bounded canvas and the combat clock. */
+/* Ground light stays behind the cats; small foreground effects share their clock. */
 #combat-effects{pointer-events:none;z-index:6;overflow:hidden}
 .vfx-canvas{position:absolute;inset:0;display:block;width:100%;height:100%;pointer-events:none}
+#arena>.vfx-ground{z-index:2}
 .actor.has-shield .actor-body:after{display:none!important}
 .actor-body .painted-sprite>.rig-canvas,.painted-sprite>.rig-canvas{left:-22%;top:-20%;width:144%;height:138%}
 .actor-body.impact-flash{filter:none!important}

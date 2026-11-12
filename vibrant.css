@@ -60,3 +60,6 @@ html[data-gallery] button,html[data-gallery] select{background:#4b7273;color:#f7
 html[data-gallery] button[aria-pressed="true"]{background:#b38b52;color:#fff0cd;border-color:#e2c285}
 html[data-gallery] .card{background:#6e604f;border-color:#b09a7d}html[data-gallery] .card:nth-child(4n+2){background:#4b657a}html[data-gallery] .card:nth-child(4n+3){background:#57715f}html[data-gallery] .card:nth-child(4n){background:#6e5b79}html[data-gallery] .card b{color:#fff0d0}
 @media(max-width:350px){#arena .actor .nameplate{font-size:9px;line-height:12px}#arena .actor .hp-track{width:42px}#arena .actor .energy-track{width:40px}.fish-stall{padding:12px}.fish-stall h3{font-size:17px}.fish-stall-income .primary{padding-inline:12px}}
+
+/* Keep moving character canvases on a single compositing surface. */
+#arena .actor .actor-body,#arena .actor.enemy .actor-body,#arena .actor .painted-sprite{filter:none}

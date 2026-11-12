@@ -1,8 +1,9 @@
-import {projectilePose,unit} from './motion.mjs?v=0.19.0';
-import {ACTION_BY_ID} from './action-profiles.mjs?v=0.19.0';
+import {projectilePose,unit} from './motion.mjs?v=0.19.1';
+import {ACTION_BY_ID} from './action-profiles.mjs?v=0.19.1';
+import {HEAL_ART,healingImpact,healingCast} from './healing-fx.mjs?v=0.19.1';
 
 // All samples depend on simulation time, never frame count or Math.random().
-export const FX_CELLS={flash:1,dust:2,ember:3,fire:4,flame:5,ice:6,shard:7,heal:8,heart:9,milk:10,fish:11,shield:12,glass:13,star:14,electric:15};
+export const FX_CELLS={flash:1,dust:2,ember:3,fire:4,flame:5,ice:6,shard:7,heal:8,heart:9,milk:10,fish:11,shield:12,glass:13,star:14,electric:15,...HEAL_ART};
 export const effectEnvelope=(age,duration,fadeIn=.035,fadeOut=.22)=>Math.min(unit(age/fadeIn),unit((duration-age)/fadeOut));
 export const impactStyle=r=>r.style==='shield'?(r.tone==='support'?'guard':'block'):r.style==='heal'?'heal':r.style==='star'&&r.tone==='energy'?'energy':ACTION_BY_ID[r.profile]?.impact||(['arrow','fish','milk'].includes(r.style)?'burst':r.style);
 export const shieldTransition=(previous,next)=>next>previous?'raise':next<previous?(next<=0?'break':'block'):'steady';
@@ -31,7 +32,8 @@ export function sampleProjectile(route,targetId,time,w,h,centers,sizes,shot=0,co
 export function sampleImpact(style,p,size,age,duration,seed=1,direction=1,skill=false){
  const out=[],k=unit(age/duration),fade=effectEnvelope(age,duration),x=p.x,y=p.y;
  if(age<0||age>=duration)return out;
- if(['heal','energy','guard'].includes(style)){
+ if(style==='heal')return healingImpact(p,size,age,duration,seed);
+ if(['energy','guard'].includes(style)){
   const col=style==='energy'?'star':style==='guard'?'shield':'heal',grow=1-(1-k)**3;
   // Open-center ribbons stay below the face; motes travel independently.
   const ring=sprite(out,col,x,y+size*.24,size*(.65+grow*.55),fade*(style==='guard'?.48:.7),style==='heal'?-k*.7:0,1,style==='guard'?.80:.48,0);
@@ -126,6 +128,11 @@ export function sampleRoute(r,time,w,h,centers={},sizes={}){
  const origin=centers[r.from]||r.positions?.[r.from],size=sizes[r.from]||50;
  if(!origin)return out;
  const source=point(origin,w,h),support=r.tone==='support'||r.tone==='energy',performance=ACTION_BY_ID[r.profile];
+ if(r.style==='heal'&&r.phase!=='impact'){
+  out.push(...healingCast(source,size,age,duration,r.phase==='release'));
+  if(r.phase==='release')for(const id of r.targets){const p=centers[id]||r.positions?.[id];if(!p)continue;const q=point(p,w,h),s=sizes[id]||50;out.push({art:'heal-light',x:q.x,y:q.y+s*.39,width:s*(.55+k*.35),height:s*.22,alpha:effectEnvelope(age,duration,.05,.07)*.28,angle:0,layer:0});}
+  return out;
+ }
  if(r.phase==='windup'){
   if(r.kind==='skill'||r.style==='warning'){
    const art=support?'star':({fire:'ember',ice:'shard',electric:'electric',warning:'ember'})[r.style]||'star';

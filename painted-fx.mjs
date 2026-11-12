@@ -1,12 +1,14 @@
-import {VFX_ATLAS} from './vfx-atlas.mjs?v=0.19.0';
-import {FX_CELLS,sampleRoute,sampleImpact,sampleGuard,sampleStatus,shieldTransition} from './vfx-motion.mjs?v=0.19.0';
-export {effectEnvelope,impactStyle,shieldTransition} from './vfx-motion.mjs?v=0.19.0';
+import {VFX_ATLAS} from './vfx-atlas.mjs?v=0.19.1';
+import {FX_CELLS,sampleRoute,sampleImpact,sampleGuard,sampleStatus,shieldTransition} from './vfx-motion.mjs?v=0.19.1';
+import {paintHealing} from './healing-fx.mjs?v=0.19.1';
+export {effectEnvelope,impactStyle,shieldTransition} from './vfx-motion.mjs?v=0.19.1';
 let image;
 function atlas(){if(!image&&typeof Image!=='undefined'){image=new Image();image.src=VFX_ATLAS.url;}return image;}
 // Same painter is used by the browser and the offline review renderer.
 export function paintVFX(ctx,img,particles){
  for(const p of particles){
-  const rect=VFX_ATLAS.rects[FX_CELLS[p.art]];if(!rect)continue;
+  if(paintHealing(ctx,p))continue;
+  const rect=VFX_ATLAS.rects[FX_CELLS[p.art]];if(!rect||!img)continue;
   const aspect=rect[2]/rect[3],width=p.width,height=p.height/aspect;
   ctx.save();ctx.globalAlpha=p.alpha;ctx.translate(p.x,p.y);ctx.rotate(p.angle);ctx.scale(width<0?-1:1,1);
   const dw=Math.abs(width),dh=height;
@@ -26,11 +28,12 @@ export function paintVFX(ctx,img,particles){
 export class CombatEffects{
  constructor(layer){
   this.layer=layer;this.routes=new Map();this.bursts=[];this.guards=[];this.statuses=[];this.particles=[];
-  if(layer){this.canvas=document.createElement('canvas');this.canvas.className='vfx-canvas';this.canvas.setAttribute('aria-hidden','true');this.ctx=this.canvas.getContext('2d',{alpha:true});layer.replaceChildren(this.canvas);atlas();}
+  if(layer){this.canvas=document.createElement('canvas');this.canvas.className='vfx-canvas';this.canvas.setAttribute('aria-hidden','true');this.ctx=this.canvas.getContext('2d',{alpha:true});layer.replaceChildren(this.canvas);
+   this.groundCanvas=document.createElement('canvas');this.groundCanvas.className='vfx-canvas vfx-ground';this.groundCanvas.setAttribute('aria-hidden','true');this.groundCtx=this.groundCanvas.getContext('2d',{alpha:true});layer.before(this.groundCanvas);atlas();}
  }
  clear(){
   this.routes.clear();this.bursts=[];this.guards=[];this.statuses=[];this.particles=[];
-  if(this.canvas){this.layer.replaceChildren(this.canvas);this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);}
+  if(this.canvas){this.layer.replaceChildren(this.canvas);this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);this.groundCtx.clearRect(0,0,this.groundCanvas.width,this.groundCanvas.height);}
  }
  emit(style,point,time,size=52,duration=.65){
   this.bursts.push({style,point:{...point},born:time,size,duration,seed:this.bursts.length*31+Math.round(time*100)});
@@ -52,9 +55,12 @@ export class CombatEffects{
   this.particles=particles.sort((a,b)=>a.layer-b.layer);
   if(!this.ctx)return this.particles;
   const dpr=Math.min(2,typeof devicePixelRatio==='number'?devicePixelRatio:1),cw=Math.max(1,Math.round(w*dpr)),ch=Math.max(1,Math.round(h*dpr));
-  if(this.canvas.width!==cw||this.canvas.height!==ch){this.canvas.width=cw;this.canvas.height=ch;}
-  this.ctx.setTransform(dpr,0,0,dpr,0,0);this.ctx.clearRect(0,0,w,h);
-  const img=atlas();if(img?.complete&&img.naturalWidth)paintVFX(this.ctx,img,this.particles);
+  const img=atlas(),ready=img?.complete&&img.naturalWidth;
+  for(const [canvas,ctx,behind] of [[this.groundCanvas,this.groundCtx,true],[this.canvas,this.ctx,false]]){
+   if(canvas.width!==cw||canvas.height!==ch){canvas.width=cw;canvas.height=ch;}
+   ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+   paintVFX(ctx,ready?img:null,this.particles.filter(p=>(p.layer===0)===behind));
+  }
   this.canvas.dataset.particles=String(this.particles.length);
   this.canvas.dataset.ready=String(!!img?.naturalWidth);
   return this.particles;

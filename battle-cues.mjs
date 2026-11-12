@@ -1,6 +1,6 @@
-import {attackStyle} from './motion.mjs?v=0.19.0';
-import {CATS} from './core.mjs?v=0.19.0';
-import {catAction} from './action-profiles.mjs?v=0.19.0';
+import {attackStyle} from './motion.mjs?v=0.19.1';
+import {CATS} from './core.mjs?v=0.19.1';
+import {catAction} from './action-profiles.mjs?v=0.19.1';
 export const cueColors={attack:'#edc581',enemy:'#ee9f8c',support:'#b3d9ba',energy:'#d2b9eb'};
 const skillEffect={orange:'全队护盾',ink:'穿甲三连',milk:'全队治疗',spark:'群攻灼烧',mint:'眩晕打断',bolt:'破甲',pudding:'群攻＋全队护盾',star:'治疗＋回能'};
 // Coordinates are foot contacts on the painted ground, not sprite centers.
@@ -31,7 +31,7 @@ export class BattleCues{
    // Rescue has its own combined readout, but deaths and interrupts still retire pending attacks.
    for(const e of events)if(e.type==='down'||e.type==='interrupt')this.cancelPending(e.to);else if(e.type==='cancel')this.cancelPending(e.from);
    const enemies=events.filter(e=>e.type==='hit'&&e.to?.startsWith('e')).map(e=>e.to),friends=b.heroes.filter(h=>h.hp>0).map(h=>h.id),p={...positions,can:{x:50,y:99}};
-   this.addRoute('can-attack','can',enemies,'伤敌','attack',b.time,p,'impact',.7,{style:'melee'});this.addRoute('can-heal','can',friends,'回血','support',b.time,p,'impact',.8,{style:'heal'});
+   this.addRoute('can-attack','can',enemies,'伤敌','attack',b.time,p,'impact',.7,{style:'melee'});this.addRoute('can-heal','can',friends,'回血','support',b.time,p,'impact',1.15,{style:'heal'});
    this.log('开罐啦','全队救援','全体敌我',events.some(e=>e.type==='interrupt')?'回血20% · 伤敌 · 打断成功':'回血20% · 伤敌','support',b.time,true);return;
   }
   for(const e of events){
@@ -57,7 +57,7 @@ export class BattleCues{
     const info=CATS.find(c=>c.id===a.catId),targets=e.targets||[],friends=targets.filter(id=>id.startsWith('p')),foes=targets.filter(id=>id.startsWith('e'));
     this.routes.delete(a.id);
     if(foes.length)this.addRoute(a.id,a.id,foes,e.text,tone,at,positions,'impact',.82,{style:attackStyle(a),kind:'skill',profile:catAction(a.catId,'skill')?.id});
-    if(friends.length)this.addRoute(a.id+'-support',a.id,friends,e.text,a.catId==='star'?'energy':'support',at,positions,'impact',1.05,{kind:'skill',profile:catAction(a.catId,'skill')?.id,style:['orange','pudding'].includes(a.catId)?'shield':a.catId==='star'?'star':'heal'});
+    if(friends.length)this.addRoute(a.id+'-support',a.id,friends,e.text,a.catId==='star'?'energy':'support',at,positions,'impact',a.catId==='milk'?1.32:1.05,{kind:'skill',profile:catAction(a.catId,'skill')?.id,style:['orange','pudding'].includes(a.catId)?'shield':a.catId==='star'?'star':'heal'});
     this.log(a.name,info.skill,targets.length===1?name(targets[0]):friends.length&&foes.length?'敌方＋全队':friends.length?'我方全队':'敌方全体',skillEffect[a.catId],friends.length?'support':'attack',at,true);
    }
    if(e.type==='heal'&&!casters.has(e.from)){
