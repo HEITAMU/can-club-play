@@ -1,5 +1,5 @@
-import {CUTOUTS} from './cutout-data.mjs?v=0.14.0';
-import {rigFor} from './rig-motion.mjs?v=0.14.0';
+import {CUTOUTS} from './cutout-data.mjs?v=0.14.1';
+import {rigFor} from './rig-motion.mjs?v=0.14.1';
 const PAD_X=.22,PAD_TOP=.20,PAD_BOTTOM=.18,images=new Map(),instances=new WeakMap();
 // Four rigid painted layers per partner; no per-triangle clipping or whole-image bending.
 export const PART_LAYOUT={

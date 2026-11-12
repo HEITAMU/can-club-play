@@ -1,5 +1,5 @@
-import {attackStyle} from './motion.mjs?v=0.14.0';
-import {CATS} from './core.mjs?v=0.14.0';
+import {attackStyle} from './motion.mjs?v=0.14.1';
+import {CATS} from './core.mjs?v=0.14.1';
 export const cueColors={attack:'#edc581',enemy:'#ee9f8c',support:'#b3d9ba',energy:'#d2b9eb'};
 const skillEffect={orange:'全队护盾',ink:'穿甲三连',milk:'全队治疗',spark:'群攻灼烧',mint:'眩晕打断',bolt:'破甲',pudding:'群攻＋全队护盾',star:'治疗＋回能'};
 // Coordinates are foot contacts on the painted ground, not sprite centers.
@@ -17,6 +17,7 @@ export function formationPositions(b){
 export class BattleCues{
  constructor(){this.clear();}
  clear(){this.routes=new Map();this.entries=[];this.nextId=0;}
+ cancelPending(id){for(const [key,r] of this.routes)if(r.from===id&&r.phase!=='impact')this.routes.delete(key);}
  addRoute(key,from,targets,label,tone,time,positions,phase='impact',duration=.55,extra={}){
   if(!targets.length)return;
   this.routes.set(key,{id:++this.nextId,from,targets:[...new Set(targets)],label,tone,phase,born:time,until:time+duration,positions:structuredClone(positions),...extra});
@@ -26,17 +27,18 @@ export class BattleCues{
   const actors=[...b.heroes,...b.enemies],byId=id=>actors.find(a=>a.id===id),name=id=>byId(id)?.name.split(' · ')[0]||'开罐啦';
   const casters=new Set(events.filter(e=>e.type==='skill').map(e=>e.from)),can=events.some(e=>e.type==='can'),bursts=new Set(events.filter(e=>e.type==='burst').map(e=>e.from));
   if(can){
-   for(const e of events)if(e.type==='interrupt')this.routes.delete(e.to);
+   // Rescue has its own combined readout, but deaths and interrupts still retire pending attacks.
+   for(const e of events)if(e.type==='down'||e.type==='interrupt')this.cancelPending(e.to);else if(e.type==='cancel')this.cancelPending(e.from);
    const enemies=events.filter(e=>e.type==='hit'&&e.to?.startsWith('e')).map(e=>e.to),friends=b.heroes.filter(h=>h.hp>0).map(h=>h.id),p={...positions,can:{x:50,y:99}};
    this.addRoute('can-attack','can',enemies,'伤敌','attack',b.time,p,'impact',.7,{style:'melee'});this.addRoute('can-heal','can',friends,'回血','support',b.time,p,'impact',.8,{style:'heal'});
    this.log('开罐啦','全队救援','全体敌我',events.some(e=>e.type==='interrupt')?'回血20% · 伤敌 · 打断成功':'回血20% · 伤敌','support',b.time,true);return;
   }
   for(const e of events){
-   const a=byId(e.from);if(!a)continue;const at=e.at??b.time,tone=a.side==='e'?'enemy':'attack';
    if(e.type==='cancel'||e.type==='down'){
     const id=e.type==='down'?e.to:e.from;
-    for(const [key,r] of this.routes)if(r.from===id&&r.phase!=='impact')this.routes.delete(key);
+    this.cancelPending(id);
    }
+   const a=byId(e.from);if(!a)continue;const at=e.at??b.time,tone=a.side==='e'?'enemy':'attack';
    if(e.type==='windup'||e.type==='release'){
     const duration=e.type==='windup'?(e.windup||.4)+.06:(e.travel||.29)+.05,extra={style:attackStyle(a),travel:e.travel||.29,kind:e.kind};
     if(e.kind==='normal')this.addRoute(a.id,a.id,[e.to],'普攻',tone,at,positions,e.type,duration,extra);

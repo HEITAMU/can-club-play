@@ -1,6 +1,6 @@
-import {poseFor} from './motion.mjs?v=0.14.0';
-import {rigPose,rigFor,blendRigPose,animationClock} from './rig-motion.mjs?v=0.14.0';
-import {drawRig} from './rig-renderer.mjs?v=0.14.0';
+import {poseFor} from './motion.mjs?v=0.14.1';
+import {rigPose,rigFor,blendRigPose,animationClock} from './rig-motion.mjs?v=0.14.1';
+import {drawRig} from './rig-renderer.mjs?v=0.14.1';
 // Original paintings are the loading fallback; partners use separate painted body parts.
 const heroSheets={orange:['a',0],ink:['a',1],milk:['b',0],spark:['b',1],mint:['c',0],bolt:['c',1],pudding:['d',0],star:['d',1]};
 const foeSheets={dust:['a',0],box:['a',1],mop:['a',2],battery:['a',3],bag:['b',0],drone:['b',1],vacuum:['b',2],fridge:['b',3],sign:['c',0],boxBoss:['c',1],clock:['c',2],vendor:['c',3]};
