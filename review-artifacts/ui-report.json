@@ -31,9 +31,12 @@
   ],
   "checks": [
     "Every unlocked card buys exactly ten levels for the summed cost; archive selection and formation values stay in sync",
-    "Mouse drag swaps allies, replacement preserves training, invalid drops do nothing, and formation survives reload"
+    "Mouse drag swaps allies, replacement preserves training, invalid drops do nothing, and formation survives reload",
+    "Real touch drag swaps positions, touch cancellation preserves formation, and tap-to-select placement works",
+    "Dragging from the bench on a short screen automatically scrolls back to the formation",
+    "Batch upgrade caps at level 100 and is disabled when the full batch is unaffordable; single-level training remains available",
+    "Battle actors have no visible names; incapacitated partners stay in place at full size with the unable-to-fight label"
   ],
-  "result": "failed",
-  "error": "Error: page: expected Page or Frame\n    at BrowserContext.newCDPSession (/home/runner/work/can-club-play/can-club-play/node_modules/playwright-core/lib/client/browserContext.js:406:13)\n    at touchDrag (file:///home/runner/work/can-club-play/can-club-play/scripts/check-crew-ui.mjs:19:141)\n    at async file:///home/runner/work/can-club-play/can-club-play/scripts/check-crew-ui.mjs:58:3",
+  "result": "passed",
   "browserErrors": []
 }
