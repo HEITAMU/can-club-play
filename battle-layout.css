@@ -63,3 +63,8 @@ html,body{height:100%;overflow:hidden}body{min-height:0;padding:0 22px;align-ite
 .crew-collection h3{font-size:16px;color:#e0cfaf;margin-bottom:4px}
 .crew-view .inherit-summary{margin-top:18px}
 @media(max-width:350px){.crew-view{padding-inline:10px}.crew-training .party{gap:4px}.crew-training .section-title>span{font-size:9px}.crew-training .party-portrait{height:56px;min-height:56px}.crew-training .party-portrait .painted-sprite{width:56px;height:56px}.crew-training .party-meta b{font-size:9px}.crew-training .upgrade-btn{font-size:10px}.crew-training .party-empty{height:122px;min-height:122px}}
+
+/* Fallen partners stay on the battlefield, readable at their original scale. */
+#arena .actor.downed .actor-tag{top:auto;bottom:2px;right:auto;left:50%;transform:translateX(-50%);font-size:8px;line-height:12px;padding:1px 5px;color:#ffe3c8;background:#755b52;border:1px solid #c59a7c;white-space:nowrap}
+#arena .actor.downed .ground-shadow{width:calc(var(--actor-size)*.74);opacity:.7}
+#arena .actor.enemy.dead .actor-tag{display:none}

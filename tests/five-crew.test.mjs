@@ -55,7 +55,7 @@ test('skill captions remain attributable when several allies cast in one tick',(
 test('five-person formation has distinct bounded foot positions',()=>{
  const b=new Battle(ready(),{stage:30}),p=formationPositions(b);assert.equal(new Set(b.heroes.map(h=>JSON.stringify(p[h.id]))).size,5);
  for(const pos of Object.values(p)){assert.ok(pos.x>=0&&pos.x<=100&&pos.y>=0&&pos.y<=100);assert.ok(Number.isFinite(pos.x)&&Number.isFinite(pos.y));}
- b.heroes[0].hp=0;assert.equal(formationPositions(b).p1.x,36);assert.equal(formationPositions(b).p2.x,36);
+ b.heroes[0].hp=0;assert.deepEqual(formationPositions(b),p);
 });
 
 test('ordinary attacks alternate across two front cats and never choose a rear cat',()=>{

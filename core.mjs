@@ -1,6 +1,6 @@
-import {actionTiming,attackStyle} from './motion.mjs?v=0.20.0';
-import {CAN_TIMING,canHitAt,canDuration,canTargetOrder} from './can-timing.mjs?v=0.20.0';
-import {heroCombatStats,enemyCombatStats,mitigatedDamage} from './combat-stats.mjs?v=0.20.0';
+import {actionTiming,attackStyle} from './motion.mjs?v=0.21.0';
+import {CAN_TIMING,canHitAt,canDuration,canTargetOrder} from './can-timing.mjs?v=0.21.0';
+import {heroCombatStats,enemyCombatStats,mitigatedDamage} from './combat-stats.mjs?v=0.21.0';
 export const VERSION=1, MAX_STAGE=120, MAX_LEVEL=100, MAX_PARTY=5;
 export const CATS=[
  {id:'orange',name:'橘座',job:'前排守护',tag:'守护',color:'#edab62',accent:'#c8793b',unlock:0,hp:205,atk:17,interval:1.5,skill:'锅盖护体',desc:'举起锅盖：获得自身生命 45% 的护盾，并为队友提供 12% 护盾。',passive:'5 级：受到伤害降低 15%。',quote:'这条街的罐头，我罩了。',gear:'pan'},
@@ -73,6 +73,7 @@ export function normalizeState(raw,now=Date.now()){
  s.lastAccrued=num(raw.lastAccrued,now,0,now);s.idle=num(raw.idle,0,0,idleRate(s)*240);s.created=num(raw.created,now,0,now);s.onboarded=!!raw.onboarded;s.auto=raw.auto!==false;s.speed=raw.speed===2?2:1;s.sound=!!raw.sound;return s;
 }
 export function upgradeCost(level){return Math.round(22+level*12+Math.pow(level,1.65)*2);}
+export function upgradeQuote(level,count=10){const levels=Math.max(0,Math.min(MAX_LEVEL-level,Math.floor(count),10));let cost=0;for(let i=0;i<levels;i++)cost+=upgradeCost(level+i);return {levels,cost};}
 export function upgrade(s,id,count=1){const c=CATS.find(c=>c.id===id);if(!c||s.highest<c.unlock)return 0;let done=0;for(let i=0;i<clamp(count,1,10);i++){const l=s.levels[id],cost=upgradeCost(l);if(l>=MAX_LEVEL||s.gold<cost)break;s.gold-=cost;s.levels[id]++;s.upgrades++;done++;}return done;}
 export function setParty(s,slot,id){if(!unlocked(s).some(c=>c.id===id)||!Number.isInteger(slot)||slot<0||slot>=MAX_PARTY)return false;const inheritance=inheritanceFor(s,slot,id);if(inheritance)inheritTraining(s,inheritance.from,id);const p=[...s.party],old=p.indexOf(id);if(old>=0){if(p[slot])p[old]=p[slot];else p.splice(old,1);}p[slot]=id;s.party=p.filter(Boolean).slice(0,MAX_PARTY);return true;}
 export function buffs(s){const r=s.relics;return {atk:1+.12*(r.claw||0),hp:1+.15*(r.coat||0),speed:1+.08*(r.bell||0),crit:.1+.05*(r.scope||0),regen:.008*(r.bowl||0),canCd:12-.8*(r.can||0),gold:1+.12*(r.magnet||0),idle:1+.2*(r.thermos||0),reflect:.1*(r.thorn||0),shield:.1*(r.charm||0),energy:5*(r.charm||0),burn:.35*(r.match||0),boss:1+.15*(r.badge||0)};}

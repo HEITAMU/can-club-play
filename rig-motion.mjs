@@ -1,4 +1,4 @@
-import {catAction} from './action-profiles.mjs?v=0.20.0';
+import {catAction} from './action-profiles.mjs?v=0.21.0';
 // Continuous motion for painted cutout parts. No pose-frame swapping.
 const clamp=n=>Math.max(0,Math.min(1,n));
 export const ease=n=>{const t=clamp(n);return t*t*(3-2*t);};
@@ -55,7 +55,7 @@ export function rigPose(id,actor,time,idleTime=time){
   const elapsed=.38-(actor.burstUntil-time),charged={...neutral,breath:-.06,lean:-.07,head:-.08,hand:-.22,tail:-.18},strike={...neutral,breath:.055,lean:.16,head:.1,hand:.32,reach:.045};p=elapsed<.12?mix(charged,strike,ease(elapsed/.12)):mix(strike,idle,ease((elapsed-.12)/.26));
  }
  if((actor?.hitUntil||0)>time){const t=clamp(1-(actor.hitUntil-time)/.22),kick=Math.sin(t*Math.PI);p={...p,lean:p.lean-kick*.10,head:p.head-kick*.13,breath:p.breath-kick*.025};}
- if(actor?.hp<=0){const t=ease((time-(actor.downAt??time))/.5);p=mix(p,{...neutral,breath:-.13,lean:-.32,head:-.18,hand:-.30,tail:.12,sink:.045,alpha:.35},t);}
+ if(actor?.hp<=0){const t=ease((time-(actor.downAt??time))/.55),hero=!!RIGS[id],breath=Math.sin(time*2.4)*.012;p=mix(p,hero?{...neutral,breath:-.36+breath,lean:.74,head:.46,hand:.22,tail:-.22,sink:.025,alpha:1}:{...neutral,breath:-.16,lean:.72,head:.1,sink:.03,alpha:.45},t);}
  return p;
 }
 function weight(point,zone){if(!zone)return 0;const d=Math.hypot((point[0]-zone[0])/zone[2],(point[1]-zone[1])/zone[3]);return 1-ease((d-.30)/.70);}

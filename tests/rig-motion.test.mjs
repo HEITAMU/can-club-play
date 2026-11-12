@@ -37,9 +37,8 @@ test('render blending freezes on pause and eases interruptions without overshoot
  const before=rigPose('orange',actors[0],1),after={...before,lean:.15,hand:.5};assert.deepEqual(blendRigPose(before,after,0),before);
  const mid=blendRigPose(before,after,1/60);assert.ok(mid.lean>Math.min(before.lean,after.lean)&&mid.lean<Math.max(before.lean,after.lean));assert.deepEqual(blendRigPose(null,after,0),after);
 });
-test('retirement starts on the ground, then shrinks and moves without teleporting',()=>{
+test('incapacitated partners keep their original position and full scale',()=>{
  const s=initialState();s.party=['orange','ink','milk'];const b=new Battle(s),motion=new FormationMotion(),before=motion.update(b,0);b.heroes[0].hp=0;b.heroes[0].downAt=1;
- assert.deepEqual(motion.update(b,1).p0,before.p0);assert.deepEqual(motion.update(b,1.44).p0,before.p0);
- const mid=motion.update(b,1.6).p0,last=motion.update(b,2).p0;assert.ok(mid.y>before.p0.y&&mid.y<last.y);assert.equal(last.y,98);
- assert.equal(retiringSize(52,b.heroes[0],1),52);assert.equal(retiringSize(52,b.heroes[0],2),23);assert.deepEqual(motion.update(b,2),motion.update(b,2));
+ for(const t of [1,1.3,1.6,2,10]){assert.deepEqual(motion.update(b,t),before);assert.equal(retiringSize(52,b.heroes[0],t),52);}
+ for(const c of CATS){const actor={catId:c.id,side:'p',hp:0,downAt:1},atRest=rigPose(c.id,actor,2),later=rigPose(c.id,actor,2.4);assert.equal(atRest.alpha,1);assert.ok(atRest.head>.3);assert.notEqual(atRest.breath,later.breath);assert.deepEqual(rigPose(c.id,actor,2),atRest);assert.ok(Object.values(atRest).every(Number.isFinite));}
 });
