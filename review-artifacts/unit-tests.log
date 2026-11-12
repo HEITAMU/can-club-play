@@ -1,0 +1,723 @@
+TAP version 13
+# Subtest: all sixteen companion actions carry their own motion and effect profile through real combat
+ok 1 - all sixteen companion actions carry their own motion and effect profile through real combat
+  ---
+  duration_ms: 223.126799
+  type: 'test'
+  ...
+# Subtest: every monster uses only the shared melee or ranged normal attack and keeps its existing timing
+ok 2 - every monster uses only the shared melee or ranged normal attack and keeps its existing timing
+  ---
+  duration_ms: 0.988516
+  type: 'test'
+  ...
+# Subtest: arm roots remain attached to their own shoulder while rotating, including shields and bow
+ok 3 - arm roots remain attached to their own shoulder while rotating, including shields and bow
+  ---
+  duration_ms: 1.290998
+  type: 'test'
+  ...
+# Subtest: expression priority follows defeat, victory, damage and the actual attack type
+ok 4 - expression priority follows defeat, victory, damage and the actual attack type
+  ---
+  duration_ms: 0.172518
+  type: 'test'
+  ...
+# Subtest: all cats blink and return to neutral; the rejected controlled face is absent
+ok 5 - all cats blink and return to neutral; the rejected controlled face is absent
+  ---
+  duration_ms: 1.878455
+  type: 'test'
+  ...
+# Subtest: paused face transitions and idle eyes stay frozen on the battle clock
+ok 6 - paused face transitions and idle eyes stay frozen on the battle clock
+  ---
+  duration_ms: 0.248762
+  type: 'test'
+  ...
+# Subtest: bow releases its visible arrow with the projectile and reloads during recovery
+ok 7 - bow releases its visible arrow with the projectile and reloads during recovery
+  ---
+  duration_ms: 0.258456
+  type: 'test'
+  ...
+# Subtest: melee travel remains continuous through windup, strike, and return
+ok 8 - melee travel remains continuous through windup, strike, and return
+  ---
+  duration_ms: 0.945843
+  type: 'test'
+  ...
+# Subtest: melee closes the gap without passing the target; same-position skills stay finite
+ok 9 - melee closes the gap without passing the target; same-position skills stay finite
+  ---
+  duration_ms: 0.747105
+  type: 'test'
+  ...
+# Subtest: recoil and travel freeze when simulation time is unchanged
+ok 10 - recoil and travel freeze when simulation time is unchanged
+  ---
+  duration_ms: 0.506957
+  type: 'test'
+  ...
+# Subtest: damage trail holds briefly, catches up, and handles consecutive hits
+ok 11 - damage trail holds briefly, catches up, and handles consecutive hits
+  ---
+  duration_ms: 0.333538
+  type: 'test'
+  ...
+# Subtest: healing never trails below health and regeneration cannot freeze a damage trail
+ok 12 - healing never trails below health and regeneration cannot freeze a damage trail
+  ---
+  duration_ms: 0.256243
+  type: 'test'
+  ...
+# Subtest: boss cue and cooldown follow actual interrupt state without changing battle data
+ok 13 - boss cue and cooldown follow actual interrupt state without changing battle data
+  ---
+  duration_ms: 1.226572
+  type: 'test'
+  ...
+# Subtest: ordinary fights have no boss panel and adjusted cooldown uses its real duration
+ok 14 - ordinary fights have no boss panel and adjusted cooldown uses its real duration
+  ---
+  duration_ms: 0.316252
+  type: 'test'
+  ...
+# Subtest: can opens overhead, drops all four food shapes and hits every enemy with one continuous lid
+ok 15 - can opens overhead, drops all four food shapes and hits every enemy with one continuous lid
+  ---
+  duration_ms: 151.800791
+  type: 'test'
+  ...
+# Subtest: heal and each damage event resolve exactly on the matching animation beat, once each
+ok 16 - heal and each damage event resolve exactly on the matching animation beat, once each
+  ---
+  duration_ms: 3.278525
+  type: 'test'
+  ...
+# Subtest: a lethal lid completes its right-side exit before victory replaces the scene
+ok 17 - a lethal lid completes its right-side exit before victory replaces the scene
+  ---
+  duration_ms: 0.654348
+  type: 'test'
+  ...
+# Subtest: can animation is deterministic when paused, scales with the viewport and cleans up
+ok 18 - can animation is deterministic when paused, scales with the viewport and cleans up
+  ---
+  duration_ms: 1.904515
+  type: 'test'
+  ...
+# Subtest: every painted can part preserves the canvas drawing state
+ok 19 - every painted can part preserves the canvas drawing state
+  ---
+  duration_ms: 0.32196
+  type: 'test'
+  ...
+# {
+#   "passed": 12,
+#   "checks": [
+#     "first encounter is winnable with untouched starter party",
+#     "all 120 encounters have finite stats and unique actor IDs",
+#     "upgrade spending is exact and cannot go negative or unlock a locked cat",
+#     "offline yield caps at four hours and cannot be claimed twice",
+#     "relic choices are validated and single use across save/restore",
+#     "invalid and corrupted saves are rejected; valid saves strip untrusted fields",
+#     "boss charge is interruptible and active skill has a real cooldown",
+#     "all eight cat skills execute with valid HP and shields",
+#     "party has unique cats and locked cats cannot be equipped",
+#     "prestige preserves cats, gold and training but resets run relics",
+#     "milestone rewards are one-time and persist through import",
+#     "dead heroes cannot be healed or revived by active skill"
+#   ],
+#   "simulation": {
+#     "highest": 120,
+#     "farmBattles": 104,
+#     "curve": [
+#       {
+#         "stage": 1,
+#         "seconds": 2.2,
+#         "levels": [
+#           3,
+#           3
+#         ],
+#         "gold": 60
+#       },
+#       {
+#         "stage": 2,
+#         "seconds": 4.8,
+#         "levels": [
+#           4,
+#           4
+#         ],
+#         "gold": 52
+#       },
+#       {
+#         "stage": 3,
+#         "seconds": 2.4,
+#         "levels": [
+#           4,
+#           4,
+#           1
+#         ],
+#         "gold": 100
+#       },
+#       {
+#         "stage": 4,
+#         "seconds": 2.4,
+#         "levels": [
+#           5,
+#           4,
+#           4
+#         ],
+#         "gold": 56
+#       },
+#       {
+#         "stage": 5,
+#         "seconds": 4.8,
+#         "levels": [
+#           6,
+#           5,
+#           5
+#         ],
+#         "gold": 86
+#       },
+#       {
+#         "stage": 6,
+#         "seconds": 2.8,
+#         "levels": [
+#           6,
+#           5,
+#           5
+#         ],
+#         "gold": 152
+#       },
+#       {
+#         "stage": 10,
+#         "seconds": 6,
+#         "levels": [
+#           6,
+#           6,
+#           6,
+#           4
+#         ],
+#         "gold": 98
+#       },
+#       {
+#         "stage": 20,
+#         "seconds": 10.1,
+#         "levels": [
+#           8,
+#           8,
+#           7,
+#           7,
+#           7
+#         ],
+#         "gold": 298
+#       },
+#       {
+#         "stage": 30,
+#         "seconds": 11.9,
+#         "levels": [
+#           14,
+#           14,
+#           14,
+#           13,
+#           13
+#         ],
+#         "gold": 352
+#       },
+#       {
+#         "stage": 40,
+#         "seconds": 15.7,
+#         "levels": [
+#           15,
+#           15,
+#           15,
+#           15,
+#           15
+#         ],
+#         "gold": 420
+#       },
+#       {
+#         "stage": 50,
+#         "seconds": 12.3,
+#         "levels": [
+#           17,
+#           17,
+#           17,
+#           16,
+#           16
+#         ],
+#         "gold": 346
+#       },
+#       {
+#         "stage": 60,
+#         "seconds": 14.3,
+#         "levels": [
+#           19,
+#           18,
+#           18,
+#           18,
+#           18
+#         ],
+#         "gold": 486
+#       },
+#       {
+#         "stage": 70,
+#         "seconds": 14.3,
+#         "levels": [
+#           22,
+#           22,
+#           22,
+#           22,
+#           22
+#         ],
+#         "gold": 680
+#       },
+#       {
+#         "stage": 80,
+#         "seconds": 26.4,
+#         "levels": [
+#           24,
+#           24,
+#           23,
+#           23,
+#           23
+#         ],
+#         "gold": 1138
+#       },
+#       {
+#         "stage": 90,
+#         "seconds": 17.1,
+#         "levels": [
+#           25,
+#           25,
+#           25,
+#           25,
+#           25
+#         ],
+#         "gold": 1170
+#       },
+#       {
+#         "stage": 100,
+#         "seconds": 17.5,
+#         "levels": [
+#           33,
+#           33,
+#           33,
+#           33,
+#           32
+#         ],
+#         "gold": 924
+#       },
+#       {
+#         "stage": 110,
+#         "seconds": 14.3,
+#         "levels": [
+#           34,
+#           34,
+#           34,
+#           34,
+#           34
+#         ],
+#         "gold": 1244
+#       },
+#       {
+#         "stage": 120,
+#         "seconds": 23.8,
+#         "levels": [
+#           38,
+#           38,
+#           38,
+#           37,
+#           37
+#         ],
+#         "gold": 824
+#       }
+#     ]
+#   }
+# }
+# Subtest: tests/core.test.mjs
+ok 5 - tests/core.test.mjs
+  ---
+  duration_ms: 378.496934
+  type: 'test'
+  ...
+# Subtest: separate arms draw once, keep the torso grounded and stay inside the canvas throughout attacks
+ok 21 - separate arms draw once, keep the torso grounded and stay inside the canvas throughout attacks
+  ---
+  duration_ms: 59.589048
+  type: 'test'
+  ...
+# Subtest: expression changes retain opaque fur instead of showing the dark background through the head
+ok 22 - expression changes retain opaque fur instead of showing the dark background through the head
+  ---
+  duration_ms: 2.935605
+  type: 'test'
+  ...
+# Subtest: attacks use the same calm head pixels and opacity as idle, including transitions
+ok 23 - attacks use the same calm head pixels and opacity as idle, including transitions
+  ---
+  duration_ms: 1.470035
+  type: 'test'
+  ...
+# Subtest: every cat visibly swings its painted weapon or drawing hand at a 48px battle size
+ok 24 - every cat visibly swings its painted weapon or drawing hand at a 48px battle size
+  ---
+  duration_ms: 2.817838
+  type: 'test'
+  ...
+# Subtest: prepared battle idles advance on the ambient clock, active battle pauses freeze them
+ok 25 - prepared battle idles advance on the ambient clock, active battle pauses freeze them
+  ---
+  duration_ms: 0.177726
+  type: 'test'
+  ...
+# Subtest: spline position and velocity meet at interior animation keys
+ok 26 - spline position and velocity meet at interior animation keys
+  ---
+  duration_ms: 0.205857
+  type: 'test'
+  ...
+# Subtest: interrupting a melee approach settles from its last visible position and freezes on pause
+ok 27 - interrupting a melee approach settles from its last visible position and freezes on pause
+  ---
+  duration_ms: 0.884731
+  type: 'test'
+  ...
+# Subtest: shield art follows actual raises, absorption, and break without changing combat damage
+ok 28 - shield art follows actual raises, absorption, and break without changing combat damage
+  ---
+  duration_ms: 1.530686
+  type: 'test'
+  ...
+# Subtest: support and damaging effects remain distinguishable and end with zero opacity
+ok 29 - support and damaging effects remain distinguishable and end with zero opacity
+  ---
+  duration_ms: 0.573507
+  type: 'test'
+  ...
+# Subtest: rescue removes unfinished attacks from defeated enemies while retaining completed impacts
+ok 30 - rescue removes unfinished attacks from defeated enemies while retaining completed impacts
+  ---
+  duration_ms: 4.43205
+  type: 'test'
+  ...
+# Subtest: rescue interruption still removes the boss warning and records success
+ok 31 - rescue interruption still removes the boss warning and records success
+  ---
+  duration_ms: 0.710611
+  type: 'test'
+  ...
+# Subtest: ranged effects keep their launch point and arrive at a moving target, then stop on the hit clock
+ok 32 - ranged effects keep their launch point and arrive at a moving target, then stop on the hit clock
+  ---
+  duration_ms: 1.441322
+  type: 'test'
+  ...
+# Subtest: projectiles freeze with the battle clock and fall back to recorded target positions when absent
+ok 33 - projectiles freeze with the battle clock and fall back to recorded target positions when absent
+  ---
+  duration_ms: 0.315451
+  type: 'test'
+  ...
+# Subtest: five unique unlocked cats survive save roundtrip; old three-cat saves keep resources and levels
+ok 34 - five unique unlocked cats survive save roundtrip; old three-cat saves keep resources and levels
+  ---
+  duration_ms: 2.415898
+  type: 'test'
+  ...
+# Subtest: fourth and fifth slots support inherited replacement and swapping without creating training
+ok 35 - fourth and fifth slots support inherited replacement and swapping without creating training
+  ---
+  duration_ms: 0.416502
+  type: 'test'
+  ...
+# Subtest: new recruits fill the fourth and fifth free places at level one
+ok 36 - new recruits fill the fourth and fifth free places at level one
+  ---
+  duration_ms: 0.944751
+  type: 'test'
+  ...
+# Subtest: five-cat ordinary hits follow the living front, with no position buff; boss burst hits all five
+ok 37 - five-cat ordinary hits follow the living front, with no position buff; boss burst hits all five
+  ---
+  duration_ms: 2.513514
+  type: 'test'
+  ...
+# Subtest: healing and shield skill events name all five actual recipients
+ok 38 - healing and shield skill events name all five actual recipients
+  ---
+  duration_ms: 0.484373
+  type: 'test'
+  ...
+# Subtest: all eight skills publish correct single or group destinations
+ok 39 - all eight skills publish correct single or group destinations
+  ---
+  duration_ms: 0.573586
+  type: 'test'
+  ...
+# Subtest: actual impact replaces an obsolete windup target; cues are read-only and freeze on game time
+ok 40 - actual impact replaces an obsolete windup target; cues are read-only and freeze on game time
+  ---
+  duration_ms: 0.914316
+  type: 'test'
+  ...
+# Subtest: can rescue clears interrupted boss routes and is attributed to the button rather than the front cat
+ok 41 - can rescue clears interrupted boss routes and is attributed to the button rather than the front cat
+  ---
+  duration_ms: 0.687166
+  type: 'test'
+  ...
+# Subtest: skill captions remain attributable when several allies cast in one tick
+ok 42 - skill captions remain attributable when several allies cast in one tick
+  ---
+  duration_ms: 0.881066
+  type: 'test'
+  ...
+# Subtest: five-person formation has distinct bounded foot positions
+ok 43 - five-person formation has distinct bounded foot positions
+  ---
+  duration_ms: 0.462811
+  type: 'test'
+  ...
+# Subtest: ordinary attacks alternate across two front cats and never choose a rear cat
+ok 44 - ordinary attacks alternate across two front cats and never choose a rear cat
+  ---
+  duration_ms: 0.420989
+  type: 'test'
+  ...
+# Subtest: locked front target stays fixed through windup and release, then switches next attack
+ok 45 - locked front target stays fixed through windup and release, then switches next attack
+  ---
+  duration_ms: 0.404844
+  type: 'test'
+  ...
+# Subtest: mixed encounter sizes include five-mob waves and boss with four escorts, with bounded pack pressure
+ok 46 - mixed encounter sizes include five-mob waves and boss with four escorts, with bounded pack pressure
+  ---
+  duration_ms: 0.133449
+  type: 'test'
+  ...
+# Subtest: both teams have two forward foot anchors and three grounded rear anchors
+ok 47 - both teams have two forward foot anchors and three grounded rear anchors
+  ---
+  duration_ms: 0.183114
+  type: 'test'
+  ...
+# Subtest: skill release carries its named caster, visual type, targets and actual projectile time
+ok 48 - skill release carries its named caster, visual type, targets and actual projectile time
+  ---
+  duration_ms: 0.23458
+  type: 'test'
+  ...
+# Subtest: enemy healing effects identify the healer and actual recipient
+ok 49 - enemy healing effects identify the healer and actual recipient
+  ---
+  duration_ms: 0.266148
+  type: 'test'
+  ...
+# {
+#   "passed": 7,
+#   "checks": [
+#     "all six enemy types, including drones, attack only the two living front cats, with backline protected",
+#     "the next living teammate takes over after the front falls",
+#     "orange intrinsic passive remains, with no position bonus",
+#     "boss charged area attack deals equal raw damage in every position",
+#     "interrupting boss charge prevents the area hit",
+#     "inheritance cannot heal through repeated level transfers",
+#     "inheritance does not revive a fallen party member"
+#   ]
+# }
+# Subtest: tests/frontline.test.mjs
+ok 9 - tests/frontline.test.mjs
+  ---
+  duration_ms: 61.247556
+  type: 'test'
+  ...
+# Subtest: healing stays attached to each recipient, leaves their face clear and ends completely
+ok 51 - healing stays attached to each recipient, leaves their face clear and ends completely
+  ---
+  duration_ms: 5.033088
+  type: 'test'
+  ...
+# Subtest: milk heals all five actual teammates with local light rather than flying milk or heart icons
+ok 52 - milk heals all five actual teammates with local light rather than flying milk or heart icons
+  ---
+  duration_ms: 2.297381
+  type: 'test'
+  ...
+# Subtest: healing painter works without an atlas and restores the canvas state
+ok 53 - healing painter works without an atlas and restores the canvas state
+  ---
+  duration_ms: 0.732243
+  type: 'test'
+  ...
+# {
+#   "passed": 16,
+#   "checks": [
+#     "old saves retain every level and resource; no catch-up is awarded",
+#     "newly unlocked recruits stay at level one",
+#     "replacement preview describes both sides before any mutation",
+#     "replacement inherits training without spending or creating levels",
+#     "an already trained recruit preserves its investment on the outgoing cat",
+#     "swapping back restores original training and lineup",
+#     "moving existing party members does not transfer their levels",
+#     "a stronger newcomer is not downgraded by replacing a weaker cat",
+#     "empty slots add a cat without an inheritance donor",
+#     "explicit inheritance supports already deployed recruits and keeps positions",
+#     "locked, unknown, same-cat, equal-level and downgrade transfers are rejected",
+#     "repeated transfers conserve all paid investment and cannot farm rewards",
+#     "a paid upgrade after inheritance charges the inherited level cost once",
+#     "save export/import retains inheritance and the first-use hint flag",
+#     "level cap and active combat stats remain valid after explicit inheritance",
+#     "rescue matches its label: twenty percent healing, enemy damage, interrupt, no coins"
+#   ]
+# }
+# Subtest: tests/inheritance.test.mjs
+ok 11 - tests/inheritance.test.mjs
+  ---
+  duration_ms: 55.560707
+  type: 'test'
+  ...
+# {
+#   "passed": 7,
+#   "checks": [
+#     "windup and release cause no damage; impact damages exactly once",
+#     "stun cancels a pending strike before impact",
+#     "death during anticipation prevents a ghost attack",
+#     "if front falls in windup, enemy impact targets the next living front",
+#     "pause leaves pose, projectile phase and health unchanged",
+#     "all eight skills use anticipation and release poses, execute once",
+#     "frame-rate slicing produces equal normal attack count and damage"
+#   ]
+# }
+# Subtest: tests/motion.test.mjs
+ok 12 - tests/motion.test.mjs
+  ---
+  duration_ms: 45.643085
+  type: 'test'
+  ...
+# Subtest: all eight idle performances move distinctly while keeping the foot anchor fixed
+ok 56 - all eight idle performances move distinctly while keeping the foot anchor fixed
+  ---
+  duration_ms: 4.952868
+  type: 'test'
+  ...
+# Subtest: one-speed is calmer and two-speed keeps an exact two-to-one clock ratio
+ok 57 - one-speed is calmer and two-speed keeps an exact two-to-one clock ratio
+  ---
+  duration_ms: 0.251095
+  type: 'test'
+  ...
+# Subtest: release and impact timestamps remain aligned across coarse and fine ticks
+ok 58 - release and impact timestamps remain aligned across coarse and fine ticks
+  ---
+  duration_ms: 2.522647
+  type: 'test'
+  ...
+# Subtest: projectiles arrive at their actual targets and never continue past the hit
+ok 59 - projectiles arrive at their actual targets and never continue past the hit
+  ---
+  duration_ms: 0.531003
+  type: 'test'
+  ...
+# Subtest: render sampling at a frozen clock cannot advance idles or projectiles
+ok 60 - render sampling at a frozen clock cannot advance idles or projectiles
+  ---
+  duration_ms: 0.386747
+  type: 'test'
+  ...
+# Subtest: rear battle canvases survive stale offscreen/zero-size reports and a lost graphics surface
+ok 61 - rear battle canvases survive stale offscreen/zero-size reports and a lost graphics surface
+  ---
+  duration_ms: 6.534059
+  type: 'test'
+  ...
+# Subtest: all actors keep planted feet and have moving head, hand, or body points
+ok 62 - all actors keep planted feet and have moving head, hand, or body points
+  ---
+  duration_ms: 18.803263
+  type: 'test'
+  ...
+# Subtest: normal and skill motion is continuous at anticipation, release, hold and recovery boundaries
+ok 63 - normal and skill motion is continuous at anticipation, release, hold and recovery boundaries
+  ---
+  duration_ms: 3.001353
+  type: 'test'
+  ...
+# Subtest: all action channels remain finite and follow through after impact
+ok 64 - all action channels remain finite and follow through after impact
+  ---
+  duration_ms: 9.682697
+  type: 'test'
+  ...
+# Subtest: hit reaction rises and recovers continuously instead of selecting a still frame
+ok 65 - hit reaction rises and recovers continuously instead of selecting a still frame
+  ---
+  duration_ms: 0.637813
+  type: 'test'
+  ...
+# Subtest: render blending freezes on pause and eases interruptions without overshoot
+ok 66 - render blending freezes on pause and eases interruptions without overshoot
+  ---
+  duration_ms: 0.275592
+  type: 'test'
+  ...
+# Subtest: retirement starts on the ground, then shrinks and moves without teleporting
+ok 67 - retirement starts on the ground, then shrinks and moves without teleporting
+  ---
+  duration_ms: 1.388504
+  type: 'test'
+  ...
+# Subtest: the retired crescent is absent from melee, ranged and warning effects
+ok 68 - the retired crescent is absent from melee, ranged and warning effects
+  ---
+  duration_ms: 2.990877
+  type: 'test'
+  ...
+# Subtest: physical contact marks expand locally and finish quickly without a traveling blade
+ok 69 - physical contact marks expand locally and finish quickly without a traveling blade
+  ---
+  duration_ms: 1.137329
+  type: 'test'
+  ...
+# Subtest: cancelled projectiles vanish immediately while completed impacts finish and clean up
+ok 70 - cancelled projectiles vanish immediately while completed impacts finish and clean up
+  ---
+  duration_ms: 1.556845
+  type: 'test'
+  ...
+# Subtest: all particle trajectories freeze on pause and yield identical frames at any sampling rate
+ok 71 - all particle trajectories freeze on pause and yield identical frames at any sampling rate
+  ---
+  duration_ms: 5.077033
+  type: 'test'
+  ...
+# Subtest: all effects have finite transforms, distinct artwork and complete disappearance
+ok 72 - all effects have finite transforms, distinct artwork and complete disappearance
+  ---
+  duration_ms: 4.144841
+  type: 'test'
+  ...
+# Subtest: persistent shields and statuses follow moving actors and stop after death or break
+ok 73 - persistent shields and statuses follow moving actors and stop after death or break
+  ---
+  duration_ms: 0.510702
+  type: 'test'
+  ...
+# Subtest: real five versus five combat renders every skill and cleans bounded effect state
+ok 74 - real five versus five combat renders every skill and cleans bounded effect state
+  ---
+  duration_ms: 41.703936
+  type: 'test'
+  ...
+1..74
+# tests 74
+# suites 0
+# pass 74
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 704.47343
