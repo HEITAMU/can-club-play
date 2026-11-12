@@ -1,0 +1,138 @@
+{
+  "viewports": [
+    {
+      "width": 390,
+      "height": 844,
+      "viewport": 390,
+      "scroll": 390,
+      "profileWidth": 362,
+      "profileScroll": 362,
+      "hero": 208,
+      "stats": [
+        "1,394",
+        "116",
+        "1.39秒",
+        "10%",
+        "42",
+        "33",
+        "0",
+        "0"
+      ],
+      "canvas": 314,
+      "labels": [
+        "生命",
+        "攻击",
+        "间隔",
+        "暴击",
+        "护甲",
+        "魔抗",
+        "护甲穿透",
+        "法术穿透"
+      ],
+      "skillOverflow": false
+    },
+    {
+      "width": 375,
+      "height": 667,
+      "viewport": 375,
+      "scroll": 375,
+      "profileWidth": 347,
+      "profileScroll": 347,
+      "hero": 208,
+      "stats": [
+        "1,394",
+        "116",
+        "1.39秒",
+        "10%",
+        "42",
+        "33",
+        "0",
+        "0"
+      ],
+      "canvas": 314,
+      "labels": [
+        "生命",
+        "攻击",
+        "间隔",
+        "暴击",
+        "护甲",
+        "魔抗",
+        "护甲穿透",
+        "法术穿透"
+      ],
+      "skillOverflow": false
+    },
+    {
+      "width": 320,
+      "height": 568,
+      "viewport": 320,
+      "scroll": 320,
+      "profileWidth": 300,
+      "profileScroll": 300,
+      "hero": 186,
+      "stats": [
+        "1,394",
+        "116",
+        "1.39秒",
+        "10%",
+        "42",
+        "33",
+        "0",
+        "0"
+      ],
+      "canvas": 282,
+      "labels": [
+        "生命",
+        "攻击",
+        "间隔",
+        "暴击",
+        "护甲",
+        "魔抗",
+        "护甲穿透",
+        "法术穿透"
+      ],
+      "skillOverflow": false
+    },
+    {
+      "width": 1280,
+      "height": 900,
+      "viewport": 1280,
+      "scroll": 1280,
+      "profileWidth": 450,
+      "profileScroll": 450,
+      "hero": 226,
+      "stats": [
+        "1,394",
+        "116",
+        "1.39秒",
+        "10%",
+        "42",
+        "33",
+        "0",
+        "0"
+      ],
+      "canvas": 340,
+      "labels": [
+        "生命",
+        "攻击",
+        "间隔",
+        "暴击",
+        "护甲",
+        "魔抗",
+        "护甲穿透",
+        "法术穿透"
+      ],
+      "skillOverflow": false
+    }
+  ],
+  "checks": [
+    "Eight characters switch; locked role has no upgrade or deployment action",
+    "Upgrade updates level, attributes and cost, persists exactly one purchase",
+    "Replacement conserves training and updates awakened duration",
+    "Training inheritance returns to selected character without changing formation",
+    "Reposition preserves level; all five combat actors remain rendered",
+    "Insufficient currency and maximum level disable upgrade"
+  ],
+  "browserErrors": [],
+  "result": "passed"
+}
