@@ -1,0 +1,50 @@
+[
+  {
+    "width": 320,
+    "height": 568,
+    "checks": [
+      "boot",
+      "battle",
+      "rescue-animation",
+      "upgrade10",
+      "touch-swap",
+      "bench-inheritance",
+      "map",
+      "relics",
+      "export"
+    ],
+    "errors": []
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "checks": [
+      "boot",
+      "battle",
+      "rescue-animation",
+      "upgrade10",
+      "touch-swap",
+      "bench-inheritance",
+      "map",
+      "relics",
+      "export"
+    ],
+    "errors": []
+  },
+  {
+    "width": 430,
+    "height": 932,
+    "checks": [
+      "boot",
+      "battle",
+      "rescue-animation",
+      "upgrade10",
+      "touch-swap",
+      "bench-inheritance",
+      "map",
+      "relics",
+      "export"
+    ],
+    "errors": []
+  }
+]
