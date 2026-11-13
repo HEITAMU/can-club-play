@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {fileURLToPath} from 'node:url';
 import {FINISHED_SPARK as ART} from '../finished-spark-data.mjs';
-import {sparkCel,sparkFace,sparkVertex,setFinishedCanvasFactory} from '../finished-spark-renderer.mjs?v=0.21.13';
+import {sparkCel,sparkFace,sparkVertex,setFinishedCanvasFactory} from '../finished-spark-renderer.mjs?v=0.21.14';
 import {renderPuppetFrame} from '../rig-renderer.mjs';
 import {rigPose} from '../rig-motion.mjs';import {actionTiming} from '../motion.mjs';
 const require=createRequire(import.meta.url),{createCanvas,loadImage}=require('@napi-rs/canvas'),sharp=require('sharp');setFinishedCanvasFactory(createCanvas);

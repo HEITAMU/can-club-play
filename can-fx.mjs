@@ -1,5 +1,5 @@
-import {CAN_TIMING,canHitAt,canDuration} from './can-timing.mjs?v=0.21.13';
-import {healingImpact} from './healing-fx.mjs?v=0.21.13';
+import {CAN_TIMING,canHitAt,canDuration} from './can-timing.mjs?v=0.21.14';
+import {healingImpact} from './healing-fx.mjs?v=0.21.14';
 
 export const CAN_ART={'can-body':-1,'can-lid':-1,'kibble-paw':-1,'kibble-fish':-1,'kibble-heart':-1,'kibble-star':-1};
 export const CAN_ATLAS={url:'./assets/vfx/can-rescue-v0192.webp',rects:{"can-body":[45,70,204,171],"can-lid":[295,88,196,129],"kibble-paw":[553,79,172,146],"kibble-fish":[61,336,170,95],"kibble-heart":[315,320,148,125],"kibble-star":[554,308,152,141]}};
