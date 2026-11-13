@@ -6,7 +6,7 @@ function ready(){const s=initialState();s.highest=120;s.party=['orange','ink','m
 test('windup and release cause no damage; impact damages exactly once',()=>{
  const b=ready(),h=b.heroes[1],e=b.enemies[0];e.hp=e.maxHp=10000;for(const other of b.enemies.slice(1))other.hp=other.maxHp=20000;h.crit=0;
  b.beginAction(h,'normal');const before=e.hp;assert.equal(poseFor(h,b.time).frame,1);
- const timing={...h.action};b.tick(timing.windup-.01);assert.equal(e.hp,before);assert.equal(poseFor(h,b.time).phase,'windup');
+ const timing={...h.action};while(b.time<timing.windup-.01)b.tick(Math.min(.1,timing.windup-.01-b.time));assert.equal(e.hp,before);assert.equal(poseFor(h,b.time).phase,'windup');
  b.tick(.02);assert.equal(e.hp,before);assert.equal(poseFor(h,b.time).phase,'release');
  while(b.time<timing.impactAt-.01)b.tick(Math.min(.1,timing.impactAt-.01-b.time));assert.equal(e.hp,before);
  b.tick(.02);assert.equal(e.hp,before-h.atk);assert.equal(poseFor(h,b.time).phase,'hold');
