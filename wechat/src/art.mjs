@@ -1,5 +1,4 @@
 import { ANATOMY } from "../../anatomy-data.mjs";
-import { ARTICULATED } from "../../articulated-data.mjs";
 import { renderPuppetFrame } from "../../rig-renderer.mjs";
 import { rigPose, rigFor, blendRigPose } from "../../rig-motion.mjs";
 import { expressionFor, faceTransition, bowNock } from "../../expressions.mjs";
@@ -38,7 +37,7 @@ export class NativeArt {
     outcome = null,
     flip = 1,
   ) {
-    const kit = ARTICULATED[id] || ANATOMY[id],
+    const kit = ANATOMY[id],
       foe = foes[id] || foes.dust,
       img = this.image(
         kit ? kit.atlas : "assets/painted/enemies-" + foe[0] + ".webp",

@@ -1,2 +1,0 @@
-// Generated cutouts with established character heads; see scripts/pack-rebuild.py.
-export const ARTICULATED={"orange":{"atlas":"./assets/rebuild/orange.webp","width":1024,"height":1280,"parts":{"body":[6,21,244,214],"rightArm":[307,6,153,244],"leftArm":[561,6,157,244],"rightLeg":[802,18,188,219],"leftLeg":[36,274,183,220],"tail":[278,262,212,244],"shield":[520,262,239,244]},"faces":{"neutral":[780,287,232,193],"blink":[11,543,233,193],"attack":[262,539,244,202],"skill":[524,543,232,193],"hurt":[780,543,232,193],"victory":[12,799,231,193],"down":[268,812,231,167]}}};

@@ -37,7 +37,6 @@ const list = [
   "scenes/streets-v019.webp",
   "vfx/effects.webp",
   "vfx/can-rescue-v0192.webp",
-  "rebuild/orange.webp",
 ];
 const assets = {},
   packages = [],
@@ -61,8 +60,7 @@ for (const relative of list) {
       : pipeline.png({ compressionLevel: 9 })
   ).toBuffer();
   if (data.length > 3.8 * 1024 ** 2) throw Error("单图超出分包预算：" + source);
-  group = packages.find((p) => p.bytes + data.length <= 3.8 * 1024 ** 2);
-  if (!group) {
+  if (!group || group.bytes + data.length > 3.8 * 1024 ** 2) {
     group = {
       name: "art" + (packages.length + 1),
       root: "packs/art" + (packages.length + 1) + "/",
@@ -114,7 +112,7 @@ await esbuild.build({
   ],
 });
 const manifest = {
-  version: "0.22.0",
+  version: "0.21.0",
   appid,
   packages: packages.map(({ name, root }) => ({ name, root })),
   assets,

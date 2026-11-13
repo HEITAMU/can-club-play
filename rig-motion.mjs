@@ -1,4 +1,4 @@
-import {catAction} from './action-profiles.mjs?v=0.22.0';
+import {catAction} from './action-profiles.mjs?v=0.21.0';
 // Continuous motion for painted cutout parts. No pose-frame swapping.
 const clamp=n=>Math.max(0,Math.min(1,n));
 export const ease=n=>{const t=clamp(n);return t*t*(3-2*t);};
@@ -15,8 +15,8 @@ export const RIGS={
 };
 const feet={dust:.91,box:.86,mop:.90,battery:.84,bag:.91,drone:.87,vacuum:.82,fridge:.92,sign:.92,boxBoss:.935,clock:.89,vendor:.925};
 export function rigFor(id){return RIGS[id]||{foot:feet[id]||.92,period:2.7,phase:Object.keys(feet).indexOf(id)*.7,head:[.5,.30,.42,.34,.5,.60],hand:null,tail:null,swing:.28};}
-const keys=['breath','lean','head','hand','tail','reach','sink','alpha','stride','stepLift'];
-const neutral={breath:0,lean:0,head:0,hand:0,tail:0,reach:0,sink:0,alpha:1,stride:0,stepLift:0};
+const keys=['breath','lean','head','hand','tail','reach','sink','alpha'];
+const neutral={breath:0,lean:0,head:0,hand:0,tail:0,reach:0,sink:0,alpha:1};
 const mix=(a,b,t)=>Object.fromEntries(keys.map(k=>[k,lerp(a[k],b[k],t)]));
 export function blendRigPose(previous,next,dt){return !previous||dt<0?{...next}:mix(previous,next,1-Math.exp(-Math.max(0,dt)/.026));}
 export const animationClock=(actor,time,idleTime)=>actor&&time>0?time:idleTime;
@@ -46,9 +46,7 @@ export function rigPose(id,actor,time,idleTime=time){
    head:idle.head+offset(-.065,.075,.11,.018),
    hand:idle.hand+hand,
    tail:idle.tail+offset(-.15,.12,.25,.035),
-   reach:offset(-.018,melee?.09:archer?.065:.035,melee?.07:.043),
-   stride:melee&&id==='orange'?flowTrack(t,[[0,0],[w,0],[w+(hit-w)*.35,.8],[w+(hit-w)*.75,-.8],[hit,0],[follow,0],[follow+(end-follow)*.35,-.65],[follow+(end-follow)*.72,.65],[end,0]]):0,
-   stepLift:melee&&id==='orange'?Math.max(0,Math.sin(Math.PI*clamp((t-w)/(hit-w))))*.018:0
+   reach:offset(-.018,melee?.09:archer?.065:.035,melee?.07:.043)
   };
  }else if(actor?.charge>0){
   const progress=clamp((2-actor.charge)/.45),sway=Math.sin(time*5.5)*.008;

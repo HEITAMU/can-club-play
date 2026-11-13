@@ -4,7 +4,6 @@ import fs from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {renderPuppetFrame} from '../rig-renderer.mjs';
 import {ANATOMY} from '../anatomy-data.mjs';
-import {ARTICULATED} from '../articulated-data.mjs';
 import {rigPose} from '../rig-motion.mjs';
 import {actionTiming} from '../motion.mjs';
 import {EXPRESSIONS,expressionFor,bowNock} from '../expressions.mjs';
@@ -14,7 +13,7 @@ const font='/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc';
 if(fs.existsSync(font))GlobalFonts.registerFromPath(font,'Review CJK');
 const ids=Object.keys(ANATOMY),names=['橘座','阿墨','奶盖','火花','薄荷','螺丝','布丁','星斑'];
 const labels={neutral:'平静',blink:'眨眼',attack:'攻击',skill:'施法',hurt:'受击',victory:'胜利',down:'退场'};
-const images=Object.fromEntries(await Promise.all(ids.map(async id=>[id,await loadImage((ARTICULATED[id]||ANATOMY[id]).atlas)])));
+const images=Object.fromEntries(await Promise.all(ids.map(async id=>[id,await loadImage(ANATOMY[id].atlas)])));
 export function characterFrame(id,time=0,expression,action='idle',width=288){
  const c=createCanvas(width,Math.round(width*138/144)),ctx=c.getContext('2d');
  const actor={id,catId:id,side:'p',hp:1},timing=actionTiming(actor,action),elapsed=time%2.4;
