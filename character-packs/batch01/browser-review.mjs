@@ -1,0 +1,18 @@
+import fs from 'node:fs';import path from 'node:path';import http from 'node:http';import assert from 'node:assert/strict';import {fileURLToPath} from 'node:url';import {createRequire} from 'node:module';
+import {ORDER,CHARACTERS} from './characters.mjs';import {sceneAction} from './stage.mjs';
+const require=createRequire(import.meta.url),{chromium}=require('playwright'),root=path.dirname(fileURLToPath(import.meta.url)),out=path.resolve(root,'../../qa/batch01-browser');fs.mkdirSync(out,{recursive:true});
+const mime={'.html':'text/html','.mjs':'text/javascript','.json':'application/json','.webp':'image/webp','.png':'image/png'};
+const server=http.createServer((req,res)=>{const p=path.resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://local').pathname));if(!p.startsWith(root+path.sep)&&p!==root){res.writeHead(403).end();return;}const file=p===root?path.join(root,'index.html'):p;try{const data=fs.readFileSync(file);res.writeHead(200,{'Content-Type':mime[path.extname(file)]||'application/octet-stream'}).end(data);}catch{res.writeHead(404).end();}});
+await new Promise(r=>server.listen(0,'127.0.0.1',r));const url='http://127.0.0.1:'+server.address().port+'/';let browser;
+try{browser=await chromium.launch({headless:true,args:['--no-sandbox']});const report=[];
+ for(const width of [390,960]){const page=await browser.newPage({viewport:{width,height:844},deviceScaleFactor:1});const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.status()>=400&&!r.url().endsWith('favicon.ico'))errors.push(r.status()+' '+r.url());});await page.goto(url);await page.waitForFunction(()=>globalThis.characterPack?.state.ready);
+  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);assert.equal(overflow,false,'page horizontal overflow');let actions=0;
+  for(const id of ORDER){await page.evaluate(id=>characterPack.select(id),id);await page.waitForFunction(id=>characterPack.state.id===id&&characterPack.state.ready,id);assert.ok((await page.evaluate(()=>characterPack.state.loadedImages))<=3);
+   for(let i=-1;i<CHARACTERS[id].behaviors.length;i++){const a=sceneAction(id,i);await page.evaluate(({i,t})=>{characterPack.chooseSkill(i);characterPack.seek(t);},{i,t:id==='pudding'&&i===1?1.97:a.hit+.2});await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));actions++;}
+  }
+  await page.evaluate(()=>{characterPack.select('pudding');});await page.waitForFunction(()=>characterPack.state.id==='pudding'&&characterPack.state.ready);const interaction=await page.evaluate(()=>{characterPack.seek(.70);document.getElementById('try-energy').click();const filled=characterPack.state.manual.state;document.getElementById('try-control').click();document.getElementById('try-cleanse').click();return{filled,after:characterPack.state.manual};});assert.equal(interaction.filled,'primed');assert.equal(interaction.after.state,'normal');assert.equal(interaction.after.hits,0);
+  await page.locator('#demo-success').click();await page.evaluate(()=>characterPack.seek(1.97));await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));await page.screenshot({path:path.join(out,'xuanyue-'+width+'.png'),fullPage:true});
+  assert.deepEqual(errors,[]);report.push({width,actions,consoleErrors:errors.length,overflow,fullEnergyDuringCharge:true,controlCancelsPunch:true});await page.close();
+ }
+ fs.writeFileSync(path.join(out,'report.json'),JSON.stringify({status:'passed',viewports:report},null,2)+'\n');console.log(JSON.stringify(report));
+}finally{await browser?.close();server.close();}
