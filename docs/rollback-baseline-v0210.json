@@ -1,0 +1,14 @@
+{
+  "status": "verified-version-backup",
+  "gameVersion": "0.21.0",
+  "sourceCommit": "c614a214de6c3d50ee9afc79afa01ffd70fcecbe",
+  "packagedCommit": "f6c4192ca189763ec3de49ae3ffbea11d96ed589",
+  "backupBranch": "backup/v0.21.0-before-roster50",
+  "wechatAppId": "wx43da24c6ac1e5a12",
+  "wechatPackage": "can-club-wechat-v0.21.0.zip",
+  "packageBytes": 14708340,
+  "sha256": "325b959e3703b4ddf943666af65c1a5929d34a6c5c6644347501b7bf125d6345",
+  "userDeviceSaveBackedUp": false,
+  "gameImplementationChanged": false,
+  "approvalRequiredBeforeImplementation": true
+}
