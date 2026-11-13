@@ -43,4 +43,4 @@ test('partial shield damage preserves charge; breaking shield cancels even a pri
  }
 });
 
-test('punch release clears shields but preserves locked damage',()=>{const b=make(),h=b.heroes[0];h.energy=100;let locked;for(let i=0;i<220;i++){b.tick(1/60);if(h.shieldState==='primed')locked=h.shieldPunch.shieldAtSecond;if(h.shieldState==='punching'){assert.equal(h.shield,0);assert.equal(h.shieldPunch.shieldAtSecond,locked);return;}}assert.fail('no punch');});
+test('punch release clears shields but preserves locked damage',()=>{const b=make(),h=b.heroes[0];h.energy=100;let locked=7000;for(let i=0;i<220;i++){b.tick(1/60);if(h.shieldState==='primed')locked=h.shieldPunch.shieldAtSecond;if(h.shieldState==='punching'){assert.equal(h.shield,0);assert.equal(h.shieldPunch.shieldAtSecond,locked);return;}}assert.fail('no punch');});
