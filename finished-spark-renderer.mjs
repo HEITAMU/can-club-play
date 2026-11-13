@@ -1,4 +1,4 @@
-import {FINISHED_SPARK as ART} from './finished-spark-data.mjs?v=0.21.1';
+import {FINISHED_SPARK as ART} from './finished-spark-data.mjs?v=0.21.2';
 
 // Every action drawing is one complete character. A limb is never separately
 // mirrored, stretched, crossfaded, or taken from a different character.
@@ -45,16 +45,29 @@ function facialLayer(atlas,index,key){
  if(entries.size>4)entries.delete(entries.keys().next().value);return result;
 }
 export function sparkVertex(x,y,pose){
- const t=pose.sparkClock||0,lock=clamp((518-y)/110,0,1);
- const tail=Math.exp(-(((x-105)/80)**2+((y-310)/110)**2))*lock;
- const cape=Math.exp(-(((x-147)/105)**2+((y-366)/120)**2))*lock;
- const head=clamp((270-y)/100,0,1);
- const chest=Math.exp(-(((y-310)/72)**2))*lock;
- // Small continuous secondary motion, with a rigid skull and planted feet.
- const sway=Math.sin(t*2.7+.8),ripple=Math.sin(t*3.6-1.2);
- const dx=(tail*sway*8+cape*ripple*2.8+head*Math.sin(t*1.8)*.9+(x-260)*chest*sway*.012)*lock;
- const dy=tail*Math.sin(t*2.7)*3+cape*ripple*1.5-head*Math.sin(t*2.7)*1.8-chest*sway*1.2;
- return [x+dx,y+dy];
+ const t=pose.sparkClock||0;
+ const smooth=v=>{v=clamp(v,0,1);return v*v*(3-2*v);};
+ // One slow breath drives the shoulders and skull together. The skull is
+ // translated rigidly; the bend is confined to the torso above planted paws.
+ const phase=t*Math.PI*2/3.8,breath=Math.sin(phase);
+ const upper=1-smooth((y-260)/235),feet=1-smooth((y-470)/48);
+ const active=1-clamp((pose.sparkCel||0)/1.5,0,1);
+ const shift=Math.sin(phase*.5)*1.8;
+ let dx=shift*upper,dy=-breath*3.8*upper;
+ // Rib cage expansion stays below the face and above the belt.
+ const ribs=Math.exp(-(((y-325)/55)**2))*feet;
+ dx+=(x-260)*ribs*breath*.008;
+ // The hanging hand and lantern follow the breath as a connected pendulum.
+ // Limit this zone to the resting cel; casting drawings have a raised arm.
+ const hand=smooth((x-130)/42)*(1-smooth((x-239)/38))*smooth((y-290)/75)*(1-smooth((y-475)/35));
+ const lag=Math.sin(phase-.55),angle=lag*.035*active;
+ dx+=-(y-310)*angle*hand;dy+=(x-202)*angle*hand;
+ // Tail tip moves more than its root; the cape trails the same breath.
+ const tail=(1-smooth((x-105)/57))*smooth((y-230)/50)*(1-smooth((y-370)/48));
+ const cape=(1-smooth((x-145)/60))*smooth((y-340)/45)*(1-smooth((y-445)/30));
+ dx+=(tail*Math.sin(phase-.9)*5+cape*lag*1.4)*active;
+ dy+=tail*Math.cos(phase-.9)*2*active;
+ return [x+dx*feet,y+dy*feet];
 }
 function triangle(ctx,image,src,dst){
  const [a,b,c]=src,[A,B,C]=dst,ux=b[0]-a[0],uy=b[1]-a[1],vx=c[0]-a[0],vy=c[1]-a[1],det=ux*vy-uy*vx;

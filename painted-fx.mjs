@@ -1,8 +1,8 @@
-import {VFX_ATLAS} from './vfx-atlas.mjs?v=0.21.1';
-import {FX_CELLS,sampleRoute,sampleImpact,sampleGuard,sampleStatus,shieldTransition} from './vfx-motion.mjs?v=0.21.1';
-import {paintHealing} from './healing-fx.mjs?v=0.21.1';
-import {CAN_ATLAS,paintCan} from './can-fx.mjs?v=0.21.1';
-export {effectEnvelope,impactStyle,shieldTransition} from './vfx-motion.mjs?v=0.21.1';
+import {VFX_ATLAS} from './vfx-atlas.mjs?v=0.21.2';
+import {FX_CELLS,sampleRoute,sampleImpact,sampleGuard,sampleStatus,shieldTransition} from './vfx-motion.mjs?v=0.21.2';
+import {paintHealing} from './healing-fx.mjs?v=0.21.2';
+import {CAN_ATLAS,paintCan} from './can-fx.mjs?v=0.21.2';
+export {effectEnvelope,impactStyle,shieldTransition} from './vfx-motion.mjs?v=0.21.2';
 let image;
 let canImage;
 function canAtlas(){if(!canImage&&typeof Image!=='undefined'){canImage=new Image();canImage.src=CAN_ATLAS.url;}return canImage;}

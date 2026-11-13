@@ -1,4 +1,4 @@
-import {catAction} from './action-profiles.mjs?v=0.21.1';
+import {catAction} from './action-profiles.mjs?v=0.21.2';
 // Continuous motion for painted cutout parts. No pose-frame swapping.
 const clamp=n=>Math.max(0,Math.min(1,n));
 export const ease=n=>{const t=clamp(n);return t*t*(3-2*t);};
@@ -28,7 +28,7 @@ export function flowTrack(time,points){
  const [x0,y0]=points[i],[x1,y1]=points[i+1],h=x1-x0,u=(time-x0)/h,u2=u*u,u3=u2*u;
  return (2*u3-3*u2+1)*y0+(u3-2*u2+u)*h*slope(i)+(-2*u3+3*u2)*y1+(u3-u2)*h*slope(i+1);
 }
-function resting(id,time){const r=rigFor(id),q=time*Math.PI*2/r.period+r.phase,hero=!!RIGS[id];return {...neutral,breath:Math.sin(q)*.035,lean:Math.sin(q+.6)*.026,head:hero?Math.sin(q*.73+1)*.045:Math.sin(q)*.025,hand:hero?Math.sin(q+.9)*.055:0,tail:hero?Math.sin(q*1.22+r.phase)*.18:0};}
+function resting(id,time){if(id==='spark')return {...neutral};const r=rigFor(id),q=time*Math.PI*2/r.period+r.phase,hero=!!RIGS[id];return {...neutral,breath:Math.sin(q)*.035,lean:Math.sin(q+.6)*.026,head:hero?Math.sin(q*.73+1)*.045:Math.sin(q)*.025,hand:hero?Math.sin(q+.9)*.055:0,tail:hero?Math.sin(q*1.22+r.phase)*.18:0};}
 export function rigPose(id,actor,time,idleTime=time){
  const r=rigFor(id),idle=resting(id,idleTime);let p=idle;
  if(actor?.action){

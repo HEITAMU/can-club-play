@@ -121,7 +121,7 @@ await esbuild.build({
   ],
 });
 const manifest = {
-  version: "0.21.1",
+  version: "0.21.2",
   appid,
   packages: packages.map(({ name, root }) => ({ name, root })),
   assets,

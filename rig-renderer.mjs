@@ -1,8 +1,8 @@
-import {FINISHED_SPARK} from './finished-spark-data.mjs?v=0.21.1';
-import {drawFinishedSpark} from './finished-spark-renderer.mjs?v=0.21.1';
-import {ANATOMY} from './anatomy-data.mjs?v=0.21.1';
-import {drawAnatomy} from './anatomy-renderer.mjs?v=0.21.1';
-import {rigFor} from './rig-motion.mjs?v=0.21.1';
+import {FINISHED_SPARK} from './finished-spark-data.mjs?v=0.21.2';
+import {drawFinishedSpark} from './finished-spark-renderer.mjs?v=0.21.2';
+import {ANATOMY} from './anatomy-data.mjs?v=0.21.2';
+import {drawAnatomy} from './anatomy-renderer.mjs?v=0.21.2';
+import {rigFor} from './rig-motion.mjs?v=0.21.2';
 const PAD_X=.22,PAD_TOP=.20,PAD_BOTTOM=.18,images=new Map(),instances=new WeakMap();
 // The torso has no painted forearms. Left and right arms have separate shoulder sockets.
 function getImage(url){let r=images.get(url);if(!r){const img=new Image();r={img,ready:false};img.onload=()=>r.ready=true;img.src=url;images.set(url,r);}return r;}

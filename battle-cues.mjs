@@ -1,6 +1,6 @@
-import {attackStyle} from './motion.mjs?v=0.21.1';
-import {CATS} from './core.mjs?v=0.21.1';
-import {catAction} from './action-profiles.mjs?v=0.21.1';
+import {attackStyle} from './motion.mjs?v=0.21.2';
+import {CATS} from './core.mjs?v=0.21.2';
+import {catAction} from './action-profiles.mjs?v=0.21.2';
 export const cueColors={attack:'#edc581',enemy:'#ee9f8c',support:'#b3d9ba',energy:'#d2b9eb'};
 const skillEffect={orange:'全队护盾',ink:'穿甲三连',milk:'全队治疗',spark:'群攻灼烧',mint:'眩晕打断',bolt:'破甲',pudding:'群攻＋全队护盾',star:'治疗＋回能'};
 // Coordinates are foot contacts on the painted ground, not sprite centers.
