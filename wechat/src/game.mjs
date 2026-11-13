@@ -615,7 +615,7 @@ export class NativeGame {
       points = {},
       base = Math.min(70, ah * 0.235, w * 0.17);
     for (const a of actors) {
-      const size = base * (a.boss ? 1.27 : 1);
+      const size = base * (a.boss ? 1.27 : a.catId === "pudding" ? 1.22 : 1);
       sizes[a.id] = size;
       const src = ground[a.id],
         tar = ground[a.action?.targetId || b.targetFor(a)?.id],

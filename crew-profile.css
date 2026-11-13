@@ -109,3 +109,9 @@
 @media(max-width:350px){.formation-board{height:300px}.formation-slot{width:86px;height:90px}.formation-slot-art,.formation-slot-art .painted-sprite{width:65px;height:65px}.formation-card-art,.formation-card-art .painted-sprite{width:56px;height:56px}.formation-bench{gap:8px 6px}.formation-heading>span{font-size:9px}.formation-hint{font-size:10px}.crew-roster-card{flex-basis:62px}}
 
 .crew-quick-upgrade>small{font-size:11px;line-height:13px;font-weight:800}.crew-quick-upgrade>span{font-size:9px;line-height:12px;color:#f0e5c9}.crew-quick-upgrade:disabled>span{color:#bac8b9}
+
+/* All portraits share a sole anchor 8px above the panel floor. */
+.crew-portrait{--portrait-size:218px}
+.crew-portrait>.painted-sprite{position:absolute;left:50%;margin-left:calc(var(--portrait-size) * -.5);top:auto;bottom:calc(8px - var(--portrait-size) * .08);width:var(--portrait-size);height:var(--portrait-size)}
+@media(min-width:420px){.crew-portrait{--portrait-size:236px}}
+@media(max-width:350px){.crew-portrait{--portrait-size:196px}}
