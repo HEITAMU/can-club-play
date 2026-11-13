@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mitigatedDamage,effectiveDefense} from '../combat-stats.mjs';
 import {Battle,CATS,initialState,catStats,inheritTraining,encodeSave,decodeSave} from '../core.mjs';
 import {crewProfileHTML,crewSkill} from '../crew-profile.mjs';
-const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
+const near=(a,b)=>assert.equal(a,Math.round(b));
 function ready(ids=['orange','spark','mint']){const s=initialState();s.highest=120;s.roster.owned=CATS.map(c=>c.id);s.party=ids;const b=new Battle(s);for(const a of [...b.heroes,...b.enemies]){a.wait=99;a.skillWait=99;a.shield=0;a.hp=a.maxHp=10000;}return {s,b};}
 
 test('physical and magic damage use independent defense and penetration ratings',()=>{
@@ -30,7 +30,7 @@ test('armor shred is permanent and is applied before flat penetration; MR is unc
   Object.assign(h,{level,atk:100,armorPen:10});Object.assign(e,{armor:100,magicResist:80});
   b.skill(h);const armor=level===5?25:50;
   assert.equal(e.armor,armor);assert.equal(e.magicResist,80);near(e.maxHp-e.hp,300*100/(100+armor-10));
-  b.skill(h);assert.equal(e.armor,armor*(level===5?.25:.5));
+  b.skill(h);assert.equal(e.armor,Math.round(armor*(level===5?.25:.5)));
  }
  const {b}=ready(['ink']),h=b.heroes[0],e=b.enemies[0];Object.assign(h,{atk:100,armorPen:12});e.armor=100;
  b.skill(h);near(e.maxHp-e.hp,330*100/163);assert.equal(e.armor,100);
@@ -39,7 +39,7 @@ test('burn uses its real caster and magic penetration even when another cat is i
  const {b}=ready(),caster=b.heroes[1],weaker=b.heroes[2],e=b.enemies[0];
  caster.magicPen=50;weaker.magicPen=90;Object.assign(e,{armor:999,magicResist:100});
  b.applyBurn(e,100,1,caster);b.applyBurn(e,50,2,weaker);b.events=[];
- const events=b.tick(.25);near(e.maxHp-e.hp,25*100/150);
+ const events=b.tick(.25);near(e.maxHp-e.hp,20*100/150);assert.equal(e.burnStepMs,50);
  const event=events.find(x=>x.type==='burn');assert.equal(event.from,caster.id);assert.equal(event.damageType,'magic');
 });
 test('old saves and inheritance derive all four stats without changing stored investment',()=>{

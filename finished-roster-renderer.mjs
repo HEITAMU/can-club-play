@@ -10,13 +10,13 @@ function layer(id,atlas,index,face){
  const art=FINISHED_ROSTER[id],sourceScale=(atlas.width||art.width)/art.width,key=index===0?face?.to:'neutral',expression={blink:1,down:1,hurt:2,victory:3}[key],token=index+':'+(expression||0);
  const ready=value=>value.image.width?value:{image:atlas,rect:art.frames[index].map(v=>v*sourceScale),scale:sourceScale};
  let entries=cache.get(atlas);if(!entries){entries=new Map();cache.set(atlas,entries);}if(entries.has(token))return ready(entries.get(token));
- const c=canvas(512,544);if(!c)return {image:atlas,rect:art.frames[index].map(v=>v*sourceScale),scale:sourceScale};const ctx=c.getContext('2d');ctx.drawImage(atlas,...art.frames[index].map(v=>v*sourceScale),0,0,512,544);
+ const resolution=Math.min(1,sourceScale),cw=Math.round(512*resolution),ch=Math.round(544*resolution),c=canvas(cw,ch);if(!c)return {image:atlas,rect:art.frames[index].map(v=>v*sourceScale),scale:sourceScale};const ctx=c.getContext('2d');ctx.drawImage(atlas,...art.frames[index].map(v=>v*sourceScale),0,0,cw,ch);
  if(expression){
-  const p=canvas(512,544),mask=canvas(512,544);const pc=p.getContext('2d'),m=mask.getContext('2d');pc.drawImage(atlas,...art.frames[expression].map(v=>v*sourceScale),0,0,512,544);
+  const p=canvas(cw,ch),mask=canvas(cw,ch);const pc=p.getContext('2d'),m=mask.getContext('2d');pc.drawImage(atlas,...art.frames[expression].map(v=>v*sourceScale),0,0,cw,ch);
   // These bounds are calibrated against the packed paintings, not arm/head cutouts.
-  const [x,y,rx,ry]=art.face||[.57,.26,.16,.085];m.save();m.translate(x*512,y*544);m.scale(rx*512,ry*544);const g=m.createRadialGradient(0,0,.82,0,0,1);g.addColorStop(0,'#fff');g.addColorStop(1,'#fff0');m.fillStyle=g;m.fillRect(-1,-1,2,2);m.restore();pc.globalCompositeOperation='destination-in';pc.drawImage(mask,0,0);ctx.globalCompositeOperation='source-atop';ctx.drawImage(p,0,0);ctx.globalCompositeOperation='source-over';
+  const [x,y,rx,ry]=art.face||[.57,.26,.16,.085];m.save();m.translate(x*cw,y*ch);m.scale(rx*cw,ry*ch);const g=m.createRadialGradient(0,0,.82,0,0,1);g.addColorStop(0,'#fff');g.addColorStop(1,'#fff0');m.fillStyle=g;m.fillRect(-1,-1,2,2);m.restore();pc.globalCompositeOperation='destination-in';pc.drawImage(mask,0,0);ctx.globalCompositeOperation='source-atop';ctx.drawImage(p,0,0);ctx.globalCompositeOperation='source-over';
  }
- const value={image:snapshot?snapshot(c):c.transferToImageBitmap?c.transferToImageBitmap():c,rect:[0,0,512,544]};entries.set(token,value);if(entries.size>18)entries.delete(entries.keys().next().value);return ready(value);
+ const value={image:snapshot?snapshot(c):c.transferToImageBitmap?c.transferToImageBitmap():c,rect:[0,0,cw,ch],scale:resolution};entries.set(token,value);if(entries.size>18){const oldest=entries.keys().next().value;entries.get(oldest).image.close?.();entries.delete(oldest);}return ready(value);
 }
 export function prepareRosterFrames(id,atlas){for(const index of [0,...Array.from({length:FINISHED_ROSTER[id].frames.length-4},(_,i)=>i+4)])layer(id,atlas,index,{to:'neutral'});for(const to of ['blink','hurt','victory'])layer(id,atlas,0,{to});}
 export function rosterVertex(id,x,y,p){

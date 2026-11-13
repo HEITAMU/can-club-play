@@ -1,5 +1,45 @@
-const CACHE='can-club-0.25.0';
-const ASSETS=['./companions.mjs?v=0.25.0','./activities.mjs?v=0.25.0','./street-combat.mjs?v=0.25.0','./street-ui.mjs?v=0.25.0','./equipment.mjs?v=0.25.0','./inventory-ui.mjs?v=0.25.0','./inventory.css?v=0.25.0','./campaign.mjs?v=0.25.0','./campaign-ui.mjs?v=0.25.0','./talents.mjs?v=0.25.0','./district-input.mjs?v=0.25.0','./district.mjs?v=0.25.0','./district.css?v=0.25.0','./rewarded-economy.mjs?v=0.25.0','./progression.mjs?v=0.25.0','./assets/scenes/neighborhood-v0220.webp','./shield-punch.mjs?v=0.25.0','./shidun-motion.mjs?v=0.25.0','./shidun-fx.mjs?v=0.25.0','./assets/finished/pudding-v0216.webp','./assets/finished/pudding-portrait-v0216.webp','./finished-roster-data.mjs?v=0.25.0','./finished-roster-renderer.mjs?v=0.25.0','./assets/finished/orange-v0213.webp','./assets/finished/orange-portrait-v0213.webp','./assets/finished/ink-v0213.webp','./assets/finished/ink-portrait-v0213.webp','./assets/finished/milk-v0213.webp','./assets/finished/milk-portrait-v0213.webp','./assets/finished/mint-v0213.webp','./assets/finished/mint-portrait-v0213.webp','./assets/finished/bolt-v0216.webp','./assets/finished/bolt-portrait-v0213.webp','./assets/finished/star-v0213.webp','./assets/finished/star-portrait-v0213.webp','./finished-spark-data.mjs?v=0.25.0','./finished-spark-renderer.mjs?v=0.25.0','./assets/finished/spark-v0211.webp','./assets/finished/spark-portrait-v0211.webp','./crew-formation.mjs?v=0.25.0','./combat-stats.mjs?v=0.25.0','./crew-profile.mjs?v=0.25.0','./crew-profile.css?v=0.25.0','./can-timing.mjs?v=0.25.0','./can-fx.mjs?v=0.25.0','./assets/vfx/can-rescue-v0192.webp','./healing-fx.mjs?v=0.25.0','./vibrant.css?v=0.25.0','./assets/scenes/streets-v019.webp','./','./action-profiles.mjs?v=0.25.0','./anatomy-data.mjs?v=0.25.0','./anatomy-renderer.mjs?v=0.25.0','./expressions.mjs?v=0.25.0','./assets/anatomy/cats-a-v0200.webp','./assets/anatomy/cats-b.webp','./assets/anatomy/cats-c.webp','./assets/anatomy/cats-d.webp','./assets/anatomy/portraits-v0200.webp','./painted-fx.mjs?v=0.25.0','./painted-fx.css?v=0.25.0','./effects.html','./effects-gallery.mjs?v=0.25.0','./assets/vfx/effects-v0216.webp','./vfx-motion.mjs?v=0.25.0','./vfx-atlas.mjs?v=0.25.0','./index.html','./style.css?v=0.25.0','./flat.css?v=0.25.0','./painted.css?v=0.25.0','./core.mjs?v=0.25.0','./motion.mjs?v=0.25.0','./idle-motion.mjs?v=0.25.0','./rig-motion.mjs?v=0.25.0','./rig-renderer.mjs?v=0.25.0','./formation-motion.mjs?v=0.25.0','./battle-ui.mjs?v=0.25.0','./battle-cues.mjs?v=0.25.0','./battle-layout.css?v=0.25.0','./painted-art.mjs?v=0.25.0','./art.mjs?v=0.25.0','./app.mjs?v=0.25.0','./motion.html','./motion-gallery.mjs?v=0.25.0','./painted-motion.css?v=0.25.0','./icon.svg','./manifest.webmanifest','./assets/painted/enemies-a.webp','./assets/painted/enemies-b.webp','./assets/painted/enemies-c.webp','./assets/painted/items.webp'];
-self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
-self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('can-club-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
-self.addEventListener('fetch',event=>{if(event.request.method!=='GET'||new URL(event.request.url).origin!==self.location.origin)return;event.respondWith(fetch(event.request).then(response=>{if(response.ok){const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(event.request,copy));}return response;}).catch(()=>caches.match(event.request).then(hit=>hit||(event.request.mode==='navigate'?caches.match('./index.html'):Response.error()))));});
+const CACHE='can-club-0.25.1',ART_CACHE='can-club-art-v1';
+// Cache only the shell at install. Download artwork when the player needs it.
+const SHELL=['./index.html','./game.bundle.mjs?v=0.25.1','./game.bundle.css?v=0.25.1'];
+self.addEventListener('install',event=>event.waitUntil((async()=>{
+ try{const cache=await caches.open(CACHE);await Promise.allSettled(SHELL.map(url=>cache.add(url)));}catch{}
+ await self.skipWaiting();
+})()));
+self.addEventListener('activate',event=>event.waitUntil((async()=>{
+ // Retain already downloaded scenery/effects before retiring the old shell.
+ try{
+  const art=await caches.open(ART_CACHE);
+  for(const key of await caches.keys())if(key.startsWith('can-club-')&&key!==CACHE&&key!==ART_CACHE){
+   const old=await caches.open(key);
+   for(const request of await old.keys())if(/\/assets\/(scenes|vfx|painted)\//.test(request.url)){
+    if(!await art.match(request)){const response=await old.match(request);if(response?.ok)await art.put(request,response).catch(()=>{});}
+   }
+   await caches.delete(key);
+  }
+ }catch{}
+ await self.clients.claim();
+})()));
+async function remember(cache,key,response){if(cache&&response?.ok)await cache.put(key,response.clone()).catch(()=>{});return response;}
+async function resource(request){
+ const artwork=new URL(request.url).pathname.includes('/assets/');
+ const cache=await caches.open(artwork?ART_CACHE:CACHE).catch(()=>null);
+ const cached=await cache?.match(request).catch(()=>null);if(cached)return cached;
+ return remember(cache,request,await fetch(request));
+}
+async function page(request){
+ const cache=await caches.open(CACHE).catch(()=>null),cached=await cache?.match('./index.html').catch(()=>null);
+ const network=fetch(request).then(async response=>{
+  if(!response.ok&&cached)return cached;
+  return remember(cache,'./index.html',response);
+ }).catch(error=>{if(cached)return cached;throw error;});
+ if(!cached)return network;
+ let timer;
+ try{return await Promise.race([network,new Promise(resolve=>{timer=setTimeout(()=>resolve(cached),2500);})]);}
+ finally{clearTimeout(timer);}
+}
+self.addEventListener('fetch',event=>{
+ if(event.request.method!=='GET'||new URL(event.request.url).origin!==self.location.origin)return;
+ const result=event.request.mode==='navigate'?page(event.request):resource(event.request);
+ event.respondWith(result.catch(()=>Response.error()));
+ event.waitUntil(result.catch(()=>{}));
+});

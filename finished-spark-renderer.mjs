@@ -24,8 +24,8 @@ function facialLayer(atlas,index,key){
  const id=index+':'+key;if(entries.has(id))return entries.get(id);
  // Cache the selected cel even for the neutral face. The mesh then samples a
  // small, consistently scaled surface instead of the full 2048px atlas.
- const surface=canvas(512,544);if(!surface)return {image:atlas,rect,scale:sourceScale};
- const ctx=surface.getContext('2d');ctx.drawImage(atlas,...rect,0,0,512,544);
+ const resolution=Math.min(1,sourceScale),surface=canvas(Math.round(512*resolution),Math.round(544*resolution));if(!surface)return {image:atlas,rect,scale:sourceScale};
+ const ctx=surface.getContext('2d');ctx.scale(resolution,resolution);ctx.drawImage(atlas,...rect,0,0,512,544);
  if(key!=='neutral'){
  const patch=canvas(320,256),mask=canvas(320,256);
  if(!patch||!mask)return {image:atlas,rect,scale:sourceScale};
@@ -40,7 +40,7 @@ function facialLayer(atlas,index,key){
  p.globalCompositeOperation='destination-in';p.drawImage(mask,0,0);
  ctx.globalCompositeOperation='source-atop';ctx.drawImage(patch,...ART.frames[index].head);ctx.globalCompositeOperation='source-over';
  }
- const result={image:surface,rect:[0,0,512,544]};entries.set(id,result);
+ const result={image:surface,rect:[0,0,surface.width,surface.height],scale:resolution};entries.set(id,result);
  // Keep memory bounded when the roster, portrait and combat use the same cat.
  if(entries.size>4)entries.delete(entries.keys().next().value);return result;
 }

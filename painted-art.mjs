@@ -1,3 +1,4 @@
+import {webAsset} from './web-assets.mjs?v=0.25.1';
 import {FINISHED_ROSTER} from './finished-roster-data.mjs?v=0.25.0';
 import {poseFor} from './motion.mjs?v=0.25.0';
 import {rigPose,rigFor,blendRigPose,animationClock} from './rig-motion.mjs?v=0.25.0';
@@ -9,9 +10,13 @@ const foeSheets={dust:['a',0],box:['a',1],mop:['a',2],battery:['a',3],bag:['b',0
 const reduce=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 const poses=new WeakMap();
 function sprite(kind,sheet,row,rows,id){
- return `<span class="painted-sprite" data-art="${id}" data-atlas="./assets/painted/${kind}-${sheet}.webp" data-hero="${kind==='heroes'}" data-row="${row}" data-rows="${rows}" data-pose="0" style="--atlas:url('./assets/painted/${kind}-${sheet}.webp');--sheet-rows:${rows};background-position:0% ${row/(rows-1)*100}%" aria-hidden="true"><canvas class="rig-canvas" aria-hidden="true"></canvas></span>`;
+ return `<span class="painted-sprite" data-art="${id}" data-atlas="./assets/painted/${kind}-${sheet}.webp" data-asset="./assets/painted/${kind}-${sheet}.webp" data-hero="${kind==='heroes'}" data-row="${row}" data-rows="${rows}" data-pose="0" style="--atlas:url('./assets/painted/${kind}-${sheet}.webp');--sheet-rows:${rows};background-position:0% ${row/(rows-1)*100}%" aria-hidden="true"><canvas class="rig-canvas" aria-hidden="true"></canvas></span>`;
 }
-export function paintedCat(id){if(FINISHED_ROSTER[id]){const art=FINISHED_ROSTER[id];return `<span class="painted-sprite" data-art="${id}" data-hero="true" data-atlas="${art.atlas}" aria-hidden="true"><span class="anatomy-fallback" style="background-image:url('${art.portrait}');background-size:100% 100%"></span><canvas class="rig-canvas" aria-hidden="true"></canvas></span>`;}if(id==='spark')return `<span class="painted-sprite" data-art="spark" data-hero="true" data-atlas="./assets/finished/spark-v0211.webp" aria-hidden="true"><span class="anatomy-fallback" style="background-image:url('./assets/finished/spark-portrait-v0211.webp');background-size:100% 100%"></span><canvas class="rig-canvas" aria-hidden="true"></canvas></span>`;const i=Math.max(0,heroIds.indexOf(id)),row=Math.floor(i/4),atlas='./assets/anatomy/portraits-v0200.webp';return `<span class="painted-sprite" data-art="${heroIds[i]}" data-atlas="${atlas}" data-hero="true" data-row="${row}" data-rows="2" data-pose="0" style="--atlas:url('${atlas}');--sheet-rows:2" aria-hidden="true"><span class="anatomy-fallback" style="background-position:${i%4/3*100}% ${row*100}%"></span><canvas class="rig-canvas" aria-hidden="true"></canvas></span>`;}
+export function paintedCat(id,portrait=false){
+ const art=FINISHED_ROSTER[id]||(id==='spark'?{atlas:'./assets/finished/spark-v0211.webp',portrait:'./assets/finished/spark-portrait-v0211.webp'}:FINISHED_ROSTER.orange);
+ const fallback=`<span class="anatomy-fallback" data-asset="${webAsset(art.portrait)}" style="background-size:100% 100%"></span>`;
+ return `<span class="painted-sprite${portrait?' painted-thumbnail':''}" data-art="${id}" data-hero="${!portrait}" data-atlas="${webAsset(art.atlas)}" aria-hidden="true">${fallback}${portrait?'':'<canvas class="rig-canvas" aria-hidden="true"></canvas>'}</span>`;
+}
 export function paintedEnemy(type,boss=false){const id=boss&&type==='box'?'boxBoss':type;const [sheet,row]=foeSheets[id]||foeSheets.dust;return sprite('enemies',sheet,row,4,id);}
 export function paintedPose(root,frame,{actor,time=0,idleTime=time,outcome,preview,renderSize}={}){
  const el=root.matches('.painted-sprite')?root:root.querySelector('.painted-sprite');if(!el)return;
@@ -22,13 +27,13 @@ export function paintedPose(root,frame,{actor,time=0,idleTime=time,outcome,previ
  shape.nock=bowNock(actor);poses.set(el,{clock,shape:{...shape},face});
  if(reduce){for(const k of ['lean','head','hand','tail','reach'])shape[k]*=.2;shape.breath*=.35;}
  el.style.transformOrigin=`50% ${foot*100}%`;
- const drawn=drawRig(el,id,shape,face,renderSize);
+ const drawn=drawRig(el,id,shape,face,renderSize,typeof performance!=='undefined'?performance.now()/1000:clock);
  el.style.transform=drawn?`translateY(${groundShift}%)`:`translateY(${groundShift}%) rotate(${shape.lean*180/Math.PI}deg) scale(${1-shape.breath*.35},${1+shape.breath})`;
  el.dataset.pose='0';el.dataset.phase=phase;el.dataset.expression=face.to;
 }
-export function paintedItem(index,size){return `<span class="painted-item" style="background-position:${index%4/3*100}% ${Math.floor(index/4)/3*100}%;${size?`width:${size}px;height:${size}px;`:''}" aria-hidden="true"></span>`;}
+export function paintedItem(index,size){return `<span class="painted-item" data-asset="./assets/painted/items.webp" style="background-position:${index%4/3*100}% ${Math.floor(index/4)/3*100}%;${size?`width:${size}px;height:${size}px;`:''}" aria-hidden="true"></span>`;}
 // Portrait cells are 418 x 627. The SVG viewport crops uniformly on every screen.
 export function paintedScene(index){
  const cell=Math.max(0,Math.min(5,Math.floor(Number(index)||0))),x=cell%3*418,y=Math.floor(cell/3)*627;
- return `<svg class="scene-art stage-scene" data-street="${cell}" viewBox="${x} ${y} 418 627" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><image href="./assets/scenes/streets-v019.webp" width="1254" height="1254"/></svg>`;
+ return `<svg class="scene-art stage-scene" data-street="${cell}" viewBox="${x} ${y} 418 627" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><image data-asset="./assets/scenes/streets-v019.webp" width="1254" height="1254"/></svg>`;
 }

@@ -1,3 +1,4 @@
+import {integer,mulDiv} from './integer-math.mjs?v=0.25.1';
 // Defense and penetration are ratings, not damage-reduction percentages.
 // Physical and magic damage have independent defenses and flat penetration.
 export const HERO_COMBAT={
@@ -32,5 +33,5 @@ export function effectiveDefense(target,source,type='physical',bonusPen=0){
  return Math.max(0,(target?.[defense]||0)-Math.max(0,source?.[penetration]||0)-Math.max(0,bonusPen));
 }
 export function mitigatedDamage(raw,target,source,type='physical',bonusPen=0){
- return Math.max(0,raw)*100/(100+effectiveDefense(target,source,type,bonusPen));
+ return mulDiv(Math.max(0,integer(raw)),100,100+integer(effectiveDefense(target,source,type,bonusPen)));
 }

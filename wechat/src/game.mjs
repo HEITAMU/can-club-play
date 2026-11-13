@@ -1,6 +1,7 @@
-import {STREET_GROUPS,streetChoices,streetSelection} from '../../street-ui.mjs';
-import {activityReward,rewardText} from '../../activities.mjs';
-import {GEAR_SLOTS,GEAR_SETS,RUNES,QUALITIES,ATTRS,BAG_CAP,gearName,gearOwner,gearValues,gearBonuses,attrText,materialRows,equipGear,unequipGear,enhanceQuote,enhanceGear,reforgeGear,dismantleGear,craftQuote,craftGear} from '../../equipment.mjs';
+import {STREET_GROUPS,streetChoices,streetSelection,activityDrops} from '../../street-ui.mjs';
+import {activityInfo,activityReward,rewardText} from '../../activities.mjs';
+import {ActivityReturn} from '../../activity-navigation.mjs';
+import {GEAR_SLOTS,GEAR_SETS,RUNES,QUALITIES,ATTRS,BAG_CAP,gearName,gearStory,gearOwner,gearValues,gearBonuses,attrText,materialRows,equipGear,unequipGear,enhanceQuote,enhanceGear,reforgeGear,dismantleGear,craftQuote,craftGear} from '../../equipment.mjs';
 import {DAILY_TASKS,JOURNEY,refreshCampaign,dailyReward,claimDaily,claimDailyChest,claimJourney,weeklyInfo} from '../../campaign.mjs';
 import {talentCards} from '../../talents.mjs';
 import {businessBoostQuote,grantBusinessBoost} from '../../rewarded-economy.mjs';
@@ -58,6 +59,7 @@ export class NativeGame {
     this.nextDelay = 0;
     this.endTime = 0;
     this.hitTexts = [];
+    this.activityReturn = new ActivityReturn();
     this.farming = false;
     this.offsets = new MotionOffsets();
     this.cues = new BattleCues();
@@ -91,6 +93,7 @@ export class NativeGame {
     this.notice = { text: message, until: this.time + 2.8 };
   }
   change(tab) {
+    if(tab!=="battle")this.activityReturn.cancel();
     this.districtRelease=null;
     this.tab = tab;
     if(tab==='map')this.mapPlace=null;
@@ -98,6 +101,7 @@ export class NativeGame {
     this.pointer = null;
   }
   start(run = true, { stage = this.state.stage, farm = false, arenaTier = 0, weeklyTier = 0, activity = null } = {}) {
+    this.activityReturn.cancel();
     if (this.state.pending) {
       this.battle = new G.Battle(this.state, { stage });
       this.running = false;
@@ -142,6 +146,7 @@ export class NativeGame {
   }
   update(dt) {
     this.time += dt;
+    if(this.tab==='battle'&&!this.modal){const route=this.activityReturn.update(this.time);if(route){this.openStreet(route.group,route.id);this.streetView.tier=route.tier;}}
     if(this.districtRelease&&this.time-this.districtRelease.at>=.27){if(this.tab==='map'&&!this.mapPlace){this.mapPlace=this.districtRelease.id;this.scroll=0;}this.districtRelease=null;}
     if (this.pointer?.dragging) {
       const y = this.pointer.y,
@@ -180,7 +185,7 @@ export class NativeGame {
       this.nextDelay = 2.2;
       b.reward=result;
       if(result.gearLoot?.item)this.toast(gearName(result.gearLoot.item)+" 已放入背包");else if(result.gearLoot?.scrap)this.toast("背包已满，掉落折算为零件 +"+result.gearLoot.scrap);
-      if(result.activity){this.running=false;this.toast(result.win?rewardText(result):"委托失败，没有损失。可调整搭配再来。");return;}
+      if(result.activity){this.running=false;this.activityReturn.finish(b.activity,this.time);this.toast(result.win?rewardText(result):"挑战结束");return;}
       if(result.arena){this.running=false;this.toast(result.win?(result.weekly?"徽章 +"+result.badges+" · 物资 +"+result.supplies+" · 鱼币 +"+result.gold:"擂台获胜，突破徽章 +"+result.badges):"挑战失败，没有损失");return;}
       if (result.win) {
         this.env.sound?.("reward");
@@ -200,8 +205,7 @@ export class NativeGame {
     for (const e of events) {
       if (
         ["hit", "heal", "burn"].includes(e.type) &&
-        e.value > 0 &&
-        (e.type !== "burn" || e.serial % 7 === 0)
+        e.value > 0
       ) {
         this.hitTexts.push({ ...e, born: b.time });
         if (this.hitTexts.length > 40) this.hitTexts.shift();
@@ -596,7 +600,7 @@ export class NativeGame {
       text(
         c,
         bv.charging
-          ? "蓄力 " + bv.seconds.toFixed(1) + "秒 · 开罐打断"
+          ? "蓄力 " + Math.ceil(bv.seconds) + "秒 · 开罐打断"
           : fmt(bv.hp) + " / " + fmt(bv.maxHp),
         376,
         this.top + 53,
@@ -859,34 +863,8 @@ export class NativeGame {
   }
   drawCrew(y) {
     const c = this.ctx;
-    this.button('companion-quests','伙伴委托 · 结识与升星',14,y,362,32,()=>this.openStreet('recruit'),{size:12});y+=44;
-    this.button(
-      "profile",
-      "伙伴档案",
-      14,
-      y,
-      177,
-      33,
-      () => {
-        this.mode = "profile";
-        this.scroll = 0;
-      },
-      { fill: this.mode === "profile" ? "#7d8f78" : C.panel },
-    );
-    this.button(
-      "formation",
-      "调整阵容",
-      199,
-      y,
-      177,
-      33,
-      () => {
-        this.mode = "formation";
-        this.scroll = 0;
-      },
-      { fill: this.mode === "formation" ? "#7d8f78" : C.panel },
-    );
-    y += 45;
+    this.button('companion-quests','结识',14,y,362,32,()=>this.openStreet('recruit'),{size:12});y+=44;
+    for(const [i,[id,name]]of [['profile','养成'],['equipment','装备'],['formation','阵容']].entries())this.button(id,name,14+i*124,y,114,33,()=>{this.mode=id;if(id==='equipment'&&!G.ownsCompanion(this.state,this.selected))this.selected=G.unlocked(this.state)[0].id;this.bagDetail=null;this.bagCraft=null;this.scroll=0;},{fill:this.mode===id?'#7d8f78':C.panel});y+=45;
     if (this.mode === "formation") return this.drawFormation(y);
     c.save();
     c.beginPath();
@@ -910,7 +888,7 @@ export class NativeGame {
         65,
         91,
         () => {
-          this.selected = a.id;
+          this.selected = a.id;if(!open)this.mode="profile";this.bagDetail=null;this.bagPage=0;
         },
         {
           fill: this.selected === a.id ? palettes[a.id] : C.panel,
@@ -937,6 +915,7 @@ export class NativeGame {
     this.clip = previous;
     c.restore();
     y += 139;
+    if(this.mode==="equipment")return this.drawEquipment(y);
     const a = cat(this.selected),
       st = G.catStats(this.state, a.id),
       open = G.ownsCompanion(this.state,a.id),
@@ -977,8 +956,8 @@ export class NativeGame {
     const stats = [
       ["生命", fmt(st.hp)],
       ["攻击", fmt(st.atk)],
-      ["间隔", st.interval.toFixed(2) + "秒"],
-      ["暴击", Math.round(st.crit * 100) + "%"],
+      ["攻速", st.attackSpeed + "次/分"],
+      ["暴击", st.crit + "%"],
       ["护甲", st.armor],
       ["魔抗", st.magicResist],
       ["护甲穿透", st.armorPen],
@@ -1167,73 +1146,78 @@ export class NativeGame {
     });
     return y + 282;
   }
-  drawRelics(y) {
-    const c=this.ctx,s=this.state;
-    this.bagTab??='equipment';if(!G.unlocked(s).some(c=>c.id===this.bagCat))this.bagCat=G.unlocked(s)[0].id;this.bagPage??=0;this.bagSlot??='';this.bagSet??='';
-    if(this.bagDetail)return this.drawGearDetail(y);
-    if(this.bagCraft)return this.drawGearCraft(y);
-    text(c,'远征背包',16,y+20,24,C.ink,850);text(c,s.inventory.items.length+' / '+BAG_CAP,374,y+20,12,C.muted,500,'right');y+=44;
-    for(const [i,id]of ['equipment','materials'].entries())this.button('bag-tab-'+id,['装备','材料'][i],14+i*187,y,175,36,()=>{this.bagTab=id;this.scroll=0;},{fill:this.bagTab===id?C.gold:C.panel,color:this.bagTab===id?C.dark:C.ink});y+=53;
-    if(this.bagTab==='materials'){for(const m of materialRows(s)){box(c,14,y,362,126,C.panel,C.rim,12);this.art.item(c,m.icon,46,y+31,34);text(c,m.name,72,y+30,17,C.ink,800);text(c,fmt(m.count),360,y+30,18,C.gold,800,'right');rich(c,'用途：'+m.use+'\n来源：'+m.source,30,y+66,330,{size:12,line:21});y+=140;}return y;}
-    text(c,'为谁配装',16,y+15,13,C.muted);y+=29;
-    G.CATS.forEach((a,i)=>{this.button('bag-cat-'+a.id,a.name,14+i%4*93,y+Math.floor(i/4)*37,83,29,()=>{this.bagCat=a.id;},{disabled:!G.ownsCompanion(s,a.id),fill:this.bagCat===a.id?C.gold:C.panel,color:this.bagCat===a.id?C.dark:C.ink,size:11});});y+=85;
+  bagRows(){return this.state.inventory.items.filter(e=>!gearOwner(this.state,e.id)&&(!this.bagSlot||e.slot===this.bagSlot)&&(!this.bagSet||e.set===this.bagSet)).sort((a,b)=>b.quality-a.quality||b.tier-a.tier||+b.id.slice(1)-+a.id.slice(1));}
+  drawEquipment(y){
+    const c=this.ctx,s=this.state;this.bagCat=this.selected;this.bagSet='';this.bagPage??=0;
+    if(this.bagDetail)return this.drawGearDetail(y);if(this.bagCraft)return this.drawGearCraft(y);
+    text(c,cat(this.selected).name,16,y+20,21,C.gold,850);this.button('bag-craft','拼装',296,y,80,30,()=>{this.bagCraft={set:'hunt',slot:'claw'};this.scroll=0;});y+=45;
+    box(c,14,y,216,300,C.panel,null,14);this.art.actor(c,this.selected,'equipment-'+this.selected,122,y+235,151,this.time);
+    const spots=[[20,14],[166,14],[20,122],[166,122],[93,235]];
     for(const [i,slot]of GEAR_SLOTS.entries()){
-      const e=s.inventory.items.find(e=>e.id===s.inventory.equipped[this.bagCat]?.[slot.id]),isRune=slot.id==='rune',x=isRune?14:14+i%2*187,sy=y+(isRune?2:Math.floor(i/2))*88,w=isRune?362:175;
-      this.button('gear-slot-'+slot.id,'',x,sy,w,76,()=>{if(e){this.bagDetail=e.id;this.scroll=0;}else{this.bagSlot=slot.id;this.bagPage=0;this.scroll=0;}},{fill:isRune?'#3b5066':C.panel,stroke:e?QUALITIES[e.quality].color:C.rim});
-      this.art.item(c,slot.icon,x+27,sy+36,34);text(c,slot.name,x+52,sy+22,11,C.muted);text(c,e?gearName(e)+(isRune?'':' +'+e.enhance):'未穿戴',x+52,sy+47,12,C.ink,700);
-    }y+=272;
-    const bonus=gearBonuses(s,this.bagCat);for(const set of GEAR_SETS.filter(x=>bonus.counts[x.id])){const count=bonus.counts[set.id],desc='2 件 '+(count>=2?'已生效':'未激活')+'：'+set.two+'\n4 件 '+(count>=4?'已生效':'未激活')+'：'+set.four;const height=rich(c,desc,30,0,330,{draw:false,size:11,line:18})+49;box(c,14,y,362,height,'#294750',null,10);text(c,set.name+' · '+count+' 件',30,y+23,14,C.gold,750);rich(c,desc,30,y+46,330,{size:11,line:18});y+=height+12;}
-    this.button('bag-filter-slot',this.bagSlot?GEAR_SLOTS.find(x=>x.id===this.bagSlot).name:'全部部位',14,y,112,32,()=>{const ids=['',...GEAR_SLOTS.map(x=>x.id)];this.bagSlot=ids[(ids.indexOf(this.bagSlot)+1)%ids.length];this.bagPage=0;},{size:11});
-    this.button('bag-filter-set',this.bagSet?GEAR_SETS.find(x=>x.id===this.bagSet).name:'全部套装',136,y,112,32,()=>{const ids=['',...GEAR_SETS.map(x=>x.id)];this.bagSet=ids[(ids.indexOf(this.bagSet)+1)%ids.length];this.bagPage=0;},{size:11});
-    this.button('bag-craft','拼装装备',258,y,118,32,()=>{this.bagCraft={set:'hunt',slot:'claw'};this.scroll=0;},{size:11});y+=50;
-    const rows=s.inventory.items.filter(e=>(!this.bagSlot||e.slot===this.bagSlot)&&(!this.bagSet||e.set===this.bagSet)).sort((a,b)=>b.quality-a.quality||b.tier-a.tier||+b.id.slice(1)-+a.id.slice(1));
-    this.bagPage=Math.min(this.bagPage,Math.max(0,Math.ceil(rows.length/6)-1));
-    for(const e of rows.slice(this.bagPage*6,this.bagPage*6+6)){const owner=gearOwner(s,e.id),rune=e.slot==='rune',desc=rune?RUNES.find(x=>x.id===e.rune).desc:Object.entries(gearValues(e)).map(([k,v])=>attrText(k,v)).join(' / ');const ht=rich(c,desc,30,0,330,{draw:false,size:11,line:18})+85;
-      this.button('gear-item-'+e.id,'',14,y,362,ht,()=>{this.bagDetail=e.id;this.scroll=0;},{fill:C.panel,stroke:QUALITIES[e.quality].color});this.art.item(c,GEAR_SLOTS.find(x=>x.id===e.slot).icon,43,y+33,36);text(c,gearName(e)+(rune?'':' +'+e.enhance),72,y+25,15,C.ink,750);text(c,(rune?'妙招牌':GEAR_SLOTS.find(x=>x.id===e.slot).name+' · '+QUALITIES[e.quality].name+' · '+e.tier+' 阶')+' · '+(owner?cat(owner).name:'未穿戴')+(e.locked?' · 已锁定':''),72,y+48,11,C.muted);rich(c,desc,30,y+78,330,{size:11,line:18});y+=ht+12;}
-    if(!rows.length){rich(c,'没有符合条件的装备。首领战、擂台可获得装备。',20,y+20,350,{size:13});y+=72;}
-    this.button('bag-prev','上一页',14,y,110,33,()=>{this.bagPage--;},{disabled:this.bagPage===0});text(c,(this.bagPage+1)+' / '+Math.max(1,Math.ceil(rows.length/6)),195,y+17,12,C.muted,600,'center');this.button('bag-next','下一页',266,y,110,33,()=>{this.bagPage++;},{disabled:(this.bagPage+1)*6>=rows.length});y+=53;
-    rich(c,'4 个常规部位可组成 4 件套或 2＋2。妙招牌独立生效，只能装一张。换装下场战斗生效。',20,y,350,{size:11,line:18});return y+70;
+      const e=s.inventory.items.find(e=>e.id===s.inventory.equipped[this.selected]?.[slot.id]),[sx,sy]=spots[i],x=sx,gy=y+sy;
+      this.button('gear-slot-'+slot.id,'',x,gy,58,58,()=>{this.bagSlot=slot.id;this.bagPage=0;},{fill:this.bagSlot===slot.id?'#617969':C.dark,stroke:e?QUALITIES[e.quality].color:C.rim});
+      this.art.item(c,slot.icon,x+29,gy+18,25);text(c,slot.name,x+29,gy+36,9,C.ink,650,'center');text(c,e?(GEAR_SETS.find(z=>z.id===e.set)?.name||'妙招'):'＋',x+29,gy+49,9,C.gold,700,'center');
+      if(e)this.button('gear-detail-'+slot.id,'···',x+34,gy-7,25,19,()=>{this.bagDetail=e.id;this.scroll=0;},{size:12});
+    }
+    text(c,this.bagSlot?GEAR_SLOTS.find(x=>x.id===this.bagSlot).name:'未装备',245,y+15,13,C.ink,750);this.button('bag-show-all','全部',330,y,46,25,()=>{this.bagSlot='';this.bagSet='';this.bagPage=0;},{size:10});
+    const rows=this.bagRows();this.bagPage=Math.min(this.bagPage,Math.max(0,Math.ceil(rows.length/3)-1));
+    rows.slice(this.bagPage*3,this.bagPage*3+3).forEach((e,i)=>{const gy=y+39+i*82;this.button('gear-item-'+e.id,'',240,gy,136,74,()=>{this.bagDetail=e.id;this.scroll=0;},{stroke:QUALITIES[e.quality].color});text(c,gearName(e),248,gy+19,9,C.ink,700);text(c,e.enhance?'+'+e.enhance:'',248,gy+38,11,C.gold);this.button('gear-equip-now-'+e.id,'装备',306,gy+38,62,26,()=>{if(equipGear(s,e.id,this.selected,G.unlocked(s).map(x=>x.id)))this.bagChanged();},{size:11});});
+    if(!rows.length)text(c,'暂无装备',306,y+81,12,C.muted,500,'center');
+    if(rows.length>3){this.button('bag-prev','‹',240,y+291,38,27,()=>this.bagPage--,{disabled:this.bagPage===0});text(c,(this.bagPage+1)+' / '+Math.ceil(rows.length/3),308,y+305,11,C.muted,500,'center');this.button('bag-next','›',338,y+291,38,27,()=>this.bagPage++,{disabled:(this.bagPage+1)*3>=rows.length});}
+    return y+338;
+  }
+  drawRelics(y) {
+    const c=this.ctx,s=this.state;this.bagTab??='equipment';this.bagPage??=0;this.bagSlot??='';this.bagSet??='';
+    if(this.bagCraft)return this.drawGearCraft(y);
+    text(c,'背包',16,y+20,24,C.ink,850);text(c,s.inventory.items.filter(e=>!gearOwner(s,e.id)).length,374,y+20,12,C.muted,500,'right');y+=44;
+    for(const [i,id]of ['equipment','materials'].entries())this.button('bag-tab-'+id,['装备','材料'][i],14+i*187,y,175,36,()=>{this.bagTab=id;this.scroll=0;},{fill:this.bagTab===id?C.gold:C.panel,color:this.bagTab===id?C.dark:C.ink});y+=53;
+    if(this.bagTab==='materials'){for(const m of materialRows(s)){box(c,14,y,362,62,C.panel,C.rim,12);this.art.item(c,m.icon,46,y+31,34);text(c,m.name,72,y+30,17,C.ink,800);text(c,fmt(m.count),360,y+30,18,C.gold,800,'right');y+=74;}return y;}
+    for(const [i,slot]of [{id:'',name:'全部'},...GEAR_SLOTS].entries())this.button('bag-filter-slot-'+(slot.id||'all'),slot.name,14+i%3*124,y+Math.floor(i/3)*37,114,29,()=>{this.bagSlot=slot.id;this.bagPage=0;},{fill:this.bagSlot===slot.id?C.gold:C.panel,color:this.bagSlot===slot.id?C.dark:C.ink,size:11});y+=86;
+    this.button('bag-filter-set',this.bagSet?GEAR_SETS.find(x=>x.id===this.bagSet).name:'全部套装',14,y,175,32,()=>{const ids=['',...GEAR_SETS.map(x=>x.id)];this.bagSet=ids[(ids.indexOf(this.bagSet)+1)%ids.length];this.bagPage=0;},{size:11});
+    this.button('bag-craft','拼装',201,y,175,32,()=>{this.bagCraft={set:'hunt',slot:'claw'};this.scroll=0;},{size:11});y+=50;
+    const rows=this.bagRows();this.bagPage=Math.min(this.bagPage,Math.max(0,Math.ceil(rows.length/6)-1));
+    for(const e of rows.slice(this.bagPage*6,this.bagPage*6+6)){const desc=e.slot==='rune'?RUNES.find(x=>x.id===e.rune).desc:Object.entries(gearValues(e)).map(([k,v])=>attrText(k,v)).join(' / '),ht=rich(c,desc,72,0,282,{draw:false,size:11,line:18})+60;
+      this.button('gear-item-'+e.id,'',14,y,362,ht,()=>{this.change('cats');this.mode='equipment';if(!G.ownsCompanion(s,this.selected))this.selected=G.unlocked(s)[0].id;this.bagCat=this.selected;this.bagDetail=e.id;},{fill:C.panel,stroke:QUALITIES[e.quality].color});this.art.item(c,GEAR_SLOTS.find(x=>x.id===e.slot).icon,43,y+33,36);text(c,gearName(e)+(e.enhance?' +'+e.enhance:''),72,y+25,15,C.ink,750);rich(c,desc,72,y+51,282,{size:11,line:18});y+=ht+12;}
+    if(!rows.length){text(c,'暂无装备',195,y+25,14,C.muted,500,'center');y+=60;}
+    if(rows.length>6){this.button('bag-prev','‹',14,y,110,33,()=>this.bagPage--,{disabled:this.bagPage===0});text(c,(this.bagPage+1)+' / '+Math.ceil(rows.length/6),195,y+17,12,C.muted,600,'center');this.button('bag-next','›',266,y,110,33,()=>this.bagPage++,{disabled:(this.bagPage+1)*6>=rows.length});y+=53;}return y;
   }
   bagChanged(message){this.save();if(message)this.toast(message);}
   drawGearDetail(y){
-    const c=this.ctx,s=this.state,e=s.inventory.items.find(x=>x.id===this.bagDetail);if(!e){this.bagDetail=null;return this.drawRelics(y);}
+    const c=this.ctx,s=this.state,e=s.inventory.items.find(x=>x.id===this.bagDetail);if(!e){this.bagDetail=null;return this.tab==='cats'?this.drawEquipment(y):this.drawRelics(y);}
     const rune=e.slot==='rune',owner=gearOwner(s,e.id),set=GEAR_SETS.find(x=>x.id===e.set),q=enhanceQuote(e);
     this.button('bag-detail-back','‹ 返回装备',14,y,124,32,()=>{this.bagDetail=null;this.scroll=0;});y+=54;
     text(c,gearName(e)+(rune?'':' +'+e.enhance),16,y+19,23,C.gold,850);y+=39;
-    text(c,(rune?'妙招牌 · 效果固定':GEAR_SLOTS.find(x=>x.id===e.slot).name+' · '+QUALITIES[e.quality].name+' · '+e.tier+' 阶')+' · '+(owner?cat(owner).name:'未穿戴'),16,y+13,12,C.muted);y+=34;
     for(const [k,v]of Object.entries(gearValues(e))){text(c,attrText(k,v),22,y+16,16,C.ink,700);y+=29;}
-    const description=rune?RUNES.find(x=>x.id===e.rune).desc+'\n独立位置，不参与套装，不强化或洗炼。':set.name+'套装\n2 件：'+set.two+'\n4 件：'+set.four;
+    const description=rune?RUNES.find(x=>x.id===e.rune).desc:set.name+'套装\n2 件：'+set.two+'\n4 件：'+set.four;
     y+=rich(c,description,20,y+10,350,{size:13,line:21})+27;
-    const current=s.inventory.items.find(x=>x.id===s.inventory.equipped[this.bagCat]?.[e.slot]);if(current&&current.id!==e.id){text(c,'当前穿戴：'+gearName(current),20,y+16,13,C.muted);y+=35;y+=rich(c,Object.entries(gearValues(current)).map(([k,v])=>attrText(k,v)).join(' / '),20,y,350,{size:11,line:18})+22;}
-    this.button('gear-equip',owner===this.bagCat?'卸下':'穿戴给 '+cat(this.bagCat).name+(owner?'（从'+cat(owner).name+'转移）':''),14,y,362,38,()=>{if(owner===this.bagCat)unequipGear(s,this.bagCat,e.slot);else equipGear(s,e.id,this.bagCat,G.unlocked(s).map(c=>c.id));this.bagChanged('装备已更新，下场战斗生效');},{fill:C.gold,color:C.dark,size:13});y+=52;
+    this.button('gear-equip',owner===this.bagCat?'卸下':'装备 · '+cat(this.bagCat).name,14,y,362,38,()=>{if(owner===this.bagCat)unequipGear(s,this.bagCat,e.slot);else equipGear(s,e.id,this.bagCat,G.unlocked(s).map(c=>c.id));this.bagChanged();this.bagDetail=null;this.scroll=0;},{fill:C.gold,color:C.dark,size:13});y+=52;
     if(!rune){this.button('gear-enhance',q.maxed?'强化已满 +12':'强化 · '+q.gold+' 鱼币 / '+q.scrap+' 零件',14,y,362,36,()=>{if(enhanceGear(s,e.id))this.bagChanged('强化成功');},{disabled:q.maxed||s.gold<q.gold||s.inventory.materials.scrap<q.scrap,size:12});y+=48;
       for(const [i,a]of e.subs.entries()){this.button('gear-reforge-'+i,'洗炼副属性 '+(i+1)+' · '+ATTRS[a.key].name+' · 2 打磨砂',14,y,362,34,()=>{if(reforgeGear(s,e.id,i))this.bagChanged('副属性已更新');},{disabled:s.inventory.materials.essence<2,size:11});y+=46;}}
     this.button('gear-lock',e.locked?'解锁装备':'锁定装备',14,y,362,34,()=>{e.locked=!e.locked;this.bagChanged();});y+=48;
-    this.button('gear-dismantle','分解装备',14,y,362,34,async()=>{if(!await this.env.confirm('分解 '+gearName(e),'装备会消失，返还修补零件和部分打磨砂。'))return;const r=dismantleGear(s,e.id);if(r){this.bagDetail=null;this.scroll=0;this.bagChanged('零件 +'+r.scrap+' · 打磨砂 +'+r.essence);}},{disabled:!!owner||e.locked});return y+55;
+    this.button('gear-dismantle','分解装备',14,y,362,34,async()=>{if(!await this.env.confirm('分解 '+gearName(e),'装备会消失，返还修补零件和部分打磨砂。'))return;const r=dismantleGear(s,e.id);if(r){this.bagDetail=null;this.scroll=0;this.bagChanged('零件 +'+r.scrap+' · 打磨砂 +'+r.essence);}},{disabled:!!owner||e.locked});y+=55;y+=rich(c,gearStory(e),20,y,350,{size:13,line:21});return y+28;
   }
   drawGearCraft(y){const c=this.ctx,s=this.state,q=craftQuote(s),v=this.bagCraft;
     this.button('bag-craft-back','‹ 返回装备',14,y,124,32,()=>{this.bagCraft=null;this.scroll=0;});y+=58;text(c,'拼装装备',16,y+20,24,C.ink,850);y+=44;
-    y+=rich(c,'选择套装和部位，拼出 '+q.tier+' 阶稀有装备。副属性随机。妙招牌从首领和擂台掉落。',20,y,350,{size:13,line:21})+25;
     for(const [i,set]of GEAR_SETS.entries())this.button('craft-set-'+set.id,set.name,14+i%3*124,y+Math.floor(i/3)*44,114,34,()=>v.set=set.id,{fill:v.set===set.id?C.gold:C.panel,color:v.set===set.id?C.dark:C.ink});y+=102;
     for(const [i,slot]of GEAR_SLOTS.filter(x=>x.id!=='rune').entries())this.button('craft-slot-'+slot.id,slot.name,14+i*93,y,83,34,()=>v.slot=slot.id,{fill:v.slot===slot.id?C.gold:C.panel,color:v.slot===slot.id?C.dark:C.ink});y+=65;
     text(c,q.gold+' 鱼币 · '+q.scrap+' 零件 · '+q.essence+' 打磨砂',20,y+20,13,C.ink);y+=48;
-    this.button('craft-confirm','拼装',14,y,362,40,()=>{const e=craftGear(s,v.set,v.slot);if(e){this.bagCraft=null;this.bagDetail=e.id;this.scroll=0;this.bagChanged('装备已放入背包');}},{disabled:s.gold<q.gold||s.inventory.materials.scrap<q.scrap||s.inventory.materials.essence<q.essence||s.inventory.items.length>=BAG_CAP,fill:C.gold,color:C.dark});return y+65;
+    this.button('craft-confirm','拼装',14,y,362,40,()=>{const e=craftGear(s,v.set,v.slot);if(e){this.bagCraft=null;this.bagDetail=e.id;this.change('cats');this.mode='equipment';if(!G.ownsCompanion(s,this.selected))this.selected=G.unlocked(s)[0].id;this.bagCat=this.selected;this.bagChanged('装备已放入背包');}},{disabled:s.gold<q.gold||s.inventory.materials.scrap<q.scrap||s.inventory.materials.essence<q.essence||s.inventory.items.length>=BAG_CAP,fill:C.gold,color:C.dark});return y+65;
   }
   openStreet(group='recruit',id){this.modal=null;this.change('map');this.mapPlace='street';this.streetView={group,id:id||(group==='recruit'?'milk':''),tier:1};}
+  drawDrops(reward,x,y,counts=true){const c=this.ctx,icons={gold:12,supplies:14,badges:9,notes:15,seals:11,essence:11,scrap:0,gear:4,shards:6};let dx=x;for(const [k,v]of Object.entries(reward)){if(!(v>0)||icons[k]===undefined)continue;this.art.item(c,icons[k],dx+12,y+12,24);if(counts){text(c,fmt(v),dx+28,y+12,11,C.ink,650);dx+=65;}else dx+=29;}return dx-x;}
   drawStreet(y){const c=this.ctx,s=this.state,v=this.streetView??={group:'recruit',id:'milk',tier:1},q=streetSelection(s,v),choices=streetChoices(v.group);text(c,STREET_GROUPS.find(g=>g.id===v.group).name,16,y+22,24,C.gold,850);y+=46;
     for(const [i,g]of STREET_GROUPS.entries())this.button('street-group-'+g.id,g.name,14+i%2*187,y+Math.floor(i/2)*40,175,32,()=>this.openStreet(g.id),{fill:g.id===v.group?C.gold:C.panel,color:g.id===v.group?C.dark:C.ink,size:12});y+=91;
-    for(const [i,item]of choices.entries())this.button('street-choice-'+item.id,item.name,14+i%3*124,y+Math.floor(i/3)*38,114,30,()=>{v.id=item.id;v.tier=1;this.scroll=0;},{fill:item.id===v.id?'#7d8f78':C.panel,size:11});y+=Math.ceil(choices.length/3)*38+18;
-    text(c,v.group==='recruit'?cat(v.id).name+'的委托':q.name,16,y+20,19,C.ink,750);y+=41;y+=rich(c,q.rule,20,y,350,{size:12,line:20})+20;
-    this.button('street-prev','上一档',14,y,98,32,()=>{v.tier--;},{disabled:q.tier<=1,size:11});text(c,(q.kind==='hunt'?'危险等级 ':'难度 ')+q.tier,195,y+17,17,C.gold,800,'center');this.button('street-next','下一档',278,y,98,32,()=>{v.tier++;},{disabled:q.tier>=q.max||q.tier>q.cleared,size:11});y+=52;
-    text(c,'已完成 '+q.cleared+' 档 · 敌方培养参照 Lv.'+q.level,20,y+15,12,C.muted);y+=37;y+=rich(c,(q.first?'首通奖励：':'重复奖励：')+rewardText(activityReward(q))+(['salvage','hard'].includes(q.kind)?' · 装备掉落':''),20,y,350,{size:12,line:20})+22;
-    this.button('street-fight',q.open?'开始挑战':s.highest<q.required?'普通关第 '+q.required+' 关开启':'先完成前一档',14,y,362,38,()=>{if(!q.open)return;this.change('battle');this.start(true,{activity:q.request});this.toast(q.rule);},{disabled:!q.open,fill:C.gold,color:C.dark});y+=58;
-    if(q.kind==='recruit'){const owned=G.ownsCompanion(s,v.id),have=s.roster.shards[v.id]||0;text(c,cat(v.id).name+'信物 '+have+' / 20',20,y+18,16,C.ink,750);y+=38;this.button('street-recruit',owned?'已结识 · 信物可用于升星':'结识 '+cat(v.id).name,14,y,362,36,()=>{if(G.recruitCompanion(s,v.id)){this.save();this.toast(cat(v.id).name+'加入了远征队');}},{disabled:owned||have<20});y+=55;}
-    y+=rich(c,'无体力限制，失败不损失材料。限时 90 秒，已过难度可反复刷。追猎的三条路线分别推进；硬仗先看机制再搭配。',20,y,350,{size:11,line:18});return y+25;
+    for(const [i,item]of choices.entries()){const x=14+i%3*124,gy=y+Math.floor(i/3)*68,info=activityInfo(s,{kind:v.group==='materials'?item.id:v.group,id:v.group==='materials'?'':item.id,tier:1});this.button('street-choice-'+item.id,'',x,gy,114,57,()=>{v.id=item.id;v.tier=1;this.scroll=0;},{fill:item.id===v.id?'#7d8f78':C.panel});text(c,item.name,x+57,gy+17,12,C.ink,750,'center');this.drawDrops(activityDrops(info),x+12,gy+29,false);}y+=Math.ceil(choices.length/3)*68+18;
+    text(c,v.group==='recruit'?cat(v.id).name:q.name,16,y+20,19,C.ink,750);y+=41;
+    this.button('street-prev','‹',14,y,98,32,()=>v.tier--,{disabled:q.tier<=1});text(c,q.tier,195,y+17,17,C.gold,800,'center');this.button('street-next','›',278,y,98,32,()=>v.tier++,{disabled:q.tier>=q.max||q.tier>q.cleared});y+=48;
+    this.drawDrops(activityDrops(q),20,y);y+=43;
+    this.button('street-fight',q.open?'挑战':'未开启',14,y,362,38,()=>{if(q.open){this.change('battle');this.start(true,{activity:q.request});}},{disabled:!q.open,fill:C.gold,color:C.dark});y+=58;
+    if(q.kind==='recruit'){const owned=G.ownsCompanion(s,v.id),have=s.roster.shards[v.id]||0;this.button('street-recruit',owned?'已结识':'结识 · '+have+' / 20',14,y,362,36,()=>{if(G.recruitCompanion(s,v.id)){this.save();this.toast(cat(v.id).name+'加入了远征队');}},{disabled:owned||have<20});y+=55;}return y;
   }
-  drawGrowth(y,id){const c=this.ctx,s=this.state,b=G.breakthroughQuote(s,id),a=G.starQuote(s,id);text(c,'伙伴突破 '+b.rank+' / 3',20,y+22,18,C.gold,800);y+=42;y+=rich(c,'上限 '+b.cap+'。突破增加上限 20、基础攻击与生命 8%。训练和突破可继承。',20,y,350,{size:12,line:19})+18;
+  drawGrowth(y,id){const c=this.ctx,s=this.state,b=G.breakthroughQuote(s,id),a=G.starQuote(s,id);text(c,'突破 '+b.rank+' / 3',20,y+22,18,C.gold,800);y+=42;
     y+=rich(c,'徽章 '+s.badges+'/'+b.cost+' · 训练笔记 '+s.growth.notes+'/'+b.notes+' · 历练印记 '+s.growth.seals+'/'+b.seals,20,y,350,{size:12,line:19})+20;
     this.button('breakthrough-'+id,b.maxed?'突破已完成':s.levels[id]<b.requiredLevel?'Lv.'+b.requiredLevel+' 可突破':'突破',14,y,362,35,()=>{if(G.breakthrough(s,id)){this.battle?.syncStats(s,{preserveHealthRatio:true});this.save();this.toast('突破成功');}},{disabled:b.maxed||s.levels[id]<b.requiredLevel||!b.canAfford});y+=47;this.button('growth-materials','获取突破材料',14,y,362,32,()=>this.openStreet('materials','escort'));y+=58;
-    text(c,'伙伴升星 '+a.rank+' / 5',20,y+20,18,C.gold,800);y+=40;y+=rich(c,'每星基础攻击与生命 +4%。3 星心得：'+a.talent+'。星级、信物和装备不随继承转移。',20,y,350,{size:12,line:19})+20;
+    text(c,'升星 '+a.rank+' / 5',20,y+20,18,C.gold,800);y+=40;y+=rich(c,'3 星 · '+a.talent,20,y,350,{size:12,line:19})+20;
     text(c,'信物 '+a.have+'/'+a.shards+' · 训练笔记 '+s.growth.notes+'/'+a.notes,20,y+15,12,C.ink);y+=36;this.button('ascend-'+id,a.maxed?'已满星':'升至 '+(a.rank+1)+' 星',14,y,362,35,()=>{if(G.ascendCompanion(s,id)){this.battle?.syncStats(s,{preserveHealthRatio:true});this.save();this.toast('升星成功');}},{disabled:a.maxed||a.have<a.shards||s.growth.notes<a.notes});y+=47;this.button('growth-shards','获取'+cat(id).name+'信物',14,y,362,32,()=>this.openStreet('recruit',id));return y+55;
   }
   async watchBusinessBoost() {
@@ -1264,7 +1248,7 @@ export class NativeGame {
     }
     if(this.mapPlace==='stall'){
       text(c,'街角鱼摊',16,y+20,24,C.ink,850);y+=38;
-      text(c,'经营物资 '+fmt(s.supplies)+' · 储存 '+G.idleMinutes(s)/60+' 小时',16,y+14,12,C.gold);y+=30;
+      text(c,'经营物资 '+fmt(s.supplies)+' · 储存 '+Math.floor(G.idleMinutes(s)/60)+' 小时',16,y+14,12,C.gold);y+=30;
       text(c,G.idleRate(s)+' 鱼币 / 分钟',16,y+17,13,C.ink);
       this.button('claim-idle','领取 '+fmt(s.idle),220,y,156,32,()=>{const n=G.claimIdle(s);this.save();this.toast('领取 '+n+' 鱼币');});y+=48;
       const boost=businessBoostQuote(s,Date.now(),G.idleRate(s)),available=this.env.rewardedAds?.available;
@@ -1274,28 +1258,24 @@ export class NativeGame {
       text(c,'自愿看完视频领取 · 今日剩余 '+boost.remaining+' 次',30,y+70,11,C.muted);
       const label=this.adPending?'视频加载中…':!available?'视频补给暂未开放':!boost.remaining?'今日补给已领完':boost.wait?'休息 '+boost.wait+' 秒':'看视频领补给';
       this.button('business-ad',label,30,y+88,330,30,()=>this.watchBusinessBoost(),{disabled:this.adPending||!available||!boost.available,size:12});y+=146;
-      rich(c,'补给可升级鱼摊，提高后续收益。物资也能通过普通关获取。',18,y,350,{size:11,line:17});y+=45;
       for(const u of G.STALL_UPGRADES){const q=G.stallQuote(s,u.id);box(c,14,y,362,114,C.panel,C.rim,12);text(c,u.name+' · Lv.'+q.level,30,y+25,17,C.gold,800);rich(c,u.effect,30,y+49,330,{size:12,line:18});this.button('stall-'+u.id,q.maxed?'已满级':'升级 · '+q.cost+' 物资',30,y+76,330,28,()=>{if(G.upgradeStall(s,u.id)){this.save();this.toast('鱼摊升级完成');}},{disabled:q.maxed||s.supplies<q.cost,size:11});y+=126;}return y;
     }
     if(this.mapPlace==='journal'){
       const a=refreshCampaign(s);text(c,'猫巷手账',16,y+24,24,C.ink,850);y+=53;
-      rich(c,'每日 0 点更新委托，完成其中 3 项领交班礼。成长奖励永久保留，可随进度补领。',16,y,350,{size:12,line:19});y+=55;
       for(const t of DAILY_TASKS){const r=dailyReward(s),claimed=a.claimed.includes(t.id);box(c,14,y,362,118,C.panel,C.rim,12);text(c,t.name+' · '+a.progress[t.id]+'/'+t.goal,30,y+25,16,C.gold,800);text(c,t.desc,30,y+48,11,C.ink);this.button('daily-'+t.id,claimed?'已领取':r.gold+' 鱼币 · '+r.supplies+' 物资',30,y+73,330,30,()=>{if(claimDaily(s,t.id)){this.save();this.toast('委托奖励已领取');}},{disabled:claimed||a.progress[t.id]<t.goal,size:12});y+=130;}
       this.button('daily-chest',a.chest?'交班礼已领取':'交班礼 · '+a.claimed.length+'/3 · 40 物资 / 2 徽章',14,y,362,36,()=>{if(claimDailyChest(s)){this.save();this.toast('交班礼已领取');}},{disabled:a.chest||a.claimed.length<3,size:12});y+=58;
       text(c,'成长之路 · '+a.journey.length+' / 30',16,y+22,21,C.ink,800);y+=42;
       for(const j of JOURNEY){const done=a.journey.includes(j.id);box(c,14,y,362,112,C.panel,C.rim,12);text(c,j.index+'. '+j.name+' · 第 '+j.stage+' 关',30,y+25,15,C.gold,700);text(c,j.gold+' 鱼币 / '+j.supplies+' 物资 / '+j.badges+' 徽章',30,y+48,11,C.ink);this.button('journey-'+j.id,done?'已领取':s.highest>=j.stage?'领取':'进行中',30,y+69,330,29,()=>{if(claimJourney(s,j.id)){this.save();this.toast('成长奖励已领取');}},{disabled:done||s.highest<j.stage,size:12});y+=124;}return y;
     }
     if(this.mapPlace==='street')return this.drawStreet(y);
-    if(this.mapPlace==='arena'){text(c,'猫巷委托板',16,y+24,24,C.ink,850);y+=52;for(const group of STREET_GROUPS){box(c,14,y,362,112,C.panel,C.rim,12);text(c,group.name,30,y+24,18,C.gold,800);text(c,group.desc,30,y+48,11,C.ink);this.button('street-'+group.id,'进入',30,y+69,330,29,()=>this.openStreet(group.id));y+=124;}this.button('open-journal','猫巷手账 · 每日 / 成长',14,y,362,36,()=>{this.mapPlace='journal';this.scroll=0;});y+=48;this.button('open-challenges','本周挑战与擂台',14,y,362,36,()=>{this.mapPlace='challenges';this.scroll=0;});return y+60;}
+    if(this.mapPlace==='arena'){text(c,'猫巷委托板',16,y+24,24,C.ink,850);y+=52;for(const group of STREET_GROUPS){box(c,14,y,362,112,C.panel,C.rim,12);text(c,group.name,30,y+24,18,C.gold,800);this.drawDrops(group.drops,30,y+37,false);this.button('street-'+group.id,'进入',30,y+69,330,29,()=>this.openStreet(group.id));y+=124;}this.button('open-journal','猫巷手账 · 每日 / 成长',14,y,362,36,()=>{this.mapPlace='journal';this.scroll=0;});y+=48;this.button('open-challenges','本周挑战与擂台',14,y,362,36,()=>{this.mapPlace='challenges';this.scroll=0;});return y+60;}
     if(this.mapPlace==='challenges'){
       this.button('open-journal','猫巷手账 · 每日委托 / 成长之路',14,y,362,40,()=>{this.mapPlace='journal';this.scroll=0;},{size:13});y+=58;
       text(c,'本周挑战 · '+weeklyInfo(s,1).name,16,y+23,20,C.gold,800);y+=50;
-      rich(c,weeklyInfo(s,1).rule+' 每周一更新，每档奖励每周一次。',16,y,350,{size:12,line:19});y+=58;
-      for(const n of [1,2,3]){const q=weeklyInfo(s,n);box(c,14,y,362,100,C.panel,C.rim,12);text(c,['入门','进阶','极限'][n-1]+' · '+q.reward.badges+' 徽章 / '+q.reward.supplies+' 物资',30,y+27,14,C.ink,700);this.button('weekly-'+n,q.claimed?'已领 · 再次切磋':q.open?'挑战':'第 15 关开启',30,y+54,330,30,()=>{this.change('battle');this.start(true,{weeklyTier:n});this.toast(q.rule);},{disabled:!q.open,size:12});y+=112;}
+      for(const n of [1,2,3]){const q=weeklyInfo(s,n);box(c,14,y,362,100,C.panel,C.rim,12);text(c,['入门','进阶','极限'][n-1]+' · '+q.reward.badges+' 徽章 / '+q.reward.supplies+' 物资',30,y+27,14,C.ink,700);this.button('weekly-'+n,q.claimed?'已领 · 再次切磋':q.open?'挑战':'第 15 关开启',30,y+54,330,30,()=>{this.change('battle');this.start(true,{weeklyTier:n});},{disabled:!q.open,size:12});y+=112;}
 
       text(c,'街头擂台',16,y+22,24,C.ink,850);y+=50;
-      rich(c,'固定阵容，失败不扣资源。每次胜利有徽章，首通额外奖励。普通关第15关开启。',16,y,358,{size:12,line:20});y+=52;
-      for(let tier=1;tier<=G.ARENA_MAX;tier++){const a=G.arenaInfo(tier),first=tier>s.arenaCleared;box(c,14,y,362,148,C.panel,C.rim,12);text(c,'第 '+tier+' 擂 · '+a.name,30,y+24,17,C.gold,800);rich(c,a.rule,30,y+49,330,{size:11,line:18});text(c,'每次 '+a.baseReward+' 徽章'+(first?' · 首通额外 '+a.firstBonus:''),30,y+98,11,C.muted);this.button('arena-'+tier,first?'挑战':'再次挑战',30,y+111,330,28,()=>{this.change('battle');this.start(true,{arenaTier:tier});this.toast(a.rule);},{disabled:!G.arenaOpen(s,tier),size:11});y+=160;}return y;
+      for(let tier=1;tier<=G.ARENA_MAX;tier++){const a=G.arenaInfo(tier),first=tier>s.arenaCleared;box(c,14,y,362,148,C.panel,C.rim,12);text(c,'第 '+tier+' 擂 · '+a.name,30,y+24,17,C.gold,800);this.drawDrops({badges:1,gear:1},30,y+39,false);text(c,'每次 '+a.baseReward+' 徽章'+(first?' · 首通额外 '+a.firstBonus:''),30,y+98,11,C.muted);this.button('arena-'+tier,first?'挑战':'再次挑战',30,y+111,330,28,()=>{this.change('battle');this.start(true,{arenaTier:tier});},{disabled:!G.arenaOpen(s,tier),size:11});y+=160;}return y;
     }
     text(c,'街区巡逻 · '+G.MAX_STAGE+' 关',16,y+22,22,C.ink,850);y+=42;
     for(let i=0;i<G.MAX_STAGE/20;i++){const ch=G.CHAPTERS[i%6],open=s.runCleared>=i*20;this.button('chapter-'+i,'',14,y,362,90,()=>this.modal={type:'chapter',index:i},{fill:C.panel,disabled:!open});text(c,ch.name+' · '+(Math.floor(i/6)+1),30,y+29,18,C.ink,800);text(c,'第 '+(i*20+1)+'—'+(i*20+20)+' 关 · 鱼币与物资',30,y+59,12,C.muted);y+=102;}return y;
@@ -1337,14 +1317,6 @@ export class NativeGame {
         size: 17,
         line: 24,
       });
-      rich(
-        c,
-        "猫猫自动战斗。点击「开罐啦」给队友回血，让罐头盖打断敌方蓄力。\n在伙伴里升级、拖动调整阵容。",
-        45,
-        y + 244,
-        300,
-        { size: 13, line: 24 },
-      );
       this.button(
         "begin",
         "出发巡逻",
@@ -1399,7 +1371,6 @@ export class NativeGame {
         ["export", "复制存档", () => this.exportSave()],
         ["import", "导入网页存档", () => this.importSave()],
         ["share", "分享给朋友", () => this.env.share?.()],
-        ["help", "玩法说明", () => (this.modal = { type: "help" })],
         ["reset", "重新开始", () => this.reset()],
       ];
       rows.forEach(([id, label, fn], i) =>
@@ -1410,24 +1381,13 @@ export class NativeGame {
       );
       text(
         c,
-        "微信测试版 · v0.21.0",
+        "微信测试版 · v0.25.1",
         195,
         y + h - 24,
         10,
         C.muted,
         500,
         "center",
-      );
-    }
-    if (m.type === "help") {
-      text(c, "一起守住这条街", 42, y + 36, 24, C.ink, 850);
-      rich(
-        c,
-        "猫猫自动普攻，能量满后释放技能。\n开罐啦：全队回血20%，罐头盖命中全体敌人并打断蓄力。\n伙伴：每张卡可升10级；档案可升1级。拖动调整阵容，替换队员继承培养。\n街区：点击鱼摊升级经营，点击擂台获取突破徽章。普通关共600关，产出鱼币和经营物资。旧关巡逻鱼币奖励为原来的60%。",
-        42,
-        y + 80,
-        306,
-        { size: 12, line: 24 },
       );
     }
     if (m.type === "quests") {
@@ -1452,7 +1412,7 @@ export class NativeGame {
           600,
           "right",
         );
-        text(c, q.desc, 38, sy + 15, 8, C.muted);
+
       });
       this.button(
         "claim-quests",

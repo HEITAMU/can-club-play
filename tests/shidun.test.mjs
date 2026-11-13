@@ -17,8 +17,8 @@ test('self shield completes a second punch without ally shields or incoming atta
 });
 test('charge energy uses simulation time and stops after interruption',()=>{
  const b=make(),h=b.heroes[0];h.energy=100;b.tick(.01);
- b.tick(.25);b.tick(.25);assert.ok(Math.abs(h.energy-17.5)<1e-6);
- for(let i=0;i<20;i++)b.tick(0);assert.ok(Math.abs(h.energy-17.5)<1e-6);
+ b.tick(.25);b.tick(.25);assert.equal(h.energy,17);assert.equal(h.shieldPunch.chargeRemainder,500);
+ for(let i=0;i<20;i++)b.tick(0);assert.equal(h.energy,17);assert.equal(h.shieldPunch.chargeRemainder,500);
  h.stun=3;b.tick(.01);const energy=h.energy;
  for(let i=0;i<20;i++)b.tick(.1);assert.equal(h.energy,energy);
  assert.equal(h.shieldState,'controlled');assert.ok(b.enemies.every(e=>e.hp===10000));

@@ -3,12 +3,12 @@ import {VFX_ATLAS} from './vfx-atlas.mjs?v=0.25.0';
 import {FX_CELLS,sampleRoute,sampleImpact,sampleGuard,sampleStatus,shieldTransition} from './vfx-motion.mjs?v=0.25.0';
 import {paintHealing} from './healing-fx.mjs?v=0.25.0';
 import {CAN_ATLAS,paintCan} from './can-fx.mjs?v=0.25.0';
+import {getImage} from './image-cache.mjs?v=0.25.1';
 export {effectEnvelope,impactStyle,shieldTransition} from './vfx-motion.mjs?v=0.25.0';
-let image;
-let canImage,shidunImage;
-function shidunAtlas(){if(!shidunImage&&typeof Image!=='undefined'){shidunImage=new Image();shidunImage.src='./assets/vfx/shidun-impact-v0211.webp';}return shidunImage;}
-function canAtlas(){if(!canImage&&typeof Image!=='undefined'){canImage=new Image();canImage.src=CAN_ATLAS.url;}return canImage;}
-function atlas(){if(!image&&typeof Image!=='undefined'){image=new Image();image.src=VFX_ATLAS.url;}return image;}
+function readyImage(url){if(typeof Image==='undefined')return null;const r=getImage(url);return r.ready?r.img:null;}
+function shidunAtlas(){return readyImage('./assets/vfx/shidun-impact-v0211.webp');}
+function canAtlas(){return readyImage(CAN_ATLAS.url);}
+function atlas(){return readyImage(VFX_ATLAS.url);}
 // Same painter is used by the browser and the offline review renderer.
 export function paintVFX(ctx,img,particles,canImg,shidunImg){
  for(const p of particles){
@@ -36,8 +36,9 @@ export class CombatEffects{
  constructor(layer){
   this.layer=layer;this.routes=new Map();this.bursts=[];this.guards=[];this.statuses=[];this.particles=[];
   if(layer){this.canvas=document.createElement('canvas');this.canvas.className='vfx-canvas';this.canvas.setAttribute('aria-hidden','true');this.ctx=this.canvas.getContext('2d',{alpha:true});layer.replaceChildren(this.canvas);
-   this.groundCanvas=document.createElement('canvas');this.groundCanvas.className='vfx-canvas vfx-ground';this.groundCanvas.setAttribute('aria-hidden','true');this.groundCtx=this.groundCanvas.getContext('2d',{alpha:true});layer.before(this.groundCanvas);atlas();canAtlas();}
+   this.groundCanvas=document.createElement('canvas');this.groundCanvas.className='vfx-canvas vfx-ground';this.groundCanvas.setAttribute('aria-hidden','true');this.groundCtx=this.groundCanvas.getContext('2d',{alpha:true});layer.before(this.groundCanvas);}
  }
+ warm(battle){atlas();canAtlas();if(battle?.heroes.some(a=>a.catId==='pudding'))shidunAtlas();}
  clear(){
   this.routes.clear();this.bursts=[];this.guards=[];this.statuses=[];this.particles=[];
   if(this.canvas){this.layer.replaceChildren(this.canvas);this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);this.groundCtx.clearRect(0,0,this.groundCanvas.width,this.groundCanvas.height);}
@@ -63,7 +64,7 @@ export class CombatEffects{
   this.particles=particles.sort((a,b)=>a.layer-b.layer);
   if(!this.ctx)return this.particles;
   const dpr=Math.min(2,typeof devicePixelRatio==='number'?devicePixelRatio:1),cw=Math.max(1,Math.round(w*dpr)),ch=Math.max(1,Math.round(h*dpr));
-  const img=atlas(),ready=img?.complete&&img.naturalWidth,canImg=canAtlas(),shidunImg=shidunAtlas();
+  const img=this.particles.length?atlas():null,ready=!!img,canImg=this.particles.some(p=>CAN_ATLAS.rects[p.art])?canAtlas():null,shidunImg=this.particles.some(p=>p.art?.startsWith('shidun'))?shidunAtlas():null;
   for(const [canvas,ctx,behind] of [[this.groundCanvas,this.groundCtx,true],[this.canvas,this.ctx,false]]){
    if(canvas.width!==cw||canvas.height!==ch){canvas.width=cw;canvas.height=ch;}
    ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);

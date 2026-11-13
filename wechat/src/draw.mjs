@@ -13,9 +13,9 @@ export const C = {
 };
 export const fmt = (n) =>
   n >= 1e8
-    ? (n / 1e8).toFixed(1) + "亿"
+    ? Math.floor(n / 1e8) + "亿"
     : n >= 1e4
-      ? (n / 1e4).toFixed(1) + "万"
+      ? Math.floor(n / 1e4) + "万"
       : Math.floor(n).toLocaleString("zh-CN");
 export function round(c, x, y, w, h, r = 10) {
   r = Math.max(0, Math.min(r, w / 2, h / 2));

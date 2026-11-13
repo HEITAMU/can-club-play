@@ -21,6 +21,8 @@ test('rear battle canvases survive stale offscreen/zero-size reports and a lost 
   assert.equal(drawRig(el,id,pose,undefined,66),false);const lost=ctx.draws;
   listeners.contextrestored();assert.ok(drawRig(el,id,pose,undefined,66));assert.ok(ctx.draws>lost);assert.ok(classes.has('rig-ready'));
   canvas.width=0;const reset=ctx.draws;assert.ok(drawRig(el,id,pose,undefined,66));assert.ok(ctx.draws>reset,'a cleared surface redraws even while paused');
+  const initial=ctx.clears;for(let i=0;i<60;i++)drawRig(el,id,{...pose,breath:i/1000},undefined,66,20+i/60);assert.ok(ctx.clears-initial<=31,'60 animation steps rasterize at most 31 times');assert.ok(ctx.clears-initial>=29,'animation remains live');
+  const held=ctx.clears;drawRig(el,id,{...pose,rosterCel:3},undefined,66,21);assert.equal(ctx.clears,held+1,'a new action drawing is painted immediately');
  }
  delete globalThis.Image;delete globalThis.ResizeObserver;delete globalThis.IntersectionObserver;
 });

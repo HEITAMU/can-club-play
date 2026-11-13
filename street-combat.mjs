@@ -10,8 +10,8 @@ export function streetEnemies(info){
  return types.slice(0,count).map((type,i)=>{const boss=(theme==='barrier'&&i===0)||(theme==='burst'&&i<(kind==='hard'?2:1));const hp=i<2?210:i===2?150:100;
  const e={id:'e'+i,type,name:theme==='healer'&&i===2?'夜班补给员':theme==='ambush'&&i<2?'绕后追兵':boss?'街头头目':'街巷对手',maxHp:Math.round(hp*m*power),atk:Math.round((i<2?15:10)*m*power*.78),interval:i<2?2:2.6,boss,...enemyCombatStats(type,Math.min(600,level*3),boss),skillWait:theme==='burst'?(i===0?4:8):6,burstCooldown:9};
  if(theme==='armor'){e.armor=i<2?(kind==='hard'?300+tier*200:180+tier*32):25;e.magicResist=i<2?25:(kind==='hard'?200+tier*80:150+tier*15);}
- if(theme==='barrier'&&i===0){e.maxHp=Math.round(e.maxHp*1.8);e.barrierCycle=8;e.nextBarrier=8;e.barrierRatio=kind==='hard'?[.28,.38,.48][tier-1]:.23;}
- if(theme==='healer'&&i===2){e.maxHp=Math.round(270*m*power);e.arenaHealer=true;e.nextHeal=5;e.healRatio=kind==='hard'?[.24,.32,.4][tier-1]:.2;}
+ if(theme==='barrier'&&i===0){e.maxHp=Math.round(e.maxHp*1.8);e.barrierCycle=8;e.nextBarrier=8;e.barrierRatio=kind==='hard'?[28,38,48][tier-1]:23;}
+ if(theme==='healer'&&i===2){e.maxHp=Math.round(270*m*power);e.arenaHealer=true;e.nextHeal=5;e.healRatio=kind==='hard'?[24,32,40][tier-1]:20;}
  if(theme==='adaptive'&&i<2)e.adaptive=true;
  if(theme==='ambush'&&i<2)e.ambusher=true;
  if(kind==='hard'){

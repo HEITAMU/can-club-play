@@ -191,9 +191,15 @@ test('commission journal opens, daily claim works and weekly retry keeps its mod
  a.mapPlace='arena';a.scroll=0;a.start(true,{weeklyTier:2});assert.equal(a.battle.weekly.tier,2);a.battle.result='lose';a.pause();assert.equal(a.battle.weekly.tier,2);assert.equal(a.state.arenaCleared,0);
 });
 
-test('backpack separates equipment/materials and supports five-slot equip-lock flow',async()=>{
- const h=await harness({state:developed()}),a=h.app;a.change('relics');a.render();assert.equal(a.buttons.filter(b=>b.id.startsWith('gear-slot-')).length,5);h.tap('bag-tab-materials');assert.equal(a.bagTab,'materials');assert.equal(a.buttons.some(b=>b.id.startsWith('gear-slot-')),false);h.tap('bag-tab-equipment');h.tap('gear-slot-claw');const id=a.bagDetail;assert.ok(id);h.tap('gear-equip');assert.equal(a.state.inventory.equipped.orange.claw,undefined);h.tap('gear-equip');assert.equal(a.state.inventory.equipped.orange.claw,id);a.scroll=140;a.render();h.tap('gear-lock');assert.equal(a.state.inventory.items.find(e=>e.id===id).locked,true);assert.equal(a.buttons.some(b=>b.id==='gear-dismantle'),false);
+test('backpack lists only unequipped items; companion orbit supports equip, lock and slot filters',async()=>{
+ const h=await harness({state:developed()}),a=h.app;a.change('relics');a.render();assert.equal(a.buttons.filter(b=>b.id.startsWith('gear-slot-')).length,0);assert.equal(a.buttons.filter(b=>b.id.startsWith('bag-filter-slot-')).length,6);
+ h.tap('bag-tab-materials');assert.equal(a.bagTab,'materials');h.tap('bag-tab-equipment');h.tap('bag-filter-slot-coat');assert.equal(a.bagSlot,'coat');
+ a.change('cats');h.tap('equipment');assert.equal(a.mode,'equipment');assert.equal(a.buttons.filter(b=>b.id.startsWith('gear-slot-')).length,5);
+ h.tap('gear-detail-claw');const id=a.bagDetail;assert.ok(id);tapScrolled(h,'gear-equip');assert.equal(a.state.inventory.equipped.orange.claw,undefined);assert.equal(a.bagDetail,null);
+ a.bagSlot='claw';a.render();tapScrolled(h,'gear-equip-now-'+id);assert.equal(a.state.inventory.equipped.orange.claw,id);assert.equal(a.bagRows().some(e=>e.id===id),false);
+ a.scroll=0;h.tap('gear-detail-claw');tapScrolled(h,'gear-lock');assert.equal(a.state.inventory.items.find(e=>e.id===id).locked,true);assert.equal(a.buttons.some(b=>b.id==='gear-dismantle'),false);h.stop();
 });
+
 function tapScrolled(h,id){const a=h.app;a.render();for(let y=0;y<=a.scrollMax+180;y+=180){a.scroll=Math.min(y,a.scrollMax);a.render();if(a.buttons.some(b=>b.id===id)){h.tap(id);return;}}throw Error('No reachable enabled button: '+id);}
 test('native companion contracts, star growth and breakthroughs save exact costs',async()=>{
  const state=G.initialState();state.onboarded=true;state.highest=600;state.runCleared=3;state.stage=4;state.roster.shards.milk=20;state.roster.shards.orange=20;state.growth={notes:2000,seals:30};state.badges=100;state.levels.orange=40;
@@ -209,5 +215,10 @@ test('native material replay preserves selected job and main campaign progress',
  assert.equal(a.battle.result,'win');assert.equal(a.state.activities.cleared.escort,1);const badges=a.state.badges;
  a.pause();assert.equal(a.battle.activity.kind,'escort');assert.equal(a.battle.activity.tier,1);
  for(let i=0;i<400&&!a.battle.result;i++){a.update(.25);if(a.battle.canCd===0)a.can();}
- assert.equal(a.battle.result,'win');assert.equal(a.state.badges-badges,2);assert.deepEqual([a.state.stage,a.state.highest],before);h.stop();
+ assert.equal(a.battle.result,'win');assert.equal(a.state.badges-badges,2);assert.deepEqual([a.state.stage,a.state.highest],before);a.update(1.5);assert.equal(a.tab,'map');assert.equal(a.mapPlace,'street');assert.deepEqual(a.streetView,{group:'materials',id:'escort',tier:1});a.render();h.stop();
+});
+
+test('contract auto-return cannot override a user navigation or rematch',async()=>{
+ const h=await harness({state:developed()}),a=h.app;a.activityReturn.finish({kind:'escort',tier:2},a.time);a.change('cats');a.update(2);assert.equal(a.tab,'cats');
+ a.change('battle');a.activityReturn.finish({kind:'escort',tier:2},a.time);a.start(true);a.update(2);assert.equal(a.tab,'battle');assert.equal(a.battle.mode,'patrol');h.stop();
 });
