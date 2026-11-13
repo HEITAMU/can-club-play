@@ -1,0 +1,42 @@
+name: Spark character in-game review
+on:
+  push:
+    branches: [rebuild/spark-reference-v0211]
+    paths-ignore: ['docs/review/spark-v0211/**']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: wechat/package-lock.json
+      - run: npm ci --prefix wechat
+      - run: ln -s wechat/node_modules node_modules
+      - run: wechat/node_modules/.bin/playwright install --with-deps chromium
+      - run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk ffmpeg
+      - run: npm run build --prefix wechat
+      - run: npm test --prefix wechat
+      - run: node scripts/review-finished-spark.mjs
+      - run: node scripts/browser-spark-review.mjs
+      - name: Preserve review evidence
+        run: |
+          mkdir -p docs/review/spark-v0211
+          cp qa/spark/motion-keyframes.png qa/spark/expressions.png qa/spark-browser/*.png qa/spark-browser/*.json qa/spark-browser/*.mp4 docs/review/spark-v0211/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f docs/review/spark-v0211
+          if ! git diff --cached --quiet; then
+            git commit -m 'Save spark in-game review evidence [skip ci]'
+            git push origin HEAD:rebuild/spark-reference-v0211
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: spark-v0211-in-game-review
+          path: docs/review/spark-v0211/

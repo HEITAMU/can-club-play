@@ -1,3 +1,5 @@
+import {FINISHED_SPARK} from '../../finished-spark-data.mjs';
+import {setFinishedCanvasFactory} from '../../finished-spark-renderer.mjs';
 import { ANATOMY } from "../../anatomy-data.mjs";
 import { renderPuppetFrame } from "../../rig-renderer.mjs";
 import { rigPose, rigFor, blendRigPose } from "../../rig-motion.mjs";
@@ -19,6 +21,7 @@ const foes = {
 export class NativeArt {
   constructor(env, images) {
     this.env = env;
+    setFinishedCanvasFactory((w,h)=>{const c=env.createCanvas();c.width=w;c.height=h;return c;});
     this.images = images;
     this.sprites = new Map();
   }
@@ -37,7 +40,7 @@ export class NativeArt {
     outcome = null,
     flip = 1,
   ) {
-    const kit = ANATOMY[id],
+    const kit = id==='spark'?FINISHED_SPARK:ANATOMY[id],
       foe = foes[id] || foes.dust,
       img = this.image(
         kit ? kit.atlas : "assets/painted/enemies-" + foe[0] + ".webp",
@@ -68,6 +71,7 @@ export class NativeArt {
         shape,
         cache.time < 0 ? -1 : time - cache.time,
       );
+    if(id==='spark'){pose.sparkCel=shape.sparkCel;pose.sparkRecovery=shape.sparkRecovery;pose.sparkClock=time;}
     pose.nock = bowNock(actor);
     const face = faceTransition(
       cache.face,

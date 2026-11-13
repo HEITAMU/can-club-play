@@ -1,7 +1,7 @@
-import {projectilePose,unit} from './motion.mjs?v=0.21.0';
-import {ACTION_BY_ID} from './action-profiles.mjs?v=0.21.0';
-import {HEAL_ART,healingImpact,healingCast} from './healing-fx.mjs?v=0.21.0';
-import {CAN_ART,sampleCan} from './can-fx.mjs?v=0.21.0';
+import {projectilePose,unit} from './motion.mjs?v=0.21.1';
+import {ACTION_BY_ID} from './action-profiles.mjs?v=0.21.1';
+import {HEAL_ART,healingImpact,healingCast} from './healing-fx.mjs?v=0.21.1';
+import {CAN_ART,sampleCan} from './can-fx.mjs?v=0.21.1';
 
 // All samples depend on simulation time, never frame count or Math.random().
 export const FX_CELLS={flash:1,dust:2,ember:3,fire:4,flame:5,ice:6,shard:7,heal:8,heart:9,milk:10,fish:11,shield:12,glass:13,star:14,electric:15,...HEAL_ART,...CAN_ART};
@@ -26,7 +26,8 @@ export function sampleProjectile(route,targetId,time,w,h,centers,sizes,shot=0,co
  const origin=route.positions?.[route.from]||centers[route.from],to=centers[targetId]||route.positions?.[targetId];
  if(!origin||!to)return null;
  const recorded=route.positions?.[targetId]||to,dir=recorded.x>=origin.x?1:-1;
- const from={x:origin.x+dir*(sizes[route.from]||50)*.23/w*100,y:origin.y-1};
+ const spark=route.profile==='spark-normal'||route.profile==='spark-skill',size=sizes[route.from]||50;
+ const from={x:origin.x+dir*size*(spark?.31:.23)/w*100,y:origin.y-(spark?size*.09/h*100:1)};
  return projectilePose(from,to,w,h,time-route.born,route.travel||.29,route.style,shot,count);
 }
 

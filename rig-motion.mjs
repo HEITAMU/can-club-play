@@ -1,4 +1,4 @@
-import {catAction} from './action-profiles.mjs?v=0.21.0';
+import {catAction} from './action-profiles.mjs?v=0.21.1';
 // Continuous motion for painted cutout parts. No pose-frame swapping.
 const clamp=n=>Math.max(0,Math.min(1,n));
 export const ease=n=>{const t=clamp(n);return t*t*(3-2*t);};
@@ -15,8 +15,8 @@ export const RIGS={
 };
 const feet={dust:.91,box:.86,mop:.90,battery:.84,bag:.91,drone:.87,vacuum:.82,fridge:.92,sign:.92,boxBoss:.935,clock:.89,vendor:.925};
 export function rigFor(id){return RIGS[id]||{foot:feet[id]||.92,period:2.7,phase:Object.keys(feet).indexOf(id)*.7,head:[.5,.30,.42,.34,.5,.60],hand:null,tail:null,swing:.28};}
-const keys=['breath','lean','head','hand','tail','reach','sink','alpha'];
-const neutral={breath:0,lean:0,head:0,hand:0,tail:0,reach:0,sink:0,alpha:1};
+const keys=['breath','lean','head','hand','tail','reach','sink','alpha','sparkCel','sparkClock','sparkRecovery'];
+const neutral={breath:0,lean:0,head:0,hand:0,tail:0,reach:0,sink:0,alpha:1,sparkCel:0,sparkClock:0,sparkRecovery:0};
 const mix=(a,b,t)=>Object.fromEntries(keys.map(k=>[k,lerp(a[k],b[k],t)]));
 export function blendRigPose(previous,next,dt){return !previous||dt<0?{...next}:mix(previous,next,1-Math.exp(-Math.max(0,dt)/.026));}
 export const animationClock=(actor,time,idleTime)=>actor&&time>0?time:idleTime;
@@ -56,6 +56,15 @@ export function rigPose(id,actor,time,idleTime=time){
  }
  if((actor?.hitUntil||0)>time){const t=clamp(1-(actor.hitUntil-time)/.22),kick=Math.sin(t*Math.PI);p={...p,lean:p.lean-kick*.10,head:p.head-kick*.13,breath:p.breath-kick*.025};}
  if(actor?.hp<=0){const t=ease((time-(actor.downAt??time))/.55),hero=!!RIGS[id],breath=Math.sin(time*2.4)*.012;p=mix(p,hero?{...neutral,breath:-.36+breath,lean:.74,head:.46,hand:.22,tail:-.22,sink:.025,alpha:1}:{...neutral,breath:-.16,lean:.72,head:.1,sink:.03,alpha:.45},t);}
+ if(id==='spark'){
+  p.sparkClock=idleTime;
+  const a=actor?.action;
+  if(a&&actor.hp>0){const w=a.windup,e=a.duration,t=a.elapsed;
+   // Release drawing coincides with the actual projectile launch, not impact.
+   p.sparkCel=flowTrack(t,[[0,0],[w*.20,1],[w*.42,2],[w*.62,3],[w*.82,4],[w,5],[w+.10,4],[e-.30,3],[e-.15,2],[e-.07,1],[e,0]]);
+   p.sparkRecovery=flowTrack(t,[[0,0],[w,0],[w+.04,1],[e-.08,1],[e,0]]);
+  }
+ }
  return p;
 }
 function weight(point,zone){if(!zone)return 0;const d=Math.hypot((point[0]-zone[0])/zone[2],(point[1]-zone[1])/zone[3]);return 1-ease((d-.30)/.70);}

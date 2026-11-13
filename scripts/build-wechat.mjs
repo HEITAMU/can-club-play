@@ -37,11 +37,13 @@ const list = [
   "scenes/streets-v019.webp",
   "vfx/effects.webp",
   "vfx/can-rescue-v0192.webp",
+  "finished/spark-v0211.webp",
 ];
 const assets = {},
   packages = [],
   audit = [];
 let group = null;
+const prepared = [];
 for (const relative of list) {
   const source = "assets/" + relative,
     pipeline = sharp(path.join(root, source));
@@ -53,6 +55,7 @@ for (const relative of list) {
       width: Math.floor(meta.width / 4),
       height: meta.height,
     });
+  if (relative === "finished/spark-v0211.webp") pipeline.resize({width:1536});
   const jpg = relative.startsWith("scenes/");
   const data = await (
     jpg
@@ -60,7 +63,13 @@ for (const relative of list) {
       : pipeline.png({ compressionLevel: 9 })
   ).toBuffer();
   if (data.length > 3.8 * 1024 ** 2) throw Error("单图超出分包预算：" + source);
-  if (!group || group.bytes + data.length > 3.8 * 1024 ** 2) {
+  prepared.push({relative,source,data});
+}
+// Largest-first placement avoids adding a package just because a late atlas is large.
+for (const {relative,source,data} of prepared.sort((a,b)=>b.data.length-a.data.length)) {
+  const jpg = relative.startsWith("scenes/");
+  group = packages.find(p => p.bytes + data.length <= 3.8 * 1024 ** 2);
+  if (!group) {
     group = {
       name: "art" + (packages.length + 1),
       root: "packs/art" + (packages.length + 1) + "/",
@@ -112,7 +121,7 @@ await esbuild.build({
   ],
 });
 const manifest = {
-  version: "0.21.0",
+  version: "0.21.1",
   appid,
   packages: packages.map(({ name, root }) => ({ name, root })),
   assets,
