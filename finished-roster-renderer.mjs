@@ -1,4 +1,4 @@
-import {FINISHED_ROSTER} from './finished-roster-data.mjs?v=0.21.3';
+import {FINISHED_ROSTER} from './finished-roster-data.mjs?v=0.21.4';
 let factory,snapshot;
 export function setRosterCanvasFactory(f,freeze){factory=f;snapshot=freeze;}
 const cache=new WeakMap(),clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x)),smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
@@ -34,8 +34,9 @@ function triangle(ctx,image,src,dst){const [a,b,c]=src,[A,B,C]=dst,ux=b[0]-a[0],
 export function drawFinishedRoster(ctx,id,pose,atlas,face){
  const cel=rosterCel(pose),l=layer(id,atlas,cel,face),scale=.91/480,foot=.92;
  ctx.save();ctx.translate(.5,foot+(pose.sink||0));ctx.rotate(clamp((pose.lean||0)*.22,-.10,.32));ctx.translate(-.5,-foot);ctx.globalCompositeOperation='lighter';
- const cols=8,rows=10,points=[];
- for(let y=0;y<=rows;y++)for(let x=0;x<=cols;x++){const px=x/cols*512,py=y/rows*544,[dx,dy]=rosterVertex(id,px,py,pose);points.push({src:[l.rect[0]+px*(l.scale||1),l.rect[1]+py*(l.scale||1)],dst:[.5+(dx-256)*scale,foot+(dy-518)*scale]});}
+ // Place mesh rows at anatomical boundaries; keep the skull rigid and feet planted.
+ const xs=[0,110,256,512],ys=[0,258,335,420,470,518,544],cols=xs.length-1,rows=ys.length-1,points=[];
+ for(let y=0;y<=rows;y++)for(let x=0;x<=cols;x++){const px=xs[x],py=ys[y],[dx,dy]=rosterVertex(id,px,py,pose);points.push({src:[l.rect[0]+px*(l.scale||1),l.rect[1]+py*(l.scale||1)],dst:[.5+(dx-256)*scale,foot+(dy-518)*scale]});}
  for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){const a=y*(cols+1)+x,b=a+1,c=a+cols+1,d=c+1;for(const ids of [[a,b,d],[a,d,c]])triangle(ctx,l.image,ids.map(i=>points[i].src),ids.map(i=>points[i].dst));}
  ctx.restore();
 }

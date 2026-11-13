@@ -1,4 +1,4 @@
-import {FINISHED_SPARK as ART} from './finished-spark-data.mjs?v=0.21.3';
+import {FINISHED_SPARK as ART} from './finished-spark-data.mjs?v=0.21.4';
 
 // Every action drawing is one complete character. A limb is never separately
 // mirrored, stretched, crossfaded, or taken from a different character.
@@ -84,9 +84,10 @@ export function drawFinishedSpark(ctx,pose,atlas,face){
  // antialiased triangles contribute complementary coverage; adding that
  // coverage avoids the translucent grid produced by source-over clipping.
  ctx.globalCompositeOperation='lighter';
- const cols=8,rows=10,points=[];
+ // Place mesh rows at anatomical boundaries; keep the skull rigid and feet planted.
+ const xs=[0,110,256,512],ys=[0,258,335,420,470,518,544],cols=xs.length-1,rows=ys.length-1,points=[];
  for(let y=0;y<=rows;y++)for(let x=0;x<=cols;x++){
-  const px=x/cols*512,py=y/rows*544,[dx,dy]=sparkVertex(px,py,pose);
+  const px=xs[x],py=ys[y],[dx,dy]=sparkVertex(px,py,pose);
   points.push({src:[sx+px*(layer.scale||1),sy+py*(layer.scale||1)],dst:[.5+(dx-256)*scale,foot+(dy-518)*scale]});
  }
  for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){

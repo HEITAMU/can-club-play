@@ -1,9 +1,9 @@
-import {CATS,Battle,initialState} from './core.mjs?v=0.21.3';
-import {actorArt,setPose,sceneSVG} from './art.mjs?v=0.21.3';
-import {poseFor,battleRate,travelOffset,MotionOffsets,actionTiming} from './motion.mjs?v=0.21.3';
-import {BattleCues,formationPositions} from './battle-cues.mjs?v=0.21.3';
-import {CombatEffects,GuardEffects,StatusEffects} from './painted-fx.mjs?v=0.21.3';
-import {canHitAt} from './can-timing.mjs?v=0.21.3';
+import {CATS,Battle,initialState} from './core.mjs?v=0.21.4';
+import {actorArt,setPose,sceneSVG} from './art.mjs?v=0.21.4';
+import {poseFor,battleRate,travelOffset,MotionOffsets,actionTiming} from './motion.mjs?v=0.21.4';
+import {BattleCues,formationPositions} from './battle-cues.mjs?v=0.21.4';
+import {CombatEffects,GuardEffects,StatusEffects} from './painted-fx.mjs?v=0.21.4';
+import {canHitAt} from './can-timing.mjs?v=0.21.4';
 const $=s=>document.querySelector(s),cues=new BattleCues(),fx=new CombatEffects($('#combat-effects')),guards=new GuardEffects(),statuses=new StatusEffects(),offsets=new MotionOffsets();
 const modes=[...CATS.map(c=>[c.id,c.name]),['enemy-melee','怪物近战'],['enemy-ranged','怪物远程'],['boss','首领群攻'],['can','开罐啦']];
 $('#skills').innerHTML=modes.map(([id,label])=>`<button data-demo="${id}" aria-pressed="${id==='orange'}">${label}</button>`).join('');
