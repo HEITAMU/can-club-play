@@ -1,9 +1,9 @@
-import {sampleShidun,paintShidun} from './shidun-fx.mjs?v=0.21.8';
-import {VFX_ATLAS} from './vfx-atlas.mjs?v=0.21.8';
-import {FX_CELLS,sampleRoute,sampleImpact,sampleGuard,sampleStatus,shieldTransition} from './vfx-motion.mjs?v=0.21.8';
-import {paintHealing} from './healing-fx.mjs?v=0.21.8';
-import {CAN_ATLAS,paintCan} from './can-fx.mjs?v=0.21.8';
-export {effectEnvelope,impactStyle,shieldTransition} from './vfx-motion.mjs?v=0.21.8';
+import {sampleShidun,paintShidun} from './shidun-fx.mjs?v=0.21.9';
+import {VFX_ATLAS} from './vfx-atlas.mjs?v=0.21.9';
+import {FX_CELLS,sampleRoute,sampleImpact,sampleGuard,sampleStatus,shieldTransition} from './vfx-motion.mjs?v=0.21.9';
+import {paintHealing} from './healing-fx.mjs?v=0.21.9';
+import {CAN_ATLAS,paintCan} from './can-fx.mjs?v=0.21.9';
+export {effectEnvelope,impactStyle,shieldTransition} from './vfx-motion.mjs?v=0.21.9';
 let image;
 let canImage;
 function canAtlas(){if(!canImage&&typeof Image!=='undefined'){canImage=new Image();canImage.src=CAN_ATLAS.url;}return canImage;}
