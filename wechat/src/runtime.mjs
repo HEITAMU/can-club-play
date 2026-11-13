@@ -94,6 +94,7 @@ export async function boot(api, manifest, options = {}) {
       screen.windowHeight - (screen.safeArea?.bottom || screen.windowHeight),
     ),
     createCanvas: () => api.createCanvas(),
+    snapshotCanvas: api.snapshotCanvas,
     sound,
     save: (state) => {
       if (!writeSave(api, state)) showToast("存档写入失败，请在设置中复制备份");

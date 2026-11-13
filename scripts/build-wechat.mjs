@@ -62,7 +62,7 @@ for (const relative of list) {
       width: Math.floor(meta.width / 4),
       height: meta.height,
     });
-  if (relative === "finished/spark-v0211.webp") pipeline.resize({width:1536});
+  if (relative.startsWith("finished/") && !relative.includes("portrait")) pipeline.resize({width:1536});
   const jpg = relative.startsWith("scenes/");
   const data = await (
     jpg

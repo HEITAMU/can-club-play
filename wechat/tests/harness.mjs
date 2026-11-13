@@ -59,6 +59,9 @@ export async function harness({
     );
   const api = {
     createCanvas: () => createCanvas(1, 1),
+    // Napi copies mutable canvases per clipped triangle; immutable images match
+    // browser bitmap sampling and keep the native review's memory bounded.
+    snapshotCanvas: (c) => {const image=new canvas.Image();image.src=c.toBuffer('image/png');return image;},
     getWindowInfo: () => ({
       windowWidth: width,
       windowHeight: height,

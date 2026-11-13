@@ -7,15 +7,16 @@ export function rosterCel(pose){const k=Math.round(clamp(pose.rosterCel||0,0,4))
 // Cached surfaces are shared between battle, collection cards and portraits.
 // Expressions replace the face inside the resting drawing; costume and feet stay exact.
 function layer(id,atlas,index,face){
- const art=FINISHED_ROSTER[id],key=index===0?face?.to:'neutral',expression={blink:1,down:1,hurt:2,victory:3}[key],token=index+':'+(expression||0);
- let entries=cache.get(atlas);if(!entries){entries=new Map();cache.set(atlas,entries);}if(entries.has(token))return entries.get(token);
- const c=canvas(512,544);if(!c)return {image:atlas,rect:art.frames[index]};const ctx=c.getContext('2d');ctx.drawImage(atlas,...art.frames[index],0,0,512,544);
+ const art=FINISHED_ROSTER[id],sourceScale=(atlas.width||art.width)/art.width,key=index===0?face?.to:'neutral',expression={blink:1,down:1,hurt:2,victory:3}[key],token=index+':'+(expression||0);
+ const ready=value=>value.image.width?value:{image:atlas,rect:art.frames[index].map(v=>v*sourceScale),scale:sourceScale};
+ let entries=cache.get(atlas);if(!entries){entries=new Map();cache.set(atlas,entries);}if(entries.has(token))return ready(entries.get(token));
+ const c=canvas(512,544);if(!c)return {image:atlas,rect:art.frames[index].map(v=>v*sourceScale),scale:sourceScale};const ctx=c.getContext('2d');ctx.drawImage(atlas,...art.frames[index].map(v=>v*sourceScale),0,0,512,544);
  if(expression){
-  const p=canvas(512,544),mask=canvas(512,544);const pc=p.getContext('2d'),m=mask.getContext('2d');pc.drawImage(atlas,...art.frames[expression],0,0,512,544);
+  const p=canvas(512,544),mask=canvas(512,544);const pc=p.getContext('2d'),m=mask.getContext('2d');pc.drawImage(atlas,...art.frames[expression].map(v=>v*sourceScale),0,0,512,544);
   // These bounds are calibrated against the packed paintings, not arm/head cutouts.
   const [x,y,rx,ry]=art.face||[.57,.26,.16,.085];m.save();m.translate(x*512,y*544);m.scale(rx*512,ry*544);const g=m.createRadialGradient(0,0,.82,0,0,1);g.addColorStop(0,'#fff');g.addColorStop(1,'#fff0');m.fillStyle=g;m.fillRect(-1,-1,2,2);m.restore();pc.globalCompositeOperation='destination-in';pc.drawImage(mask,0,0);ctx.globalCompositeOperation='source-atop';ctx.drawImage(p,0,0);ctx.globalCompositeOperation='source-over';
  }
- const value={image:snapshot?snapshot(c):c.transferToImageBitmap?c.transferToImageBitmap():c,rect:[0,0,512,544]};entries.set(token,value);if(entries.size>14)entries.delete(entries.keys().next().value);return value;
+ const value={image:snapshot?snapshot(c):c.transferToImageBitmap?c.transferToImageBitmap():c,rect:[0,0,512,544]};entries.set(token,value);if(entries.size>14)entries.delete(entries.keys().next().value);return ready(value);
 }
 export function prepareRosterFrames(id,atlas){for(const index of [0,4,5,6,7,8,9,10,11])layer(id,atlas,index,{to:'neutral'});for(const to of ['blink','hurt','victory'])layer(id,atlas,0,{to});}
 export function rosterVertex(id,x,y,p){
@@ -34,7 +35,7 @@ export function drawFinishedRoster(ctx,id,pose,atlas,face){
  const cel=rosterCel(pose),l=layer(id,atlas,cel,face),scale=.91/480,foot=.92;
  ctx.save();ctx.translate(.5,foot+(pose.sink||0));ctx.rotate(clamp((pose.lean||0)*.22,-.10,.32));ctx.translate(-.5,-foot);ctx.globalCompositeOperation='lighter';
  const cols=8,rows=10,points=[];
- for(let y=0;y<=rows;y++)for(let x=0;x<=cols;x++){const px=x/cols*512,py=y/rows*544,[dx,dy]=rosterVertex(id,px,py,pose);points.push({src:[l.rect[0]+px,l.rect[1]+py],dst:[.5+(dx-256)*scale,foot+(dy-518)*scale]});}
+ for(let y=0;y<=rows;y++)for(let x=0;x<=cols;x++){const px=x/cols*512,py=y/rows*544,[dx,dy]=rosterVertex(id,px,py,pose);points.push({src:[l.rect[0]+px*(l.scale||1),l.rect[1]+py*(l.scale||1)],dst:[.5+(dx-256)*scale,foot+(dy-518)*scale]});}
  for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){const a=y*(cols+1)+x,b=a+1,c=a+cols+1,d=c+1;for(const ids of [[a,b,d],[a,d,c]])triangle(ctx,l.image,ids.map(i=>points[i].src),ids.map(i=>points[i].dst));}
  ctx.restore();
 }

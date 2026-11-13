@@ -24,7 +24,7 @@ export class NativeArt {
   constructor(env, images) {
     this.env = env;
     setFinishedCanvasFactory((w,h)=>{const c=env.createCanvas();c.width=w;c.height=h;return c;});
-    setRosterCanvasFactory((w,h)=>{const c=env.createCanvas();c.width=w;c.height=h;return c;});
+    setRosterCanvasFactory((w,h)=>{const c=env.createCanvas();c.width=w;c.height=h;return c;},env.snapshotCanvas);
     this.images = images;
     this.sprites = new Map();
   }
