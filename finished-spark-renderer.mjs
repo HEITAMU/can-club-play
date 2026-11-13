@@ -20,13 +20,17 @@ export function sparkFace(face,cel){
 }
 function facialLayer(atlas,index,key){
  const sourceScale=(atlas.width||ART.width)/ART.width,rect=ART.frames[index].rect.map(v=>v*sourceScale);
- if(key==='neutral')return {image:atlas,rect,scale:sourceScale};
  let entries=cache.get(atlas);if(!entries){entries=new Map();cache.set(atlas,entries);}
  const id=index+':'+key;if(entries.has(id))return entries.get(id);
- const surface=canvas(512,544),patch=canvas(320,256),mask=canvas(320,256);
- if(!surface||!patch||!mask)return {image:atlas,rect,scale:sourceScale};
- const ctx=surface.getContext('2d'),p=patch.getContext('2d'),m=mask.getContext('2d');
- ctx.drawImage(atlas,...rect,0,0,512,544);p.drawImage(atlas,...ART.faces[key].map(v=>v*sourceScale),0,0,320,256);
+ // Cache the selected cel even for the neutral face. The mesh then samples a
+ // small, consistently scaled surface instead of the full 2048px atlas.
+ const surface=canvas(512,544);if(!surface)return {image:atlas,rect,scale:sourceScale};
+ const ctx=surface.getContext('2d');ctx.drawImage(atlas,...rect,0,0,512,544);
+ if(key!=='neutral'){
+ const patch=canvas(320,256),mask=canvas(320,256);
+ if(!patch||!mask)return {image:atlas,rect,scale:sourceScale};
+ const p=patch.getContext('2d'),m=mask.getContext('2d');
+ p.drawImage(atlas,...ART.faces[key].map(v=>v*sourceScale),0,0,320,256);
  // Feather only eyes, brows, and muzzle. Skull, ears, neck and body pixels are
  // the original finished drawing, so a blink cannot resize the head or torso.
  for(const [x,y,rx,ry] of [[.55,.58,.30,.26],[.83,.57,.13,.23],[.75,.72,.23,.18]]){
@@ -35,6 +39,7 @@ function facialLayer(atlas,index,key){
  }
  p.globalCompositeOperation='destination-in';p.drawImage(mask,0,0);
  ctx.globalCompositeOperation='source-atop';ctx.drawImage(patch,...ART.frames[index].head);ctx.globalCompositeOperation='source-over';
+ }
  const result={image:surface,rect:[0,0,512,544]};entries.set(id,result);
  // Keep memory bounded when the roster, portrait and combat use the same cat.
  if(entries.size>4)entries.delete(entries.keys().next().value);return result;

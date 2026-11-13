@@ -37,6 +37,12 @@ jobs:
             git push origin HEAD:rebuild/spark-reference-v0211
           fi
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: spark-v0211-in-game-review
-          path: docs/review/spark-v0211/
+          path: |
+            qa/spark/*.png
+            qa/spark-browser/*.png
+            qa/spark-browser/*.json
+            qa/spark-browser/*.mp4
+            dist/wechat/BUILD-REPORT.json
