@@ -1,6 +1,6 @@
 import {CHARACTERS,SUPPORT,behavior} from './characters.mjs';
 import {actionFor,sampleAction,clamp} from './motion.mjs';
-import {drawActor} from './render.mjs';
+import {drawActor,muzzleFor} from './render.mjs';
 import {paintEffects} from './fx.mjs';
 import {ULTIMATES,ENEMY_POINTS,ALLY_POINTS,paintUltimate,paintUltimateGround,paintShieldPunch} from './ultimates.mjs';
 import {scriptedShieldPunch,shieldPunchPose} from './shield-punch.mjs';
@@ -28,10 +28,12 @@ export function renderShieldStage(ctx,atlas,images,d,time,width=960,height=520){
  const hitEvent=[...d.events].reverse().find(e=>e.type==='punchHit'),age=hitEvent?time-hitEvent.at:-1,hit=age>=0&&age<.3?age/.3:0;
  if(age>=0&&age<.28)ctx.translate(Math.sin(age*110)*5*(1-age/.28),Math.cos(age*77)*2.5*(1-age/.28));
  const pose=shieldPunchPose(d.s,time),x=255,y=440,size=310;
- paintShieldPunch(ctx,atlas,images,d,time,{x:405,y:330},true);
+ const muzzle=muzzleFor(atlas,'pudding',pose,x,y,size);
+ const start=[...d.events].reverse().find(e=>e.type==='punchStart');
+ const origin=!start||time-start.at<=d.s.config.punchTravel?muzzle:muzzleFor(atlas,'pudding',{bodyFrame:10},x,y,size);
+ paintShieldPunch(ctx,atlas,images,d,time,origin,true);
  ENEMY_POINTS.forEach(([tx,ty],i)=>{dummy(ctx,tx,ty,hit);const e=d.enemies[i];if(e){ctx.fillStyle='#20393d';ctx.fillRect(tx-37,ty-154,74,5);ctx.fillStyle='#d8bd7f';ctx.fillRect(tx-37,ty-154,74*clamp(e.hp/e.maxHp),5);}});
- shadow(ctx,x,y);const muzzle=drawActor(ctx,atlas,images,'pudding',pose,x,y,size,{charge:pose.charge});
- const start=[...d.events].reverse().find(e=>e.type==='punchStart');const origin=pose.phase==='蓄力'||pose.phase==='锁定盾量'||(start&&time-start.at<=d.s.config.punchTravel)?muzzle:{x:405,y:330};
+ shadow(ctx,x,y);drawActor(ctx,atlas,images,'pudding',pose,x,y,size,{charge:pose.charge,time});
  paintShieldPunch(ctx,atlas,images,d,time,origin);
  // A local shield/energy readout makes the two triggers inspectable without a combat log.
  ctx.fillStyle='#1e363b';ctx.fillRect(132,476,246,9);ctx.fillStyle='#dfbb74';ctx.fillRect(132,476,246*clamp(d.s.shield/(d.s.maxHp*d.s.config.shieldCapRatio)),9);

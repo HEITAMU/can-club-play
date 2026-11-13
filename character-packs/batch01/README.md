@@ -1,10 +1,10 @@
-# 第一批伙伴角色包 · v0.1.0 review
+# 第一批伙伴角色包 · v0.2.0 review
 
 10 名角色：橘座、阿墨、奶盖、火花、薄荷、螺丝、玄岳、星斑、夜航、砚台。32 个技能加 10 个普通攻击的独立动作/效果预览。现阶段为角色资产与动作原型，未替换正式游戏战斗、经济、存档或微信工程。
 
 ## 查看
 
-在仓库根目录启动静态服务器，打开 `character-packs/batch01/`。预览默认打开玄岳的蓄盾轰拳，可切换角色、技能、暂停、拖动进度，也可以手动补盾、补满能量、施加控制及解控。
+在仓库根目录启动静态服务器，打开 `character-packs/batch01/`。预览默认打开玄岳的蓄盾轰拳，可切换角色、技能、暂停、0.5 倍慢放、逐帧前进、拖动进度，也可以手动补盾、补满能量、施加控制及解控。
 
 `review/batch01-motion.mp4` 为实际渲染器录制，包含十位伙伴大技能、玄岳普攻和受控打断。`review/lineup.png`、`review/ultimates.png`、`review/xuanyue-sequence.png` 为同一渲染器输出，不是概念图冒充运行画面。敌方木桩是演示靶子。
 
@@ -22,7 +22,7 @@
 
 ## 动作与特效
 
-3 个可复用体型基础，头、两臂、尾巴独立运动；近战普攻有接近、挥击、命中、归位。玄岳蓄力时右拳后收，出拳时身体前压、右臂前伸，拳压在拳头前送后才展开。半场拳压、全体受击、碎盾、地面裂光和短促震屏有各自时间段，未采用旧黄色月牙。
+九位伙伴继续使用分件骨架，换入带连续肩颈的身体稿，肩膀和头部锚点按新身体重新定位，保留原头部、手部和武器素材。玄岳改为十二幅完整身体姿势：待机、呼吸、跑步、起手、普攻、格挡、沉身、蓄拳、送拳、命中和受控；统一缩放和脚点，保持蹲身高度，避免旋转独立手臂造成肩部脱节。近战普攻保留接近、挥击、命中、归位。拳压从当前拳头的位置展开，命中后的余波保留出拳时的起点。半场拳压、全体受击、碎盾、地面裂光和短促震屏有各自时间段，未采用旧黄色月牙。
 
 | 角色 | 大技能视觉 |
 |---|---|
@@ -49,8 +49,14 @@
 
 ## 验证与接入边界
 
-本地 `node --test character-packs/batch01/test.mjs character-packs/batch01/shield-punch.test.mjs`：26 项通过，覆盖护盾/能量/控制边界、42 个动作渲染、图集范围、近战归位与单次命中。`browser-review.mjs` 另测 390px 和 960px 页面、全部动作加载、内存缓存数量与交互打断；是否通过以 `review/browser-report.json` 的实际结果为准。
+本地 `node --test character-packs/batch01/test.mjs character-packs/batch01/shield-punch.test.mjs character-packs/batch01/anatomy-upgrade.test.mjs`：29 项通过，覆盖护盾/能量/控制边界、42 个动作渲染、图集范围、近战归位与单次命中。`browser-review.mjs` 另测 320px、390px 和 960px 页面、全部动作加载、资源缓存数量、慢放、逐帧前进与交互打断；是否通过以 `review/browser-report.json` 的实际结果为准。
 
-完整 50 人战斗、养成平衡、正式关卡中的目标跟随/控制系统适配和微信真机性能尚未完成。原型护盾由宿主负责持续时间与驱散。当前角色预览只加载选中角色所需图集，不能据此断言 50 人包体或真机性能已通过。
+完整 50 人战斗、养成平衡、正式关卡中的目标跟随/控制系统适配和微信真机性能尚未完成。原型护盾由宿主负责持续时间与驱散。当前角色预览只加载选中角色所需的 2–4 张图集，不能据此断言 50 人包体或真机性能已通过。
 
 原游戏回档基线：`docs/rollback-baseline-v0210.json`；`backup/v0.21.0-before-roster50` 不变。后续鱼摊和关卡经济改动继续留待下一次更新。
+
+## 重现本次接入
+
+使用 Node.js，并安装 `sharp`、`@napi-rs/canvas` 和 `playwright`。`node character-packs/batch01/pack.cjs` 会重建原图集并接入新的肩颈身体及玄岳姿势；仅重建这两张新素材可运行 `pack-body-upgrade.cjs`。来源记录在 `source/upgrade-provenance.json`。
+
+`node character-packs/batch01/review.mjs --video` 生成实际渲染画面及视频。浏览器检查可通过 `BROWSER_EXECUTABLE` 指定本机 Chromium；未设置时使用 Playwright 配套浏览器。

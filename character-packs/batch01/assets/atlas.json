@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0-review",
+  "version": "0.2.0-review",
   "coordinateSystem": "anatomical-right-is-near-camera; facing screen right",
   "characters": {
     "orange": {
@@ -9,10 +9,10 @@
       "source": "orange-v1.webp",
       "parts": {
         "body": [
-          25,
-          636,
-          238,
-          263
+          89,
+          38,
+          240,
+          338
         ],
         "nearRightArm": [
           298,
@@ -107,6 +107,23 @@
       },
       "faceAtlases": {
         "attack": "assets/attack-heads-v1.webp"
+      },
+      "partAtlases": {
+        "body": "assets/neck-bodies-v2.webp"
+      },
+      "bodyRig": {
+        "near": [
+          0.21,
+          0.28
+        ],
+        "far": [
+          0.82,
+          0.28
+        ],
+        "neck": [
+          0.54,
+          0.065
+        ]
       }
     },
     "ink": {
@@ -116,10 +133,10 @@
       "source": "ink-v1.webp",
       "parts": {
         "body": [
-          50,
-          633,
-          195,
-          269
+          496,
+          38,
+          215,
+          337
         ],
         "nearRightArm": [
           306,
@@ -214,6 +231,23 @@
       },
       "faceAtlases": {
         "attack": "assets/attack-heads-v1.webp"
+      },
+      "partAtlases": {
+        "body": "assets/neck-bodies-v2.webp"
+      },
+      "bodyRig": {
+        "near": [
+          0.21,
+          0.28
+        ],
+        "far": [
+          0.82,
+          0.28
+        ],
+        "neck": [
+          0.54,
+          0.065
+        ]
       }
     },
     "milk": {
@@ -223,10 +257,10 @@
       "source": "milk-v1.webp",
       "parts": {
         "body": [
-          16,
-          610,
-          253,
-          258
+          861,
+          39,
+          254,
+          337
         ],
         "nearRightArm": [
           296,
@@ -321,6 +355,23 @@
       },
       "faceAtlases": {
         "attack": "assets/attack-heads-v1.webp"
+      },
+      "partAtlases": {
+        "body": "assets/neck-bodies-v2.webp"
+      },
+      "bodyRig": {
+        "near": [
+          0.21,
+          0.28
+        ],
+        "far": [
+          0.82,
+          0.28
+        ],
+        "neck": [
+          0.54,
+          0.065
+        ]
       }
     },
     "spark": {
@@ -330,10 +381,10 @@
       "source": "spark-lantern-correction-v5.webp",
       "parts": {
         "body": [
-          17,
-          658,
-          233,
-          260
+          1241,
+          38,
+          235,
+          337
         ],
         "nearRightArm": [
           314,
@@ -428,6 +479,23 @@
       },
       "faceAtlases": {
         "attack": "assets/attack-heads-v1.webp"
+      },
+      "partAtlases": {
+        "body": "assets/neck-bodies-v2.webp"
+      },
+      "bodyRig": {
+        "near": [
+          0.21,
+          0.28
+        ],
+        "far": [
+          0.82,
+          0.28
+        ],
+        "neck": [
+          0.54,
+          0.065
+        ]
       }
     },
     "mint": {
@@ -437,10 +505,10 @@
       "source": "mint-v1.webp",
       "parts": {
         "body": [
-          36,
-          625,
-          222,
-          274
+          1610,
+          39,
+          254,
+          335
         ],
         "nearRightArm": [
           75,
@@ -538,10 +606,25 @@
       },
       "partAtlases": {
         "nearRightArm": "assets/mint-arms-hires-v1.webp",
-        "farLeftArm": "assets/mint-arms-hires-v1.webp"
+        "farLeftArm": "assets/mint-arms-hires-v1.webp",
+        "body": "assets/neck-bodies-v2.webp"
       },
       "referenceAtlases": {
         "action": "assets/mint-action-hires-v1.webp"
+      },
+      "bodyRig": {
+        "near": [
+          0.21,
+          0.28
+        ],
+        "far": [
+          0.82,
+          0.28
+        ],
+        "neck": [
+          0.54,
+          0.065
+        ]
       }
     },
     "bolt": {
@@ -551,10 +634,10 @@
       "source": "bolt-v1.webp",
       "parts": {
         "body": [
-          32,
-          619,
-          237,
-          286
+          98,
+          439,
+          225,
+          339
         ],
         "nearRightArm": [
           305,
@@ -649,6 +732,23 @@
       },
       "faceAtlases": {
         "attack": "assets/attack-heads-v1.webp"
+      },
+      "partAtlases": {
+        "body": "assets/neck-bodies-v2.webp"
+      },
+      "bodyRig": {
+        "near": [
+          0.21,
+          0.28
+        ],
+        "far": [
+          0.82,
+          0.28
+        ],
+        "neck": [
+          0.54,
+          0.065
+        ]
       }
     },
     "pudding": {
@@ -658,10 +758,10 @@
       "source": "xuanyue-atlas-v1.webp",
       "parts": {
         "body": [
-          28,
-          794,
-          207,
-          258
+          470,
+          437,
+          253,
+          341
         ],
         "nearRightArm": [
           281,
@@ -754,7 +854,236 @@
           309
         ]
       },
-      "faceAtlases": {}
+      "faceAtlases": {},
+      "partAtlases": {
+        "body": "assets/neck-bodies-v2.webp"
+      },
+      "bodyRig": {
+        "near": [
+          0.21,
+          0.28
+        ],
+        "far": [
+          0.82,
+          0.28
+        ],
+        "neck": [
+          0.54,
+          0.065
+        ]
+      },
+      "fullBody": {
+        "atlas": "assets/xuanyue-poses-v2.webp",
+        "width": 1448,
+        "height": 330,
+        "source": "xuanyue-poses-v2.webp",
+        "frames": [
+          {
+            "name": "idle",
+            "rect": [
+              55,
+              14,
+              248,
+              325
+            ],
+            "pivot": [
+              150,
+              325
+            ],
+            "fist": [
+              -47,
+              -110
+            ]
+          },
+          {
+            "name": "breathe",
+            "rect": [
+              418,
+              9,
+              250,
+              330
+            ],
+            "pivot": [
+              147,
+              330
+            ],
+            "fist": [
+              -47,
+              -104
+            ]
+          },
+          {
+            "name": "runA",
+            "rect": [
+              765,
+              26,
+              273,
+              311
+            ],
+            "pivot": [
+              176,
+              313
+            ],
+            "fist": [
+              -66,
+              -151
+            ]
+          },
+          {
+            "name": "runB",
+            "rect": [
+              1153,
+              35,
+              256,
+              302
+            ],
+            "pivot": [
+              142,
+              304
+            ],
+            "fist": [
+              -45,
+              -176
+            ]
+          },
+          {
+            "name": "ready",
+            "rect": [
+              51,
+              378,
+              255,
+              325
+            ],
+            "pivot": [
+              154,
+              323
+            ],
+            "fist": [
+              -46,
+              -156
+            ]
+          },
+          {
+            "name": "jab",
+            "rect": [
+              399,
+              377,
+              318,
+              326
+            ],
+            "pivot": [
+              166,
+              324
+            ],
+            "fist": [
+              125,
+              -205
+            ]
+          },
+          {
+            "name": "guard",
+            "rect": [
+              751,
+              402,
+              291,
+              302
+            ],
+            "pivot": [
+              169,
+              299
+            ],
+            "fist": [
+              -82,
+              -132
+            ]
+          },
+          {
+            "name": "sink",
+            "rect": [
+              1103,
+              416,
+              317,
+              288
+            ],
+            "pivot": [
+              179,
+              285
+            ],
+            "fist": [
+              -100,
+              -132
+            ]
+          },
+          {
+            "name": "coil",
+            "rect": [
+              29,
+              756,
+              288,
+              311
+            ],
+            "pivot": [
+              176,
+              311
+            ],
+            "fist": [
+              52,
+              -178
+            ]
+          },
+          {
+            "name": "drive",
+            "rect": [
+              375,
+              760,
+              342,
+              308
+            ],
+            "pivot": [
+              187,
+              307
+            ],
+            "fist": [
+              130,
+              -188
+            ]
+          },
+          {
+            "name": "impact",
+            "rect": [
+              730,
+              771,
+              336,
+              297
+            ],
+            "pivot": [
+              192,
+              296
+            ],
+            "fist": [
+              126,
+              -155
+            ]
+          },
+          {
+            "name": "controlled",
+            "rect": [
+              1113,
+              756,
+              286,
+              312
+            ],
+            "pivot": [
+              174,
+              311
+            ],
+            "fist": [
+              -81,
+              -74
+            ]
+          }
+        ]
+      }
     },
     "star": {
       "atlas": "assets/star.webp",
@@ -763,10 +1092,10 @@
       "source": "star-v1.webp",
       "parts": {
         "body": [
-          34,
-          666,
-          216,
-          259
+          857,
+          439,
+          259,
+          339
         ],
         "nearRightArm": [
           294,
@@ -861,6 +1190,23 @@
       },
       "faceAtlases": {
         "attack": "assets/attack-heads-v1.webp"
+      },
+      "partAtlases": {
+        "body": "assets/neck-bodies-v2.webp"
+      },
+      "bodyRig": {
+        "near": [
+          0.21,
+          0.28
+        ],
+        "far": [
+          0.82,
+          0.28
+        ],
+        "neck": [
+          0.54,
+          0.065
+        ]
       }
     },
     "night": {
@@ -870,10 +1216,10 @@
       "source": "night-v2.webp",
       "parts": {
         "body": [
-          5,
-          613,
-          246,
-          293
+          1234,
+          440,
+          265,
+          337
         ],
         "nearRightArm": [
           274,
@@ -968,6 +1314,23 @@
       },
       "faceAtlases": {
         "attack": "assets/attack-heads-v1.webp"
+      },
+      "partAtlases": {
+        "body": "assets/neck-bodies-v2.webp"
+      },
+      "bodyRig": {
+        "near": [
+          0.21,
+          0.28
+        ],
+        "far": [
+          0.82,
+          0.28
+        ],
+        "neck": [
+          0.54,
+          0.065
+        ]
       }
     },
     "inkstone": {
@@ -977,10 +1340,10 @@
       "source": "inkstone-v1.webp",
       "parts": {
         "body": [
-          30,
-          682,
-          245,
-          273
+          1625,
+          439,
+          249,
+          339
         ],
         "nearRightArm": [
           326,
@@ -1075,7 +1438,28 @@
       },
       "faceAtlases": {
         "attack": "assets/attack-heads-v1.webp"
+      },
+      "partAtlases": {
+        "body": "assets/neck-bodies-v2.webp"
+      },
+      "bodyRig": {
+        "near": [
+          0.21,
+          0.28
+        ],
+        "far": [
+          0.82,
+          0.28
+        ],
+        "neck": [
+          0.54,
+          0.065
+        ]
       }
     }
+  },
+  "bodyUpgrade": {
+    "source": "neck-bodies-v2.webp",
+    "provenance": "source/upgrade-provenance.json"
   }
 }

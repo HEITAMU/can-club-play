@@ -1,9 +1,10 @@
 import fs from 'node:fs';import path from 'node:path';import {createRequire} from 'node:module';import {fileURLToPath} from 'node:url';import {spawn} from 'node:child_process';
 import {ORDER,CHARACTERS} from './characters.mjs';import {drawActor} from './render.mjs';import {sceneAction,renderStage} from './stage.mjs';import {sampleAction} from './motion.mjs';
 import {scriptedShieldPunch,shieldPunchPose} from './shield-punch.mjs';
+import {assetFiles} from './asset-files.mjs';
 const require=createRequire(import.meta.url),{createCanvas,loadImage,GlobalFonts}=require('@napi-rs/canvas'),sharp=require('sharp');
 const root=path.dirname(fileURLToPath(import.meta.url));GlobalFonts.registerFromPath('/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc','Review CJK');
-export async function resources(){const atlas=JSON.parse(fs.readFileSync(path.join(root,'assets/atlas.json')));const files=new Set(Object.values(atlas.characters).flatMap(a=>[a.atlas,...Object.values(a.partAtlases||{}),...Object.values(a.faceAtlases||{})]));const images=Object.fromEntries(await Promise.all([...files].map(async p=>[p,await loadImage(path.join(root,p))])));return{atlas,images};}
+export async function resources(){const atlas=JSON.parse(fs.readFileSync(path.join(root,'assets/atlas.json')));const files=new Set(Object.values(atlas.characters).flatMap(assetFiles));const images=Object.fromEntries(await Promise.all([...files].map(async p=>[p,await loadImage(path.join(root,p))])));return{atlas,images};}
 if(process.argv[1]===fileURLToPath(import.meta.url)){
  const {atlas,images}=await resources();fs.mkdirSync(path.join(root,'review'),{recursive:true});
  const thumbs=createCanvas(1600,200),tc=thumbs.getContext('2d');ORDER.forEach((id,i)=>drawActor(tc,atlas,images,id,{face:'neutral'},i*160+78,190,175));await sharp(thumbs.toBuffer('image/png')).webp({quality:94,alphaQuality:100}).toFile(path.join(root,'assets/portraits.webp'));

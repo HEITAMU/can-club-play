@@ -32,7 +32,10 @@ export function sampleAction(a,t,idleTime=t){
  const lean=track(t,[[0,0],[a.prepare,-.09],[pre,.03],[a.release,-.06],[a.hit,.10],[a.retreat,.08],[a.returnEnd+.20,0]]);
  const phase=t<0?'待机':t<a.prepare?'起手':t<pre?'接近':t<a.release?'蓄力':t<a.hit?'挥击':t<a.retreat?'命中':t<a.returnEnd?'归位':'收招';
  const face=t>a.release-.06&&t<a.hit+.18?'attack':t>=0&&a.kind!=='normal'&&t<a.hit+.4?'skill':Math.sin(idleTime*1.2)> .997?'blink':'neutral';
- return {x:lerp(a.start.x,a.stop.x,distance),y:lerp(a.start.y,a.stop.y,distance),near,far,lean,head:-lean*.28,breath:Math.sin(idleTime*2.5)*.012,
+ let bodyFrame;
+ if(a.id==='pudding')bodyFrame=!active?undefined:run?(Math.floor(Math.max(0,t)*9)%2?3:2):
+  SUPPORT.has(a.kind)?(t<a.hit+.3?6:0):t<a.hit-.07?4:t<a.retreat?5:t<a.returnEnd+.12?6:0;
+ return {time:idleTime,bodyFrame,x:lerp(a.start.x,a.stop.x,distance),y:lerp(a.start.y,a.stop.y,distance),near,far,lean,head:-lean*.28,breath:Math.sin(idleTime*2.5)*.012,
   tail:Math.sin(idleTime*3.2)*.09+lean*.7,run:run?Math.sin(t*25):0,bob:run?Math.abs(Math.sin(t*25))*-.023:0,face,phase,hit:t>=a.hit,contact:a.hit,distance};
 }
 // For the host combat loop: one callback when contact is crossed, never on dispatch.
