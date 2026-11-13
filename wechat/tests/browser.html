@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+  /><title>WeChat Canvas Adapter Review</title
+  ><style>
+    html,
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #294a54;
+      touch-action: none;
+    }
+    canvas.screen {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
+  <script>
+    window.module = { exports: {} };
+  </script>
+  <script src="/dist/wechat/runtime.js"></script>
+  <script type="module">
+    import { initialState, encodeSave } from "/core.mjs";
+    const handlers = {},
+      store = new Map(),
+      modals = [];
+    let main,
+      canvasCount = 0;
+    const api = {
+      createCanvas() {
+        const canvas = document.createElement("canvas");
+        if (!canvasCount++) {
+          main = canvas;
+          canvas.className = "screen";
+          document.body.append(canvas);
+        }
+        return canvas;
+      },
+      getWindowInfo() {
+        return {
+          windowWidth: innerWidth,
+          windowHeight: innerHeight,
+          pixelRatio: devicePixelRatio,
+          statusBarHeight: 28,
+          safeArea: { top: 28, bottom: innerHeight - 20 },
+        };
+      },
+      createImage() {
+        const image = new Image(),
+          src = Object.getOwnPropertyDescriptor(
+            HTMLImageElement.prototype,
+            "src",
+          );
+        Object.defineProperty(image, "src", {
+          set(value) {
+            src.set.call(this, "/dist/wechat/" + value);
+          },
+        });
+        return image;
+      },
+      loadSubpackage(o) {
+        fetch("/dist/wechat/packs/" + o.name + "/game.js")
+          .then((r) => {
+            if (!r.ok) throw Error(r.status);
+            o.success();
+          })
+          .catch(o.fail);
+        return { onProgressUpdate() {} };
+      },
+      getStorageSync: (k) => store.get(k) || "",
+      setStorageSync: (k, v) => store.set(k, v),
+      showModal: (o) => o.success(modals.shift() || { confirm: true }),
+      setClipboardData: (o) => {
+        window.copied = o.data;
+        o.success();
+      },
+      showToast: (o) => (window.lastToast = o.title),
+      showShareMenu() {},
+      onShareAppMessage: (fn) => (handlers.share = fn),
+      shareAppMessage() {
+        window.shared = true;
+      },
+      getLogManager: () => console,
+    };
+    for (const key of [
+      "TouchStart",
+      "TouchMove",
+      "TouchEnd",
+      "TouchCancel",
+      "Hide",
+      "Show",
+      "WindowResize",
+    ])
+      api["on" + key] = (fn) => (handlers[key] = fn);
+    const state = {
+      ...initialState(),
+      onboarded: true,
+      highest: 60,
+      runCleared: 45,
+      stage: 46,
+      gold: 32000,
+      party: ["orange", "ink", "milk", "mint", "bolt"],
+      levels: {
+        orange: 28,
+        ink: 50,
+        milk: 13,
+        spark: 1,
+        mint: 1,
+        bolt: 1,
+        pudding: 1,
+        star: 1,
+      },
+    };
+    store.set("can-club-wechat-v1", encodeSave(state));
+    window.fixture = await module.exports.boot(
+      api,
+      await (await fetch("/dist/wechat/asset-manifest.json")).json(),
+      { autoStart: false, throwOnError: true },
+    );
+    Object.assign(window.fixture, { handlers, store, modals });
+    for (const [event, key] of [
+      ["pointerdown", "TouchStart"],
+      ["pointermove", "TouchMove"],
+      ["pointerup", "TouchEnd"],
+      ["pointercancel", "TouchCancel"],
+    ])
+      main.addEventListener(event, (e) => {
+        e.preventDefault();
+        if (event === "pointerdown") main.setPointerCapture(e.pointerId);
+        const touch = {
+          clientX: e.clientX,
+          clientY: e.clientY,
+          identifier: e.pointerId,
+        };
+        handlers[key]({ touches: [touch], changedTouches: [touch] });
+        fixture.app.render();
+      });
+    window.ready = true;
+  </script>
+</html>
