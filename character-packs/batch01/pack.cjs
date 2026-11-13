@@ -44,6 +44,7 @@ function bound(cs,w,h){if(!cs.length)throw Error('Missing painted component');co
  const hands=await extra('mint-arms-hires-v1.webp',2,1);
  for(let i=0;i<2;i++){const key=parts[i+1];meta.characters.mint.parts[key]=hands.boxes[i];}meta.characters.mint.partAtlases={nearRightArm:hands.atlas,farLeftArm:hands.atlas};
  const mintAction=await extra('mint-action-hires-v1.webp',1,1);meta.characters.mint.reference.action=mintAction.boxes[0];meta.characters.mint.referenceAtlases={action:mintAction.atlas};
+ await require('./pack-body-upgrade.cjs').upgrade(meta);
  fs.writeFileSync(path.join(root,'assets/atlas.json'),JSON.stringify(meta,null,2)+'\n');
  fs.mkdirSync(path.join(root,'../../qa/batch01'),{recursive:true});
  fs.writeFileSync(path.join(root,'../../qa/batch01/neutral-heads-reference.png'),headSheet.toBuffer('image/png'));

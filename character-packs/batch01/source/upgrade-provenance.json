@@ -1,0 +1,8 @@
+{
+  "version": "0.2.0-review",
+  "sources": [
+    {"file": "neck-bodies-v2.webp", "original": "十身无头服装精灵图集.png", "library_file_id": "libfile_56a2cb17c8dc8191821ef10528b95fc8", "use": "body and neck only; original faces, hands and weapons retained"},
+    {"file": "xuanyue-poses-v2.webp", "original": "玄岳武猫十二帧动作图集.png", "library_file_id": "libfile_7450aec87b6881919206dcd761626b1d", "use": "twelve whole-body poses for Xuanyue"}
+  ],
+  "processing": "Lossless source format conversion and rectangular atlas packing; no AI regeneration, recoloring or painted over anatomy."
+}
