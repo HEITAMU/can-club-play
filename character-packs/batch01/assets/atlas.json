@@ -1,0 +1,1081 @@
+{
+  "version": "0.1.0-review",
+  "coordinateSystem": "anatomical-right-is-near-camera; facing screen right",
+  "characters": {
+    "orange": {
+      "atlas": "assets/orange.webp",
+      "width": 1024,
+      "height": 1536,
+      "source": "orange-v1.webp",
+      "parts": {
+        "body": [
+          25,
+          636,
+          238,
+          263
+        ],
+        "nearRightArm": [
+          298,
+          648,
+          132,
+          218
+        ],
+        "farLeftArm": [
+          514,
+          637,
+          245,
+          255
+        ],
+        "tail": [
+          803,
+          645,
+          188,
+          214
+        ]
+      },
+      "faces": {
+        "neutral": [
+          13,
+          966,
+          232,
+          184
+        ],
+        "blink": [
+          266,
+          966,
+          232,
+          185
+        ],
+        "skill": [
+          519,
+          967,
+          230,
+          183
+        ],
+        "victory": [
+          766,
+          966,
+          249,
+          184
+        ],
+        "attack": [
+          15,
+          163,
+          322,
+          257
+        ]
+      },
+      "fx": {
+        "seed": [
+          43,
+          1279,
+          169,
+          154
+        ],
+        "release": [
+          266,
+          1249,
+          241,
+          200
+        ],
+        "impact": [
+          540,
+          1249,
+          196,
+          194
+        ],
+        "state": [
+          786,
+          1252,
+          214,
+          184
+        ]
+      },
+      "reference": {
+        "idle": [
+          14,
+          67,
+          458,
+          470
+        ],
+        "action": [
+          503,
+          113,
+          515,
+          424
+        ]
+      },
+      "faceAtlases": {
+        "attack": "assets/attack-heads-v1.webp"
+      }
+    },
+    "ink": {
+      "atlas": "assets/ink.webp",
+      "width": 1024,
+      "height": 1536,
+      "source": "ink-v1.webp",
+      "parts": {
+        "body": [
+          50,
+          633,
+          195,
+          269
+        ],
+        "nearRightArm": [
+          306,
+          649,
+          147,
+          215
+        ],
+        "farLeftArm": [
+          523,
+          608,
+          184,
+          304
+        ],
+        "tail": [
+          772,
+          686,
+          216,
+          163
+        ]
+      },
+      "faces": {
+        "neutral": [
+          15,
+          969,
+          235,
+          215
+        ],
+        "blink": [
+          270,
+          967,
+          234,
+          219
+        ],
+        "skill": [
+          524,
+          966,
+          235,
+          219
+        ],
+        "victory": [
+          780,
+          966,
+          235,
+          219
+        ],
+        "attack": [
+          373,
+          121,
+          323,
+          299
+        ]
+      },
+      "fx": {
+        "seed": [
+          31,
+          1346,
+          212,
+          51
+        ],
+        "release": [
+          315,
+          1303,
+          136,
+          102
+        ],
+        "impact": [
+          554,
+          1295,
+          136,
+          131
+        ],
+        "state": [
+          775,
+          1329,
+          223,
+          61
+        ]
+      },
+      "reference": {
+        "idle": [
+          19,
+          44,
+          420,
+          502
+        ],
+        "action": [
+          501,
+          49,
+          506,
+          493
+        ]
+      },
+      "faceAtlases": {
+        "attack": "assets/attack-heads-v1.webp"
+      }
+    },
+    "milk": {
+      "atlas": "assets/milk.webp",
+      "width": 1024,
+      "height": 1536,
+      "source": "milk-v1.webp",
+      "parts": {
+        "body": [
+          16,
+          610,
+          253,
+          258
+        ],
+        "nearRightArm": [
+          296,
+          651,
+          182,
+          177
+        ],
+        "farLeftArm": [
+          530,
+          651,
+          206,
+          150
+        ],
+        "tail": [
+          776,
+          621,
+          219,
+          230
+        ]
+      },
+      "faces": {
+        "neutral": [
+          16,
+          932,
+          238,
+          208
+        ],
+        "blink": [
+          266,
+          932,
+          237,
+          208
+        ],
+        "skill": [
+          516,
+          930,
+          239,
+          210
+        ],
+        "victory": [
+          766,
+          932,
+          249,
+          208
+        ],
+        "attack": [
+          724,
+          134,
+          324,
+          286
+        ]
+      },
+      "fx": {
+        "seed": [
+          21,
+          1299,
+          224,
+          87
+        ],
+        "release": [
+          276,
+          1245,
+          225,
+          206
+        ],
+        "impact": [
+          561,
+          1251,
+          163,
+          172
+        ],
+        "state": [
+          779,
+          1244,
+          221,
+          189
+        ]
+      },
+      "reference": {
+        "idle": [
+          14,
+          32,
+          401,
+          523
+        ],
+        "action": [
+          499,
+          40,
+          517,
+          514
+        ]
+      },
+      "faceAtlases": {
+        "attack": "assets/attack-heads-v1.webp"
+      }
+    },
+    "spark": {
+      "atlas": "assets/spark.webp",
+      "width": 1024,
+      "height": 1536,
+      "source": "spark-lantern-correction-v5.webp",
+      "parts": {
+        "body": [
+          17,
+          658,
+          233,
+          260
+        ],
+        "nearRightArm": [
+          314,
+          689,
+          112,
+          225
+        ],
+        "farLeftArm": [
+          543,
+          698,
+          180,
+          148
+        ],
+        "tail": [
+          800,
+          682,
+          176,
+          176
+        ]
+      },
+      "faces": {
+        "neutral": [
+          13,
+          969,
+          244,
+          198
+        ],
+        "blink": [
+          270,
+          970,
+          235,
+          197
+        ],
+        "skill": [
+          522,
+          969,
+          238,
+          200
+        ],
+        "victory": [
+          771,
+          969,
+          243,
+          196
+        ],
+        "attack": [
+          1078,
+          157,
+          326,
+          264
+        ]
+      },
+      "fx": {
+        "seed": [
+          17,
+          1330,
+          235,
+          99
+        ],
+        "release": [
+          298,
+          1234,
+          170,
+          249
+        ],
+        "impact": [
+          532,
+          1291,
+          197,
+          166
+        ],
+        "state": [
+          787,
+          1238,
+          179,
+          230
+        ]
+      },
+      "reference": {
+        "idle": [
+          32,
+          70,
+          404,
+          517
+        ],
+        "action": [
+          535,
+          89,
+          435,
+          497
+        ]
+      },
+      "faceAtlases": {
+        "attack": "assets/attack-heads-v1.webp"
+      }
+    },
+    "mint": {
+      "atlas": "assets/mint.webp",
+      "width": 1024,
+      "height": 1536,
+      "source": "mint-v1.webp",
+      "parts": {
+        "body": [
+          36,
+          625,
+          222,
+          274
+        ],
+        "nearRightArm": [
+          75,
+          297,
+          374,
+          601
+        ],
+        "farLeftArm": [
+          707,
+          36,
+          791,
+          963
+        ],
+        "tail": [
+          789,
+          661,
+          199,
+          193
+        ]
+      },
+      "faces": {
+        "neutral": [
+          14,
+          968,
+          244,
+          218
+        ],
+        "blink": [
+          263,
+          968,
+          245,
+          218
+        ],
+        "skill": [
+          515,
+          968,
+          241,
+          218
+        ],
+        "victory": [
+          759,
+          967,
+          250,
+          216
+        ],
+        "attack": [
+          1434,
+          130,
+          329,
+          291
+        ]
+      },
+      "fx": {
+        "seed": [
+          17,
+          1344,
+          228,
+          66
+        ],
+        "release": [
+          264,
+          1258,
+          216,
+          201
+        ],
+        "impact": [
+          535,
+          1289,
+          233,
+          147
+        ],
+        "state": [
+          768,
+          1317,
+          238,
+          106
+        ]
+      },
+      "reference": {
+        "idle": [
+          49,
+          50,
+          426,
+          488
+        ],
+        "action": [
+          14,
+          256,
+          996,
+          1021
+        ]
+      },
+      "faceAtlases": {
+        "attack": "assets/attack-heads-v1.webp"
+      },
+      "partAtlases": {
+        "nearRightArm": "assets/mint-arms-hires-v1.webp",
+        "farLeftArm": "assets/mint-arms-hires-v1.webp"
+      },
+      "referenceAtlases": {
+        "action": "assets/mint-action-hires-v1.webp"
+      }
+    },
+    "bolt": {
+      "atlas": "assets/bolt.webp",
+      "width": 1024,
+      "height": 1536,
+      "source": "bolt-v1.webp",
+      "parts": {
+        "body": [
+          32,
+          619,
+          237,
+          286
+        ],
+        "nearRightArm": [
+          305,
+          649,
+          201,
+          218
+        ],
+        "farLeftArm": [
+          558,
+          656,
+          151,
+          184
+        ],
+        "tail": [
+          781,
+          669,
+          205,
+          182
+        ]
+      },
+      "faces": {
+        "neutral": [
+          6,
+          950,
+          250,
+          206
+        ],
+        "blink": [
+          262,
+          949,
+          249,
+          207
+        ],
+        "skill": [
+          518,
+          950,
+          250,
+          207
+        ],
+        "victory": [
+          774,
+          948,
+          243,
+          208
+        ],
+        "attack": [
+          14,
+          595,
+          324,
+          268
+        ]
+      },
+      "fx": {
+        "seed": [
+          30,
+          1259,
+          196,
+          194
+        ],
+        "release": [
+          267,
+          1295,
+          225,
+          139
+        ],
+        "impact": [
+          527,
+          1251,
+          208,
+          194
+        ],
+        "state": [
+          791,
+          1252,
+          208,
+          202
+        ]
+      },
+      "reference": {
+        "idle": [
+          21,
+          46,
+          381,
+          528
+        ],
+        "action": [
+          459,
+          98,
+          554,
+          471
+        ]
+      },
+      "faceAtlases": {
+        "attack": "assets/attack-heads-v1.webp"
+      }
+    },
+    "pudding": {
+      "atlas": "assets/pudding.webp",
+      "width": 1024,
+      "height": 1536,
+      "source": "xuanyue-atlas-v1.webp",
+      "parts": {
+        "body": [
+          28,
+          794,
+          207,
+          258
+        ],
+        "nearRightArm": [
+          281,
+          811,
+          199,
+          225
+        ],
+        "farLeftArm": [
+          532,
+          814,
+          187,
+          218
+        ],
+        "tail": [
+          830,
+          844,
+          159,
+          180
+        ]
+      },
+      "faces": {
+        "neutral": [
+          7,
+          1067,
+          249,
+          222
+        ],
+        "blink": [
+          262,
+          1066,
+          249,
+          222
+        ],
+        "skill": [
+          510,
+          1067,
+          251,
+          222
+        ],
+        "victory": [
+          761,
+          1066,
+          253,
+          223
+        ],
+        "attack": [
+          761,
+          1066,
+          253,
+          223
+        ]
+      },
+      "fx": {
+        "seed": [
+          47,
+          1313,
+          209,
+          193
+        ],
+        "release": [
+          256,
+          1306,
+          249,
+          208
+        ],
+        "impact": [
+          528,
+          1306,
+          227,
+          200
+        ],
+        "state": [
+          778,
+          1305,
+          231,
+          206
+        ]
+      },
+      "reference": {
+        "idle": [
+          104,
+          11,
+          309,
+          378
+        ],
+        "action": [
+          545,
+          83,
+          402,
+          309
+        ]
+      },
+      "faceAtlases": {}
+    },
+    "star": {
+      "atlas": "assets/star.webp",
+      "width": 1024,
+      "height": 1536,
+      "source": "star-v1.webp",
+      "parts": {
+        "body": [
+          34,
+          666,
+          216,
+          259
+        ],
+        "nearRightArm": [
+          294,
+          688,
+          212,
+          197
+        ],
+        "farLeftArm": [
+          539,
+          695,
+          194,
+          173
+        ],
+        "tail": [
+          776,
+          693,
+          218,
+          196
+        ]
+      },
+      "faces": {
+        "neutral": [
+          8,
+          974,
+          248,
+          222
+        ],
+        "blink": [
+          263,
+          974,
+          245,
+          218
+        ],
+        "skill": [
+          513,
+          975,
+          246,
+          221
+        ],
+        "victory": [
+          760,
+          973,
+          259,
+          222
+        ],
+        "attack": [
+          722,
+          572,
+          329,
+          295
+        ]
+      },
+      "fx": {
+        "seed": [
+          41,
+          1312,
+          191,
+          132
+        ],
+        "release": [
+          287,
+          1310,
+          200,
+          108
+        ],
+        "impact": [
+          536,
+          1260,
+          190,
+          193
+        ],
+        "state": [
+          773,
+          1275,
+          216,
+          167
+        ]
+      },
+      "reference": {
+        "idle": [
+          39,
+          46,
+          399,
+          543
+        ],
+        "action": [
+          507,
+          92,
+          492,
+          496
+        ]
+      },
+      "faceAtlases": {
+        "attack": "assets/attack-heads-v1.webp"
+      }
+    },
+    "night": {
+      "atlas": "assets/night.webp",
+      "width": 1024,
+      "height": 1536,
+      "source": "night-v2.webp",
+      "parts": {
+        "body": [
+          5,
+          613,
+          246,
+          293
+        ],
+        "nearRightArm": [
+          274,
+          630,
+          270,
+          256
+        ],
+        "farLeftArm": [
+          567,
+          639,
+          129,
+          215
+        ],
+        "tail": [
+          783,
+          657,
+          183,
+          196
+        ]
+      },
+      "faces": {
+        "neutral": [
+          12,
+          976,
+          243,
+          196
+        ],
+        "blink": [
+          269,
+          978,
+          240,
+          194
+        ],
+        "skill": [
+          523,
+          976,
+          242,
+          197
+        ],
+        "victory": [
+          780,
+          976,
+          240,
+          196
+        ],
+        "attack": [
+          1079,
+          601,
+          324,
+          264
+        ]
+      },
+      "fx": {
+        "seed": [
+          43,
+          1274,
+          182,
+          210
+        ],
+        "release": [
+          268,
+          1281,
+          214,
+          193
+        ],
+        "impact": [
+          525,
+          1261,
+          243,
+          209
+        ],
+        "state": [
+          768,
+          1299,
+          244,
+          136
+        ]
+      },
+      "reference": {
+        "idle": [
+          16,
+          59,
+          411,
+          486
+        ],
+        "action": [
+          451,
+          96,
+          560,
+          446
+        ]
+      },
+      "faceAtlases": {
+        "attack": "assets/attack-heads-v1.webp"
+      }
+    },
+    "inkstone": {
+      "atlas": "assets/inkstone.webp",
+      "width": 1024,
+      "height": 1536,
+      "source": "inkstone-v1.webp",
+      "parts": {
+        "body": [
+          30,
+          682,
+          245,
+          273
+        ],
+        "nearRightArm": [
+          326,
+          689,
+          162,
+          241
+        ],
+        "farLeftArm": [
+          554,
+          699,
+          165,
+          226
+        ],
+        "tail": [
+          804,
+          748,
+          164,
+          159
+        ]
+      },
+      "faces": {
+        "neutral": [
+          17,
+          1033,
+          242,
+          170
+        ],
+        "blink": [
+          271,
+          1034,
+          241,
+          170
+        ],
+        "skill": [
+          523,
+          1034,
+          240,
+          169
+        ],
+        "victory": [
+          774,
+          1006,
+          245,
+          193
+        ],
+        "attack": [
+          1434,
+          635,
+          325,
+          230
+        ]
+      },
+      "fx": {
+        "seed": [
+          14,
+          1315,
+          242,
+          161
+        ],
+        "release": [
+          256,
+          1311,
+          233,
+          161
+        ],
+        "impact": [
+          527,
+          1310,
+          226,
+          153
+        ],
+        "state": [
+          786,
+          1323,
+          216,
+          115
+        ]
+      },
+      "reference": {
+        "idle": [
+          40,
+          97,
+          423,
+          517
+        ],
+        "action": [
+          518,
+          132,
+          482,
+          475
+        ]
+      },
+      "faceAtlases": {
+        "attack": "assets/attack-heads-v1.webp"
+      }
+    }
+  }
+}
