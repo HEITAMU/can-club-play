@@ -107,3 +107,8 @@
 @media(max-width:350px){.formation-board{height:300px}.formation-slot{width:86px;height:90px}.formation-slot-art,.formation-slot-art .painted-sprite{width:65px;height:65px}.formation-card-art,.formation-card-art .painted-sprite{width:56px;height:56px}.formation-bench{gap:8px 6px}.formation-heading>span{font-size:9px}.formation-hint{font-size:10px}.crew-roster-card{flex-basis:62px}}
 
 .crew-quick-upgrade>small{font-size:11px;line-height:13px;font-weight:800}.crew-quick-upgrade>span{font-size:9px;line-height:12px;color:#f0e5c9}.crew-quick-upgrade:disabled>span{color:#bac8b9}
+
+/* Leave room for orange's ears, tail and shield throughout the idle cycle. */
+[data-profile-cat="orange"] .crew-portrait>.painted-sprite{width:194px;height:194px}
+@media(min-width:420px){[data-profile-cat="orange"] .crew-portrait>.painted-sprite{width:210px;height:210px}}
+@media(max-width:350px){[data-profile-cat="orange"] .crew-portrait>.painted-sprite{width:174px;height:174px}}

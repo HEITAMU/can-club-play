@@ -39,6 +39,8 @@ try{
   const guard=await seek('skill',.66);assert.ok(guard.shield>0);assert.ok(Math.abs(guard.offset.x)<1e-8&&Math.abs(guard.offset.y)<1e-8);
   await page.screenshot({path:path.join(out,'guard-'+width+'.png')});
   await page.locator('[data-tab="cats"]').click();await page.waitForFunction(()=>document.querySelector('#crew-detail .painted-sprite[data-art="orange"]')?.classList.contains('rig-ready'));
+  const portraitInside=await page.evaluate(()=>{const c=document.querySelector('#crew-detail [data-art="orange"] canvas'),r=c.getBoundingClientRect(),box=c.closest('.crew-hero').getBoundingClientRect(),pixels=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let l=c.width,t=c.height,b=0,right=0;for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++)if(pixels[(y*c.width+x)*4+3]>60){l=Math.min(l,x);right=Math.max(right,x);t=Math.min(t,y);b=Math.max(b,y);}const paint={left:r.left+l/c.width*r.width,right:r.left+right/c.width*r.width,top:r.top+t/c.height*r.height,bottom:r.top+b/c.height*r.height};return paint.left>=box.left+3&&paint.right<=box.right-3&&paint.top>=box.top+3&&paint.bottom<=box.bottom-3;});
+  assert.ok(portraitInside,'orange portrait clips ears, shield, tail or paws');
   await page.screenshot({path:path.join(out,'crew-'+width+'.png'),fullPage:true});
   const before=await page.evaluate(()=>__orangeReview.state().level);await page.locator('#crew-detail [data-upgrade="orange"]').click();assert.equal(await page.evaluate(()=>__orangeReview.state().level),before+1);
   if(width===390){
@@ -46,7 +48,7 @@ try{
    for(let i=0;i<144;i++){const kind=['normal','skill','hit'][Math.floor(i/48)],t=i%48/48*1.6;await seek(kind,t);await page.screenshot({path:path.join(frames,String(i).padStart(4,'0')+'.png')});}
    execFileSync('ffmpeg',['-hide_banner','-loglevel','error','-y','-framerate','24','-i',path.join(frames,'%04d.png'),'-an','-c:v','libx264','-preset','fast','-crf','21','-pix_fmt','yuv420p','-movflags','+faststart',path.join(out,'orange-in-game.mp4')]);
   }
-  assert.deepEqual(errors,[]);report.push({width,height,renderer:'jointed-anatomy',normalContact:true,guardStaysPlanted:true,upgradePreservesSave:true,horizontalOverflow:false,errors});await context.close();
+  assert.deepEqual(errors,[]);report.push({width,height,renderer:'jointed-anatomy',normalContact:true,guardStaysPlanted:true,portraitUnclipped:portraitInside,upgradePreservesSave:true,horizontalOverflow:false,errors});await context.close();
  }
  fs.writeFileSync(path.join(out,'report.json'),JSON.stringify({version:'0.22.0',scope:['orange'],fixture:'Original game root, deterministic battle fixture; Chromium mobile viewports, not physical iPhone testing.',viewports:report},null,2)+'\n');console.log(JSON.stringify(report));
 }finally{await browser?.close();server.close();}
