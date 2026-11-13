@@ -42,8 +42,8 @@ try{
   await page.screenshot({path:path.join(out,'skill-impact-'+width+'.png')});
   await page.locator('[data-tab="cats"]').click();await page.waitForFunction(()=>document.querySelector('#crew-detail .painted-sprite[data-art="spark"]')?.classList.contains('rig-ready'));
   const portraitInside=await page.evaluate(()=>{const c=document.querySelector('#crew-detail [data-art="spark"] canvas'),r=c.getBoundingClientRect(),box=c.closest('.crew-hero').getBoundingClientRect(),pixels=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let l=c.width,t=c.height,b=0,right=0;for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++)if(pixels[(y*c.width+x)*4+3]>60){l=Math.min(l,x);right=Math.max(right,x);t=Math.min(t,y);b=Math.max(b,y);}const paint={left:r.left+l/c.width*r.width,right:r.left+right/c.width*r.width,top:r.top+t/c.height*r.height,bottom:r.top+b/c.height*r.height};return paint.left>=box.left+3&&paint.right<=box.right-3&&paint.top>=box.top+3&&paint.bottom<=box.bottom-3;});
-  assert.ok(portraitInside,'spark portrait clips ears, lantern, tail or paws');
   await page.screenshot({path:path.join(out,'crew-'+width+'.png'),fullPage:true});
+  assert.ok(portraitInside,'spark portrait clips ears, lantern, tail or paws');
   const before=await page.evaluate(()=>__sparkReview.state().level);await page.locator('#crew-detail [data-upgrade="spark"]').click();assert.equal(await page.evaluate(()=>__sparkReview.state().level),before+1);
   if(width===390){
    const frames=path.join(out,'frames');fs.mkdirSync(frames,{recursive:true});
