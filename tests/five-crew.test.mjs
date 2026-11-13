@@ -32,7 +32,7 @@ test('healing and shield skill events name all five actual recipients',()=>{
 test('all eight skills publish correct single or group destinations',()=>{
  for(const cat of CATS){const s=ready();s.party=[cat.id,...CATS.filter(c=>c.id!==cat.id).slice(0,4).map(c=>c.id)];const b=new Battle(s,{stage:30});const targets=b.skillTargets(b.heroes[0]);
   if(['orange','milk','star'].includes(cat.id))assert.ok(targets.length===5&&targets.every(t=>t.side==='p'));
-  else if(cat.id==='pudding')assert.equal(targets.length,b.heroes.length+b.enemies.length);
+  else if(cat.id==='pudding')assert.deepEqual(targets,[b.heroes[0]]);
   else if(cat.id==='spark')assert.deepEqual(targets,b.enemies);
   else assert.equal(targets.length,1);
  }

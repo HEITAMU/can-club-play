@@ -27,7 +27,7 @@
 .crew-portrait:after{content:"";position:absolute;width:140px;height:17px;bottom:14px;right:24px;background:#374e4b33;border-radius:50%;z-index:-1}
 .crew-portrait>.painted-sprite{width:218px;height:218px;filter:saturate(1.1) brightness(1.04)}
 /* Finished full-body paintings retain room above the ears and hats. */
-.crew-portrait>.painted-sprite:not([data-art="pudding"]){top:11px}
+.crew-portrait>.painted-sprite{top:11px}
 .crew-attributes{padding:10px 13px 12px;background:#dfcea6;color:#314b4d;border:1px solid var(--crew-rim);border-top:1px solid #f4dfad;border-radius:0 0 15px 11px}
 .crew-section-label{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
 .crew-section-label h4{margin:0;font-size:12px;line-height:1.3;letter-spacing:.06em;font-weight:800}

@@ -1,4 +1,5 @@
-import {catAction} from './action-profiles.mjs?v=0.21.5';
+import {shidunPose} from './shidun-motion.mjs?v=0.21.6';
+import {catAction} from './action-profiles.mjs?v=0.21.6';
 // Continuous motion for painted cutout parts. No pose-frame swapping.
 const clamp=n=>Math.max(0,Math.min(1,n));
 export const ease=n=>{const t=clamp(n);return t*t*(3-2*t);};
@@ -73,6 +74,7 @@ export function rigPose(id,actor,time,idleTime=time){
    p.sparkRecovery=flowTrack(t,[[0,0],[w,0],[w+.04,1],[e-.08,1],[e,0]]);
   }
  }
+ if(id==='pudding')Object.assign(p,shidunPose(actor,time,idleTime));
  return p;
 }
 function weight(point,zone){if(!zone)return 0;const d=Math.hypot((point[0]-zone[0])/zone[2],(point[1]-zone[1])/zone[3]);return 1-ease((d-.30)/.70);}

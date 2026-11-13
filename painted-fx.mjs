@@ -1,8 +1,9 @@
-import {VFX_ATLAS} from './vfx-atlas.mjs?v=0.21.5';
-import {FX_CELLS,sampleRoute,sampleImpact,sampleGuard,sampleStatus,shieldTransition} from './vfx-motion.mjs?v=0.21.5';
-import {paintHealing} from './healing-fx.mjs?v=0.21.5';
-import {CAN_ATLAS,paintCan} from './can-fx.mjs?v=0.21.5';
-export {effectEnvelope,impactStyle,shieldTransition} from './vfx-motion.mjs?v=0.21.5';
+import {sampleShidun,paintShidun} from './shidun-fx.mjs?v=0.21.6';
+import {VFX_ATLAS} from './vfx-atlas.mjs?v=0.21.6';
+import {FX_CELLS,sampleRoute,sampleImpact,sampleGuard,sampleStatus,shieldTransition} from './vfx-motion.mjs?v=0.21.6';
+import {paintHealing} from './healing-fx.mjs?v=0.21.6';
+import {CAN_ATLAS,paintCan} from './can-fx.mjs?v=0.21.6';
+export {effectEnvelope,impactStyle,shieldTransition} from './vfx-motion.mjs?v=0.21.6';
 let image;
 let canImage;
 function canAtlas(){if(!canImage&&typeof Image!=='undefined'){canImage=new Image();canImage.src=CAN_ATLAS.url;}return canImage;}
@@ -10,6 +11,7 @@ function atlas(){if(!image&&typeof Image!=='undefined'){image=new Image();image.
 // Same painter is used by the browser and the offline review renderer.
 export function paintVFX(ctx,img,particles,canImg){
  for(const p of particles){
+  if(paintShidun(ctx,p))continue;
   if(paintCan(ctx,canImg,p))continue;
   if(paintHealing(ctx,p))continue;
   const rect=VFX_ATLAS.rects[FX_CELLS[p.art]];if(!rect||!img)continue;
@@ -54,6 +56,7 @@ export class CombatEffects{
   }
   for(const {entry,actor} of this.guards){const p=centers[actor.id];if(p)particles.push(...sampleGuard(entry,actor,time,{x:p.x*w/100,y:p.y*h/100},sizes[actor.id]||50));}
   for(const actor of this.statuses){const p=centers[actor.id];if(p)particles.push(...sampleStatus(actor,time,{x:p.x*w/100,y:p.y*h/100},sizes[actor.id]||50));}
+  for(const actor of this.statuses){const p=centers[actor.id];if(p)particles.push(...sampleShidun(actor,time,{x:p.x*w/100,y:p.y*h/100},sizes[actor.id]||50,w,h));}
   this.bursts=this.bursts.filter(b=>time-b.born<b.duration);
   for(const b of this.bursts)particles.push(...sampleImpact(b.style,{x:b.point.x*w/100,y:b.point.y*h/100},b.size,time-b.born,b.duration,b.seed));
   this.particles=particles.sort((a,b)=>a.layer-b.layer);
@@ -88,5 +91,5 @@ export class GuardEffects{
 }
 export class StatusEffects{
  clear(){}
- render(actors,time,centers,sizes,combat){if(combat)combat.statuses=actors.filter(a=>a.hp>0&&(a.burnTime>0||a.stun>0));}
+ render(actors,time,centers,sizes,combat){if(combat)combat.statuses=actors.filter(a=>a.hp>0&&(a.catId==='pudding'||a.burnTime>0||a.stun>0));}
 }

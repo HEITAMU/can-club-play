@@ -9,7 +9,7 @@ import {FormationMotion,retiringSize} from '../formation-motion.mjs';
 const enemies=['dust','box','mop','battery','bag','drone','vacuum','fridge','sign','boxBoss','clock','vendor'];
 const actors=[...CATS.map(c=>({id:c.id,catId:c.id,side:'p',hp:100,interval:1.5})),...enemies.map(id=>({id,type:id,side:'e',hp:100,interval:1.5}))];
 test('all actors keep planted feet and have moving head, hand, or body points',()=>{
- for(const a of actors){if(a.side==='p'&&!['spark','pudding'].includes(a.id)){const heights=[];for(let i=0;i<300;i++){const pose=rigPose(a.id,a,i/60);assert.deepEqual(rosterVertex(a.id,180,518,pose),[180,518]);heights.push(rosterVertex(a.id,260,150,pose)[1]);}assert.ok(Math.max(...heights)-Math.min(...heights)>5);continue;}if(a.id==='spark'){const heights=[];for(let i=0;i<240;i++){const pose=rigPose(a.id,a,i/60);assert.deepEqual(sparkVertex(180,518,pose),[180,518]);heights.push(sparkVertex(260,150,pose)[1]);}assert.ok(Math.max(...heights)-Math.min(...heights)>6);continue;}const foot=rigFor(a.id).foot,p=preparePoint(a.id,.4,foot),upper=preparePoint(a.id,.52,.3),head=[];
+ for(const a of actors){if(a.side==='p'&&a.id!=='spark'){const heights=[];for(let i=0;i<300;i++){const pose=rigPose(a.id,a,i/60);assert.deepEqual(rosterVertex(a.id,180,518,pose),[180,518]);heights.push(rosterVertex(a.id,260,150,pose)[1]);}assert.ok(Math.max(...heights)-Math.min(...heights)>5);continue;}if(a.id==='spark'){const heights=[];for(let i=0;i<240;i++){const pose=rigPose(a.id,a,i/60);assert.deepEqual(sparkVertex(180,518,pose),[180,518]);heights.push(sparkVertex(260,150,pose)[1]);}assert.ok(Math.max(...heights)-Math.min(...heights)>6);continue;}const foot=rigFor(a.id).foot,p=preparePoint(a.id,.4,foot),upper=preparePoint(a.id,.52,.3),head=[];
   for(let i=0;i<240;i++){const pose=rigPose(a.id,a,i/60),f=deformPoint(a.id,p,pose),h=deformPoint(a.id,upper,pose);assert.ok(Math.abs(f.x-.4)<1e-8&&Math.abs(f.y-foot)<1e-8,a.id);head.push(h.x);}
   assert.ok(Math.max(...head)-Math.min(...head)>.015,a.id+' has readable continuous motion');
  }
@@ -18,7 +18,7 @@ test('normal and skill motion is continuous at anticipation, release, hold and r
  for(const a of actors)for(const kind of ['normal','skill']){const timing=actionTiming(a,kind),actor={...a,action:{...timing,kind,elapsed:0}};
   for(const edge of [0,timing.windup,timing.impactAt,timing.impactAt+timing.hold,timing.duration]){
    const sample=t=>{actor.action.elapsed=Math.max(0,t);return rigPose(a.id,actor,3+t,8+t);};
-   const before=sample(edge-1e-7),after=sample(edge+1e-7);for(const k of Object.keys(before))assert.ok(Math.abs(before[k]-after[k])<1e-5,a.id+' '+kind+' '+edge+' '+k);
+   const before=sample(edge-1e-7),after=sample(edge+1e-7);for(const k of Object.keys(before).filter(k=>k!=='shidunCel'))assert.ok(Math.abs(before[k]-after[k])<1e-5,a.id+' '+kind+' '+edge+' '+k);
   }
   actor.action.elapsed=timing.duration;const end=rigPose(a.id,actor,3+timing.duration,8+timing.duration);actor.action=null;const idle=rigPose(a.id,actor,3+timing.duration,8+timing.duration);for(const k of Object.keys(end))assert.ok(Math.abs(end[k]-idle[k])<1e-12);
  }

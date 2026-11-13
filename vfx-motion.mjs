@@ -1,7 +1,7 @@
-import {projectilePose,unit} from './motion.mjs?v=0.21.5';
-import {ACTION_BY_ID} from './action-profiles.mjs?v=0.21.5';
-import {HEAL_ART,healingImpact,healingCast} from './healing-fx.mjs?v=0.21.5';
-import {CAN_ART,sampleCan} from './can-fx.mjs?v=0.21.5';
+import {projectilePose,unit} from './motion.mjs?v=0.21.6';
+import {ACTION_BY_ID} from './action-profiles.mjs?v=0.21.6';
+import {HEAL_ART,healingImpact,healingCast} from './healing-fx.mjs?v=0.21.6';
+import {CAN_ART,sampleCan} from './can-fx.mjs?v=0.21.6';
 
 // All samples depend on simulation time, never frame count or Math.random().
 export const FX_CELLS={flash:1,dust:2,ember:3,fire:4,flame:5,ice:6,shard:7,heal:8,heart:9,milk:10,fish:11,shield:12,glass:13,star:14,electric:15,...HEAL_ART,...CAN_ART};

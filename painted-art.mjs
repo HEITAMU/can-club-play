@@ -1,8 +1,8 @@
-import {FINISHED_ROSTER} from './finished-roster-data.mjs?v=0.21.5';
-import {poseFor} from './motion.mjs?v=0.21.5';
-import {rigPose,rigFor,blendRigPose,animationClock} from './rig-motion.mjs?v=0.21.5';
-import {drawRig} from './rig-renderer.mjs?v=0.21.5';
-import {EXPRESSIONS,expressionFor,faceTransition,bowNock} from './expressions.mjs?v=0.21.5';
+import {FINISHED_ROSTER} from './finished-roster-data.mjs?v=0.21.6';
+import {poseFor} from './motion.mjs?v=0.21.6';
+import {rigPose,rigFor,blendRigPose,animationClock} from './rig-motion.mjs?v=0.21.6';
+import {drawRig} from './rig-renderer.mjs?v=0.21.6';
+import {EXPRESSIONS,expressionFor,faceTransition,bowNock} from './expressions.mjs?v=0.21.6';
 // Loading portraits are assembled from the same corrected parts as the live characters.
 const heroIds=['orange','ink','milk','spark','mint','bolt','pudding','star'];
 const foeSheets={dust:['a',0],box:['a',1],mop:['a',2],battery:['a',3],bag:['b',0],drone:['b',1],vacuum:['b',2],fridge:['b',3],sign:['c',0],boxBoss:['c',1],clock:['c',2],vendor:['c',3]};
@@ -17,7 +17,7 @@ export function paintedPose(root,frame,{actor,time=0,idleTime=time,outcome,previ
  const el=root.matches('.painted-sprite')?root:root.querySelector('.painted-sprite');if(!el)return;
  const id=el.dataset.art,phase=actor?poseFor(actor,time).phase:'idle',next=rigPose(id,actor,time,idleTime),foot=rigFor(id).foot,groundShift=(.92-foot)*100,clock=animationClock(actor,time,idleTime),prior=poses.get(el),shape=blendRigPose(prior?.shape,next,prior?clock-prior.clock:-1);
  const key=expressionFor(id,actor,time,clock,{outcome,preview}),face=faceTransition(EXPRESSIONS.includes(preview)?null:prior?.face,key,clock);
- if(FINISHED_ROSTER[id]){shape.rosterCel=next.rosterCel;shape.rosterRecovery=next.rosterRecovery;shape.rosterSkill=next.rosterSkill;shape.rosterClock=clock;}
+ if(FINISHED_ROSTER[id]){shape.shidunCel=next.shidunCel;shape.shidunCharge=next.shidunCharge;shape.shidunTime=next.shidunTime;shape.rosterCel=next.rosterCel;shape.rosterRecovery=next.rosterRecovery;shape.rosterSkill=next.rosterSkill;shape.rosterClock=clock;}
  if(id==='spark'){shape.sparkCel=next.sparkCel;shape.sparkRecovery=next.sparkRecovery;shape.sparkClock=clock;}
  shape.nock=bowNock(actor);poses.set(el,{clock,shape:{...shape},face});
  if(reduce){for(const k of ['lean','head','hand','tail','reach'])shape[k]*=.2;shape.breath*=.35;}

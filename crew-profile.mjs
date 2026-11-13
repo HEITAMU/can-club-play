@@ -1,5 +1,5 @@
-import {CATS,MAX_LEVEL,catStats,upgradeCost,upgradeQuote,unlocked} from './core.mjs?v=0.21.5';
-import {catSVG,icon,relicSVG} from './art.mjs?v=0.21.5';
+import {CATS,MAX_LEVEL,catStats,upgradeCost,upgradeQuote,unlocked} from './core.mjs?v=0.21.6';
+import {catSVG,icon,relicSVG} from './art.mjs?v=0.21.6';
 
 const palettes={
  orange:['#aa875d','#dec394','#f0cd89'],ink:['#738a99','#b4c1c4','#c2d8e3'],
@@ -8,7 +8,7 @@ const palettes={
  pudding:['#9f8865','#d7c59a','#eddbb2'],star:['#8d7d9b','#c5b5ca','#dfc5e2']
 };
 const skillIcons={orange:'coat',ink:'claw',milk:'thermos',spark:'match',mint:'bowl',bolt:'scope',pudding:'thorn',star:'bell'};
-const passiveNames={orange:'稳稳接住',ink:'一击中的',milk:'加满一杯',spark:'余温未散',mint:'冷静一下',bolt:'彻底拆解',pudding:'越打越饱',star:'星光先行'};
+const passiveNames={orange:'稳稳接住',ink:'一击中的',milk:'加满一杯',spark:'余温未散',mint:'冷静一下',bolt:'彻底拆解',pudding:'硬气护体',star:'星光先行'};
 const number=n=>n>=1e8?(n/1e8).toFixed(1)+'亿':n>=1e4?(n/1e4).toFixed(1)+'万':Math.floor(n).toLocaleString('zh-CN');
 const effect=(value,type)=>'<strong class="skill-'+type+'">'+value+'</strong>';
 const scaling=text=>'<span class="skill-scaling">（'+text+'）</span>';
@@ -21,7 +21,7 @@ export function crewSkill(id,level,stats){
   spark:{description:'对全体敌人造成 '+effect(amount(1.6),'damage')+scaling('160% 攻击力')+' 法术伤害，并灼烧目标 '+effect(awake?'6 秒':'4 秒','control')+'，每秒造成 '+effect(amount(.3),'damage')+scaling('30% 攻击力')+' 法术伤害。',passive:'灼烧持续时间由 '+effect('4 秒','control')+' 延长至 '+effect('6 秒','control')+'。'},
   mint:{description:'对当前生命值最高的敌人造成 '+effect(amount(2.3),'damage')+scaling('230% 攻击力')+' 法术伤害，使其 '+effect('眩晕 '+(awake?'2.6':'1.8')+' 秒','control')+' 并打断蓄力。',passive:'眩晕持续时间由 '+effect('1.8 秒','control')+' 延长至 '+effect('2.6 秒','control')+'。'},
   bolt:{description:'使敌方前排目标的当前护甲永久降低 '+effect(awake?'75%':'50%','armor')+'，随后造成 '+effect(amount(3),'damage')+scaling('300% 攻击力')+' 物理伤害。',passive:'技能对当前护甲的削减比例由 '+effect('50%','armor')+' 提高至 '+effect('75%','armor')+'。'},
-  pudding:{description:'对全体敌人造成 '+effect(amount(1.4),'damage')+scaling('140% 攻击力')+' 物理伤害，并为全体队友提供相当于各自 '+effect('18% 最大生命值','shield')+' 的护盾。',passive:'造成生命伤害时，回复相当于该伤害 '+effect('22%','heal')+' 的生命值。'},
+  pudding:{description:'满能量为自身增加 '+effect(amount(.35,'hp'),'shield')+scaling('35% 最大生命值')+' 护盾。盾量达到生命 30% 时下蹲蓄力；期间再获生命 15% 的护盾，打出震街拳：100% 攻击力＋锁定盾量的 160% 物理伤害。命中目标所在直线的前后排及另一名前排，最多三人。',passive:'护盾吸收伤害回复 12 能量，间隔 0.8 秒。蓄力时满能量仍可加盾；蓄力最长 4 秒，重拳间隔 8 秒。'},
   star:{description:'为其他队友回复 '+effect('48 点能量','energy')+'，并为全体队友恢复 '+effect(amount(1.6),'heal')+scaling('160% 攻击力')+' 生命值。',passive:'战斗开始时，额外获得 '+effect('40 点能量','energy')+'。'}
  };
  return skills[id];

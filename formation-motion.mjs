@@ -1,5 +1,5 @@
-import {formationPositions} from './battle-cues.mjs?v=0.21.5';
-import {ease} from './rig-motion.mjs?v=0.21.5';
+import {formationPositions} from './battle-cues.mjs?v=0.21.6';
+import {ease} from './rig-motion.mjs?v=0.21.6';
 export class FormationMotion{
  constructor(){this.clear();}
  clear(){this.points=new Map();}

@@ -1,4 +1,4 @@
-import {enemyAttackType} from './action-profiles.mjs?v=0.21.5';
+import {enemyAttackType} from './action-profiles.mjs?v=0.21.6';
 // Combat and rendering share a simulation clock. x1 is a deliberate, calmer pace.
 export const battleRate=speed=>speed===2?1.8:.9;
 export function attackStyle(a){
@@ -26,6 +26,7 @@ export function poseFor(a,time){
  const hero=a.side==='p',action=a.action;
  if(a.hp<=0)return {frame:hero?5:3,phase:'down',move:0};
  if((a.burstUntil||0)>time)return {frame:2,phase:'release',move:0};
+ if(['charging','primed'].includes(a.shieldState))return {frame:6,phase:'charge',move:0};
  if(a.charge>0)return {frame:1,phase:'charge',move:0};
  if(action){
   const t=action.elapsed,skill=action.kind==='skill',hold=action.hold??.085;
@@ -40,6 +41,7 @@ export function poseFor(a,time){
 }
 export function travelOffset(actor,pose,source,target,width,height,bodySize=130,targetSize=110,time=0){
  let x=0,y=0;
+ if(actor.action?.shieldStrike)return {x:0,y:0};
  if(actor.action&&source&&target){
   const dx=(target.x-source.x)*width/100,dy=(target.y-source.y)*height/100,distance=Math.hypot(dx,dy),melee=attackStyle(actor)==='melee';
   const reach=melee?Math.min(distance*.76,Math.max(0,distance-(bodySize+targetSize)*.28)):Math.min(6,distance*.04);

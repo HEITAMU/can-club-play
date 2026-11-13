@@ -1,8 +1,8 @@
-import {attackStyle} from './motion.mjs?v=0.21.5';
-import {CATS} from './core.mjs?v=0.21.5';
-import {catAction} from './action-profiles.mjs?v=0.21.5';
+import {attackStyle} from './motion.mjs?v=0.21.6';
+import {CATS} from './core.mjs?v=0.21.6';
+import {catAction} from './action-profiles.mjs?v=0.21.6';
 export const cueColors={attack:'#edc581',enemy:'#ee9f8c',support:'#b3d9ba',energy:'#d2b9eb'};
-const skillEffect={orange:'全队护盾',ink:'穿甲三连',milk:'全队治疗',spark:'群攻灼烧',mint:'眩晕打断',bolt:'破甲',pudding:'群攻＋全队护盾',star:'治疗＋回能'};
+const skillEffect={orange:'全队护盾',ink:'穿甲三连',milk:'全队治疗',spark:'群攻灼烧',mint:'眩晕打断',bolt:'破甲',pudding:'蓄盾重拳 · 最多三目标',star:'治疗＋回能'};
 // Coordinates are foot contacts on the painted ground, not sprite centers.
 export function formationPositions(b){
  const result={};
@@ -60,7 +60,7 @@ export class BattleCues{
     this.routes.delete(a.id);
     if(foes.length)this.addRoute(a.id,a.id,foes,e.text,tone,at,positions,'impact',.82,{style:attackStyle(a),kind:'skill',profile:catAction(a.catId,'skill')?.id});
     if(friends.length)this.addRoute(a.id+'-support',a.id,friends,e.text,a.catId==='star'?'energy':'support',at,positions,'impact',a.catId==='milk'?1.32:1.05,{kind:'skill',profile:catAction(a.catId,'skill')?.id,style:['orange','pudding'].includes(a.catId)?'shield':a.catId==='star'?'star':'heal'});
-    this.log(a.name,info.skill,targets.length===1?name(targets[0]):friends.length&&foes.length?'敌方＋全队':friends.length?'我方全队':'敌方全体',skillEffect[a.catId],friends.length?'support':'attack',at,true);
+    this.log(a.name,info.skill,targets.length===1?name(targets[0]):friends.length&&foes.length?'敌方＋全队':friends.length?'我方全队':a.catId==='pudding'?'穿线＋双前排':'敌方全体',skillEffect[a.catId],friends.length?'support':'attack',at,true);
    }
    if(e.type==='heal'&&!casters.has(e.from)){
     const label=a.side==='e'?'纸袋修补':'吸血回复';

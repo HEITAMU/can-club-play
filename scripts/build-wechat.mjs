@@ -26,7 +26,7 @@ if (!/^wx[a-f\d]{16}$/.test(appid))
 await fs.rm(out, { recursive: true, force: true });
 await fs.mkdir(out, { recursive: true });
 const list = [
-  "anatomy/cats-d.webp",
+  "finished/pudding-v0216.webp",
   "painted/enemies-a.webp",
   "painted/enemies-b.webp",
   "painted/enemies-c.webp",
@@ -59,7 +59,7 @@ for (const relative of list) {
       width: Math.floor(meta.width / 4),
       height: meta.height,
     });
-  if (relative.startsWith("finished/") && !relative.includes("portrait")) pipeline.resize({width:relative.includes("v0213")?1024:1536});
+  if (relative.startsWith("finished/") && !relative.includes("portrait")) pipeline.resize({width:(relative.includes("v0213")||relative.includes("v0216"))?1024:1536});
   const jpg = relative.startsWith("scenes/");
   const data = await (
     jpg
@@ -125,7 +125,7 @@ await esbuild.build({
   ],
 });
 const manifest = {
-  version: "0.21.5",
+  version: "0.21.6",
   appid,
   packages: packages.map(({ name, root }) => ({ name, root })),
   assets,

@@ -1,4 +1,4 @@
-import {FINISHED_ROSTER} from './finished-roster-data.mjs?v=0.21.5';
+import {FINISHED_ROSTER} from './finished-roster-data.mjs?v=0.21.6';
 let factory,snapshot;
 export function setRosterCanvasFactory(f,freeze){factory=f;snapshot=freeze;}
 const cache=new WeakMap(),clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x)),smooth=x=>{x=clamp(x);return x*x*(3-2*x);};
@@ -28,11 +28,12 @@ export function rosterVertex(id,x,y,p){
  dx+=Math.sin(phase-.65)*tail*(id==='pudding'?2.2:4);dy+=Math.cos(phase-.65)*tail*1.5;
  // Action deformation reinforces weight transfer; it never detaches a limb or scales a skull.
  dx+=(p.reach||0)*85*upper;dy+=(p.breath||0)*-30*upper;
+ if(id==='pudding'&&p.shidunCharge>0){const q=p.shidunCharge,t=p.shidunTime||0,body=1-smooth((y-410)/65);dx+=Math.sin(t*83)*q*5*body;dy+=Math.cos(t*91)*q*2.5*body;}
  return [x+dx*feet,y+dy*feet];
 }
 function triangle(ctx,image,src,dst){const [a,b,c]=src,[A,B,C]=dst,ux=b[0]-a[0],uy=b[1]-a[1],vx=c[0]-a[0],vy=c[1]-a[1],det=ux*vy-uy*vx,p=((B[0]-A[0])*vy-(C[0]-A[0])*uy)/det,q=((B[1]-A[1])*vy-(C[1]-A[1])*uy)/det,r=((C[0]-A[0])*ux-(B[0]-A[0])*vx)/det,s=((C[1]-A[1])*ux-(B[1]-A[1])*vx)/det;ctx.save();ctx.beginPath();dst.forEach(([x,y],i)=>ctx[i?'lineTo':'moveTo'](x,y));ctx.closePath();ctx.clip();ctx.transform(p,q,r,s,A[0]-p*a[0]-r*a[1],A[1]-q*a[0]-s*a[1]);ctx.drawImage(image,0,0);ctx.restore();}
 export function drawFinishedRoster(ctx,id,pose,atlas,face){
- const cel=rosterCel(pose),l=layer(id,atlas,cel,face),scale=.91/480,foot=.92;
+ const cel=id==='pudding'?Math.round(pose.shidunCel||0):rosterCel(pose),l=layer(id,atlas,cel,face),scale=.91/480,foot=.92;
  ctx.save();ctx.translate(.5,foot+(pose.sink||0));ctx.rotate(clamp((pose.lean||0)*.22,-.10,.32));ctx.translate(-.5,-foot);ctx.globalCompositeOperation='lighter';
  // Place mesh rows at anatomical boundaries; keep the skull rigid and feet planted.
  const xs=[0,110,256,512],ys=[0,258,335,420,470,518,544],cols=xs.length-1,rows=ys.length-1,points=[];

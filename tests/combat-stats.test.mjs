@@ -55,7 +55,7 @@ test('skill tooltips show current values and the eight visible attributes use co
   const s=initialState();s.highest=120;s.party=[c.id];s.levels[c.id]=10;
   const b=new Battle(s),h=b.heroes[0],e=b.enemies[0];Object.assign(e,{hp:1e6,maxHp:1e6,armor:0,magicResist:0});h.hp=1;
   const description=crewSkill(c.id,10,catStats(s,c.id));b.skill(h);
-  const type=c.id==='orange'?'shield':['milk','star'].includes(c.id)?'heal':'hit';
+  const type=['orange','pudding'].includes(c.id)?'shield':['milk','star'].includes(c.id)?'heal':'hit';
   const event=b.events.find(x=>x.type===type&&x.from===h.id);
   if(type==='hit')assert.equal(event.damageType,['spark','mint'].includes(c.id)?'magic':'physical');
   assert.ok(description.description.includes('>'+event.value.toLocaleString('zh-CN')+'</strong>'),c.id);
