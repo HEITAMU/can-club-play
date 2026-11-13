@@ -1,12 +1,13 @@
 import {enemyAttackType} from './action-profiles.mjs?v=0.21.6';
 // Combat and rendering share a simulation clock. x1 is a deliberate, calmer pace.
 export const battleRate=speed=>speed===2?1.8:.9;
-export function attackStyle(a){
+export function attackStyle(a,kind=a.action?.kind||'normal'){
  if(a.side==='e')return enemyAttackType(a.type);
+ if(a.catId==='bolt')return kind==='skill'?'melee':'wrench';
  return ({orange:'melee',ink:'arrow',milk:'milk',spark:'fire',mint:'ice',bolt:'melee',pudding:'melee',star:'star'})[a.catId];
 }
 export function actionTiming(a,kind='normal'){
- const tempo=Math.max(.64,Math.min(1,(a.interval||1.5)/1.25))*(kind==='normal'&&a.side!=='e'?1.4:1),windup=(kind==='skill'?.40:.25)*tempo,travel=(attackStyle(a)==='melee'?.20:.29)*tempo,hold=(kind==='skill'?.11:.085)*tempo,recovery=.31*tempo;
+ const tempo=Math.max(.64,Math.min(1,(a.interval||1.5)/1.25))*(kind==='normal'&&a.side!=='e'?1.4:1),windup=(kind==='skill'?.40:.25)*tempo,travel=(a.catId==='bolt'&&kind==='normal'?.48:attackStyle(a,kind)==='melee'?.20:.29)*tempo,hold=(kind==='skill'?.11:.085)*tempo,recovery=.31*tempo;
  return {windup,travel,hold,recovery,impactAt:windup+travel,duration:windup+travel+hold+recovery};
 }
 export const unit=n=>Math.min(1,Math.max(0,n));
@@ -54,7 +55,7 @@ export function travelOffset(actor,pose,source,target,width,height,bodySize=130,
 // Short tails and curved flight are projectile effects, never source-to-target guides.
 export function projectilePose(from,to,width,height,elapsed,travel,style,shot=0,count=1){
  const delay=count>1?shot*.035:0,flight=Math.max(.08,travel-(count-1)*.035),raw=(elapsed-delay)/flight,t=unit(raw),sx=from.x*width/100,sy=from.y*height/100,dx=(to.x-from.x)*width/100,dy=(to.y-from.y)*height/100;
- const arch=['fire','milk','heal','star'].includes(style)?Math.min(22,Math.hypot(dx,dy)*.14):0,spread=count>1?(shot-(count-1)/2)*4:0;
- const x=sx+dx*t,y=sy+dy*t-Math.sin(t*Math.PI)*(arch+spread),tangent=dy-Math.cos(t*Math.PI)*Math.PI*(arch+spread);
- return {x,y,angle:Math.atan2(tangent,dx)*180/Math.PI,visible:raw>=0&&raw<=1,progress:t,tailX:x-dx/Math.max(1,Math.hypot(dx,dy))*9,tailY:y-tangent/Math.max(1,Math.hypot(dx,dy))*9};
+ const arch=style==='wrench'?Math.min(72,Math.max(28,Math.hypot(dx,dy)*.32)):['fire','milk','heal','star'].includes(style)?Math.min(22,Math.hypot(dx,dy)*.14):0,spread=count>1?(shot-(count-1)/2)*4:0;
+ const x=sx+dx*t,y=sy+dy*t-(style==='wrench'?4*t*(1-t):Math.sin(t*Math.PI))*(arch+spread),tangent=dy-(style==='wrench'?4*(1-2*t):Math.cos(t*Math.PI)*Math.PI)*(arch+spread);
+ return {x,y,angle:Math.atan2(tangent,dx)*180/Math.PI+(style==='wrench'?t*720*(dx<0?-1:1):0),visible:raw>=0&&raw<=1,progress:t,tailX:x-dx/Math.max(1,Math.hypot(dx,dy))*9,tailY:y-tangent/Math.max(1,Math.hypot(dx,dy))*9};
 }

@@ -645,7 +645,7 @@ export class NativeGame {
         centers,
         sizes,
       ),
-      atlas = this.art.image("assets/vfx/effects.webp"),
+      atlas = this.art.image("assets/vfx/effects-v0216.webp"),
       can = this.art.image("assets/vfx/can-rescue-v0192.webp");
     paintVFX(
       c,

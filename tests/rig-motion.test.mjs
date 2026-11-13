@@ -18,7 +18,7 @@ test('normal and skill motion is continuous at anticipation, release, hold and r
  for(const a of actors)for(const kind of ['normal','skill']){const timing=actionTiming(a,kind),actor={...a,action:{...timing,kind,elapsed:0}};
   for(const edge of [0,timing.windup,timing.impactAt,timing.impactAt+timing.hold,timing.duration]){
    const sample=t=>{actor.action.elapsed=Math.max(0,t);return rigPose(a.id,actor,3+t,8+t);};
-   const before=sample(edge-1e-7),after=sample(edge+1e-7);for(const k of Object.keys(before).filter(k=>k!=='shidunCel'))assert.ok(Math.abs(before[k]-after[k])<1e-5,a.id+' '+kind+' '+edge+' '+k);
+   const before=sample(edge-1e-7),after=sample(edge+1e-7);for(const k of Object.keys(before).filter(k=>!['shidunCel','boltCel'].includes(k)))assert.ok(Math.abs(before[k]-after[k])<1e-5,a.id+' '+kind+' '+edge+' '+k);
   }
   actor.action.elapsed=timing.duration;const end=rigPose(a.id,actor,3+timing.duration,8+timing.duration);actor.action=null;const idle=rigPose(a.id,actor,3+timing.duration,8+timing.duration);for(const k of Object.keys(end))assert.ok(Math.abs(end[k]-idle[k])<1e-12);
  }

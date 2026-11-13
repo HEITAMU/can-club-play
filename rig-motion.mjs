@@ -74,6 +74,7 @@ export function rigPose(id,actor,time,idleTime=time){
    p.sparkRecovery=flowTrack(t,[[0,0],[w,0],[w+.04,1],[e-.08,1],[e,0]]);
   }
  }
+ if(id==='bolt'){const a=actor?.action;p.boltCel=a?.kind==='normal'&&a.elapsed<a.duration?(a.elapsed<a.windup?12:a.elapsed<a.windup+.12?13:a.elapsed<a.duration-.18?14:15):-1;}
  if(id==='pudding')Object.assign(p,shidunPose(actor,time,idleTime));
  return p;
 }

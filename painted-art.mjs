@@ -17,7 +17,7 @@ export function paintedPose(root,frame,{actor,time=0,idleTime=time,outcome,previ
  const el=root.matches('.painted-sprite')?root:root.querySelector('.painted-sprite');if(!el)return;
  const id=el.dataset.art,phase=actor?poseFor(actor,time).phase:'idle',next=rigPose(id,actor,time,idleTime),foot=rigFor(id).foot,groundShift=(.92-foot)*100,clock=animationClock(actor,time,idleTime),prior=poses.get(el),shape=blendRigPose(prior?.shape,next,prior?clock-prior.clock:-1);
  const key=expressionFor(id,actor,time,clock,{outcome,preview}),face=faceTransition(EXPRESSIONS.includes(preview)?null:prior?.face,key,clock);
- if(FINISHED_ROSTER[id]){shape.shidunCel=next.shidunCel;shape.shidunCharge=next.shidunCharge;shape.shidunTime=next.shidunTime;shape.rosterCel=next.rosterCel;shape.rosterRecovery=next.rosterRecovery;shape.rosterSkill=next.rosterSkill;shape.rosterClock=clock;}
+ if(FINISHED_ROSTER[id]){shape.boltCel=next.boltCel;shape.shidunCel=next.shidunCel;shape.shidunCharge=next.shidunCharge;shape.shidunTime=next.shidunTime;shape.rosterCel=next.rosterCel;shape.rosterRecovery=next.rosterRecovery;shape.rosterSkill=next.rosterSkill;shape.rosterClock=clock;}
  if(id==='spark'){shape.sparkCel=next.sparkCel;shape.sparkRecovery=next.sparkRecovery;shape.sparkClock=clock;}
  shape.nock=bowNock(actor);poses.set(el,{clock,shape:{...shape},face});
  if(reduce){for(const k of ['lean','head','hand','tail','reach'])shape[k]*=.2;shape.breath*=.35;}

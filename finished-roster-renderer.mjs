@@ -16,9 +16,9 @@ function layer(id,atlas,index,face){
   // These bounds are calibrated against the packed paintings, not arm/head cutouts.
   const [x,y,rx,ry]=art.face||[.57,.26,.16,.085];m.save();m.translate(x*512,y*544);m.scale(rx*512,ry*544);const g=m.createRadialGradient(0,0,.82,0,0,1);g.addColorStop(0,'#fff');g.addColorStop(1,'#fff0');m.fillStyle=g;m.fillRect(-1,-1,2,2);m.restore();pc.globalCompositeOperation='destination-in';pc.drawImage(mask,0,0);ctx.globalCompositeOperation='source-atop';ctx.drawImage(p,0,0);ctx.globalCompositeOperation='source-over';
  }
- const value={image:snapshot?snapshot(c):c.transferToImageBitmap?c.transferToImageBitmap():c,rect:[0,0,512,544]};entries.set(token,value);if(entries.size>14)entries.delete(entries.keys().next().value);return ready(value);
+ const value={image:snapshot?snapshot(c):c.transferToImageBitmap?c.transferToImageBitmap():c,rect:[0,0,512,544]};entries.set(token,value);if(entries.size>18)entries.delete(entries.keys().next().value);return ready(value);
 }
-export function prepareRosterFrames(id,atlas){for(const index of [0,4,5,6,7,8,9,10,11])layer(id,atlas,index,{to:'neutral'});for(const to of ['blink','hurt','victory'])layer(id,atlas,0,{to});}
+export function prepareRosterFrames(id,atlas){for(const index of [0,...Array.from({length:FINISHED_ROSTER[id].frames.length-4},(_,i)=>i+4)])layer(id,atlas,index,{to:'neutral'});for(const to of ['blink','hurt','victory'])layer(id,atlas,0,{to});}
 export function rosterVertex(id,x,y,p){
  const period=FINISHED_ROSTER[id]?.period||4,phase=(p.rosterClock||0)*Math.PI*2/period,breath=Math.sin(phase),upper=1-smooth((y-258)/242),feet=1-smooth((y-470)/48);
  // Rigid skull translation, small rib expansion, no whole-character idle sway.
@@ -33,7 +33,7 @@ export function rosterVertex(id,x,y,p){
 }
 function triangle(ctx,image,src,dst){const [a,b,c]=src,[A,B,C]=dst,ux=b[0]-a[0],uy=b[1]-a[1],vx=c[0]-a[0],vy=c[1]-a[1],det=ux*vy-uy*vx,p=((B[0]-A[0])*vy-(C[0]-A[0])*uy)/det,q=((B[1]-A[1])*vy-(C[1]-A[1])*uy)/det,r=((C[0]-A[0])*ux-(B[0]-A[0])*vx)/det,s=((C[1]-A[1])*ux-(B[1]-A[1])*vx)/det;ctx.save();ctx.beginPath();dst.forEach(([x,y],i)=>ctx[i?'lineTo':'moveTo'](x,y));ctx.closePath();ctx.clip();ctx.transform(p,q,r,s,A[0]-p*a[0]-r*a[1],A[1]-q*a[0]-s*a[1]);ctx.drawImage(image,0,0);ctx.restore();}
 export function drawFinishedRoster(ctx,id,pose,atlas,face){
- const cel=id==='pudding'?Math.round(pose.shidunCel||0):rosterCel(pose),l=layer(id,atlas,cel,face),scale=.91/480,foot=.92;
+ const cel=id==='bolt'&&pose.boltCel>=0?pose.boltCel:id==='pudding'?Math.round(pose.shidunCel||0):rosterCel(pose),l=layer(id,atlas,cel,face),scale=.91/480,foot=.92;
  ctx.save();ctx.translate(.5,foot+(pose.sink||0));ctx.rotate(clamp((pose.lean||0)*.22,-.10,.32));ctx.translate(-.5,-foot);ctx.globalCompositeOperation='lighter';
  // Place mesh rows at anatomical boundaries; keep the skull rigid and feet planted.
  const xs=[0,110,256,512],ys=[0,258,335,420,470,518,544],cols=xs.length-1,rows=ys.length-1,points=[];

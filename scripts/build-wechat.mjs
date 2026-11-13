@@ -32,14 +32,14 @@ const list = [
   "painted/enemies-c.webp",
   "painted/items.webp",
   "scenes/streets-v019.webp",
-  "vfx/effects.webp",
+  "vfx/effects-v0216.webp",
   "vfx/can-rescue-v0192.webp",
   "finished/spark-v0211.webp",
   "finished/orange-v0213.webp",
   "finished/ink-v0213.webp",
   "finished/milk-v0213.webp",
   "finished/mint-v0213.webp",
-  "finished/bolt-v0213.webp",
+  "finished/bolt-v0216.webp",
   "finished/star-v0213.webp",
 
 ];

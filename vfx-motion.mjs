@@ -4,7 +4,7 @@ import {HEAL_ART,healingImpact,healingCast} from './healing-fx.mjs?v=0.21.6';
 import {CAN_ART,sampleCan} from './can-fx.mjs?v=0.21.6';
 
 // All samples depend on simulation time, never frame count or Math.random().
-export const FX_CELLS={flash:1,dust:2,ember:3,fire:4,flame:5,ice:6,shard:7,heal:8,heart:9,milk:10,fish:11,shield:12,glass:13,star:14,electric:15,...HEAL_ART,...CAN_ART};
+export const FX_CELLS={wrench:16,flash:1,dust:2,ember:3,fire:4,flame:5,ice:6,shard:7,heal:8,heart:9,milk:10,fish:11,shield:12,glass:13,star:14,electric:15,...HEAL_ART,...CAN_ART};
 export const effectEnvelope=(age,duration,fadeIn=.035,fadeOut=.22)=>Math.min(unit(age/fadeIn),unit((duration-age)/fadeOut));
 export const impactStyle=r=>r.style==='shield'?(r.tone==='support'?'guard':'block'):r.style==='heal'?'heal':r.style==='star'&&r.tone==='energy'?'energy':ACTION_BY_ID[r.profile]?.impact||(['arrow','fish','milk'].includes(r.style)?'burst':r.style);
 export const shieldTransition=(previous,next)=>next>previous?'raise':next<previous?(next<=0?'break':'block'):'steady';
@@ -159,7 +159,7 @@ export function sampleRoute(r,time,w,h,centers={},sizes={}){
      if(ribbon&&r.style==='fire')ribbon.deform={axis:'x',phase:time*20-j*.7,amplitude:.18};
      if(j%2===0){const drift=Math.sin((r.id+j)*3)*j*.5;sprite(out,r.style==='ice'?'shard':support?'heart':'ember',past.x+drift,past.y-j*.6,head*.12*taper,taper*.7,time*4+j,1,1,1);}
     }
-    const stretch=1+.30*Math.sin(flight.progress*Math.PI),headSprite=sprite(out,art,flight.x,flight.y,head*stretch,1,flight.angle*Math.PI/180,1,1/stretch,2);
+    const stretch=r.style==='wrench'?1:1+.30*Math.sin(flight.progress*Math.PI),headSprite=sprite(out,art,flight.x,flight.y,head*stretch,1,flight.angle*Math.PI/180,1,1/stretch,2);
     if(headSprite&&['fire','milk','heal','star'].includes(r.style))headSprite.deform={axis:'x',phase:time*22+i*2,amplitude:r.style==='fire'?.16:.09};
     if(headSprite&&r.style==='ice')headSprite.angle+=Math.sin(flight.progress*Math.PI*3)*.12;
    }

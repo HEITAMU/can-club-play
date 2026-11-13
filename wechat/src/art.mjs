@@ -74,7 +74,7 @@ export class NativeArt {
         shape,
         cache.time < 0 ? -1 : time - cache.time,
       );
-    if(FINISHED_ROSTER[id]){pose.shidunCel=shape.shidunCel;pose.shidunCharge=shape.shidunCharge;pose.shidunTime=shape.shidunTime;pose.rosterCel=shape.rosterCel;pose.rosterRecovery=shape.rosterRecovery;pose.rosterSkill=shape.rosterSkill;pose.rosterClock=time;}
+    if(FINISHED_ROSTER[id]){pose.boltCel=shape.boltCel;pose.shidunCel=shape.shidunCel;pose.shidunCharge=shape.shidunCharge;pose.shidunTime=shape.shidunTime;pose.rosterCel=shape.rosterCel;pose.rosterRecovery=shape.rosterRecovery;pose.rosterSkill=shape.rosterSkill;pose.rosterClock=time;}
     if(id==='spark'){pose.sparkCel=shape.sparkCel;pose.sparkRecovery=shape.sparkRecovery;pose.sparkClock=time;}
     pose.nock = bowNock(actor);
     const face = faceTransition(
