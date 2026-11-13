@@ -26,9 +26,6 @@ if (!/^wx[a-f\d]{16}$/.test(appid))
 await fs.rm(out, { recursive: true, force: true });
 await fs.mkdir(out, { recursive: true });
 const list = [
-  "anatomy/cats-a-v0200.webp",
-  "anatomy/cats-b.webp",
-  "anatomy/cats-c.webp",
   "anatomy/cats-d.webp",
   "painted/enemies-a.webp",
   "painted/enemies-b.webp",
@@ -62,7 +59,7 @@ for (const relative of list) {
       width: Math.floor(meta.width / 4),
       height: meta.height,
     });
-  if (relative.startsWith("finished/") && !relative.includes("portrait")) pipeline.resize({width:1536});
+  if (relative.startsWith("finished/") && !relative.includes("portrait")) pipeline.resize({width:relative.includes("v0213")?1024:1536});
   const jpg = relative.startsWith("scenes/");
   const data = await (
     jpg
