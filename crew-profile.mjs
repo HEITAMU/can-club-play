@@ -1,5 +1,5 @@
-import {CATS,MAX_LEVEL,catStats,upgradeCost,upgradeQuote,unlocked} from './core.mjs?v=0.21.12';
-import {catSVG,icon,relicSVG} from './art.mjs?v=0.21.12';
+import {CATS,MAX_LEVEL,catStats,upgradeCost,upgradeQuote,unlocked} from './core.mjs?v=0.21.13';
+import {catSVG,icon,relicSVG} from './art.mjs?v=0.21.13';
 
 const palettes={
  orange:['#aa875d','#dec394','#f0cd89'],ink:['#738a99','#b4c1c4','#c2d8e3'],

@@ -1,9 +1,9 @@
-import {sampleShidun,paintShidun} from './shidun-fx.mjs?v=0.21.12';
-import {VFX_ATLAS} from './vfx-atlas.mjs?v=0.21.12';
-import {FX_CELLS,sampleRoute,sampleImpact,sampleGuard,sampleStatus,shieldTransition} from './vfx-motion.mjs?v=0.21.12';
-import {paintHealing} from './healing-fx.mjs?v=0.21.12';
-import {CAN_ATLAS,paintCan} from './can-fx.mjs?v=0.21.12';
-export {effectEnvelope,impactStyle,shieldTransition} from './vfx-motion.mjs?v=0.21.12';
+import {sampleShidun,paintShidun} from './shidun-fx.mjs?v=0.21.13';
+import {VFX_ATLAS} from './vfx-atlas.mjs?v=0.21.13';
+import {FX_CELLS,sampleRoute,sampleImpact,sampleGuard,sampleStatus,shieldTransition} from './vfx-motion.mjs?v=0.21.13';
+import {paintHealing} from './healing-fx.mjs?v=0.21.13';
+import {CAN_ATLAS,paintCan} from './can-fx.mjs?v=0.21.13';
+export {effectEnvelope,impactStyle,shieldTransition} from './vfx-motion.mjs?v=0.21.13';
 let image;
 let canImage,shidunImage;
 function shidunAtlas(){if(!shidunImage&&typeof Image!=='undefined'){shidunImage=new Image();shidunImage.src='./assets/vfx/shidun-impact-v0211.webp';}return shidunImage;}
