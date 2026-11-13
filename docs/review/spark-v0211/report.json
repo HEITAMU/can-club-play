@@ -1,0 +1,42 @@
+{
+  "version": "0.21.1",
+  "scope": [
+    "spark"
+  ],
+  "fixture": "Original game root, deterministic battle fixture; Chromium mobile viewports, not physical iPhone testing.",
+  "viewports": [
+    {
+      "width": 320,
+      "height": 568,
+      "renderer": "finished-full-body",
+      "fullBodyArt": true,
+      "releaseAtLaunch": true,
+      "portraitUnclipped": true,
+      "upgradePreservesSave": true,
+      "horizontalOverflow": false,
+      "errors": []
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "renderer": "finished-full-body",
+      "fullBodyArt": true,
+      "releaseAtLaunch": true,
+      "portraitUnclipped": true,
+      "upgradePreservesSave": true,
+      "horizontalOverflow": false,
+      "errors": []
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "renderer": "finished-full-body",
+      "fullBodyArt": true,
+      "releaseAtLaunch": true,
+      "portraitUnclipped": true,
+      "upgradePreservesSave": true,
+      "horizontalOverflow": false,
+      "errors": []
+    }
+  ]
+}

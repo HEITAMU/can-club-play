@@ -1,0 +1,5 @@
+{
+  "samples": 120,
+  "averageMs": 0.49583333333333335,
+  "environment": "CI Chromium; not a phone benchmark"
+}
