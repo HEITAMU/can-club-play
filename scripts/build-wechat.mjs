@@ -38,6 +38,13 @@ const list = [
   "vfx/effects.webp",
   "vfx/can-rescue-v0192.webp",
   "finished/spark-v0211.webp",
+  "finished/orange-v0213.webp",
+  "finished/ink-v0213.webp",
+  "finished/milk-v0213.webp",
+  "finished/mint-v0213.webp",
+  "finished/bolt-v0213.webp",
+  "finished/star-v0213.webp",
+
 ];
 const assets = {},
   packages = [],
@@ -121,7 +128,7 @@ await esbuild.build({
   ],
 });
 const manifest = {
-  version: "0.21.2",
+  version: "0.21.3",
   appid,
   packages: packages.map(({ name, root }) => ({ name, root })),
   assets,

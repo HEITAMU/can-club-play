@@ -1,4 +1,4 @@
-import {catAction} from './action-profiles.mjs?v=0.21.2';
+import {catAction} from './action-profiles.mjs?v=0.21.3';
 // Continuous motion for painted cutout parts. No pose-frame swapping.
 const clamp=n=>Math.max(0,Math.min(1,n));
 export const ease=n=>{const t=clamp(n);return t*t*(3-2*t);};
@@ -15,8 +15,8 @@ export const RIGS={
 };
 const feet={dust:.91,box:.86,mop:.90,battery:.84,bag:.91,drone:.87,vacuum:.82,fridge:.92,sign:.92,boxBoss:.935,clock:.89,vendor:.925};
 export function rigFor(id){return RIGS[id]||{foot:feet[id]||.92,period:2.7,phase:Object.keys(feet).indexOf(id)*.7,head:[.5,.30,.42,.34,.5,.60],hand:null,tail:null,swing:.28};}
-const keys=['breath','lean','head','hand','tail','reach','sink','alpha','sparkCel','sparkClock','sparkRecovery'];
-const neutral={breath:0,lean:0,head:0,hand:0,tail:0,reach:0,sink:0,alpha:1,sparkCel:0,sparkClock:0,sparkRecovery:0};
+const keys=['breath','lean','head','hand','tail','reach','sink','alpha','sparkCel','sparkClock','sparkRecovery','rosterCel','rosterClock','rosterRecovery','rosterSkill'];
+const neutral={breath:0,lean:0,head:0,hand:0,tail:0,reach:0,sink:0,alpha:1,sparkCel:0,sparkClock:0,sparkRecovery:0,rosterCel:0,rosterClock:0,rosterRecovery:0,rosterSkill:0};
 const mix=(a,b,t)=>Object.fromEntries(keys.map(k=>[k,lerp(a[k],b[k],t)]));
 export function blendRigPose(previous,next,dt){return !previous||dt<0?{...next}:mix(previous,next,1-Math.exp(-Math.max(0,dt)/.026));}
 export const animationClock=(actor,time,idleTime)=>actor&&time>0?time:idleTime;
@@ -28,7 +28,7 @@ export function flowTrack(time,points){
  const [x0,y0]=points[i],[x1,y1]=points[i+1],h=x1-x0,u=(time-x0)/h,u2=u*u,u3=u2*u;
  return (2*u3-3*u2+1)*y0+(u3-2*u2+u)*h*slope(i)+(-2*u3+3*u2)*y1+(u3-u2)*h*slope(i+1);
 }
-function resting(id,time){if(id==='spark')return {...neutral};const r=rigFor(id),q=time*Math.PI*2/r.period+r.phase,hero=!!RIGS[id];return {...neutral,breath:Math.sin(q)*.035,lean:Math.sin(q+.6)*.026,head:hero?Math.sin(q*.73+1)*.045:Math.sin(q)*.025,hand:hero?Math.sin(q+.9)*.055:0,tail:hero?Math.sin(q*1.22+r.phase)*.18:0};}
+function resting(id,time){if(RIGS[id]&&id!=='pudding')return {...neutral};const r=rigFor(id),q=time*Math.PI*2/r.period+r.phase,hero=!!RIGS[id];return {...neutral,breath:Math.sin(q)*.035,lean:Math.sin(q+.6)*.026,head:hero?Math.sin(q*.73+1)*.045:Math.sin(q)*.025,hand:hero?Math.sin(q+.9)*.055:0,tail:hero?Math.sin(q*1.22+r.phase)*.18:0};}
 export function rigPose(id,actor,time,idleTime=time){
  const r=rigFor(id),idle=resting(id,idleTime);let p=idle;
  if(actor?.action){
@@ -56,6 +56,13 @@ export function rigPose(id,actor,time,idleTime=time){
  }
  if((actor?.hitUntil||0)>time){const t=clamp(1-(actor.hitUntil-time)/.22),kick=Math.sin(t*Math.PI);p={...p,lean:p.lean-kick*.10,head:p.head-kick*.13,breath:p.breath-kick*.025};}
  if(actor?.hp<=0){const t=ease((time-(actor.downAt??time))/.55),hero=!!RIGS[id],breath=Math.sin(time*2.4)*.012;p=mix(p,hero?{...neutral,breath:-.36+breath,lean:.74,head:.46,hand:.22,tail:-.22,sink:.025,alpha:1}:{...neutral,breath:-.16,lean:.72,head:.1,sink:.03,alpha:.45},t);}
+ if(RIGS[id]&&!['spark','pudding'].includes(id)){
+  p.rosterClock=idleTime;const a=actor?.action;
+  if(a&&actor.hp>0){const t=a.elapsed,w=a.windup,hit=a.impactAt,end=a.duration,support=['orange','milk','star'].includes(id)&&a.kind==='skill';
+   const release=support?w:(catAction(id,a.kind)?.delivery==='melee'?hit:w);
+   const r=Math.max(.05,release);p.rosterCel=flowTrack(t,[[0,0],[r*.25,1],[r*.50,2],[r*.75,3],[r,4],[r+.08,3],[end-.13,2],[end-.05,1],[end,0]]);p.rosterRecovery=flowTrack(t,[[0,0],[r,0],[r+.025,1],[end-.04,1],[end,0]]);p.rosterSkill=support?p.rosterCel/4:a.kind==='skill'?-p.rosterCel/4:0;
+  }
+ }
  if(id==='spark'){
   p.sparkClock=idleTime;
   const a=actor?.action;

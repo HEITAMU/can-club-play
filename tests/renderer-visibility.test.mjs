@@ -9,7 +9,7 @@ test('rear battle canvases survive stale offscreen/zero-size reports and a lost 
  globalThis.IntersectionObserver=class {constructor(cb){intersections.push(cb);}observe(){}unobserve(){}};
  const {drawRig}=await import('../rig-renderer.mjs?visibility-regression');
  for(const id of ['milk','mint','bolt']){
-  const classes=new Set(),listeners={},ctx={draws:0,clears:0,globalAlpha:1,setTransform(){},clearRect(){this.clears++;},save(){},restore(){},translate(){},rotate(){},scale(){},beginPath(){},moveTo(){},lineTo(){},closePath(){},stroke(){},fill(){},drawImage(){this.draws++;}};
+  const classes=new Set(),listeners={},ctx={draws:0,clears:0,globalAlpha:1,setTransform(){},clearRect(){this.clears++;},save(){},restore(){},translate(){},rotate(){},scale(){},beginPath(){},moveTo(){},lineTo(){},closePath(){},clip(){},transform(){},stroke(){},fill(){},drawImage(){this.draws++;}};
   const canvas={width:300,height:150,getContext:()=>ctx,addEventListener:(name,cb)=>listeners[name]=cb};
   const el={dataset:{},clientWidth:66,clientHeight:66,querySelector:()=>canvas,classList:{contains:c=>classes.has(c),add:c=>classes.add(c),remove:c=>classes.delete(c)}};
   const pose=rigPose(id,{hp:100},1);

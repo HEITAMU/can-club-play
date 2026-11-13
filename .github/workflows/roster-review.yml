@@ -1,0 +1,33 @@
+name: Six companion animation review
+on:
+  push:
+    branches: [rebuild/seven-companions-v0213]
+    paths-ignore: ['docs/review/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: wechat/package-lock.json
+      - run: npm ci --prefix wechat
+      - run: ln -s wechat/node_modules node_modules
+      - run: wechat/node_modules/.bin/playwright install --with-deps chromium
+      - run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk ffmpeg
+      - run: npm run build --prefix wechat
+      - run: npm test --prefix wechat
+      - run: node scripts/browser-roster-review.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: six-companion-review-v0213
+          path: |
+            qa/roster-browser/
+            dist/wechat/BUILD-REPORT.json

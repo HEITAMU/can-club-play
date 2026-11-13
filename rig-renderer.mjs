@@ -1,8 +1,10 @@
-import {FINISHED_SPARK} from './finished-spark-data.mjs?v=0.21.2';
-import {drawFinishedSpark} from './finished-spark-renderer.mjs?v=0.21.2';
-import {ANATOMY} from './anatomy-data.mjs?v=0.21.2';
-import {drawAnatomy} from './anatomy-renderer.mjs?v=0.21.2';
-import {rigFor} from './rig-motion.mjs?v=0.21.2';
+import {FINISHED_ROSTER} from './finished-roster-data.mjs?v=0.21.3';
+import {drawFinishedRoster} from './finished-roster-renderer.mjs?v=0.21.3';
+import {FINISHED_SPARK} from './finished-spark-data.mjs?v=0.21.3';
+import {drawFinishedSpark} from './finished-spark-renderer.mjs?v=0.21.3';
+import {ANATOMY} from './anatomy-data.mjs?v=0.21.3';
+import {drawAnatomy} from './anatomy-renderer.mjs?v=0.21.3';
+import {rigFor} from './rig-motion.mjs?v=0.21.3';
 const PAD_X=.22,PAD_TOP=.20,PAD_BOTTOM=.18,images=new Map(),instances=new WeakMap();
 // The torso has no painted forearms. Left and right arms have separate shoulder sockets.
 function getImage(url){let r=images.get(url);if(!r){const img=new Image();r={img,ready:false};img.onload=()=>r.ready=true;img.src=url;images.set(url,r);}return r;}
@@ -18,6 +20,7 @@ export function renderPuppetFrame(ctx,id,pose,atlas,width,height,enemySource=nul
  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,width,height);
  const sx=width/(1+PAD_X*2),sy=height/(1+PAD_TOP+PAD_BOTTOM),foot=rigFor(id).foot;
  ctx.setTransform(sx,0,0,sy,PAD_X*sx,PAD_TOP*sy);ctx.globalAlpha=pose.alpha;
+ if(FINISHED_ROSTER[id]){drawFinishedRoster(ctx,id,pose,atlas,face);ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;return;}
  if(id==='spark'){drawFinishedSpark(ctx,pose,atlas,face);ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;return;}
  ctx.translate(.5,foot+pose.sink);ctx.rotate(pose.lean*.45);ctx.scale(1-pose.breath*.28,1+pose.breath*.55);ctx.translate(-.5,-foot);
  if(ANATOMY[id])drawAnatomy(ctx,id,pose,atlas,face);
@@ -25,7 +28,7 @@ export function renderPuppetFrame(ctx,id,pose,atlas,width,height,enemySource=nul
  ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;
 }
 export function drawRig(el,id,pose,face,renderSize){
- const kit=id==='spark'?FINISHED_SPARK:ANATOMY[id],source=getImage(kit?.atlas||el.dataset.atlas);if(!source.ready)return false;
+ const kit=id==='spark'?FINISHED_SPARK:FINISHED_ROSTER[id]||ANATOMY[id],source=getImage(kit?.atlas||el.dataset.atlas);if(!source.ready)return false;
  let v=instances.get(el);if(!v){const canvas=el.querySelector('.rig-canvas'),ctx=canvas?.getContext('2d',{alpha:true});if(!ctx)return false;v={canvas,ctx,width:el.clientWidth,height:el.clientHeight,visible:true,last:'',lost:false};instances.set(el,v);resize?.observe(el);visibility?.observe(el);ctx.imageSmoothingEnabled=true;
   canvas.addEventListener('contextlost',e=>{e.preventDefault();v.lost=true;v.last='';el.classList.remove('rig-ready');});
   canvas.addEventListener('contextrestored',()=>{v.lost=false;v.last='';});
@@ -42,5 +45,5 @@ export function drawRig(el,id,pose,face,renderSize){
  const img=source.img,rows=+el.dataset.rows,row=+el.dataset.row,enemySource=kit?null:[0,row*img.height/rows,img.width/4,img.height/rows];
  renderPuppetFrame(ctx,id,pose,img,width,height,enemySource,face);
  v.last=signature;
- el.dataset.renderer=id==='spark'?'finished-full-body':kit?'painted-anatomy':'painted-object';if(!el.classList.contains('rig-ready'))el.classList.add('rig-ready');return true;
+ el.dataset.renderer=(id==='spark'||FINISHED_ROSTER[id])?'finished-full-body':kit?'painted-anatomy':'painted-object';if(!el.classList.contains('rig-ready'))el.classList.add('rig-ready');return true;
 }

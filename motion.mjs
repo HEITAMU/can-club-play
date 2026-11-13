@@ -1,4 +1,4 @@
-import {enemyAttackType} from './action-profiles.mjs?v=0.21.2';
+import {enemyAttackType} from './action-profiles.mjs?v=0.21.3';
 // Combat and rendering share a simulation clock. x1 is a deliberate, calmer pace.
 export const battleRate=speed=>speed===2?1.8:.9;
 export function attackStyle(a){

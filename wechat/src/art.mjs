@@ -1,3 +1,5 @@
+import {FINISHED_ROSTER} from '../../finished-roster-data.mjs';
+import {setRosterCanvasFactory} from '../../finished-roster-renderer.mjs';
 import {FINISHED_SPARK} from '../../finished-spark-data.mjs';
 import {setFinishedCanvasFactory} from '../../finished-spark-renderer.mjs';
 import { ANATOMY } from "../../anatomy-data.mjs";
@@ -22,6 +24,7 @@ export class NativeArt {
   constructor(env, images) {
     this.env = env;
     setFinishedCanvasFactory((w,h)=>{const c=env.createCanvas();c.width=w;c.height=h;return c;});
+    setRosterCanvasFactory((w,h)=>{const c=env.createCanvas();c.width=w;c.height=h;return c;});
     this.images = images;
     this.sprites = new Map();
   }
@@ -40,7 +43,7 @@ export class NativeArt {
     outcome = null,
     flip = 1,
   ) {
-    const kit = id==='spark'?FINISHED_SPARK:ANATOMY[id],
+    const kit = id==='spark'?FINISHED_SPARK:FINISHED_ROSTER[id]||ANATOMY[id],
       foe = foes[id] || foes.dust,
       img = this.image(
         kit ? kit.atlas : "assets/painted/enemies-" + foe[0] + ".webp",
@@ -71,6 +74,7 @@ export class NativeArt {
         shape,
         cache.time < 0 ? -1 : time - cache.time,
       );
+    if(FINISHED_ROSTER[id]){pose.rosterCel=shape.rosterCel;pose.rosterRecovery=shape.rosterRecovery;pose.rosterSkill=shape.rosterSkill;pose.rosterClock=time;}
     if(id==='spark'){pose.sparkCel=shape.sparkCel;pose.sparkRecovery=shape.sparkRecovery;pose.sparkClock=time;}
     pose.nock = bowNock(actor);
     const face = faceTransition(
