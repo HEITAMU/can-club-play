@@ -13,7 +13,7 @@ test('self shield completes a second punch without ally shields or incoming atta
  const hits=events.filter(e=>e.type==='hit'&&e.from===h.id);
  assert.equal(punches.length,1);assert.equal(hits.length,3);
  assert.ok(hits.every(e=>e.at>2.8&&e.at<3.4));
- assert.ok(h.shield>3500,'second self shield was actually granted');
+ assert.equal(h.shield,0,'punch spends all shield');
 });
 test('charge energy uses simulation time and stops after interruption',()=>{
  const b=make(),h=b.heroes[0];h.energy=100;b.tick(.01);
@@ -42,3 +42,5 @@ test('partial shield damage preserves charge; breaking shield cancels even a pri
   assert.equal(events.filter(e=>e.type==='hit'&&e.from===h.id).length,0);
  }
 });
+
+test('punch release clears shields but preserves locked damage',()=>{const b=make(),h=b.heroes[0];h.energy=100;let locked;for(let i=0;i<220;i++){b.tick(1/60);if(h.shieldState==='primed')locked=h.shieldPunch.shieldAtSecond;if(h.shieldState==='punching'){assert.equal(h.shield,0);assert.equal(h.shieldPunch.shieldAtSecond,locked);return;}}assert.fail('no punch');});

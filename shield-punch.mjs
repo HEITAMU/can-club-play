@@ -70,7 +70,7 @@ export function tickShieldPunch(s,now,enemies=[]){
   if(elapsed)events.push(...gainEnergy(s,elapsed*s.config.chargeEnergyPerSecond,until,'charge'));
  }
  events.push(...castSelfShield(s,now));
- if(s.state==='primed'&&now>=s.releaseAt){s.state='punching';events.push({type:'punchStart',at:s.releaseAt});}
+ if(s.state==='primed'&&now>=s.releaseAt){s.state='punching';s.shield=0;events.push({type:'punchStart',at:s.releaseAt});}
  if(s.state==='punching'&&!s.hitDelivered&&now>=s.hitAt){
   s.hitDelivered=true;const raw=s.attack*s.config.attackRatio+s.shieldAtSecond*s.config.shieldRatio;
   const hits=enemies.filter(e=>e.hp>0&&e.side!=='ally').map(e=>({targetId:e.id,rawDamage:raw,damage:raw*100/(100+Math.max(0,(e.armor||0)-(e.armorPenTaken||0)))}));

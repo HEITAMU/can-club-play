@@ -1,8 +1,8 @@
-import {shidunTargets} from './shidun-motion.mjs?v=0.21.9';
-import {createShieldPunch,gainShield,tickShieldPunch,controlShieldPunch,absorbShieldDamage} from './shield-punch.mjs?v=0.21.9';
-import {actionTiming,attackStyle} from './motion.mjs?v=0.21.9';
-import {CAN_TIMING,canHitAt,canDuration,canTargetOrder} from './can-timing.mjs?v=0.21.9';
-import {heroCombatStats,enemyCombatStats,mitigatedDamage} from './combat-stats.mjs?v=0.21.9';
+import {shidunTargets} from './shidun-motion.mjs?v=0.21.10';
+import {createShieldPunch,gainShield,tickShieldPunch,controlShieldPunch,absorbShieldDamage} from './shield-punch.mjs?v=0.21.10';
+import {actionTiming,attackStyle} from './motion.mjs?v=0.21.10';
+import {CAN_TIMING,canHitAt,canDuration,canTargetOrder} from './can-timing.mjs?v=0.21.10';
+import {heroCombatStats,enemyCombatStats,mitigatedDamage} from './combat-stats.mjs?v=0.21.10';
 export const VERSION=1, MAX_STAGE=120, MAX_LEVEL=100, MAX_PARTY=5;
 export const CATS=[
  {id:'orange',name:'橘座',job:'前排守护',tag:'守护',color:'#edab62',accent:'#c8793b',unlock:0,hp:205,atk:17,interval:1.5,skill:'锅盖护体',desc:'举起锅盖：获得自身生命 45% 的护盾，并为队友提供 12% 护盾。',passive:'5 级：受到伤害降低 15%。',quote:'这条街的罐头，我罩了。',gear:'pan'},
@@ -11,7 +11,7 @@ export const CATS=[
  {id:'spark',name:'火花',job:'群体灼烧',tag:'爆发',color:'#d98f75',accent:'#8f494b',unlock:8,hp:112,atk:27,interval:1.55,skill:'辣椒罐头',desc:'对全体敌人造成 160% 攻击力的法术伤害，并施加每秒 30% 攻击力的法术灼烧。',passive:'5 级：灼烧持续时间从 4 秒提高到 6 秒。',quote:'微辣。猫猫的微辣。',gear:'goggles'},
  {id:'mint',name:'薄荷',job:'眩晕控制',tag:'控制',color:'#a9d4c1',accent:'#4a8d83',unlock:15,hp:133,atk:22,interval:1.3,skill:'冰镇气泡',desc:'对生命最多的敌人造成 230% 攻击力的法术伤害，眩晕 1.8 秒并打断蓄力。',passive:'5 级：眩晕时间提高到 2.6 秒。',quote:'别急，先冷静一下。',gear:'hood'},
  {id:'bolt',name:'扳手',job:'破甲专家',tag:'破甲',color:'#adbacb',accent:'#636e8b',unlock:25,hp:162,atk:24,interval:1.5,skill:'扳手大修',desc:'先永久降低目标 50% 当前护甲，再造成 300% 攻击力的物理伤害。',passive:'5 级：护甲降低幅度提高到 75%。',quote:'修不好，就再拧一下。',gear:'helmet'},
- {id:'pudding',name:'石墩',job:'蓄盾重拳',tag:'守护',color:'#757780',accent:'#c69358',unlock:40,hp:235,atk:22,interval:1.65,skill:'护体劲 · 震街拳',desc:'满能量获得自身生命 35% 的护盾。盾量达到生命 30% 后蓄力；期间再获得生命 15% 的护盾，向目标所在前排及其身后两名后排打出重拳，最多 3 个目标，伤害为 100% 攻击＋锁定盾量的 160%。蓄力无时限，被控制或护盾被打空时中断；重拳间隔 8 秒。',passive:'护盾吸收伤害回复 12 能量，间隔 0.8 秒；蓄力每秒回复 35 能量，满能量再次加盾并触发重拳。',quote:'站稳，再出拳。',gear:'cape'},
+ {id:'pudding',name:'石墩',job:'蓄盾重拳',tag:'守护',color:'#757780',accent:'#c69358',unlock:40,hp:235,atk:22,interval:1.65,skill:'护体劲 · 震街拳',desc:'满能量获得自身生命 35% 的护盾。盾量达到生命 30% 后蓄力；期间再获得生命 15% 的护盾，向目标所在前排及其身后两名后排打出重拳，最多 3 个目标，伤害为 100% 攻击＋锁定盾量的 160%。蓄力无时限，被控制或护盾被打空时中断；出拳时清空护盾，伤害按清空前锁定盾量计算；重拳间隔 8 秒。',passive:'护盾吸收伤害回复 12 能量，间隔 0.8 秒；蓄力每秒回复 35 能量，满能量再次加盾并触发重拳。',quote:'站稳，再出拳。',gear:'cape'},
  {id:'star',name:'星斑',job:'能量辅助',tag:'支援',color:'#c4b1df',accent:'#78669f',unlock:60,hp:150,atk:19,interval:1.4,skill:'今晚有星星',desc:'为其他队友回复 48 能量，并治疗相当于星斑攻击 160% 的生命。',passive:'5 级：开场拥有 40 点能量。',quote:'许个愿，然后自己去实现。',gear:'wizard'}
 ];
 export const RELICS=[
