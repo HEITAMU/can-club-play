@@ -1,4 +1,4 @@
-import {catAction} from './action-profiles.mjs?v=0.21.4';
+import {catAction} from './action-profiles.mjs?v=0.21.5';
 // Continuous motion for painted cutout parts. No pose-frame swapping.
 const clamp=n=>Math.max(0,Math.min(1,n));
 export const ease=n=>{const t=clamp(n);return t*t*(3-2*t);};
@@ -60,7 +60,7 @@ export function rigPose(id,actor,time,idleTime=time){
   p.rosterClock=idleTime;const a=actor?.action;
   if(a&&actor.hp>0){const t=a.elapsed,w=a.windup,hit=a.impactAt,end=a.duration,support=['orange','milk','star'].includes(id)&&a.kind==='skill';
    const release=support?w:(catAction(id,a.kind)?.delivery==='melee'?hit:w);
-   const r=Math.max(.05,release);p.rosterCel=flowTrack(t,[[0,0],[r*.25,1],[r*.50,2],[r*.75,3],[r,4],[r+.08,3],[end-.13,2],[end-.05,1],[end,0]]);p.rosterRecovery=flowTrack(t,[[0,0],[r,0],[r+.025,1],[end-.04,1],[end,0]]);p.rosterSkill=support?p.rosterCel/4:a.kind==='skill'?-p.rosterCel/4:0;
+   const r=Math.max(.05,release),pace=a.kind==='normal'?1.4:1;p.rosterCel=flowTrack(t,[[0,0],[r*.25,1],[r*.50,2],[r*.75,3],[r,4],[r+.08*pace,3],[end-.13*pace,2],[end-.05*pace,1],[end,0]]);p.rosterRecovery=flowTrack(t,[[0,0],[r,0],[r+.025*pace,1],[end-.04*pace,1],[end,0]]);p.rosterSkill=support?p.rosterCel/4:a.kind==='skill'?-p.rosterCel/4:0;
   }
  }
  if(id==='spark'){
@@ -68,7 +68,8 @@ export function rigPose(id,actor,time,idleTime=time){
   const a=actor?.action;
   if(a&&actor.hp>0){const w=a.windup,e=a.duration,t=a.elapsed;
    // Release drawing coincides with the actual projectile launch, not impact.
-   p.sparkCel=flowTrack(t,[[0,0],[w*.20,1],[w*.42,2],[w*.62,3],[w*.82,4],[w,5],[w+.10,4],[e-.30,3],[e-.15,2],[e-.07,1],[e,0]]);
+   const pace=a.kind==='normal'?1.4:1;
+   p.sparkCel=flowTrack(t,[[0,0],[w*.20,1],[w*.42,2],[w*.62,3],[w*.82,4],[w,5],[w+.10*pace,4],[e-.30*pace,3],[e-.15*pace,2],[e-.07*pace,1],[e,0]]);
    p.sparkRecovery=flowTrack(t,[[0,0],[w,0],[w+.04,1],[e-.08,1],[e,0]]);
   }
  }

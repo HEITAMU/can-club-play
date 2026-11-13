@@ -1,8 +1,8 @@
-import {FINISHED_SPARK} from './finished-spark-data.mjs?v=0.21.4';
-import {renderPuppetFrame} from './rig-renderer.mjs?v=0.21.4';
-import {rigPose} from './rig-motion.mjs?v=0.21.4';
-import {actionTiming} from './motion.mjs?v=0.21.4';
-import {expressionFor} from './expressions.mjs?v=0.21.4';
+import {FINISHED_SPARK} from './finished-spark-data.mjs?v=0.21.5';
+import {renderPuppetFrame} from './rig-renderer.mjs?v=0.21.5';
+import {rigPose} from './rig-motion.mjs?v=0.21.5';
+import {actionTiming} from './motion.mjs?v=0.21.5';
+import {expressionFor} from './expressions.mjs?v=0.21.5';
 const canvas=document.querySelector('#hero'),ctx=canvas.getContext('2d'),atlas=new Image();atlas.src=FINISHED_SPARK.atlas;await atlas.decode();
 let mode='demo',clock=0,last=performance.now(),paused=false,speed=1;
 const sequence=[['idle',1.4],['normal',1.5],['idle',.8],['skill',1.6],['hit',.6],['victory',1],['idle',1.1]];

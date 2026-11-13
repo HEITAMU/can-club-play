@@ -1,4 +1,4 @@
-import {FINISHED_SPARK as ART} from './finished-spark-data.mjs?v=0.21.4';
+import {FINISHED_SPARK as ART} from './finished-spark-data.mjs?v=0.21.5';
 
 // Every action drawing is one complete character. A limb is never separately
 // mirrored, stretched, crossfaded, or taken from a different character.

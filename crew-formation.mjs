@@ -1,6 +1,6 @@
-import {CATS,MAX_PARTY,inheritanceFor} from './core.mjs?v=0.21.4';
-import {catSVG} from './art.mjs?v=0.21.4';
-import {crewUpgradeHTML} from './crew-profile.mjs?v=0.21.4';
+import {CATS,MAX_PARTY,inheritanceFor} from './core.mjs?v=0.21.5';
+import {catSVG} from './art.mjs?v=0.21.5';
+import {crewUpgradeHTML} from './crew-profile.mjs?v=0.21.5';
 
 const name=id=>CATS.find(c=>c.id===id)?.name||'伙伴';
 const slots=[[71,36],[71,72],[27,23],[27,54],[27,85]];

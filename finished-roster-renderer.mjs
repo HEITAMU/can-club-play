@@ -1,4 +1,4 @@
-import {FINISHED_ROSTER} from './finished-roster-data.mjs?v=0.21.4';
+import {FINISHED_ROSTER} from './finished-roster-data.mjs?v=0.21.5';
 let factory,snapshot;
 export function setRosterCanvasFactory(f,freeze){factory=f;snapshot=freeze;}
 const cache=new WeakMap(),clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x)),smooth=x=>{x=clamp(x);return x*x*(3-2*x);};

@@ -1,4 +1,4 @@
-import {enemyAttackType} from './action-profiles.mjs?v=0.21.4';
+import {enemyAttackType} from './action-profiles.mjs?v=0.21.5';
 // Combat and rendering share a simulation clock. x1 is a deliberate, calmer pace.
 export const battleRate=speed=>speed===2?1.8:.9;
 export function attackStyle(a){
@@ -6,7 +6,7 @@ export function attackStyle(a){
  return ({orange:'melee',ink:'arrow',milk:'milk',spark:'fire',mint:'ice',bolt:'melee',pudding:'melee',star:'star'})[a.catId];
 }
 export function actionTiming(a,kind='normal'){
- const tempo=Math.max(.64,Math.min(1,(a.interval||1.5)/1.25)),windup=(kind==='skill'?.40:.25)*tempo,travel=(attackStyle(a)==='melee'?.20:.29)*tempo,hold=(kind==='skill'?.11:.085)*tempo,recovery=.31*tempo;
+ const tempo=Math.max(.64,Math.min(1,(a.interval||1.5)/1.25))*(kind==='normal'&&a.side!=='e'?1.4:1),windup=(kind==='skill'?.40:.25)*tempo,travel=(attackStyle(a)==='melee'?.20:.29)*tempo,hold=(kind==='skill'?.11:.085)*tempo,recovery=.31*tempo;
  return {windup,travel,hold,recovery,impactAt:windup+travel,duration:windup+travel+hold+recovery};
 }
 export const unit=n=>Math.min(1,Math.max(0,n));
