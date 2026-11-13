@@ -34,10 +34,12 @@ try{
   const seek=async(kind,t)=>{const result=await page.evaluate(([k,t])=>__sparkReview.seek(k,t),[kind,t]);await page.waitForFunction(()=>document.querySelector('#actor-p0 .painted-sprite')?.dataset.renderer==='finished-full-body');await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));return result;};
   await seek('idle',0);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   await page.screenshot({path:path.join(out,'battle-'+width+'.png')});
-  const release=await seek('normal',.25);assert.equal(release.phase,'release');
+  const release=await seek('normal',.25+1e-6);assert.equal(release.phase,'release');
   await page.screenshot({path:path.join(out,'release-'+width+'.png')});
-  await seek('skill',.40);
+  await seek('skill',.40+1e-6);
   await page.screenshot({path:path.join(out,'skill-'+width+'.png')});
+  await seek('skill',.79);
+  await page.screenshot({path:path.join(out,'skill-impact-'+width+'.png')});
   await page.locator('[data-tab="cats"]').click();await page.waitForFunction(()=>document.querySelector('#crew-detail .painted-sprite[data-art="spark"]')?.classList.contains('rig-ready'));
   const portraitInside=await page.evaluate(()=>{const c=document.querySelector('#crew-detail [data-art="spark"] canvas'),r=c.getBoundingClientRect(),box=c.closest('.crew-hero').getBoundingClientRect(),pixels=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let l=c.width,t=c.height,b=0,right=0;for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++)if(pixels[(y*c.width+x)*4+3]>60){l=Math.min(l,x);right=Math.max(right,x);t=Math.min(t,y);b=Math.max(b,y);}const paint={left:r.left+l/c.width*r.width,right:r.left+right/c.width*r.width,top:r.top+t/c.height*r.height,bottom:r.top+b/c.height*r.height};return paint.left>=box.left+3&&paint.right<=box.right-3&&paint.top>=box.top+3&&paint.bottom<=box.bottom-3;});
   assert.ok(portraitInside,'spark portrait clips ears, lantern, tail or paws');

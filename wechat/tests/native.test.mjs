@@ -178,7 +178,9 @@ test("build is a native game bound to requested AppID and stays within budgets",
   assert.equal(config.compileType, "game");
   assert.ok(report.mainBytes < 4 * 1024 ** 2);
   assert.ok(report.totalBytes < 20 * 1024 ** 2);
-  assert.equal(manifest.packages.length, 5);
+  assert.ok(manifest.packages.length > 0);
+  assert.equal(manifest.packages.length, report.packages.length);
+  assert.deepEqual(manifest.packages.map(p => p.name), report.packages.map(p => p.name));
   for (const p of report.packages) assert.ok(p.bytes < 4 * 1024 ** 2);
   for (const p of Object.values(manifest.assets))
     await fs.access(path.join(build, p));

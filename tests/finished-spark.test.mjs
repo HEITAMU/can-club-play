@@ -1,10 +1,10 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {createRequire} from 'node:module';
+import test from 'node:test';import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {fileURLToPath} from 'node:url';
 import {FINISHED_SPARK as ART} from '../finished-spark-data.mjs';
 import {sparkCel,sparkFace,sparkVertex,setFinishedCanvasFactory} from '../finished-spark-renderer.mjs?v=0.21.1';
 import {renderPuppetFrame} from '../rig-renderer.mjs';
 import {rigPose} from '../rig-motion.mjs';import {actionTiming} from '../motion.mjs';
 const require=createRequire(import.meta.url),{createCanvas,loadImage}=require('@napi-rs/canvas'),sharp=require('sharp');setFinishedCanvasFactory(createCanvas);
-const atlas=await loadImage(await sharp(ART.atlas).png().toBuffer());
+const atlas=await loadImage(await sharp(fileURLToPath(new URL('../'+ART.atlas,import.meta.url))).png().toBuffer());
 test('full-body art keeps one skull scale and all frame rectangles inside the atlas',()=>{
  assert.equal(ART.frames.length,9);assert.equal(ART.weaponHand,'right');
  for(const f of ART.frames){const [x,y,w,h]=f.rect;assert.ok(x>=0&&y>=0&&x+w<=ART.width&&y+h<=ART.height);assert.equal(f.head[2],265);assert.ok(f.head[3]>190&&f.head[3]<215);}
