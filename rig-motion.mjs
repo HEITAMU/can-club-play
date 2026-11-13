@@ -5,13 +5,13 @@ export const ease=n=>{const t=clamp(n);return t*t*(3-2*t);};
 const lerp=(a,b,t)=>a+(b-a)*t;
 export const RIGS={
  orange:{foot:.92,period:2.6,phase:.2,head:[.49,.29,.30,.28,.50,.46],hand:[.75,.58,.24,.34,.60,.65],tail:[.12,.65,.19,.26,.24,.72],swing:.42},
- ink:{foot:.91,period:2.2,phase:1.3,head:[.47,.27,.28,.25,.50,.45],hand:[.73,.54,.23,.34,.62,.65],tail:[.15,.63,.24,.20,.35,.56],swing:.24},
- milk:{foot:.925,period:2.8,phase:2.4,head:[.51,.28,.32,.27,.52,.47],hand:[.69,.53,.19,.27,.57,.65],tail:[.15,.56,.24,.31,.29,.72],swing:.42},
+ ink:{foot:.92,period:2.2,phase:1.3,head:[.47,.27,.28,.25,.50,.45],hand:[.73,.54,.23,.34,.62,.65],tail:[.15,.63,.24,.20,.35,.56],swing:.24},
+ milk:{foot:.92,period:2.8,phase:2.4,head:[.51,.28,.32,.27,.52,.47],hand:[.69,.53,.19,.27,.57,.65],tail:[.15,.56,.24,.31,.29,.72],swing:.42},
  spark:{foot:.92,period:2.05,phase:3.1,head:[.51,.29,.29,.27,.51,.48],hand:[.73,.59,.20,.24,.57,.66],tail:[.16,.67,.24,.28,.33,.73],swing:.5},
- mint:{foot:.90,period:2.9,phase:4.3,head:[.47,.30,.31,.25,.49,.48],hand:[.78,.45,.15,.42,.67,.67],tail:[.15,.61,.20,.23,.32,.70],swing:.38},
- bolt:{foot:.945,period:2.35,phase:5.1,head:[.46,.30,.30,.26,.48,.49],hand:[.76,.57,.22,.34,.63,.68],tail:[.10,.69,.18,.23,.25,.73],swing:.58},
+ mint:{foot:.92,period:2.9,phase:4.3,head:[.47,.30,.31,.25,.49,.48],hand:[.78,.45,.15,.42,.67,.67],tail:[.15,.61,.20,.23,.32,.70],swing:.38},
+ bolt:{foot:.92,period:2.35,phase:5.1,head:[.46,.30,.30,.26,.48,.49],hand:[.76,.57,.22,.34,.63,.68],tail:[.10,.69,.18,.23,.25,.73],swing:.58},
  pudding:{foot:.92,period:2.95,phase:1.8,head:[.45,.29,.30,.25,.48,.48],hand:[.77,.62,.24,.30,.60,.67],tail:[.13,.60,.24,.29,.29,.73],swing:.35},
- star:{foot:.93,period:2.65,phase:3.7,head:[.50,.35,.32,.28,.50,.51],hand:[.76,.56,.17,.34,.64,.70],tail:[.15,.70,.20,.23,.31,.75],swing:.44}
+ star:{foot:.92,period:2.65,phase:3.7,head:[.50,.35,.32,.28,.50,.51],hand:[.76,.56,.17,.34,.64,.70],tail:[.15,.70,.20,.23,.31,.75],swing:.44}
 };
 const feet={dust:.91,box:.86,mop:.90,battery:.84,bag:.91,drone:.87,vacuum:.82,fridge:.92,sign:.92,boxBoss:.935,clock:.89,vendor:.925};
 export function rigFor(id){return RIGS[id]||{foot:feet[id]||.92,period:2.7,phase:Object.keys(feet).indexOf(id)*.7,head:[.5,.30,.42,.34,.5,.60],hand:null,tail:null,swing:.28};}
