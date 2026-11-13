@@ -1,6 +1,41 @@
 {
-  "status": "pending_remote_verification",
-  "version": "0.2.0",
-  "localUnitTests": 29,
-  "reason": "Local Chromium process could not create its socket; remote browser checks pending."
+  "status": "passed",
+  "viewports": [
+    {
+      "width": 320,
+      "actions": 42,
+      "consoleErrors": 0,
+      "overflow": false,
+      "fullEnergyDuringCharge": true,
+      "controlCancelsPunch": true,
+      "halfSpeed": true,
+      "frameStep": true,
+      "maxCachedImages": 4,
+      "version": "0.2.0"
+    },
+    {
+      "width": 390,
+      "actions": 42,
+      "consoleErrors": 0,
+      "overflow": false,
+      "fullEnergyDuringCharge": true,
+      "controlCancelsPunch": true,
+      "halfSpeed": true,
+      "frameStep": true,
+      "maxCachedImages": 4,
+      "version": "0.2.0"
+    },
+    {
+      "width": 960,
+      "actions": 42,
+      "consoleErrors": 0,
+      "overflow": false,
+      "fullEnergyDuringCharge": true,
+      "controlCancelsPunch": true,
+      "halfSpeed": true,
+      "frameStep": true,
+      "maxCachedImages": 4,
+      "version": "0.2.0"
+    }
+  ]
 }
