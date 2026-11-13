@@ -4,7 +4,7 @@ import {mitigatedDamage,effectiveDefense} from '../combat-stats.mjs';
 import {Battle,CATS,initialState,catStats,inheritTraining,encodeSave,decodeSave} from '../core.mjs';
 import {crewProfileHTML,crewSkill} from '../crew-profile.mjs';
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
-function ready(ids=['orange','spark','mint']){const s=initialState();s.highest=120;s.party=ids;const b=new Battle(s);for(const a of [...b.heroes,...b.enemies]){a.wait=99;a.skillWait=99;a.shield=0;a.hp=a.maxHp=10000;}return {s,b};}
+function ready(ids=['orange','spark','mint']){const s=initialState();s.highest=120;s.roster.owned=CATS.map(c=>c.id);s.party=ids;const b=new Battle(s);for(const a of [...b.heroes,...b.enemies]){a.wait=99;a.skillWait=99;a.shield=0;a.hp=a.maxHp=10000;}return {s,b};}
 
 test('physical and magic damage use independent defense and penetration ratings',()=>{
  const target={armor:100,magicResist:200},source={armorPen:20,magicPen:50};

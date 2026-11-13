@@ -1,0 +1,5 @@
+import {createRequire} from 'node:module';import fs from 'node:fs';import assert from 'node:assert/strict';import {paintDistrictObjects} from '../district.mjs';
+const require=createRequire(import.meta.url),{createCanvas,loadImage}=require('@napi-rs/canvas'),base='assets/scenes/';
+const bg=await loadImage(base+'neighborhood-v0220.webp'),imgs={scene:bg};fs.mkdirSync('qa/district',{recursive:true});
+for(let i=0;i<96;i++){const t=i/24,id=t<2?'stall':'arena',age=t%2,c=createCanvas(390,586),ctx=c.getContext('2d');ctx.fillStyle='#09131e';ctx.fillRect(0,0,390,586);ctx.drawImage(bg,0,0,390,585);const lamp=ctx.getImageData(340,365,32,20).data;paintDistrictObjects(ctx,imgs,0,0,390,585,age>=.55&&age<1?id:null,age>=1&&age<1.27?{id,age:age-1}:null);assert.deepEqual(ctx.getImageData(340,365,32,20).data,lamp,'Board must never overwrite the lamp');fs.writeFileSync('qa/district/frame-'+String(i).padStart(3,'0')+'.png',c.toBuffer('image/png'));if(i===0||i===18)fs.writeFileSync('qa/district/'+(i?'pressed-fixed':'idle-fixed')+'.png',c.toBuffer('image/png'));}
+console.log('96 rendered frames: lamp remains unobstructed throughout press and release.');

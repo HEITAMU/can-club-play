@@ -4,7 +4,7 @@ import fs from 'node:fs';import path from 'node:path';import http from 'node:htt
 import {initialState,encodeSave} from '../core.mjs';
 const require=createRequire(import.meta.url),{chromium}=require('playwright'),root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),out=path.join(root,'qa/spark-browser');fs.mkdirSync(out,{recursive:true});
 const hooks=`
-import {actionTiming as reviewTiming} from './motion.mjs?v=0.21.1';
+import {actionTiming as reviewTiming} from './motion.mjs?v=0.25.0';
 globalThis.__sparkReview={
  seek(kind,elapsed){
   running=false;selectedCrew='spark';state.party=['spark','orange','ink','milk','mint'];state.highest=60;state.runCleared=19;state.stage=20;state.pending=null;state.rescueSeen=true;state.onboarded=true;queue=[];forceClose();changeTab('battle');

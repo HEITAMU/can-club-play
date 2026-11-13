@@ -1,0 +1,11 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {createRewardedService} from '../wechat/src/rewarded-ad.mjs';
+function fixture(){const handlers={},timers=new Map();let i=0;const ad={load:async()=>{},show:async()=>{},onClose:f=>handlers.close=f,onError:f=>handlers.error=f,offClose:()=>{},offError:()=>{},destroy:()=>{}};
+ const api={createRewardedVideoAd:()=>ad},svc=createRewardedService(api,'adunit-test',{setTimer:f=>{timers.set(++i,f);return i;},clearTimer:n=>timers.delete(n)});
+ return {ad,handlers,timers,svc};}
+const tick=()=>new Promise(resolve=>setImmediate(resolve));
+test('only explicit full-view SDK callback completes; concurrent request cannot share a reward',async()=>{const f=fixture(),p=f.svc.watch();await tick();assert.equal((await f.svc.watch()).status,'busy');f.handlers.close({isEnded:true});assert.equal((await p).completed,true);f.handlers.close({isEnded:true});assert.equal(f.svc.busy,false);f.svc.dispose();});
+test('early close and legacy undefined close never grant',async()=>{for(const result of [{isEnded:false},undefined]){const f=fixture(),p=f.svc.watch();await tick();f.handlers.close(result);assert.equal((await p).completed,false);f.svc.dispose();}});
+test('load/show failure, platform error and missing placement fail closed',async()=>{for(const method of ['load','show']){const f=fixture();f.ad[method]=async()=>{throw Error('network');};assert.equal((await f.svc.watch()).status,'error');assert.equal(f.svc.busy,false);f.svc.dispose();}const f=fixture(),p=f.svc.watch();await tick();f.handlers.error({errCode:1004});assert.equal((await p).completed,false);f.svc.dispose();assert.equal((await createRewardedService({},'').watch()).status,'unavailable');});
+test('timeout retires session; late callbacks cannot reward a future video',async()=>{const f=fixture(),p=f.svc.watch();await tick();[...f.timers.values()][0]();assert.equal((await p).status,'timeout');assert.equal(f.svc.available,false);f.handlers.close({isEnded:true});assert.equal((await f.svc.watch()).completed,false);f.svc.dispose();});
+test('dispose during load cancels and never opens video',async()=>{const f=fixture();let resolve,shown=0;f.ad.load=()=>new Promise(r=>resolve=r);f.ad.show=async()=>shown++;const p=f.svc.watch();f.svc.dispose();resolve();await tick();assert.equal((await p).completed,false);assert.equal(shown,0);});

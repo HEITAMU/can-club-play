@@ -8,6 +8,7 @@ const developed = () => ({
   ...G.initialState(),
   onboarded: true,
   highest: 60,
+  roster:{...G.initialState().roster,owned:G.CATS.map(c=>c.id)},
   runCleared: 60,
   stage: 61,
   gold: 999999,
@@ -143,14 +144,14 @@ test("load failure exposes retry and does not initialize a partial game", async 
   assert.ok(h.app);
   h.stop();
 });
-test("pending loot after reload is playable after choice; all modals render at small height", async () => {
+test("legacy pending loot is cleared on reload; all modals render at small height", async () => {
   const state = developed();
   state.stage = 6;
   state.runCleared = 5;
   state.pending = { stage: 5, options: ["claw", "coat", "bell"] };
   const h = await harness({ state, width: 320, height: 568 }),
     a = h.app;
-  h.tap("loot-claw");
+  assert.equal(a.state.pending,null);
   a.pause();
   h.tick(0.1);
   assert.ok(a.battle && a.battle.time > 0);
@@ -184,4 +185,29 @@ test("build is a native game bound to requested AppID and stays within budgets",
   for (const p of report.packages) assert.ok(p.bytes < 4 * 1024 ** 2);
   for (const p of Object.values(manifest.assets))
     await fs.access(path.join(build, p));
+});
+test('commission journal opens, daily claim works and weekly retry keeps its mode',async()=>{
+ const h=await harness({state:developed()}),a=h.app;a.change('map');a.mapPlace='arena';h.tap('open-journal');assert.equal(a.mapPlace,'journal');a.state.campaign.progress.patrol=5;a.render();const gold=a.state.gold;h.tap('daily-patrol');assert.ok(a.state.gold>gold);assert.equal(a.buttons.some(b=>b.id==='daily-patrol'),false);
+ a.mapPlace='arena';a.scroll=0;a.start(true,{weeklyTier:2});assert.equal(a.battle.weekly.tier,2);a.battle.result='lose';a.pause();assert.equal(a.battle.weekly.tier,2);assert.equal(a.state.arenaCleared,0);
+});
+
+test('backpack separates equipment/materials and supports five-slot equip-lock flow',async()=>{
+ const h=await harness({state:developed()}),a=h.app;a.change('relics');a.render();assert.equal(a.buttons.filter(b=>b.id.startsWith('gear-slot-')).length,5);h.tap('bag-tab-materials');assert.equal(a.bagTab,'materials');assert.equal(a.buttons.some(b=>b.id.startsWith('gear-slot-')),false);h.tap('bag-tab-equipment');h.tap('gear-slot-claw');const id=a.bagDetail;assert.ok(id);h.tap('gear-equip');assert.equal(a.state.inventory.equipped.orange.claw,undefined);h.tap('gear-equip');assert.equal(a.state.inventory.equipped.orange.claw,id);a.scroll=140;a.render();h.tap('gear-lock');assert.equal(a.state.inventory.items.find(e=>e.id===id).locked,true);assert.equal(a.buttons.some(b=>b.id==='gear-dismantle'),false);
+});
+function tapScrolled(h,id){const a=h.app;a.render();for(let y=0;y<=a.scrollMax+180;y+=180){a.scroll=Math.min(y,a.scrollMax);a.render();if(a.buttons.some(b=>b.id===id)){h.tap(id);return;}}throw Error('No reachable enabled button: '+id);}
+test('native companion contracts, star growth and breakthroughs save exact costs',async()=>{
+ const state=G.initialState();state.onboarded=true;state.highest=600;state.runCleared=3;state.stage=4;state.roster.shards.milk=20;state.roster.shards.orange=20;state.growth={notes:2000,seals:30};state.badges=100;state.levels.orange=40;
+ const h=await harness({state}),a=h.app;a.openStreet('recruit','milk');tapScrolled(h,'street-recruit');assert.ok(a.state.roster.owned.includes('milk'));assert.equal(a.state.roster.shards.milk,0);assert.equal(a.state.party.at(-1),'milk');
+ a.change('cats');a.selected='orange';tapScrolled(h,'ascend-orange');assert.equal(a.state.roster.stars.orange,1);assert.equal(a.state.roster.shards.orange,0);assert.equal(a.state.growth.notes,1970);
+ tapScrolled(h,'breakthrough-orange');assert.equal(a.state.breakthroughs.orange,1);assert.equal(a.state.badges,92);assert.equal(a.state.growth.notes,1920);
+ const restored=G.decodeSave(h.storage.get('can-club-wechat-v1'));assert.deepEqual(restored.roster,a.state.roster);assert.deepEqual(restored.growth,a.state.growth);h.stop();
+});
+test('native material replay preserves selected job and main campaign progress',async()=>{
+ const state=developed();for(const id of state.party)state.levels[id]=40;
+ const h=await harness({state}),a=h.app,before=[a.state.stage,a.state.highest];a.openStreet('materials','escort');tapScrolled(h,'street-fight');
+ for(let i=0;i<400&&!a.battle.result;i++){a.update(.25);if(a.battle.canCd===0)a.can();}
+ assert.equal(a.battle.result,'win');assert.equal(a.state.activities.cleared.escort,1);const badges=a.state.badges;
+ a.pause();assert.equal(a.battle.activity.kind,'escort');assert.equal(a.battle.activity.tier,1);
+ for(let i=0;i<400&&!a.battle.result;i++){a.update(.25);if(a.battle.canCd===0)a.can();}
+ assert.equal(a.battle.result,'win');assert.equal(a.state.badges-badges,2);assert.deepEqual([a.state.stage,a.state.highest],before);h.stop();
 });

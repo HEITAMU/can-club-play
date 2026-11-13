@@ -1,3 +1,10 @@
+import {STREET_GROUPS,streetChoices,streetSelection} from '../../street-ui.mjs';
+import {activityReward,rewardText} from '../../activities.mjs';
+import {GEAR_SLOTS,GEAR_SETS,RUNES,QUALITIES,ATTRS,BAG_CAP,gearName,gearOwner,gearValues,gearBonuses,attrText,materialRows,equipGear,unequipGear,enhanceQuote,enhanceGear,reforgeGear,dismantleGear,craftQuote,craftGear} from '../../equipment.mjs';
+import {DAILY_TASKS,JOURNEY,refreshCampaign,dailyReward,claimDaily,claimDailyChest,claimJourney,weeklyInfo} from '../../campaign.mjs';
+import {talentCards} from '../../talents.mjs';
+import {businessBoostQuote,grantBusinessBoost} from '../../rewarded-economy.mjs';
+import {DISTRICT_PLACES,paintDistrictAmbient,paintDistrictObjects} from '../../district.mjs';
 import * as G from "../../core.mjs";
 import { crewSkill } from "../../crew-profile.mjs";
 import { formationPositions, BattleCues } from "../../battle-cues.mjs";
@@ -84,24 +91,26 @@ export class NativeGame {
     this.notice = { text: message, until: this.time + 2.8 };
   }
   change(tab) {
+    this.districtRelease=null;
     this.tab = tab;
+    if(tab==='map')this.mapPlace=null;
     this.scroll = 0;
     this.pointer = null;
   }
-  start(run = true, { stage = this.state.stage, farm = false } = {}) {
+  start(run = true, { stage = this.state.stage, farm = false, arenaTier = 0, weeklyTier = 0, activity = null } = {}) {
     if (this.state.pending) {
       this.battle = new G.Battle(this.state, { stage });
       this.running = false;
       this.modal = { type: "loot" };
       return;
     }
-    if (this.state.runCleared === 120 && !farm) {
+    if (this.state.runCleared === G.MAX_STAGE && !farm && !arenaTier && !weeklyTier && !activity) {
       this.battle = this.battle || new G.Battle(this.state);
       this.running = false;
       this.modal = { type: "victory" };
       return;
     }
-    this.battle = new G.Battle(this.state, { stage, farm });
+    this.battle = new G.Battle(this.state, { stage, farm, arenaTier, weeklyTier, activity });
     this.running = run;
     this.farming = farm;
     this.endTime = 0;
@@ -123,6 +132,9 @@ export class NativeGame {
       this.start(true, {
         stage: this.farming ? this.battle.stage : this.state.stage,
         farm: this.farming,
+        arenaTier: this.battle?.arenaTier||0,
+        weeklyTier: this.battle?.weekly?.tier||0,
+        activity: this.battle?.activity?.request||null,
       });
       return;
     }
@@ -130,6 +142,7 @@ export class NativeGame {
   }
   update(dt) {
     this.time += dt;
+    if(this.districtRelease&&this.time-this.districtRelease.at>=.27){if(this.tab==='map'&&!this.mapPlace){this.mapPlace=this.districtRelease.id;this.scroll=0;}this.districtRelease=null;}
     if (this.pointer?.dragging) {
       const y = this.pointer.y,
         edge = 34,
@@ -141,12 +154,15 @@ export class NativeGame {
     const b = this.battle;
     if (b.result) {
       this.endTime += dt;
-      if (b.result === "win") {
+      if (b.result === "win" && b.mode==="patrol") {
         this.nextDelay -= dt;
         if (this.nextDelay <= 0)
           this.start(true, {
             stage: this.farming ? b.stage : this.state.stage,
             farm: this.farming,
+        arenaTier: this.battle?.arenaTier||0,
+        weeklyTier: this.battle?.weekly?.tier||0,
+        activity: this.battle?.activity?.request||null,
           });
       }
       return;
@@ -162,6 +178,10 @@ export class NativeGame {
       if (!result) return;
       this.save();
       this.nextDelay = 2.2;
+      b.reward=result;
+      if(result.gearLoot?.item)this.toast(gearName(result.gearLoot.item)+" 已放入背包");else if(result.gearLoot?.scrap)this.toast("背包已满，掉落折算为零件 +"+result.gearLoot.scrap);
+      if(result.activity){this.running=false;this.toast(result.win?rewardText(result):"委托失败，没有损失。可调整搭配再来。");return;}
+      if(result.arena){this.running=false;this.toast(result.win?(result.weekly?"徽章 +"+result.badges+" · 物资 +"+result.supplies+" · 鱼币 +"+result.gold:"擂台获胜，突破徽章 +"+result.badges):"挑战失败，没有损失");return;}
       if (result.win) {
         this.env.sound?.("reward");
         if (result.unlocked.length)
@@ -203,11 +223,11 @@ export class NativeGame {
     }
   }
   train(id, count = 10) {
-    const quote = G.upgradeQuote(this.state.levels[id], count);
+    const quote = G.upgradeQuote(this.state.levels[id], count, G.levelCap(this.state,id));
     if (
       !quote.levels ||
       this.state.gold < quote.cost ||
-      this.state.highest < cat(id).unlock
+      !G.ownsCompanion(this.state,id)
     )
       return;
     const n = G.upgrade(this.state, id, count);
@@ -226,7 +246,7 @@ export class NativeGame {
     this.save();
     const run = this.running,
       stage = this.battle?.stage;
-    if (!this.battle?.result) this.start(run, { stage, farm: this.farming });
+    if (!this.battle?.result) this.start(run, { stage, farm: this.farming,arenaTier:this.battle?.arenaTier||0,weeklyTier:this.battle?.weekly?.tier||0,activity:this.battle?.activity?.request||null });
     this.toast(
       inheritance
         ? cat(id).name + "继承 Lv." + inheritance.fromLevel
@@ -234,7 +254,7 @@ export class NativeGame {
     );
   }
   close() {
-    if (this.modal?.type === "intro" || this.modal?.type === "loot") return;
+    if (this.modal?.type === "intro") return;
     this.modal = this.queue.shift() || null;
   }
   chooseRelic(id) {
@@ -473,7 +493,7 @@ export class NativeGame {
     box(c, 124, y + 42, 84, 25, "#726889", "#aaa0c4", 7);
     text(
       c,
-      "鱼骨 " + fmt(this.state.bones),
+      "徽章 " + fmt(this.state.badges),
       166,
       y + 55,
       11,
@@ -548,16 +568,16 @@ export class NativeGame {
       ah = Math.max(180, this.navY - ay - 101),
       w = 390,
       t = b.time + (b.result ? this.endTime : 0);
-    text(c, ch.name, 14, this.top + 16, 21, C.ink, 800);
+    text(c, b.activity?b.activity.name:b.weekly?"本周 · "+b.weekly.name:b.mode==='arena'?"擂台 · "+b.arenaRule.name:ch.name, 14, this.top + 16, 21, C.ink, 800);
     this.button(
       "stage",
-      "第 " + stage + " 关  ›",
+      b.activity?"难度 "+b.activity.tier+" ›":b.mode==='arena'?"第 "+b.arenaTier+" 擂 ›":"第 " + stage + " 关  ›",
       284,
       this.top + 2,
       92,
       29,
       () => {
-        this.modal = { type: "chapter", index: Math.floor((stage - 1) / 20) };
+        if(b.activity){const q=b.activity.request;this.openStreet(['hunt','hard','recruit'].includes(q.kind)?q.kind:'materials',q.id||q.kind);this.streetView.tier=q.tier;}else if(b.mode==='arena'){this.change('map');this.mapPlace='arena';}else this.modal = { type: "chapter", index: Math.floor((stage - 1) / 20) };
       },
     );
     for (let i = 0; i < 20; i++)
@@ -592,13 +612,13 @@ export class NativeGame {
     c.rect(0, ay, w, ah);
     c.clip();
     c.translate(0, ay);
-    this.art.scene(c, Math.floor((stage - 1) / 20), 0, 0, w, ah);
+    this.art.scene(c, b.activity?.scene??Math.floor((stage - 1) / 20)%6, 0, 0, w, ah);
     c.fillStyle = "#203a4530";
     c.fillRect(0, 0, w, ah);
     box(c, 12, 10, 100, 23, "#29464bbd", null, 6);
     text(
       c,
-      this.farming ? "旧关巡逻" : "街区巡逻",
+      b.activity?"委托 · 难度 "+b.activity.tier:b.mode==='arena'?"突破徽章挑战":this.farming ? "旧关巡逻" : "街区巡逻",
       62,
       22,
       10,
@@ -728,7 +748,7 @@ export class NativeGame {
       box(c, 112, ah * 0.23, 166, 40, "#294850dc", C.gold, 10);
       text(
         c,
-        b.result === "win" ? "巡逻成功" : "先整备，再出发",
+        b.result === "win" ? (b.activity?"委托完成":"巡逻成功") : "先整备，再出发",
         195,
         ah * 0.23 + 20,
         18,
@@ -745,7 +765,7 @@ export class NativeGame {
       b.result === "lose"
         ? "再试一次"
         : b.result === "win"
-          ? "下一关"
+          ? (b.activity?"再战委托":b.mode==='arena'?"再战本擂":"下一关")
           : this.running
             ? "暂停"
             : "出发",
@@ -788,13 +808,13 @@ export class NativeGame {
     });
     this.button(
       "farm",
-      this.farming ? "返回闯关" : "去练练",
+      (b.activity||b.mode==='arena')?"返回巡逻":this.farming ? "返回闯关" : "去练练",
       12,
       y + 63,
       87,
       25,
       () => {
-        if (this.farming) this.start(true);
+        if (this.farming||b.mode==='arena'||b.activity) this.start(true);
         else
           this.start(true, {
             farm: true,
@@ -815,8 +835,8 @@ export class NativeGame {
     );
   }
   quick(id, x, y, w) {
-    const q = G.upgradeQuote(this.state.levels[id]),
-      open = this.state.highest >= cat(id).unlock;
+    const q = G.upgradeQuote(this.state.levels[id],10,G.levelCap(this.state,id)),
+      open = G.ownsCompanion(this.state,id);
     this.button(
       "train-" + id,
       open
@@ -839,6 +859,7 @@ export class NativeGame {
   }
   drawCrew(y) {
     const c = this.ctx;
+    this.button('companion-quests','伙伴委托 · 结识与升星',14,y,362,32,()=>this.openStreet('recruit'),{size:12});y+=44;
     this.button(
       "profile",
       "伙伴档案",
@@ -880,7 +901,7 @@ export class NativeGame {
     };
     G.CATS.forEach((a, i) => {
       const x = 14 + i * 72 - this.rail,
-        open = this.state.highest >= a.unlock;
+        open = G.ownsCompanion(this.state,a.id);
       this.button(
         "pick-" + a.id,
         "",
@@ -903,7 +924,7 @@ export class NativeGame {
       text(c, a.name, x + 32, y + 69, 11, C.ink, 800, "center");
       text(
         c,
-        open ? "Lv." + this.state.levels[a.id] : "第" + a.unlock + "关",
+        open ? "Lv." + this.state.levels[a.id] : "待结识",
         x + 32,
         y + 83,
         9,
@@ -918,7 +939,7 @@ export class NativeGame {
     y += 139;
     const a = cat(this.selected),
       st = G.catStats(this.state, a.id),
-      open = this.state.highest >= a.unlock,
+      open = G.ownsCompanion(this.state,a.id),
       level = this.state.levels[a.id],
       skill = crewSkill(a.id, level, st);
     box(c, 14, y, 362, 183, palettes[a.id], "#c8c6ad", 16);
@@ -931,7 +952,7 @@ export class NativeGame {
         ? this.state.party.includes(a.id)
           ? "出战中"
           : "未出战"
-        : "第 " + a.unlock + " 关加入",
+        : "伙伴委托结识",
       34,
       y + 146,
       11,
@@ -993,10 +1014,13 @@ export class NativeGame {
     );
     rich(c, skill.passive, 30, y + 46, 330);
     y += passiveH + 14;
+    for(const t of talentCards(a.id,level)){const th=rich(c,t.desc,30,0,330,{draw:false,size:12,line:19})+62;box(c,14,y,362,th,C.panel,C.rim,12);text(c,t.name+' · '+(t.active?'已解锁':'Lv.'+t.level+' 解锁'),30,y+25,15,t.active?C.gold:C.muted,700);rich(c,t.desc,30,y+49,330,{size:12,line:19});y+=th+14;}
+
+    if(open)y=this.drawGrowth(y,a.id);
     if (open) {
       this.button(
         "single-upgrade",
-        level === 100 ? "已满级" : "升1级 · " + fmt(G.upgradeCost(level)),
+        level >= G.levelCap(this.state,a.id) ? "已满级" : "升1级 · " + fmt(G.upgradeCost(level)),
         14,
         y,
         224,
@@ -1005,7 +1029,7 @@ export class NativeGame {
         {
           fill: "#b59662",
           color: C.dark,
-          disabled: level === 100 || this.state.gold < G.upgradeCost(level),
+          disabled: level >= G.levelCap(this.state,a.id) || this.state.gold < G.upgradeCost(level),
         },
       );
       this.button(
@@ -1026,7 +1050,7 @@ export class NativeGame {
     } else {
       text(
         c,
-        "通过第 " + a.unlock + " 关后加入",
+        "收集 20 份信物即可结识",
         195,
         y + 15,
         12,
@@ -1035,6 +1059,7 @@ export class NativeGame {
         "center",
       );
       y += 40;
+      this.button('companion-contract','伙伴委托 · '+(this.state.roster.shards[a.id]||0)+'/20 信物',14,y,362,36,()=>this.openStreet('recruit',a.id),{fill:C.gold,color:C.dark});y+=50;
     }
     return y;
   }
@@ -1109,7 +1134,7 @@ export class NativeGame {
     G.CATS.forEach((a, i) => {
       const x = 14 + (i % 4) * 93,
         sy = y + Math.floor(i / 4) * 141,
-        open = this.state.highest >= a.unlock;
+        open = G.ownsCompanion(this.state,a.id);
       this.button(
         "bench-" + a.id,
         "",
@@ -1130,7 +1155,7 @@ export class NativeGame {
       text(c, a.name, x + 41, sy + 82, 12, C.ink, 750, "center");
       text(
         c,
-        open ? "Lv." + this.state.levels[a.id] : "第" + a.unlock + "关",
+        open ? "Lv." + this.state.levels[a.id] : "待结识",
         x + 41,
         sy + 96,
         10,
@@ -1143,144 +1168,137 @@ export class NativeGame {
     return y + 282;
   }
   drawRelics(y) {
-    const c = this.ctx;
-    text(c, "远征背包", 16, y + 12, 24, C.ink, 850);
-    text(c, "每件最多叠加 5 层", 16, y + 40, 11, C.muted);
-    y += 62;
-    G.RELICS.forEach((r, i) => {
-      const x = 14 + (i % 2) * 187,
-        sy = y + Math.floor(i / 2) * 137,
-        level = this.state.relics[r.id] || 0;
-      box(c, x, sy, 175, 125, level ? "#5a7169" : C.panel, C.rim, 12);
-      c.globalAlpha = level ? 1 : 0.5;
-      this.art.item(c, i, x + 35, sy + 34, 49);
-      c.globalAlpha = 1;
-      text(c, r.name, x + 66, sy + 24, 12, C.ink, 800);
-      text(
-        c,
-        level ? "× " + level : "未获得",
-        x + 66,
-        sy + 46,
-        11,
-        level ? C.gold : C.muted,
-      );
-      rich(c, r.desc, x + 14, sy + 78, 147, { size: 11, line: 19 });
-    });
-    return y + 6 * 137;
+    const c=this.ctx,s=this.state;
+    this.bagTab??='equipment';if(!G.unlocked(s).some(c=>c.id===this.bagCat))this.bagCat=G.unlocked(s)[0].id;this.bagPage??=0;this.bagSlot??='';this.bagSet??='';
+    if(this.bagDetail)return this.drawGearDetail(y);
+    if(this.bagCraft)return this.drawGearCraft(y);
+    text(c,'远征背包',16,y+20,24,C.ink,850);text(c,s.inventory.items.length+' / '+BAG_CAP,374,y+20,12,C.muted,500,'right');y+=44;
+    for(const [i,id]of ['equipment','materials'].entries())this.button('bag-tab-'+id,['装备','材料'][i],14+i*187,y,175,36,()=>{this.bagTab=id;this.scroll=0;},{fill:this.bagTab===id?C.gold:C.panel,color:this.bagTab===id?C.dark:C.ink});y+=53;
+    if(this.bagTab==='materials'){for(const m of materialRows(s)){box(c,14,y,362,126,C.panel,C.rim,12);this.art.item(c,m.icon,46,y+31,34);text(c,m.name,72,y+30,17,C.ink,800);text(c,fmt(m.count),360,y+30,18,C.gold,800,'right');rich(c,'用途：'+m.use+'\n来源：'+m.source,30,y+66,330,{size:12,line:21});y+=140;}return y;}
+    text(c,'为谁配装',16,y+15,13,C.muted);y+=29;
+    G.CATS.forEach((a,i)=>{this.button('bag-cat-'+a.id,a.name,14+i%4*93,y+Math.floor(i/4)*37,83,29,()=>{this.bagCat=a.id;},{disabled:!G.ownsCompanion(s,a.id),fill:this.bagCat===a.id?C.gold:C.panel,color:this.bagCat===a.id?C.dark:C.ink,size:11});});y+=85;
+    for(const [i,slot]of GEAR_SLOTS.entries()){
+      const e=s.inventory.items.find(e=>e.id===s.inventory.equipped[this.bagCat]?.[slot.id]),isRune=slot.id==='rune',x=isRune?14:14+i%2*187,sy=y+(isRune?2:Math.floor(i/2))*88,w=isRune?362:175;
+      this.button('gear-slot-'+slot.id,'',x,sy,w,76,()=>{if(e){this.bagDetail=e.id;this.scroll=0;}else{this.bagSlot=slot.id;this.bagPage=0;this.scroll=0;}},{fill:isRune?'#3b5066':C.panel,stroke:e?QUALITIES[e.quality].color:C.rim});
+      this.art.item(c,slot.icon,x+27,sy+36,34);text(c,slot.name,x+52,sy+22,11,C.muted);text(c,e?gearName(e)+(isRune?'':' +'+e.enhance):'未穿戴',x+52,sy+47,12,C.ink,700);
+    }y+=272;
+    const bonus=gearBonuses(s,this.bagCat);for(const set of GEAR_SETS.filter(x=>bonus.counts[x.id])){const count=bonus.counts[set.id],desc='2 件 '+(count>=2?'已生效':'未激活')+'：'+set.two+'\n4 件 '+(count>=4?'已生效':'未激活')+'：'+set.four;const height=rich(c,desc,30,0,330,{draw:false,size:11,line:18})+49;box(c,14,y,362,height,'#294750',null,10);text(c,set.name+' · '+count+' 件',30,y+23,14,C.gold,750);rich(c,desc,30,y+46,330,{size:11,line:18});y+=height+12;}
+    this.button('bag-filter-slot',this.bagSlot?GEAR_SLOTS.find(x=>x.id===this.bagSlot).name:'全部部位',14,y,112,32,()=>{const ids=['',...GEAR_SLOTS.map(x=>x.id)];this.bagSlot=ids[(ids.indexOf(this.bagSlot)+1)%ids.length];this.bagPage=0;},{size:11});
+    this.button('bag-filter-set',this.bagSet?GEAR_SETS.find(x=>x.id===this.bagSet).name:'全部套装',136,y,112,32,()=>{const ids=['',...GEAR_SETS.map(x=>x.id)];this.bagSet=ids[(ids.indexOf(this.bagSet)+1)%ids.length];this.bagPage=0;},{size:11});
+    this.button('bag-craft','拼装装备',258,y,118,32,()=>{this.bagCraft={set:'hunt',slot:'claw'};this.scroll=0;},{size:11});y+=50;
+    const rows=s.inventory.items.filter(e=>(!this.bagSlot||e.slot===this.bagSlot)&&(!this.bagSet||e.set===this.bagSet)).sort((a,b)=>b.quality-a.quality||b.tier-a.tier||+b.id.slice(1)-+a.id.slice(1));
+    this.bagPage=Math.min(this.bagPage,Math.max(0,Math.ceil(rows.length/6)-1));
+    for(const e of rows.slice(this.bagPage*6,this.bagPage*6+6)){const owner=gearOwner(s,e.id),rune=e.slot==='rune',desc=rune?RUNES.find(x=>x.id===e.rune).desc:Object.entries(gearValues(e)).map(([k,v])=>attrText(k,v)).join(' / ');const ht=rich(c,desc,30,0,330,{draw:false,size:11,line:18})+85;
+      this.button('gear-item-'+e.id,'',14,y,362,ht,()=>{this.bagDetail=e.id;this.scroll=0;},{fill:C.panel,stroke:QUALITIES[e.quality].color});this.art.item(c,GEAR_SLOTS.find(x=>x.id===e.slot).icon,43,y+33,36);text(c,gearName(e)+(rune?'':' +'+e.enhance),72,y+25,15,C.ink,750);text(c,(rune?'妙招牌':GEAR_SLOTS.find(x=>x.id===e.slot).name+' · '+QUALITIES[e.quality].name+' · '+e.tier+' 阶')+' · '+(owner?cat(owner).name:'未穿戴')+(e.locked?' · 已锁定':''),72,y+48,11,C.muted);rich(c,desc,30,y+78,330,{size:11,line:18});y+=ht+12;}
+    if(!rows.length){rich(c,'没有符合条件的装备。首领战、擂台可获得装备。',20,y+20,350,{size:13});y+=72;}
+    this.button('bag-prev','上一页',14,y,110,33,()=>{this.bagPage--;},{disabled:this.bagPage===0});text(c,(this.bagPage+1)+' / '+Math.max(1,Math.ceil(rows.length/6)),195,y+17,12,C.muted,600,'center');this.button('bag-next','下一页',266,y,110,33,()=>{this.bagPage++;},{disabled:(this.bagPage+1)*6>=rows.length});y+=53;
+    rich(c,'4 个常规部位可组成 4 件套或 2＋2。妙招牌独立生效，只能装一张。换装下场战斗生效。',20,y,350,{size:11,line:18});return y+70;
+  }
+  bagChanged(message){this.save();if(message)this.toast(message);}
+  drawGearDetail(y){
+    const c=this.ctx,s=this.state,e=s.inventory.items.find(x=>x.id===this.bagDetail);if(!e){this.bagDetail=null;return this.drawRelics(y);}
+    const rune=e.slot==='rune',owner=gearOwner(s,e.id),set=GEAR_SETS.find(x=>x.id===e.set),q=enhanceQuote(e);
+    this.button('bag-detail-back','‹ 返回装备',14,y,124,32,()=>{this.bagDetail=null;this.scroll=0;});y+=54;
+    text(c,gearName(e)+(rune?'':' +'+e.enhance),16,y+19,23,C.gold,850);y+=39;
+    text(c,(rune?'妙招牌 · 效果固定':GEAR_SLOTS.find(x=>x.id===e.slot).name+' · '+QUALITIES[e.quality].name+' · '+e.tier+' 阶')+' · '+(owner?cat(owner).name:'未穿戴'),16,y+13,12,C.muted);y+=34;
+    for(const [k,v]of Object.entries(gearValues(e))){text(c,attrText(k,v),22,y+16,16,C.ink,700);y+=29;}
+    const description=rune?RUNES.find(x=>x.id===e.rune).desc+'\n独立位置，不参与套装，不强化或洗炼。':set.name+'套装\n2 件：'+set.two+'\n4 件：'+set.four;
+    y+=rich(c,description,20,y+10,350,{size:13,line:21})+27;
+    const current=s.inventory.items.find(x=>x.id===s.inventory.equipped[this.bagCat]?.[e.slot]);if(current&&current.id!==e.id){text(c,'当前穿戴：'+gearName(current),20,y+16,13,C.muted);y+=35;y+=rich(c,Object.entries(gearValues(current)).map(([k,v])=>attrText(k,v)).join(' / '),20,y,350,{size:11,line:18})+22;}
+    this.button('gear-equip',owner===this.bagCat?'卸下':'穿戴给 '+cat(this.bagCat).name+(owner?'（从'+cat(owner).name+'转移）':''),14,y,362,38,()=>{if(owner===this.bagCat)unequipGear(s,this.bagCat,e.slot);else equipGear(s,e.id,this.bagCat,G.unlocked(s).map(c=>c.id));this.bagChanged('装备已更新，下场战斗生效');},{fill:C.gold,color:C.dark,size:13});y+=52;
+    if(!rune){this.button('gear-enhance',q.maxed?'强化已满 +12':'强化 · '+q.gold+' 鱼币 / '+q.scrap+' 零件',14,y,362,36,()=>{if(enhanceGear(s,e.id))this.bagChanged('强化成功');},{disabled:q.maxed||s.gold<q.gold||s.inventory.materials.scrap<q.scrap,size:12});y+=48;
+      for(const [i,a]of e.subs.entries()){this.button('gear-reforge-'+i,'洗炼副属性 '+(i+1)+' · '+ATTRS[a.key].name+' · 2 打磨砂',14,y,362,34,()=>{if(reforgeGear(s,e.id,i))this.bagChanged('副属性已更新');},{disabled:s.inventory.materials.essence<2,size:11});y+=46;}}
+    this.button('gear-lock',e.locked?'解锁装备':'锁定装备',14,y,362,34,()=>{e.locked=!e.locked;this.bagChanged();});y+=48;
+    this.button('gear-dismantle','分解装备',14,y,362,34,async()=>{if(!await this.env.confirm('分解 '+gearName(e),'装备会消失，返还修补零件和部分打磨砂。'))return;const r=dismantleGear(s,e.id);if(r){this.bagDetail=null;this.scroll=0;this.bagChanged('零件 +'+r.scrap+' · 打磨砂 +'+r.essence);}},{disabled:!!owner||e.locked});return y+55;
+  }
+  drawGearCraft(y){const c=this.ctx,s=this.state,q=craftQuote(s),v=this.bagCraft;
+    this.button('bag-craft-back','‹ 返回装备',14,y,124,32,()=>{this.bagCraft=null;this.scroll=0;});y+=58;text(c,'拼装装备',16,y+20,24,C.ink,850);y+=44;
+    y+=rich(c,'选择套装和部位，拼出 '+q.tier+' 阶稀有装备。副属性随机。妙招牌从首领和擂台掉落。',20,y,350,{size:13,line:21})+25;
+    for(const [i,set]of GEAR_SETS.entries())this.button('craft-set-'+set.id,set.name,14+i%3*124,y+Math.floor(i/3)*44,114,34,()=>v.set=set.id,{fill:v.set===set.id?C.gold:C.panel,color:v.set===set.id?C.dark:C.ink});y+=102;
+    for(const [i,slot]of GEAR_SLOTS.filter(x=>x.id!=='rune').entries())this.button('craft-slot-'+slot.id,slot.name,14+i*93,y,83,34,()=>v.slot=slot.id,{fill:v.slot===slot.id?C.gold:C.panel,color:v.slot===slot.id?C.dark:C.ink});y+=65;
+    text(c,q.gold+' 鱼币 · '+q.scrap+' 零件 · '+q.essence+' 打磨砂',20,y+20,13,C.ink);y+=48;
+    this.button('craft-confirm','拼装',14,y,362,40,()=>{const e=craftGear(s,v.set,v.slot);if(e){this.bagCraft=null;this.bagDetail=e.id;this.scroll=0;this.bagChanged('装备已放入背包');}},{disabled:s.gold<q.gold||s.inventory.materials.scrap<q.scrap||s.inventory.materials.essence<q.essence||s.inventory.items.length>=BAG_CAP,fill:C.gold,color:C.dark});return y+65;
+  }
+  openStreet(group='recruit',id){this.modal=null;this.change('map');this.mapPlace='street';this.streetView={group,id:id||(group==='recruit'?'milk':''),tier:1};}
+  drawStreet(y){const c=this.ctx,s=this.state,v=this.streetView??={group:'recruit',id:'milk',tier:1},q=streetSelection(s,v),choices=streetChoices(v.group);text(c,STREET_GROUPS.find(g=>g.id===v.group).name,16,y+22,24,C.gold,850);y+=46;
+    for(const [i,g]of STREET_GROUPS.entries())this.button('street-group-'+g.id,g.name,14+i%2*187,y+Math.floor(i/2)*40,175,32,()=>this.openStreet(g.id),{fill:g.id===v.group?C.gold:C.panel,color:g.id===v.group?C.dark:C.ink,size:12});y+=91;
+    for(const [i,item]of choices.entries())this.button('street-choice-'+item.id,item.name,14+i%3*124,y+Math.floor(i/3)*38,114,30,()=>{v.id=item.id;v.tier=1;this.scroll=0;},{fill:item.id===v.id?'#7d8f78':C.panel,size:11});y+=Math.ceil(choices.length/3)*38+18;
+    text(c,v.group==='recruit'?cat(v.id).name+'的委托':q.name,16,y+20,19,C.ink,750);y+=41;y+=rich(c,q.rule,20,y,350,{size:12,line:20})+20;
+    this.button('street-prev','上一档',14,y,98,32,()=>{v.tier--;},{disabled:q.tier<=1,size:11});text(c,(q.kind==='hunt'?'危险等级 ':'难度 ')+q.tier,195,y+17,17,C.gold,800,'center');this.button('street-next','下一档',278,y,98,32,()=>{v.tier++;},{disabled:q.tier>=q.max||q.tier>q.cleared,size:11});y+=52;
+    text(c,'已完成 '+q.cleared+' 档 · 敌方培养参照 Lv.'+q.level,20,y+15,12,C.muted);y+=37;y+=rich(c,(q.first?'首通奖励：':'重复奖励：')+rewardText(activityReward(q))+(['salvage','hard'].includes(q.kind)?' · 装备掉落':''),20,y,350,{size:12,line:20})+22;
+    this.button('street-fight',q.open?'开始挑战':s.highest<q.required?'普通关第 '+q.required+' 关开启':'先完成前一档',14,y,362,38,()=>{if(!q.open)return;this.change('battle');this.start(true,{activity:q.request});this.toast(q.rule);},{disabled:!q.open,fill:C.gold,color:C.dark});y+=58;
+    if(q.kind==='recruit'){const owned=G.ownsCompanion(s,v.id),have=s.roster.shards[v.id]||0;text(c,cat(v.id).name+'信物 '+have+' / 20',20,y+18,16,C.ink,750);y+=38;this.button('street-recruit',owned?'已结识 · 信物可用于升星':'结识 '+cat(v.id).name,14,y,362,36,()=>{if(G.recruitCompanion(s,v.id)){this.save();this.toast(cat(v.id).name+'加入了远征队');}},{disabled:owned||have<20});y+=55;}
+    y+=rich(c,'无体力限制，失败不损失材料。限时 90 秒，已过难度可反复刷。追猎的三条路线分别推进；硬仗先看机制再搭配。',20,y,350,{size:11,line:18});return y+25;
+  }
+  drawGrowth(y,id){const c=this.ctx,s=this.state,b=G.breakthroughQuote(s,id),a=G.starQuote(s,id);text(c,'伙伴突破 '+b.rank+' / 3',20,y+22,18,C.gold,800);y+=42;y+=rich(c,'上限 '+b.cap+'。突破增加上限 20、基础攻击与生命 8%。训练和突破可继承。',20,y,350,{size:12,line:19})+18;
+    y+=rich(c,'徽章 '+s.badges+'/'+b.cost+' · 训练笔记 '+s.growth.notes+'/'+b.notes+' · 历练印记 '+s.growth.seals+'/'+b.seals,20,y,350,{size:12,line:19})+20;
+    this.button('breakthrough-'+id,b.maxed?'突破已完成':s.levels[id]<b.requiredLevel?'Lv.'+b.requiredLevel+' 可突破':'突破',14,y,362,35,()=>{if(G.breakthrough(s,id)){this.battle?.syncStats(s,{preserveHealthRatio:true});this.save();this.toast('突破成功');}},{disabled:b.maxed||s.levels[id]<b.requiredLevel||!b.canAfford});y+=47;this.button('growth-materials','获取突破材料',14,y,362,32,()=>this.openStreet('materials','escort'));y+=58;
+    text(c,'伙伴升星 '+a.rank+' / 5',20,y+20,18,C.gold,800);y+=40;y+=rich(c,'每星基础攻击与生命 +4%。3 星心得：'+a.talent+'。星级、信物和装备不随继承转移。',20,y,350,{size:12,line:19})+20;
+    text(c,'信物 '+a.have+'/'+a.shards+' · 训练笔记 '+s.growth.notes+'/'+a.notes,20,y+15,12,C.ink);y+=36;this.button('ascend-'+id,a.maxed?'已满星':'升至 '+(a.rank+1)+' 星',14,y,362,35,()=>{if(G.ascendCompanion(s,id)){this.battle?.syncStats(s,{preserveHealthRatio:true});this.save();this.toast('升星成功');}},{disabled:a.maxed||a.have<a.shards||s.growth.notes<a.notes});y+=47;this.button('growth-shards','获取'+cat(id).name+'信物',14,y,362,32,()=>this.openStreet('recruit',id));return y+55;
+  }
+  async watchBusinessBoost() {
+    if(this.adPending)return;
+    const state=this.state,quote=businessBoostQuote(state,Date.now(),G.idleRate(state));
+    if(!quote.available||!this.env.rewardedAds?.available)return;
+    this.adPending=true;
+    try {
+      const result=await this.env.rewardedAds.watch();
+      if(this.state!==state)return;
+      if(grantBusinessBoost(state,quote,result.completed)){
+        this.save();this.env.sound?.('reward');
+        this.toast('补给到账：'+quote.gold+' 鱼币 · '+quote.supplies+' 物资');
+      }else this.toast(result.status==='cancelled'?'未看完视频，本次不领取补给':result.status==='completed'?'本次补给未结算，请稍后重试':'视频暂不可用，正常收益不受影响');
+    }catch{this.toast('视频暂不可用，稍后再试');}
+    finally{this.adPending=false;}
   }
   drawMap(y) {
-    const c = this.ctx;
-    box(c, 14, y, 362, 104, "#68816d", "#b6c4a5", 13);
-    this.art.item(c, 14, 48, y + 34, 45);
-    text(c, "街角小鱼摊", 81, y + 25, 18, C.ink, 800);
-    text(
-      c,
-      G.idleRate(this.state) + " 鱼币 / 分钟 · 最多积累4小时",
-      81,
-      y + 49,
-      10,
-      C.ink,
-    );
-    this.button(
-      "claim-idle",
-      "领取 " + fmt(this.state.idle),
-      229,
-      y + 67,
-      132,
-      27,
-      () => {
-        const n = G.claimIdle(this.state);
-        this.save();
-        this.toast("领取 " + n + " 鱼币");
-      },
-      { fill: "#c3b783", color: C.dark, size: 11 },
-    );
-    y += 121;
-    text(c, "整条街，一起走", 16, y + 13, 23, C.ink, 850);
-    y += 42;
-    G.CHAPTERS.forEach((ch, i) => {
-      const sy = y + i * 110,
-        open = this.state.runCleared >= i * 20;
-      this.button(
-        "chapter-" + i,
-        "",
-        14,
-        sy,
-        362,
-        99,
-        () => (this.modal = { type: "chapter", index: i }),
-        { fill: C.panel, disabled: !open },
-      );
-      c.save();
-      round(c, 15, sy + 1, 105, 97, 9);
-      c.clip();
-      this.art.scene(c, i, 15, sy + 1, 105, 97);
-      c.restore();
-      text(c, ch.name, 134, sy + 26, 19, C.ink, 800);
-      text(
-        c,
-        i * 20 + 1 + "—" + (i * 20 + 20) + " 关",
-        134,
-        sy + 51,
-        11,
-        C.muted,
-      );
-      text(
-        c,
-        open
-          ? Math.min(20, Math.max(0, this.state.runCleared - i * 20)) + " / 20"
-          : "通关上一街区开启",
-        134,
-        sy + 78,
-        11,
-        open ? C.gold : C.muted,
-      );
-    });
-    y += 660;
-    box(c, 14, y, 362, 132, "#625d73", "#aaa2b9", 13);
-    text(c, "换班远征", 30, y + 26, 20, C.ink, 800);
-    rich(
-      c,
-      "从第1关再出发，保留伙伴、等级与鱼币。鱼骨永久提高全队生命和攻击；本轮战利品重置。",
-      30,
-      y + 52,
-      330,
-      { size: 11, line: 18 },
-    );
-    const gain = G.prestigeGain(this.state);
-    this.button(
-      "prestige",
-      gain ? "换班 · 获得 " + gain + " 鱼骨" : "通过第20关开启",
-      190,
-      y + 93,
-      170,
-      28,
-      async () => {
-        if (
-          !(await this.env.confirm(
-            "换班远征",
-            "保留伙伴、等级、鱼币与历史成就，重置本轮关卡和战利品，获得 " +
-              gain +
-              " 鱼骨。",
-          ))
-        )
-          return;
-        if (G.prestige(this.state)) {
-          this.save();
-          this.modal = null;
-          this.change("battle");
-          this.start(false);
-          this.toast("新的远征开始了");
-        }
-      },
-      {
-        size: 11,
-        fill: "#bcad8c",
-        color: C.dark,
-        disabled: !gain || !!this.state.pending,
-      },
-    );
-    return y + 148;
+    const c=this.ctx,s=this.state;
+    if(this.mapPlace){this.button('district-back','‹ 返回街区',14,y,120,30,()=>{this.mapPlace=null;this.scroll=0;},{size:12});y+=45;}
+    if(!this.mapPlace){
+      const available=this.navY-this.top,h=Math.min(available,390*1.5),w=h/1.5,x=(390-w)/2,sy=this.top+(available-h)/2;
+      const img=this.art.image('assets/scenes/neighborhood-v0220.webp');if(img)c.drawImage(img,x,sy,w,h);
+      paintDistrictObjects(c,{scene:img},x,sy,w,h,this.pointer&&!this.pointer.moved?this.pointer.button?.id?.replace('district-',''):null,this.districtRelease?{id:this.districtRelease.id,age:this.time-this.districtRelease.at}:null);
+      paintDistrictAmbient(c,x,sy,w,h,this.time);
+      for(const p of DISTRICT_PLACES)this.button('district-'+p.id,'',x+w*(p.x-p.w/2)/100,sy+h*(p.y-p.h/2)/100,w*p.w/100,h*p.h/100,()=>{if(!this.districtRelease)this.districtRelease={id:p.id,at:this.time};},{draw:false});
+      return this.navY-20-this.scroll;
+    }
+    if(this.mapPlace==='stall'){
+      text(c,'街角鱼摊',16,y+20,24,C.ink,850);y+=38;
+      text(c,'经营物资 '+fmt(s.supplies)+' · 储存 '+G.idleMinutes(s)/60+' 小时',16,y+14,12,C.gold);y+=30;
+      text(c,G.idleRate(s)+' 鱼币 / 分钟',16,y+17,13,C.ink);
+      this.button('claim-idle','领取 '+fmt(s.idle),220,y,156,32,()=>{const n=G.claimIdle(s);this.save();this.toast('领取 '+n+' 鱼币');});y+=48;
+      const boost=businessBoostQuote(s,Date.now(),G.idleRate(s)),available=this.env.rewardedAds?.available;
+      box(c,14,y,362,132,C.panel,C.rim,12);
+      text(c,'经营补给',30,y+24,17,C.gold,800);
+      text(c,'+'+fmt(boost.gold)+' 鱼币  ·  +'+boost.supplies+' 经营物资',30,y+49,13,C.ink);
+      text(c,'自愿看完视频领取 · 今日剩余 '+boost.remaining+' 次',30,y+70,11,C.muted);
+      const label=this.adPending?'视频加载中…':!available?'视频补给暂未开放':!boost.remaining?'今日补给已领完':boost.wait?'休息 '+boost.wait+' 秒':'看视频领补给';
+      this.button('business-ad',label,30,y+88,330,30,()=>this.watchBusinessBoost(),{disabled:this.adPending||!available||!boost.available,size:12});y+=146;
+      rich(c,'补给可升级鱼摊，提高后续收益。物资也能通过普通关获取。',18,y,350,{size:11,line:17});y+=45;
+      for(const u of G.STALL_UPGRADES){const q=G.stallQuote(s,u.id);box(c,14,y,362,114,C.panel,C.rim,12);text(c,u.name+' · Lv.'+q.level,30,y+25,17,C.gold,800);rich(c,u.effect,30,y+49,330,{size:12,line:18});this.button('stall-'+u.id,q.maxed?'已满级':'升级 · '+q.cost+' 物资',30,y+76,330,28,()=>{if(G.upgradeStall(s,u.id)){this.save();this.toast('鱼摊升级完成');}},{disabled:q.maxed||s.supplies<q.cost,size:11});y+=126;}return y;
+    }
+    if(this.mapPlace==='journal'){
+      const a=refreshCampaign(s);text(c,'猫巷手账',16,y+24,24,C.ink,850);y+=53;
+      rich(c,'每日 0 点更新委托，完成其中 3 项领交班礼。成长奖励永久保留，可随进度补领。',16,y,350,{size:12,line:19});y+=55;
+      for(const t of DAILY_TASKS){const r=dailyReward(s),claimed=a.claimed.includes(t.id);box(c,14,y,362,118,C.panel,C.rim,12);text(c,t.name+' · '+a.progress[t.id]+'/'+t.goal,30,y+25,16,C.gold,800);text(c,t.desc,30,y+48,11,C.ink);this.button('daily-'+t.id,claimed?'已领取':r.gold+' 鱼币 · '+r.supplies+' 物资',30,y+73,330,30,()=>{if(claimDaily(s,t.id)){this.save();this.toast('委托奖励已领取');}},{disabled:claimed||a.progress[t.id]<t.goal,size:12});y+=130;}
+      this.button('daily-chest',a.chest?'交班礼已领取':'交班礼 · '+a.claimed.length+'/3 · 40 物资 / 2 徽章',14,y,362,36,()=>{if(claimDailyChest(s)){this.save();this.toast('交班礼已领取');}},{disabled:a.chest||a.claimed.length<3,size:12});y+=58;
+      text(c,'成长之路 · '+a.journey.length+' / 30',16,y+22,21,C.ink,800);y+=42;
+      for(const j of JOURNEY){const done=a.journey.includes(j.id);box(c,14,y,362,112,C.panel,C.rim,12);text(c,j.index+'. '+j.name+' · 第 '+j.stage+' 关',30,y+25,15,C.gold,700);text(c,j.gold+' 鱼币 / '+j.supplies+' 物资 / '+j.badges+' 徽章',30,y+48,11,C.ink);this.button('journey-'+j.id,done?'已领取':s.highest>=j.stage?'领取':'进行中',30,y+69,330,29,()=>{if(claimJourney(s,j.id)){this.save();this.toast('成长奖励已领取');}},{disabled:done||s.highest<j.stage,size:12});y+=124;}return y;
+    }
+    if(this.mapPlace==='street')return this.drawStreet(y);
+    if(this.mapPlace==='arena'){text(c,'猫巷委托板',16,y+24,24,C.ink,850);y+=52;for(const group of STREET_GROUPS){box(c,14,y,362,112,C.panel,C.rim,12);text(c,group.name,30,y+24,18,C.gold,800);text(c,group.desc,30,y+48,11,C.ink);this.button('street-'+group.id,'进入',30,y+69,330,29,()=>this.openStreet(group.id));y+=124;}this.button('open-journal','猫巷手账 · 每日 / 成长',14,y,362,36,()=>{this.mapPlace='journal';this.scroll=0;});y+=48;this.button('open-challenges','本周挑战与擂台',14,y,362,36,()=>{this.mapPlace='challenges';this.scroll=0;});return y+60;}
+    if(this.mapPlace==='challenges'){
+      this.button('open-journal','猫巷手账 · 每日委托 / 成长之路',14,y,362,40,()=>{this.mapPlace='journal';this.scroll=0;},{size:13});y+=58;
+      text(c,'本周挑战 · '+weeklyInfo(s,1).name,16,y+23,20,C.gold,800);y+=50;
+      rich(c,weeklyInfo(s,1).rule+' 每周一更新，每档奖励每周一次。',16,y,350,{size:12,line:19});y+=58;
+      for(const n of [1,2,3]){const q=weeklyInfo(s,n);box(c,14,y,362,100,C.panel,C.rim,12);text(c,['入门','进阶','极限'][n-1]+' · '+q.reward.badges+' 徽章 / '+q.reward.supplies+' 物资',30,y+27,14,C.ink,700);this.button('weekly-'+n,q.claimed?'已领 · 再次切磋':q.open?'挑战':'第 15 关开启',30,y+54,330,30,()=>{this.change('battle');this.start(true,{weeklyTier:n});this.toast(q.rule);},{disabled:!q.open,size:12});y+=112;}
+
+      text(c,'街头擂台',16,y+22,24,C.ink,850);y+=50;
+      rich(c,'固定阵容，失败不扣资源。每次胜利有徽章，首通额外奖励。普通关第15关开启。',16,y,358,{size:12,line:20});y+=52;
+      for(let tier=1;tier<=G.ARENA_MAX;tier++){const a=G.arenaInfo(tier),first=tier>s.arenaCleared;box(c,14,y,362,148,C.panel,C.rim,12);text(c,'第 '+tier+' 擂 · '+a.name,30,y+24,17,C.gold,800);rich(c,a.rule,30,y+49,330,{size:11,line:18});text(c,'每次 '+a.baseReward+' 徽章'+(first?' · 首通额外 '+a.firstBonus:''),30,y+98,11,C.muted);this.button('arena-'+tier,first?'挑战':'再次挑战',30,y+111,330,28,()=>{this.change('battle');this.start(true,{arenaTier:tier});this.toast(a.rule);},{disabled:!G.arenaOpen(s,tier),size:11});y+=160;}return y;
+    }
+    text(c,'街区巡逻 · '+G.MAX_STAGE+' 关',16,y+22,22,C.ink,850);y+=42;
+    for(let i=0;i<G.MAX_STAGE/20;i++){const ch=G.CHAPTERS[i%6],open=s.runCleared>=i*20;this.button('chapter-'+i,'',14,y,362,90,()=>this.modal={type:'chapter',index:i},{fill:C.panel,disabled:!open});text(c,ch.name+' · '+(Math.floor(i/6)+1),30,y+29,18,C.ink,800);text(c,'第 '+(i*20+1)+'—'+(i*20+20)+' 关 · 鱼币与物资',30,y+59,12,C.muted);y+=102;}return y;
   }
   drawModal() {
     const c = this.ctx,
@@ -1344,25 +1362,9 @@ export class NativeGame {
       );
     }
     if (m.type === "loot") {
-      text(c, "挑一件战利品", 195, y + 35, 25, C.ink, 850, "center");
-      (this.state.pending?.options || []).forEach((id, i) => {
-        const ri = G.RELICS.findIndex((r) => r.id === id),
-          r = G.RELICS[ri],
-          sy = y + 70 + i * 93;
-        this.button(
-          "loot-" + id,
-          "",
-          37,
-          sy,
-          316,
-          82,
-          () => this.chooseRelic(id),
-          { fill: "#62796c", stroke: C.gold },
-        );
-        this.art.item(c, ri, 70, sy + 40, 50);
-        text(c, r.name, 109, sy + 23, 16, C.ink, 800);
-        rich(c, r.desc, 109, sy + 48, 225, { size: 11, line: 18 });
-      });
+      text(c,'旧装备已迁移',195,y+40,24,C.ink,800,'center');
+      rich(c,'旧的全队叠加装备已经停用。背包中可查看新的角色装备与材料。',38,y+90,310,{size:14,line:23});
+      this.button('loot-migrated','继续',39,y+h-65,312,38,()=>{this.state.pending=null;this.modal=null;this.save();});
     }
     if (m.type === "recruit") {
       const a = cat(m.id);
@@ -1421,7 +1423,7 @@ export class NativeGame {
       text(c, "一起守住这条街", 42, y + 36, 24, C.ink, 850);
       rich(
         c,
-        "猫猫自动普攻，能量满后释放技能。\n开罐啦：全队回血20%，罐头盖命中全体敌人并打断蓄力。\n伙伴：每张卡可升10级；档案可升1级。拖动调整阵容，替换队员继承培养。\n街区：小鱼摊离线产鱼币，最多4小时。旧关巡逻奖励为原来的60%。",
+        "猫猫自动普攻，能量满后释放技能。\n开罐啦：全队回血20%，罐头盖命中全体敌人并打断蓄力。\n伙伴：每张卡可升10级；档案可升1级。拖动调整阵容，替换队员继承培养。\n街区：点击鱼摊升级经营，点击擂台获取突破徽章。普通关共600关，产出鱼币和经营物资。旧关巡逻鱼币奖励为原来的60%。",
         42,
         y + 80,
         306,
@@ -1468,7 +1470,7 @@ export class NativeGame {
       );
     }
     if (m.type === "chapter") {
-      const ch = G.CHAPTERS[m.index];
+      const ch = G.CHAPTERS[m.index%6];
       text(c, ch.name, 40, y + 33, 24, C.ink, 850);
       text(c, "选择已通关关卡可以练练", 40, y + 63, 11, C.muted);
       for (let i = 0; i < 20; i++) {
@@ -1537,7 +1539,7 @@ export class NativeGame {
       text(c, "月光罐头，带回家了", 195, y + 45, 24, C.ink, 850, "center");
       rich(
         c,
-        "120关远征完成。可以继续巡逻收集资源，也可以在街区换班，带着鱼骨重新出发。",
+        "600关巡逻完成。进度永久保留，可以重访旧关收集物资或继续挑战擂台。",
         44,
         y + 99,
         302,

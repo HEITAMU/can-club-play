@@ -1,3 +1,4 @@
+import {createRewardedService} from './rewarded-ad.mjs';
 import { NativeGame } from "./game.mjs";
 import {
   initialState,
@@ -84,7 +85,9 @@ export async function boot(api, manifest, options = {}) {
       a.play();
     } catch {}
   }
+  const rewardedAds = createRewardedService(api, manifest.rewardedAdUnitId);
   const env = {
+    rewardedAds,
     width: screen.windowWidth,
     height: screen.windowHeight,
     pixelRatio: screen.pixelRatio || 1,
@@ -324,6 +327,7 @@ export async function boot(api, manifest, options = {}) {
     env,
     game,
     stop() {
+      rewardedAds.dispose();
       hidden = true;
       if (frame !== null) caf(frame);
       frame = null;

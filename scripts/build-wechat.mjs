@@ -23,9 +23,13 @@ const sharp = dependency("sharp"),
 const appid = process.env.WECHAT_APPID || "wx43da24c6ac1e5a12";
 if (!/^wx[a-f\d]{16}$/.test(appid))
   throw Error("WECHAT_APPID 必须为 wx 开头的正式或测试 AppID");
+const rewardedAdUnitId=process.env.WECHAT_REWARDED_AD_UNIT_ID||'';
+if(rewardedAdUnitId&&!/^adunit-[\w-]+$/.test(rewardedAdUnitId))throw Error('广告位格式必须为 adunit-…');
+if(process.env.WECHAT_RELEASE==='1')throw Error('联网正式版尚未接入云端身份、权威存档与服务端发奖，禁止发布本地奖励测试版。见 wechat/RELEASE-STATUS.md');
 await fs.rm(out, { recursive: true, force: true });
 await fs.mkdir(out, { recursive: true });
 const list = [
+  "scenes/neighborhood-v0220.webp",
   "finished/pudding-v0216.webp",
   "painted/enemies-a.webp",
   "painted/enemies-b.webp",
@@ -61,7 +65,7 @@ for (const relative of list) {
       height: meta.height,
     });
   if (relative.startsWith("finished/") && !relative.includes("portrait")) pipeline.resize({width:(relative.includes("v0213")||relative.includes("v0216"))?1024:1536});
-  const jpg = relative.startsWith("scenes/");
+  const jpg = (relative.startsWith("scenes/") && !relative.includes("district-"));
   const data = await (
     jpg
       ? pipeline.jpeg({ quality: 93, chromaSubsampling: "4:4:4" })
@@ -72,7 +76,7 @@ for (const relative of list) {
 }
 // Largest-first placement avoids adding a package just because a late atlas is large.
 for (const {relative,source,data} of prepared.sort((a,b)=>b.data.length-a.data.length)) {
-  const jpg = relative.startsWith("scenes/");
+  const jpg = (relative.startsWith("scenes/") && !relative.includes("district-"));
   group = packages.find(p => p.bytes + data.length <= 3.8 * 1024 ** 2);
   if (!group) {
     group = {
@@ -126,7 +130,8 @@ await esbuild.build({
   ],
 });
 const manifest = {
-  version: "0.21.13",
+  version: "0.25.0",
+  rewardedAdUnitId,
   appid,
   packages: packages.map(({ name, root }) => ({ name, root })),
   assets,
@@ -237,6 +242,9 @@ await fs.writeFile(
   JSON.stringify(
     {
       version: manifest.version,
+      releaseReady: false,
+      networkMode: "local-development",
+      rewardedAdConfigured: !!rewardedAdUnitId,
       appid,
       mainBytes: main,
       totalBytes: total,
@@ -251,6 +259,7 @@ await fs.copyFile(
   path.join(root, "wechat/README.md"),
   path.join(out, "README.md"),
 );
+await fs.copyFile(path.join(root,"wechat/RELEASE-STATUS.md"),path.join(out,"RELEASE-STATUS.md"));
 console.log(
   JSON.stringify(
     {

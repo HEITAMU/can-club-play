@@ -28,9 +28,9 @@ export function paintShidun(ctx,p,img){
  }else{
   if(img){const frame=Math.min(11,Math.floor(p.q*12));
    const advance=1-Math.pow(1-Math.min(1,p.q/.65),2);
-   const width=p.span*(.58+.2*advance),height=width*.5;
+   const width=p.span*(.58+.2*advance)*1.25,height=width*.5;
    const forward=p.span*.42*advance;
-   ctx.drawImage(img,(frame%3)*512,Math.floor(frame/3)*256,512,256,s*.34+forward-width*.1,-s*.06-height*.66,width,height);
+   ctx.drawImage(img,(frame%3)*512,Math.floor(frame/3)*256,512,256,s*.34+forward-width*.1,s*.02-height*.66,width,height);
   }
 
  }

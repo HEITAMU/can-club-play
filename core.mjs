@@ -1,9 +1,18 @@
-import {shidunTargets} from './shidun-motion.mjs?v=0.21.13';
-import {createShieldPunch,gainShield,tickShieldPunch,controlShieldPunch,absorbShieldDamage} from './shield-punch.mjs?v=0.21.13';
-import {actionTiming,attackStyle} from './motion.mjs?v=0.21.13';
-import {CAN_TIMING,canHitAt,canDuration,canTargetOrder} from './can-timing.mjs?v=0.21.13';
-import {heroCombatStats,enemyCombatStats,mitigatedDamage} from './combat-stats.mjs?v=0.21.13';
-export const VERSION=1, MAX_STAGE=120, MAX_LEVEL=100, MAX_PARTY=5;
+import {newRoster,normalizeRoster,normalizeGrowth,owns,recruit,starQuote,ascend,STAR_TALENTS} from './companions.mjs?v=0.25.0';
+export {owns as ownsCompanion,recruit as recruitCompanion,starQuote,ascend as ascendCompanion,STAR_TALENTS} from './companions.mjs?v=0.25.0';
+import {normalizeActivities,activityInfo,settleActivity} from './activities.mjs?v=0.25.0';
+import {streetEnemies} from './street-combat.mjs?v=0.25.0';
+import {createInventory,normalizeInventory,gearBonuses,gearDrop} from './equipment.mjs?v=0.25.0';
+import {normalizeCampaign,recordActivity,weeklyInfo,settleWeekly} from './campaign.mjs?v=0.25.0';
+import {normalizeAdRewards} from './rewarded-economy.mjs?v=0.25.0';
+import {normalizeProgression,stallLevel,stallQuote,idleMinutes,suppliesFor,levelCap,breakthroughQuote,arenaInfo,arenaOpen} from './progression.mjs?v=0.25.0';
+export {STALL_UPGRADES,STALL_MAX,ARENA_MAX,ARENA_UNLOCK,stallQuote,idleMinutes,suppliesFor,levelCap,breakthroughQuote,arenaInfo,arenaOpen} from './progression.mjs?v=0.25.0';
+import {shidunTargets} from './shidun-motion.mjs?v=0.25.0';
+import {SHIELD_PUNCH_DEFAULTS,createShieldPunch,gainShield,tickShieldPunch,controlShieldPunch,absorbShieldDamage} from './shield-punch.mjs?v=0.25.0';
+import {actionTiming,attackStyle} from './motion.mjs?v=0.25.0';
+import {CAN_TIMING,canHitAt,canDuration,canTargetOrder} from './can-timing.mjs?v=0.25.0';
+import {heroCombatStats,enemyCombatStats,mitigatedDamage} from './combat-stats.mjs?v=0.25.0';
+export const VERSION=1, MAX_STAGE=600, MAX_LEVEL=100, MAX_PARTY=5;
 export const CATS=[
  {id:'orange',name:'橘座',job:'前排守护',tag:'守护',color:'#edab62',accent:'#c8793b',unlock:0,hp:205,atk:17,interval:1.5,skill:'锅盖护体',desc:'举起锅盖：获得自身生命 45% 的护盾，并为队友提供 12% 护盾。',passive:'5 级：受到伤害降低 15%。',quote:'这条街的罐头，我罩了。',gear:'pan'},
  {id:'ink',name:'阿墨',job:'单体输出',tag:'突袭',color:'#42465c',accent:'#929db5',unlock:0,hp:116,atk:25,interval:1.25,skill:'飞鱼三连',desc:'连续命中生命最低的敌人，合计造成 330% 攻击力的物理伤害，本次攻击额外获得 25 点护甲穿透。',passive:'5 级：暴击率额外提高 15 个百分点。',quote:'别眨眼，鱼已经到了。',gear:'scarf'},
@@ -40,71 +49,95 @@ export const MOB_TYPES=['dust','box','mop','battery','bag','drone'];
 const names={dust:'灰尘团子',box:'硬壳纸箱',mop:'拖把精',battery:'漏电电池',bag:'乱跑纸袋',drone:'嗡嗡无人机'};
 export const QUESTS=[
  {id:'first',name:'罐头保卫战',desc:'赢得第 1 场战斗',key:'wins',goal:1,reward:90},
- {id:'milk',name:'有人照顾才走得远',desc:'通过第 3 关，结识奶盖',key:'highest',goal:3,reward:150},
+ {id:'milk',name:'有人照顾才走得远',desc:'通过第 3 关，开启伙伴委托',key:'highest',goal:3,reward:150},
  {id:'train',name:'练一练，强一点',desc:'累计训练猫咪 10 次',key:'upgrades',goal:10,reward:260},
  {id:'boss',name:'大个子也没在怕',desc:'累计击败 3 位首领',key:'bosses',goal:3,reward:500},
  {id:'wins',name:'这条街我熟',desc:'累计胜利 20 场',key:'wins',goal:20,reward:650},
  {id:'relic',name:'叮叮当当一大包',desc:'累计取得 5 件战利品',key:'relicCount',goal:5,reward:800},
  {id:'chapter',name:'天台已经安全',desc:'通过第 20 关',key:'highest',goal:20,reward:1600},
  {id:'roster',name:'一家猫就要整整齐齐',desc:'解锁 6 位队员',key:'cats',goal:6,reward:2400},
- {id:'shift',name:'新的一班更强',desc:'进行 1 次换班远征',key:'prestiges',goal:1,reward:2400},
+ {id:'arena-first',name:'上台露一手',desc:'通过擂台第 1 擂',key:'arenaCleared',goal:1,reward:2400},
  {id:'half',name:'走到霓虹尽头',desc:'通过第 60 关',key:'highest',goal:60,reward:6000},
  {id:'end',name:'月光罐头收藏家',desc:'通过第 120 关',key:'highest',goal:120,reward:16000}
 ];
-export function initialState(now=Date.now()){return {version:VERSION,gold:200,levels:Object.fromEntries(CATS.map(c=>[c.id,1])),party:['orange','ink'],stage:1,runCleared:0,highest:0,bones:0,prestiges:0,relics:{},pending:null,claimed:[],wins:0,bosses:0,kills:0,upgrades:0,relicCount:0,idle:0,lastAccrued:now,onboarded:false,auto:true,speed:1,sound:false,rescueSeen:false,created:now,seconds:0};}
+export function initialState(now=Date.now()){return {...normalizeProgression({},CATS.map(c=>c.id)),inventory:createInventory(CATS.map(c=>c.id)),roster:newRoster(),growth:normalizeGrowth(),activities:normalizeActivities(),campaign:normalizeCampaign(),adRewards:normalizeAdRewards(),version:VERSION,gold:200,levels:Object.fromEntries(CATS.map(c=>[c.id,1])),party:['orange','ink'],stage:1,runCleared:0,highest:0,bones:0,prestiges:0,relics:{},pending:null,claimed:[],wins:0,bosses:0,kills:0,upgrades:0,relicCount:0,idle:0,lastAccrued:now,onboarded:false,auto:true,speed:1,sound:false,rescueSeen:false,created:now,seconds:0};}
 export const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const num=(v,d=0,a=0,b=1e12)=>typeof v==='number'&&Number.isFinite(v)?clamp(v,a,b):d;
-export function unlocked(s){return CATS.filter(c=>s.highest>=c.unlock);}
+export function unlocked(s){return CATS.filter(c=>owns(s,c.id));}
 // Replacing a stronger deployed cat transfers its training to the newcomer.
 // Swap levels so every paid level is conserved, even across repeated swaps.
 // Repositioning existing teammates, adding to an empty slot, and replacing a
 // lower-level cat never changes levels.
 export function inheritanceFor(s,slot,id){if(!Number.isInteger(slot)||slot<0||slot>=MAX_PARTY||!unlocked(s).some(c=>c.id===id)||s.party.includes(id))return null;const from=s.party[slot];return from&&s.levels[from]>s.levels[id]?{from,to:id,fromLevel:s.levels[from],toLevel:s.levels[id]}:null;}
-export function inheritTraining(s,from,to){const available=unlocked(s).map(c=>c.id);if(from===to||!available.includes(from)||!available.includes(to)||s.levels[from]<=s.levels[to])return false;[s.levels[from],s.levels[to]]=[s.levels[to],s.levels[from]];return true;}
+export function inheritTraining(s,from,to){const available=unlocked(s).map(c=>c.id);if(from===to||!available.includes(from)||!available.includes(to)||s.levels[from]<=s.levels[to])return false;[s.levels[from],s.levels[to]]=[s.levels[to],s.levels[from]];s.breakthroughs??={};[s.breakthroughs[from],s.breakthroughs[to]]=[s.breakthroughs[to]||0,s.breakthroughs[from]||0];return true;}
 export function normalizeState(raw,now=Date.now()){
  if(!raw||typeof raw!=='object'||Array.isArray(raw)||raw.version!==VERSION)throw Error('不是兼容的罐头远征队存档');
- const s=initialState(now);
+ const s=initialState(now);s.adRewards=normalizeAdRewards(raw.adRewards);s.campaign=normalizeCampaign(raw.campaign);Object.assign(s,normalizeProgression(raw,CATS.map(c=>c.id)));
  for(const k of ['gold','bones','prestiges','wins','bosses','kills','upgrades','relicCount','seconds'])s[k]=Math.floor(num(raw[k]));
  s.highest=Math.floor(num(raw.highest,0,0,MAX_STAGE));s.runCleared=Math.floor(num(raw.runCleared,0,0,s.highest));s.stage=Math.min(MAX_STAGE,s.runCleared+1);
- for(const c of CATS)s.levels[c.id]=Math.floor(num(raw.levels?.[c.id],1,1,MAX_LEVEL));
+ s.roster=normalizeRoster(raw.roster,CATS,s.highest);s.growth=normalizeGrowth(raw.growth);s.activities=normalizeActivities(raw.activities);
+ for(const c of CATS)s.levels[c.id]=Math.floor(num(raw.levels?.[c.id],1,1,levelCap(s,c.id)));
  s.rescueSeen=raw.rescueSeen===true;
  const available=unlocked(s).map(c=>c.id);s.party=Array.isArray(raw.party)?[...new Set(raw.party)].filter(id=>available.includes(id)).slice(0,MAX_PARTY):s.party;if(!s.party.length)s.party=['orange'];
- for(const r of RELICS){const level=Math.floor(num(raw.relics?.[r.id],0,0,5));if(level)s.relics[r.id]=level;}
- if(raw.pending&&Number.isInteger(raw.pending.stage)&&raw.pending.stage===s.runCleared&&raw.pending.stage%5===0){const opts=[...new Set(Array.isArray(raw.pending.options)?raw.pending.options:[])].filter(id=>RELICS.some(r=>r.id===id)&&(s.relics[id]||0)<5).slice(0,3);if(opts.length)s.pending={stage:raw.pending.stage,options:opts};}
+ s.inventory=raw.inventory?.version===1?normalizeInventory(raw.inventory,CATS.map(c=>c.id)):createInventory(CATS.map(c=>c.id),raw.relics,s.highest,s.party);s.relics={};s.pending=null;
  s.claimed=[...new Set(Array.isArray(raw.claimed)?raw.claimed:[])].filter(id=>QUESTS.some(q=>q.id===id));
- s.lastAccrued=num(raw.lastAccrued,now,0,now);s.idle=num(raw.idle,0,0,idleRate(s)*240);s.created=num(raw.created,now,0,now);s.onboarded=!!raw.onboarded;s.auto=raw.auto!==false;s.speed=raw.speed===2?2:1;s.sound=!!raw.sound;return s;
+ s.lastAccrued=num(raw.lastAccrued,now,0,now);s.idle=num(raw.idle,0,0,idleRate(s)*idleMinutes(s));s.created=num(raw.created,now,0,now);s.onboarded=!!raw.onboarded;s.auto=raw.auto!==false;s.speed=raw.speed===2?2:1;s.sound=!!raw.sound;return s;
 }
-export function upgradeCost(level){return Math.round(22+level*12+Math.pow(level,1.65)*2);}
-export function upgradeQuote(level,count=10){const levels=Math.max(0,Math.min(MAX_LEVEL-level,Math.floor(count),10));let cost=0;for(let i=0;i<levels;i++)cost+=upgradeCost(level+i);return {levels,cost};}
-export function upgrade(s,id,count=1){const c=CATS.find(c=>c.id===id);if(!c||s.highest<c.unlock)return 0;let done=0;for(let i=0;i<clamp(count,1,10);i++){const l=s.levels[id],cost=upgradeCost(l);if(l>=MAX_LEVEL||s.gold<cost)break;s.gold-=cost;s.levels[id]++;s.upgrades++;done++;}return done;}
+export function upgradeCost(level){return Math.round((22+level*12+Math.pow(level,1.65)*2)*(1+Math.max(0,level-40)**2/150));}
+export function upgradeQuote(level,count=10,cap=MAX_LEVEL){const levels=Math.max(0,Math.min(cap-level,Math.floor(count),10));let cost=0;for(let i=0;i<levels;i++)cost+=upgradeCost(level+i);return {levels,cost};}
+export function upgrade(s,id,count=1,now=Date.now()){const c=CATS.find(c=>c.id===id);if(!c||!owns(s,id))return 0;let done=0;for(let i=0;i<clamp(count,1,10);i++){const l=s.levels[id],cost=upgradeCost(l);if(l>=levelCap(s,id)||s.gold<cost)break;s.gold-=cost;s.levels[id]++;s.upgrades++;done++;}if(done)recordActivity(s,'train',done,now);return done;}
 export function setParty(s,slot,id){if(!unlocked(s).some(c=>c.id===id)||!Number.isInteger(slot)||slot<0||slot>=MAX_PARTY)return false;const inheritance=inheritanceFor(s,slot,id);if(inheritance)inheritTraining(s,inheritance.from,id);const p=[...s.party],old=p.indexOf(id);if(old>=0){if(p[slot])p[old]=p[slot];else p.splice(old,1);}p[slot]=id;s.party=p.filter(Boolean).slice(0,MAX_PARTY);return true;}
-export function buffs(s){const r=s.relics;return {atk:1+.12*(r.claw||0),hp:1+.15*(r.coat||0),speed:1+.08*(r.bell||0),crit:.1+.05*(r.scope||0),regen:.008*(r.bowl||0),canCd:12-.8*(r.can||0),gold:1+.12*(r.magnet||0),idle:1+.2*(r.thermos||0),reflect:.1*(r.thorn||0),shield:.1*(r.charm||0),energy:5*(r.charm||0),burn:.35*(r.match||0),boss:1+.15*(r.badge||0)};}
-export function catStats(s,id){const c=CATS.find(c=>c.id===id),l=s.levels[id]||1,b=buffs(s),m=(1+.18*(l-1))*(1+.08*Math.floor(l/10))*(1+.08*s.bones);return {...heroCombatStats(id,l),hp:Math.round(c.hp*m*b.hp),atk:Math.round(c.atk*m*b.atk),interval:c.interval/b.speed,crit:Math.min(.8,b.crit+(id==='ink'&&l>=5?.15:0)),level:l};}
+// Old all-party relic stacks are retired; all combat equipment is character-owned.
+export function buffs(){return {atk:1,hp:1,speed:1,crit:.1,regen:0,canCd:12,gold:1,idle:1,reflect:0,shield:0,energy:0,burn:0,boss:1};}
+export function catStats(s,id,equipment=null){const c=CATS.find(c=>c.id===id),l=s.levels[id]||1,g=equipment||gearBonuses(s,id),stars=s.roster?.stars?.[id]||0,base=heroCombatStats(id,l),m=(1+.18*(l-1))*(1+.08*Math.floor(l/10))*(1+.08*s.bones)*(1+.08*(s.breakthroughs?.[id]||0))*(1+.04*stars);return {...base,armor:base.armor+g.armor,magicResist:base.magicResist+g.magicResist,armorPen:base.armorPen+g.armorPen+(id==='bolt'&&stars>=3?8:0),magicPen:base.magicPen+g.magicPen,hp:Math.round(c.hp*m*(1+g.hp)),atk:Math.round(c.atk*m*(1+g.atk)),interval:c.interval/Math.min(2.2,1+g.speed),crit:Math.min(.8,.1+g.crit+(id==='ink'&&l>=5?.15:0)),level:l,stars,gear:g};}
 export function power(s){return s.party.reduce((n,id)=>{const c=catStats(s,id);return n+Math.round(c.hp*.3*(1+(c.armor+c.magicResist)/200)+c.atk/c.interval*5*(1+(c.armorPen+c.magicPen)/200));},0);}
-export function idleRate(s){return Math.round((18+Math.max(s.highest,1)*3)*buffs(s).idle);}
-export function accrueIdle(s,now=Date.now()){const elapsed=clamp(now-s.lastAccrued,0,4*3600e3);const amount=elapsed/60000*idleRate(s);s.idle=Math.min(idleRate(s)*240,s.idle+amount);s.lastAccrued=now;return amount;}
-export function claimIdle(s,now=Date.now()){accrueIdle(s,now);const n=Math.floor(s.idle);s.gold+=n;s.idle-=n;return n;}
+export function idleRate(s){return Math.round((18+Math.min(Math.max(s.highest,1),60)*3+Math.max(0,s.highest-60)*.6)*buffs(s).idle*(1+.15*stallLevel(s,'stall')));}
+export function accrueIdle(s,now=Date.now()){const elapsed=clamp(now-s.lastAccrued,0,idleMinutes(s)*60000);const amount=elapsed/60000*idleRate(s);s.idle=Math.min(idleRate(s)*idleMinutes(s),s.idle+amount);s.lastAccrued=now;return amount;}
+export function claimIdle(s,now=Date.now()){accrueIdle(s,now);const n=Math.floor(s.idle);s.gold+=n;s.idle-=n;if(n>0)recordActivity(s,'income',1,now);return n;}
 export function questValue(s,q){return q.key==='cats'?unlocked(s).length:s[q.key]||0;}
 export function claimQuests(s){let sum=0;for(const q of QUESTS){if(!s.claimed.includes(q.id)&&questValue(s,q)>=q.goal){s.claimed.push(q.id);s.gold+=q.reward;sum+=q.reward;}}return sum;}
-export function rewardFor(s,stage,farm=false){return Math.round((30+stage*6)*buffs(s).gold*(farm?.6:1));}
+export function rewardFor(s,stage,farm=false){return Math.round((30+stage*6)*buffs(s).gold*(1+.05*stallLevel(s,'sign'))*(farm?.6:1));}
+export function upgradeStall(s,id,now=Date.now()){const q=stallQuote(s,id);if(!q.valid||q.maxed||s.supplies<q.cost)return false;accrueIdle(s,now);s.supplies-=q.cost;s.stall??={};s.stall[id]=q.level+1;return true;}
+export function breakthrough(s,id){const c=CATS.find(c=>c.id===id),q=breakthroughQuote(s,id);if(!c||!owns(s,id)||q.maxed||s.levels[id]<q.requiredLevel||s.badges<q.cost||s.growth.notes<q.notes||s.growth.seals<q.seals)return false;s.badges-=q.cost;s.growth.notes-=q.notes;s.growth.seals-=q.seals;s.breakthroughs[id]=q.rank+1;return true;}
 export function seeded(seed){let x=(seed>>>0)||1;return ()=>{x=(Math.imul(x,1664525)+1013904223)>>>0;return x/4294967296;};}
-export function relicOptions(s,stage){const eligible=RELICS.filter(r=>(s.relics[r.id]||0)<5).map(r=>r.id);const rnd=seeded(stage*379+s.prestiges*7127+17);for(let i=eligible.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[eligible[i],eligible[j]]=[eligible[j],eligible[i]];}return eligible.slice(0,3);}
-export function chooseRelic(s,id){if(!s.pending||!s.pending.options.includes(id)||(s.relics[id]||0)>=5)return false;s.relics[id]=(s.relics[id]||0)+1;s.relicCount++;s.pending=null;return true;}
-export function prestigeGain(s){return s.runCleared>=20?Math.floor(s.runCleared/10):0;}
-export function prestige(s){const gain=prestigeGain(s);if(!gain||s.pending)return 0;s.bones+=gain;s.prestiges++;s.runCleared=0;s.stage=1;s.relics={};s.pending=null;s.gold+=200;return gain;}
-export function chapterOf(stage){return CHAPTERS[Math.min(5,Math.floor((stage-1)/20))];}
-export function enemiesFor(stage){const boss=stage%5===0,ch=chapterOf(stage),m=1+.14*(stage-1)+.0046*(stage-1)**2,ci=Math.floor((stage-1)/20);const list=[];
+export function relicOptions(){return [];}
+export function chooseRelic(){return false;}
+// Legacy API is inert: shifts are retired and can no longer reset progress.
+export function prestigeGain(){return 0;}
+export function prestige(){return 0;}
+export function chapterOf(stage){return CHAPTERS[Math.floor((stage-1)/20)%CHAPTERS.length];}
+// Fixed progression curve, independent of the player's level or chosen formation.
+// The first three encounters remain an entry path to companion contracts.
+export function patrolPressure(stage){
+ const curve=[[3,1,1],[20,1.25,1.1],[60,1.35,1.3],[120,1.45,1.45],[300,1.5,1.6],[600,1.5,1.7]];
+ if(stage<=3)return {hp:1,atk:1};
+ for(let i=1;i<curve.length;i++){const [end,hp,atk]=curve[i],[start,prevHp,prevAtk]=curve[i-1];if(stage<=end){const t=(stage-start)/(end-start);return {hp:prevHp+(hp-prevHp)*t,atk:prevAtk+(atk-prevAtk)*t};}}
+ return {hp:1.5,atk:1.7};
+}
+export function enemiesFor(stage){const boss=stage%5===0,ch=chapterOf(stage),m=(1+.14*(Math.min(stage,120)-1)+.0046*(Math.min(stage,120)-1)**2)*(1+.007*Math.max(0,stage-120)+.00002*Math.max(0,stage-120)**2),ci=Math.floor((stage-1)/20);const list=[];
  const mob=(type,index)=>({id:'e'+index,type,name:names[type],maxHp:Math.round((type==='box'?115:type==='bag'?78:90)*m),atk:Math.round((type==='battery'?13:9)*m),interval:type==='drone'?1.45:2.1,boss:false});
  if(boss){const chapterBoss=stage%20===0;list.push({id:'e0',type:ch.type,name:chapterBoss?ch.boss:['扫街队长','捣蛋头目','罐头大盗'][Math.floor((stage%20)/5)-1]+' · '+ch.boss,maxHp:Math.round((chapterBoss?345:275)*m),atk:Math.round((chapterBoss?16:13)*m),interval:2.15,boss:true});if(stage>=15){const count=chapterBoss?4:1;for(let i=1;i<=count;i++){const escort=mob(MOB_TYPES[(ci+i)%6],i);if(count===4){escort.maxHp=Math.round(escort.maxHp*.38);escort.atk=Math.max(1,Math.round(escort.atk*.38));}list.push(escort);}}}
  else {const count=stage===1?1:stage>=16&&stage%4===0?5:stage>=12&&stage%3===0?3:2;for(let i=0;i<count;i++){const e=mob(MOB_TYPES[(stage+ci-1+i)%6],i);if(count===5){e.maxHp=Math.round(e.maxHp*.48);e.atk=Math.max(1,Math.round(e.atk*.48));}list.push(e);}}
- return list.map(e=>({...e,...enemyCombatStats(e.type,stage,e.boss)}));
+ const pressure=patrolPressure(stage);
+ return list.map(e=>({...e,maxHp:Math.round(e.maxHp*(1+(Math.max(0,stage-120)/200)**2)*pressure.hp),atk:Math.round(e.atk*pressure.atk),...enemyCombatStats(e.type,stage,e.boss)}));
 }
+export function arenaEnemies(tier){const info=arenaInfo(tier),level=8+(tier-1)*7,m=(1+.18*(level-1))*(1+.08*Math.floor(level/10)),types=['box','mop','bag','battery','drone'];return types.map((type,i)=>{const boss=info.type==='burst'&&i===0;return {id:'e'+i,type,name:(boss?'擂台蓄力王':names[type]),maxHp:Math.round((i<2?180:105)*m*(boss?1.4:1)),atk:Math.round((i<2?13:10)*m),interval:2.1,boss,...enemyCombatStats(type,15+tier*4,boss),...(info.type==='iron'&&i<2?{armor:110+tier*4,magicResist:12}:{}),arenaHealer:info.type==='recovery'&&i===2,nextHeal:5};});}
 export class Battle {
- constructor(s,{stage=s.stage,farm=false,seed=stage*173+s.wins*29+37}={}){
+ constructor(s,{stage=s.stage,farm=false,arenaTier=0,weeklyTier=0,activity=null,now=Date.now(),seed=stage*173+s.wins*29+37}={}){
+  this.activity=activity?activityInfo(s,activity):null;if(this.activity&&!this.activity.open)throw Error('此委托暂不可挑战');if(this.activity){arenaTier=0;weeklyTier=0;stage=Math.max(1,this.activity.level);farm=false;}
+  const weekly=weeklyTier?weeklyInfo(s,weeklyTier,now):null;if(weekly&&!weekly.open)throw Error('每周挑战尚未解锁');if(weekly)arenaTier=weekly.arenaTier;
+  if(!weekly&&arenaTier&&!arenaOpen(s,arenaTier))throw Error('擂台尚未解锁');
+  this.weekly=weekly;
+  this.mode=this.activity?'activity':arenaTier?'arena':'patrol';this.arenaTier=arenaTier;this.arenaRule=arenaTier?arenaInfo(arenaTier):null;
+  if(arenaTier){stage=15+(arenaTier-1)*5;seed=arenaTier*173+37;farm=false;}
   this.stage=stage;this.farm=farm;this.time=0;this.result=null;this.resolved=false;this.rng=seeded(seed);this.events=[];this.kills=0;this.canCd=0;this.buff=buffs(s);this.fxSerial=0;
   this.heroes=s.party.map((id,i)=>{const c=CATS.find(c=>c.id===id),st=catStats(s,id);return {...st,id:'p'+i,catId:id,name:c.name,side:'p',maxHp:st.hp,hp:st.hp,energy:Math.min(99,this.buff.energy+(id==='star'&&st.level>=5?40:0)),shield:st.hp*this.buff.shield,wait:.3+i*.15,stun:0,burn:0,burnTime:0,burnSource:null};});
-  for(const h of this.heroes)if(h.catId==='pudding'){h.shieldPunch=createShieldPunch({maxHp:h.maxHp,hp:h.hp,attack:h.atk,energy:h.energy});h.shieldPunch.shield=h.shield;h.shieldState='normal';}
-  this.enemies=enemiesFor(stage).map((e,i)=>({...e,hp:e.maxHp,side:'e',energy:0,shield:e.type==='fridge'?e.maxHp*.2:0,wait:1.3+i*.4,skillWait:e.boss?6:99,charge:0,stun:0,burn:0,burnTime:0,attacks:0}));
+  for(const h of this.heroes){h.gearSets=h.gear.sets;h.rune=h.gear.rune;h.runeAttacks=0;h.nextRuneSkill=0;h.runeUsed=false;h.shield=0;h.nextGearHeal=6;}
+  for(const h of this.heroes)if(h.catId==='pudding'){h.shieldPunch=createShieldPunch({maxHp:h.maxHp,hp:h.hp,attack:h.atk,energy:h.energy,config:{selfShieldRatio:SHIELD_PUNCH_DEFAULTS.selfShieldRatio*this.shieldFactor(h),chargeEnergyPerSecond:SHIELD_PUNCH_DEFAULTS.chargeEnergyPerSecond+(h.stars>=3?3:0)}});h.shieldPunch.shield=h.shield;h.shieldState='normal';}
+  this.enemies=(this.activity?streetEnemies(this.activity):arenaTier?arenaEnemies(arenaTier):enemiesFor(stage)).map((e,i)=>({...e,hp:e.maxHp,side:'e',energy:0,shield:e.type==='fridge'?e.maxHp*.2:0,wait:1.3+i*.4,skillWait:e.boss?(e.skillWait??6):99,charge:0,stun:0,burn:0,burnTime:0,attacks:0,initialArmor:e.armor}));
+  if(weekly){for(const e of this.enemies){Object.assign(e,enemyCombatStats(e.type,15+arenaTier*4,false));const strength=[1,1.6,4][weeklyTier-1];e.maxHp=Math.round(e.maxHp*strength);e.hp=e.maxHp;e.atk=Math.round(e.atk*[1,1.25,2][weeklyTier-1]);e.arenaHealer=false;e.boss=false;if(weekly.type==='iron'&&this.enemies.indexOf(e)<2){e.armor=150+weeklyTier*25;e.magicResist=12;}if(weekly.type==='recovery'&&e.id==='e2')e.arenaHealer=true;if(weekly.type==='burst'&&e.id==='e0'){e.boss=true;e.skillWait=6;}if(weekly.type==='haste')e.interval*=.8;e.initialArmor=e.armor;}}
+  if(this.heroes.some(h=>h.catId==='star'&&h.level>=40))for(const h of this.heroes)if(h.catId!=='star')h.energy=Math.min(99,h.energy+12);
+  for(const h of this.heroes)if(h.gearSets.includes('guard'))this.shield(h,h.maxHp*.25,h);
  }
  alive(side){return (side==='p'?this.heroes:this.enemies).filter(x=>x.hp>0);}
  frontlines(){return this.alive('p').slice(0,2);}
@@ -115,34 +148,44 @@ export class Battle {
   let amount=mitigatedDamage(raw,target,source,type,bonusPen)*ramp;
   if(target.catId==='orange'&&target.level>=5)amount*=.85;
   if(source?.side==='p'&&target.boss)amount*=this.buff.boss;
+  if(!dot&&source?.catId==='ink'&&source.level>=40&&target.hp<target.maxHp*.4)amount*=1.25;
+  if(!dot&&source?.side==='p'&&target.stun>0&&this.heroes.some(h=>h.catId==='mint'&&h.level>=40&&h.hp>0))amount*=1.15;
+  if(source?.side==='p'&&type==='physical'&&target.armor<target.initialArmor*.5&&this.heroes.some(h=>h.catId==='bolt'&&h.level>=80&&h.hp>0))amount*=1.15;
+  if(!dot&&target.catId==='pudding'&&target.level>=40)amount*=.9;
+  if(target.adaptive&&!dot){target.sameHit=target.lastHitType===type?Math.min(.6,(target.sameHit||0)+.12):0;target.lastHitType=type;amount*=1-target.sameHit;}
+  if(!dot&&source?.gearSets?.includes('hunt')&&target.hp<target.maxHp*.5)amount*=1.3;
+  if(source?.gearSets?.includes('ember')&&target.burnTime>0)amount*=1.25;
+  if(!dot&&source?.rune==='ember'&&target.burnTime>0)amount*=1.08;
   const shield=Math.min(target.shield,amount);target.shield-=shield;amount-=shield;const hit=Math.min(target.hp,amount);target.hp=Math.max(0,target.hp-amount);
   this.emit(dot?'burn':'hit',source,target,hit+shield,{crit,shield:shield>0,damageType:type,cause:dot?'burn':!reflect?'reflect':source?.action?.kind||'normal'});
   if(!dot)target.hitUntil=(this.eventAt??this.time)+.22;
-  if(target.hp<=0){target.downAt=this.eventAt??this.time;target.action=null;this.emit('down',source,target);if(target.side==='e')this.kills++;}
+  if(target.hp<=0){target.downAt=this.eventAt??this.time;target.action=null;this.emit('down',source,target);if(target.side==='e')this.kills++;if(source?.catId==='ink'&&source.level>=80)source.energy=Math.min(100,source.energy+35);}
   if(target.catId==='pudding'&&target.shieldPunch&&shield>0&&target.hp>0){const sp=target.shieldPunch;sp.hp=target.hp;sp.energy=target.energy;sp.shield=target.shield+shield;this.shieldEvents(target,absorbShieldDamage(sp,shield,this.eventAt??this.time));}
-  if(reflect&&target.side==='p'&&source?.side==='e'&&source.hp>0&&this.buff.reflect>0)this.harm(source,(hit+shield)*this.buff.reflect,target,{reflect:false,type});return hit;
+  if(target.rune==='steadfast'&&!target.runeUsed&&target.hp>0&&target.hp<target.maxHp*.3){target.runeUsed=true;this.shield(target,target.maxHp*.08,target);}
+  if(reflect&&target.side==='p'&&source?.side==='e'&&source.hp>0&&(target.gearSets?.includes('thorn')||this.buff.reflect>0))this.harm(source,(hit+shield)*(target.gearSets?.includes('thorn')?.15:this.buff.reflect),target,{reflect:false,type});return hit;
  }
- heal(target,amount,source){if(target.hp<=0)return;const n=Math.min(target.maxHp-target.hp,amount);target.hp+=n;if(n>1)this.emit('heal',source,target,n);}
- shield(target,amount,source){if(target.hp<=0)return;if(target.shieldPunch){const sp=target.shieldPunch;sp.hp=target.hp;sp.energy=target.energy;sp.shield=target.shield;this.shieldEvents(target,gainShield(sp,amount,this.eventAt??this.time,source?.id||'ally'));return;}const added=Math.min(amount,target.maxHp-target.shield);target.shield+=added;this.emit('shield',source,target,added);}
+ heal(target,amount,source){if(target.hp<=0)return;if(source?.gearSets?.includes('spring'))amount*=1.25;if(source?.catId==='milk'&&source.stars>=3)amount*=1.08;if(source?.rune==='warmth'&&target.hp<target.maxHp*.5)amount*=1.1;if(target.scorchedUntil>this.time)amount*=.5;const overflow=Math.max(0,amount-(target.maxHp-target.hp));const n=Math.min(target.maxHp-target.hp,amount);target.hp+=n;if(n>1)this.emit('heal',source,target,n);if(source?.catId==='milk'&&source.level>=40&&overflow>0)this.shield(target,Math.min(target.maxHp*.08,overflow*.3),source);}
+ shieldFactor(target){return (target.gearSets?.includes('guard')?1.2:1)*(target.rune==='bulwark'?1.08:1);}
+ shield(target,amount,source){if(target.hp<=0)return;amount*=this.shieldFactor(target);if(source?.catId==='orange'&&source.stars>=3)amount*=1.05;if(target.shieldPunch){const sp=target.shieldPunch;sp.hp=target.hp;sp.energy=target.energy;sp.shield=target.shield;this.shieldEvents(target,gainShield(sp,amount,this.eventAt??this.time,source?.id||'ally'));return;}const added=Math.min(amount,target.maxHp-target.shield);target.shield+=added;this.emit('shield',source,target,added);}
  shieldEvents(h,events){
   const sp=h.shieldPunch;h.energy=sp.energy;h.shield=sp.shield;h.shieldState=sp.state;
   for(const e of events){
    if(e.type==='shieldGain')this.emit('shield',h,h,e.amount,{at:e.at});
-   if(e.type==='selfShield')this.emit('skill',h,h,0,{text:'护体劲',targets:[h.id],at:e.at});
+   if(e.type==='selfShield'){this.emit('skill',h,h,0,{text:'护体劲',targets:[h.id],at:e.at});this.runeSkill(h);}
    if(e.type==='chargeStart'){h.shieldTargetId=this.targetFor(h)?.id;h.action=null;this.emit('status',h,h,0,{text:'蓄盾',at:e.at});}
    if(e.type==='secondTrigger')this.emit('status',h,h,0,{text:'震街拳就绪',at:e.at});
    if(e.type==='cancel'){h.action=null;this.emit('cancel',h,h,0,{at:e.at});}
    if(e.type==='punchStart'){const target=this.enemies.find(x=>x.id===h.shieldTargetId&&x.hp>0)||this.alive('e')[0];h.shieldTargetId=target?.id;h.action={kind:'skill',windup:0,travel:sp.config.punchTravel,impactAt:sp.config.punchTravel,hold:.08,duration:sp.config.punchTravel+sp.config.recovery,elapsed:Math.max(0,this.time-e.at),released:true,impacted:false,targetId:target?.id,shieldStrike:true};this.emit('windup',h,target,0,{kind:'skill',style:'melee',windup:0,at:e.at});this.emit('release',h,target,0,{kind:'skill',style:'melee',travel:sp.config.punchTravel,at:e.at});}
-   if(e.type==='punchHit'){h.shidunImpactAt=e.at;this.eventAt=e.at;this.emit('skill',h,h,0,{text:'震街拳',targets:shidunTargets(this.enemies,h.shieldTargetId).map(x=>x.id),shieldPunch:true});for(const enemy of shidunTargets(this.enemies,h.shieldTargetId))this.harm(enemy,h.atk+e.shieldAtSecond*1.6,h,{type:'physical'});this.eventAt=null;if(h.action)h.action.impacted=true;}
+   if(e.type==='punchHit'){if(h.level>=80){h.energy=Math.min(100,h.energy+20);sp.energy=h.energy;}h.shidunImpactAt=e.at;this.eventAt=e.at;this.emit('skill',h,h,0,{text:'震街拳',targets:shidunTargets(this.enemies,h.shieldTargetId).map(x=>x.id),shieldPunch:true});for(const enemy of shidunTargets(this.enemies,h.shieldTargetId))this.harm(enemy,h.atk+e.shieldAtSecond*1.6,h,{type:'physical'});this.eventAt=null;if(h.action)h.action.impacted=true;}
    if(e.type==='normal'){h.action=null;h.wait=Math.max(h.wait,.25);}
   }
  }
  updateShieldWarrior(h){const sp=h.shieldPunch;sp.hp=h.hp;sp.maxHp=h.maxHp;sp.energy=h.energy;sp.shield=Math.min(h.shield,h.maxHp*.8);sp.attack=h.atk;if(h.stun>0&&sp.state!=='controlled')this.shieldEvents(h,controlShieldPunch(sp,this.time,h.stun));this.shieldEvents(h,tickShieldPunch(sp,this.time));if(h.action?.shieldStrike)h.action.elapsed=this.time-sp.releaseAt;return ['charging','primed','punching','controlled'].includes(sp.state);}
- applyBurn(target,damage,seconds,source){if(target.burnTime<=0||damage>=target.burn){target.burn=damage;target.burnSource=source;}target.burnTime=Math.max(target.burnTime,seconds);}
+ applyBurn(target,damage,seconds,source){if(source?.catId==='spark'&&source.stars>=3)seconds+=1;if(source?.catId==='spark'&&source.level>=40)damage*=1.2;if(target.burnTime<=0||damage>=target.burn){target.burn=damage;target.burnSource=source;}target.burnTime=Math.max(target.burnTime,seconds);}
  targetFor(actor,kind='normal'){
   if(kind==='skill'&&['orange','milk','star'].includes(actor.catId))return actor;
   const foes=this.alive(actor.side==='p'?'e':'p');if(!foes.length)return null;
-  if(actor.side==='e'){const front=this.frontlines(),locked=front.find(h=>h.id===actor.action?.targetId);return locked||front[((actor.attacks||0)+this.enemies.indexOf(actor))%front.length];}
+  if(actor.side==='e'){if(actor.ambusher){const rear=this.alive('p').filter(h=>this.heroes.indexOf(h)>=2);if(rear.length)return rear.reduce((a,b)=>a.hp/a.maxHp<b.hp/b.maxHp?a:b);}const front=this.frontlines(),locked=front.find(h=>h.id===actor.action?.targetId);return locked||front[((actor.attacks||0)+this.enemies.indexOf(actor))%front.length];}
   if(actor.catId==='ink')return foes.reduce((a,b)=>a.hp<b.hp?a:b);
   if(kind==='skill'&&actor.catId==='mint')return foes.reduce((a,b)=>a.hp>b.hp?a:b);
   return foes[0];
@@ -163,19 +206,28 @@ export class Battle {
   if(!a.impacted&&a.elapsed>=a.impactAt){a.impacted=true;const target=this.targetFor(actor,a.kind);if(target)a.targetId=target.id;this.eventAt=this.time-Math.max(0,a.elapsed-a.impactAt);if(a.kind==='skill')this.skill(actor);else this.normal(actor);this.eventAt=null;}
   if(a.elapsed>=a.duration)actor.action=null;
  }
- normal(actor){const target=this.targetFor(actor);if(!target)return;const crit=actor.side==='p'&&this.rng()<actor.crit;this.harm(target,actor.atk*(crit?1.8:1),actor,{crit,type:actor.normalDamageType});
-  if(actor.side==='p'){actor.energy=Math.min(100,actor.energy+(actor.catId==='milk'&&actor.level>=5?32:22));if(crit&&this.buff.burn>0)this.applyBurn(target,actor.atk*this.buff.burn,2,actor);}
-  else {actor.attacks++;if(actor.type==='mop'){target.wait+=.28;this.emit('status',actor,target,0,{text:'迟缓'});}if(actor.type==='bag'&&actor.attacks%3===0){const ally=this.alive('e').reduce((a,b)=>a.hp/a.maxHp<b.hp/b.maxHp?a:b);this.heal(ally,actor.maxHp*.12,actor);}}
+ normal(actor){const target=this.targetFor(actor);if(!target)return;const crit=actor.side==='p'&&this.rng()<actor.crit;const dealt=this.harm(target,actor.atk*(crit?(actor.catId==='ink'&&actor.stars>=3?1.9:1.8):1),actor,{crit,type:actor.normalDamageType});
+  if(actor.ambusher&&(actor.attacks||0)%3===2&&target.hp>0&&dealt>0){target.energy=Math.max(0,target.energy-12);if(target.shieldPunch)target.shieldPunch.energy=target.energy;this.emit('status',actor,target,0,{text:'能量 -12'});}
+  if(actor.side==='p'){actor.runeAttacks++;if(actor.rune==='followup'&&actor.runeAttacks%4===0&&target.hp>0)this.harm(target,actor.atk*.4,actor,{type:actor.normalDamageType});}
+  if(actor.catId==='bolt'&&actor.level>=40&&target.armor>target.initialArmor*.4)target.armor=Math.max(target.initialArmor*.4,target.armor-2);
+  if(actor.side==='p'){actor.energy=Math.min(100,actor.energy+(actor.catId==='milk'&&actor.level>=5?32:22)+(actor.gearSets?.includes('clock')?8:0));if(crit&&(this.buff.burn>0||actor.gearSets?.includes('ember')))this.applyBurn(target,actor.atk*(actor.gearSets?.includes('ember')?.3:this.buff.burn),2,actor);}
+  else {actor.attacks++;if(actor.type==='mop'){target.wait+=.28;this.emit('status',actor,target,0,{text:'迟缓'});}if(actor.type==='bag'&&actor.attacks%3===0&&this.alive('e').length){const ally=this.alive('e').reduce((a,b)=>a.hp/a.maxHp<b.hp/b.maxHp?a:b);this.heal(ally,actor.maxHp*.12,actor);}}
  }
+ runeSkill(h){if(h.rune==='focus'&&this.time>=h.nextRuneSkill){h.energy=Math.min(100,h.energy+6);h.nextRuneSkill=this.time+8;if(h.shieldPunch)h.shieldPunch.energy=h.energy;}}
  skill(h){h.energy=0;this.emit('skill',h,h,0,{text:CATS.find(c=>c.id===h.catId).skill,targets:this.skillTargets(h).map(a=>a.id)});const es=this.alive('e'),ps=this.alive('p');if(!es.length)return;let t=es[0];
+  if(h.catId==='orange'&&h.level>=40){const weakest=ps.reduce((a,b)=>a.hp/a.maxHp<b.hp/b.maxHp?a:b);this.shield(weakest,weakest.maxHp*.08,h);}
+  if(h.catId==='orange'&&h.level>=80)for(const p of ps)if(p!==h)p.energy=Math.min(100,p.energy+12);
+  if(h.catId==='milk'&&h.level>=80)for(const p of ps){p.burn=0;p.burnTime=0;p.burnSource=null;}
+  if(h.catId==='spark'&&h.level>=80)for(const e of es)e.scorchedUntil=this.time+4;
   if(h.catId==='orange'){this.shield(h,h.maxHp*.45,h);for(const p of ps.filter(x=>x!==h))this.shield(p,p.maxHp*.12,h);}
   if(h.catId==='ink'){t=es.reduce((a,b)=>a.hp<b.hp?a:b);this.harm(t,h.atk*3.3,h,{type:'physical',bonusPen:25});}
   if(h.catId==='milk')for(const p of ps)this.heal(p,h.maxHp*.28,h);
   if(h.catId==='spark')for(const e of es){this.harm(e,h.atk*1.6,h,{type:'magic'});this.applyBurn(e,h.atk*.3,h.level>=5?6:4,h);}
-  if(h.catId==='mint'){t=es.reduce((a,b)=>a.hp>b.hp?a:b);this.harm(t,h.atk*2.3,h,{type:'magic'});t.stun=h.level>=5?2.6:1.8;if(t.charge>0){t.charge=0;t.skillWait=5;this.emit('interrupt',h,t,0,{text:'已打断'});}}
+  if(h.catId==='mint'){t=es.reduce((a,b)=>a.hp>b.hp?a:b);this.harm(t,h.atk*2.3,h,{type:'magic'});if(h.level>=80)t.magicResist*=.8;t.stun=(h.level>=5?2.6:1.8)+(h.stars>=3?.25:0);if(t.charge>0){t.charge=0;t.skillWait=5;this.emit('interrupt',h,t,0,{text:'已打断'});}}
   if(h.catId==='bolt'){t.armor*=h.level>=5?.25:.5;this.harm(t,h.atk*3,h,{type:'physical'});this.emit('status',h,t,0,{text:'破甲'});}
   if(h.catId==='pudding')this.shield(h,h.maxHp*.35,h);
-  if(h.catId==='star')for(const p of ps){if(p!==h)p.energy=Math.min(100,p.energy+48);this.heal(p,h.atk*1.6,h);}
+  if(h.catId==='star')for(const p of ps){if(p!==h)p.energy=Math.min(100,p.energy+(h.level>=80?56:48)+(h.stars>=3?4:0));this.heal(p,h.atk*1.6,h);}
+  this.runeSkill(h);
  }
  openCan(){
   if(this.result||this.canCd>0||this.canSequence)return false;
@@ -193,24 +245,31 @@ export class Battle {
   while(c.next<c.targets.length&&age+1e-9>=canHitAt(c.next)){this.eventAt=c.born+canHitAt(c.next);const id=c.targets[c.next++],e=this.enemies.find(e=>e.id===id);if(e?.hp>0)this.harm(e,c.attack,c.source,{type:'physical'});}
   this.eventAt=null;this.canEvent=false;if(this.time+1e-9>=c.until)this.canSequence=null;
  }
- syncStats(s,{preserveHealthRatio=false}={}){this.buff=buffs(s);for(const h of this.heroes){const n=catStats(s,h.catId),oldMax=h.maxHp,ratio=h.hp/oldMax,add=n.hp-oldMax;h.maxHp=n.hp;if(h.hp>0)h.hp=preserveHealthRatio?ratio*n.hp:clamp(h.hp+Math.max(0,add),1,h.maxHp);h.shield=Math.min(n.hp,h.shield*(preserveHealthRatio?n.hp/oldMax:1));for(const key of ['atk','interval','crit','level','armor','magicResist','armorPen','magicPen','normalDamageType','skillDamageType'])h[key]=n[key];}}
- checkEnd(){if(!this.alive('e').length){if(!this.canSequence)this.result='win';}else if(!this.alive('p').length||this.time>=75)this.result='lose';return this.result;}
+ syncStats(s,{preserveHealthRatio=false}={}){this.buff=buffs(s);for(const h of this.heroes){const n=catStats(s,h.catId,h.gear),oldMax=h.maxHp,ratio=h.hp/oldMax,add=n.hp-oldMax;h.maxHp=n.hp;if(h.hp>0)h.hp=preserveHealthRatio?ratio*n.hp:clamp(h.hp+Math.max(0,add),1,h.maxHp);h.shield=Math.min(n.hp,h.shield*(preserveHealthRatio?n.hp/oldMax:1));if(h.shieldPunch)h.shieldPunch.config.chargeEnergyPerSecond+=((n.stars>=3?1:0)-(h.stars>=3?1:0))*3;for(const key of ['atk','interval','crit','level','stars','armor','magicResist','armorPen','magicPen','normalDamageType','skillDamageType'])h[key]=n[key];}}
+ checkEnd(){if(!this.alive('e').length){if(!this.canSequence)this.result='win';}else if(!this.alive('p').length||this.time>=(this.activity?90:75))this.result='lose';return this.result;}
  tick(dt){if(this.result)return this.events.splice(0);dt=clamp(dt,0,.25);this.time+=dt;this.canCd=Math.max(0,this.canCd-dt);
   this.advanceCan();
   // Let the lid leave the screen before loot or the next wave can cover it.
   if(!this.alive('e').length){this.checkEnd();return this.events.splice(0);}
-  for(const a of [...this.heroes,...this.enemies]){if(a.hp<=0){if(a.shieldPunch)this.updateShieldWarrior(a);continue;}a.stun=Math.max(0,a.stun-dt);if(a.burnTime>0){const burnDt=Math.min(dt,a.burnTime);a.burnTime-=burnDt;this.harm(a,a.burn*burnDt,a.burnSource,{type:'magic',dot:true,reflect:false});}if(a.side==='p'&&this.buff.regen>0)a.hp=Math.min(a.maxHp,a.hp+a.maxHp*this.buff.regen*dt);if(a.hp<=0)continue;if(a.shieldPunch&&this.updateShieldWarrior(a))continue;if(a.stun>0){if(a.action){a.action=null;this.emit('cancel',a,a);}continue;}
-   if(a.side==='e'&&a.boss){a.skillWait-=dt;if(a.charge>0){a.charge-=dt;if(a.charge<=0){for(const p of this.alive('p'))this.harm(p,a.atk*1.55,a,{type:a.skillDamageType});a.skillWait=7;a.burstUntil=this.time+.38;this.emit('burst',a,a);}continue;}if(a.skillWait<=0){a.action=null;a.charge=2;this.emit('charge',a,a,0,{text:'正在蓄力'});continue;}}
+  for(const a of [...this.heroes,...this.enemies]){if(a.hp<=0){if(a.shieldPunch)this.updateShieldWarrior(a);continue;}a.stun=Math.max(0,a.stun-dt);if(a.burnTime>0){const burnDt=Math.min(dt,a.burnTime);a.burnTime-=burnDt;this.harm(a,a.burn*burnDt,a.burnSource,{type:'magic',dot:true,reflect:false});}if(a.side==='p'&&a.gearSets?.includes('spring')&&this.time>=a.nextGearHeal){a.nextGearHeal=this.time+6;this.heal(a,a.maxHp*.05,a);}if(a.side==='p'&&this.buff.regen>0)a.hp=Math.min(a.maxHp,a.hp+a.maxHp*this.buff.regen*dt);if(a.hp<=0)continue;if(a.shieldPunch&&this.updateShieldWarrior(a))continue;if(a.stun>0){if(a.action){a.action=null;this.emit('cancel',a,a);}continue;}
+   if(a.barrierCycle&&this.time>=a.nextBarrier){a.nextBarrier=this.time+a.barrierCycle;if(a.burnTime<=0){this.shield(a,a.maxHp*a.barrierRatio,a);this.emit('status',a,a,0,{text:'冷库补盾'});}else this.emit('status',a,a,0,{text:'灼烧阻断补盾'});}
+   if(a.arenaHealer&&this.time>=a.nextHeal){a.nextHeal=this.time+5;for(const ally of this.enemies.slice(0,2))if(ally.hp>0)this.heal(ally,ally.maxHp*(a.healRatio||.16),a);this.emit('status',a,a,0,{text:'补给前排'});}
+   if(a.side==='e'&&a.boss){a.skillWait-=dt;if(a.charge>0){a.charge-=dt;if(a.charge<=0){for(const p of this.alive('p'))this.harm(p,a.atk*1.55,a,{type:a.skillDamageType});a.skillWait=a.burstCooldown||7;a.burstUntil=this.time+.38;this.emit('burst',a,a);}continue;}if(a.skillWait<=0){a.action=null;a.charge=2;this.emit('charge',a,a,0,{text:'正在蓄力'});continue;}}
    a.wait-=dt;if(a.action)this.advanceAction(a,dt);else if(a.wait<=0)this.beginAction(a,a.side==='p'&&a.catId!=='pudding'&&a.energy>=100?'skill':'normal');
   }this.checkEnd();return this.events.splice(0);
  }
 }
-export function settleBattle(s,b){if(!b.result||b.resolved)return null;b.resolved=true;s.kills+=b.kills;s.seconds+=Math.floor(b.time);if(b.result==='lose')return {win:false,gold:0,unlocked:[]};
+export function settleBattle(s,b,now=Date.now()){if(!b.result||b.resolved)return null;b.resolved=true;s.seconds+=Math.floor(b.time);
+ if(b.activity){if(b.result==='lose')return {win:false,activity:true,unlocked:[]};const reward=settleActivity(s,b.activity);if(!reward)return null;recordActivity(s,'arena',1,now);return {win:true,activity:true,...reward,unlocked:[],complete:false};}
+ if(b.weekly){if(b.result==='lose')return {win:false,arena:true,gold:0,badges:0,unlocked:[]};recordActivity(s,'arena',1,now);const reward=settleWeekly(s,b.weekly.tier,b.weekly.week,now);const gearLoot=reward.badges?gearDrop(s,Math.min(600,b.weekly.tier*150),{guaranteed:true}):null;return {win:true,arena:true,weekly:true,gearLoot,...reward,unlocked:[],complete:false};}
+ if(b.mode==='arena'){if(b.result==='lose')return {win:false,arena:true,gold:0,badges:0,unlocked:[]};if(!arenaOpen(s,b.arenaTier))return null;const info=arenaInfo(b.arenaTier),first=b.arenaTier>(s.arenaCleared||0),badges=info.baseReward+(first?info.firstBonus:0);s.badges+=badges;s.arenaCleared=Math.max(s.arenaCleared,b.arenaTier);recordActivity(s,'arena',1,now);const gearLoot=gearDrop(s,Math.min(600,b.arenaTier*45),{guaranteed:true});return {win:true,arena:true,gold:0,badges,gearLoot,first,unlocked:[],complete:false};}
+ s.kills+=b.kills;if(b.result==='lose')return {win:false,gold:0,supplies:0,unlocked:[]};
  if(!b.farm&&(b.stage!==s.stage||b.stage<=s.runCleared))return null;
- const before=s.highest,reward=rewardFor(s,b.stage,b.farm);s.gold+=reward;s.wins++;
- if(!b.farm){s.runCleared=b.stage;s.highest=Math.max(s.highest,b.stage);s.stage=Math.min(MAX_STAGE,b.stage+1);if(b.stage%5===0){s.bosses++;const opts=relicOptions(s,b.stage);if(opts.length)s.pending={stage:b.stage,options:opts};}}
- const joins=CATS.filter(c=>c.unlock>before&&c.unlock<=s.highest);if(s.party.length<MAX_PARTY&&joins.length)s.party.push(joins[0].id);
- return {win:true,gold:reward,unlocked:joins,complete:s.runCleared===MAX_STAGE&&!b.farm};
+ const before=s.highest,reward=rewardFor(s,b.stage,b.farm);s.gold+=reward;s.wins++;recordActivity(s,'patrol',1,now);const supplies=suppliesFor(s,b.stage,b.farm);s.supplies+=supplies;
+ if(!b.farm){s.runCleared=b.stage;s.highest=Math.max(s.highest,b.stage);s.stage=Math.min(MAX_STAGE,b.stage+1);if(b.stage%5===0)s.bosses++;}
+ const joins=[];
+ const gearLoot=gearDrop(s,b.stage);if(gearLoot?.item)s.relicCount++;
+ return {win:true,gold:reward,supplies,gearLoot,unlocked:joins,complete:s.runCleared===MAX_STAGE&&!b.farm};
 }
 function checksum(str){let h=2166136261;for(let i=0;i<str.length;i++)h=Math.imul(h^str.charCodeAt(i),16777619);return (h>>>0).toString(16);}
 export function encodeSave(s){const payload=JSON.stringify(s);return JSON.stringify({format:'CAN-CLUB-1',checksum:checksum(payload),payload});}

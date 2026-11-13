@@ -1,6 +1,6 @@
-import {CATS,MAX_PARTY,inheritanceFor} from './core.mjs?v=0.21.13';
-import {catSVG} from './art.mjs?v=0.21.13';
-import {crewUpgradeHTML} from './crew-profile.mjs?v=0.21.13';
+import {CATS,ownsCompanion,MAX_PARTY,inheritanceFor} from './core.mjs?v=0.25.0';
+import {catSVG} from './art.mjs?v=0.25.0';
+import {crewUpgradeHTML} from './crew-profile.mjs?v=0.25.0';
 
 const name=id=>CATS.find(c=>c.id===id)?.name||'伙伴';
 const slots=[[71,36],[71,72],[27,23],[27,54],[27,85]];
@@ -9,8 +9,8 @@ export function crewFormationHTML(state){
   const id=state.party[i],available=i<=state.party.length;
   return '<button class="formation-slot'+(id?'':' is-empty')+'" data-formation-slot="'+i+'" '+(id?'data-drag-cat="'+id+'"':'')+' '+(!available?'disabled':'')+' style="left:'+x+'%;top:'+y+'%" aria-label="'+(i<2?'前排 '+(i+1):'后排 '+(i-1))+'，'+(id?name(id)+'，可拖动换位':available?'空位，可拖入伙伴':'待上阵')+'"><span class="formation-slot-art">'+(id?catSVG(id,true):'<i>＋</i>')+'</span><b>'+ (id?name(id):'空位')+'</b><small>'+(id?'Lv.'+state.levels[id]:available?'拖入伙伴':'—')+'</small></button>';
  }).join('')+'</div><p class="formation-hint" role="status" aria-live="polite">拖动换位 · 替换伙伴自动继承培养</p><div class="formation-heading bench-heading"><h3>所有伙伴</h3><span>点击下方按钮升级</span></div><div class="formation-bench">'+CATS.map(c=>{
-  const open=state.highest>=c.unlock;
-  return '<article class="formation-card'+(open?'':' is-locked')+'"><button class="formation-bench-pick" '+(open?'data-drag-cat="'+c.id+'"':'disabled')+' aria-label="'+c.name+(open?'，拖动上阵':'，第 '+c.unlock+' 关结识')+'" aria-pressed="false"><span class="formation-card-art">'+catSVG(c.id,true)+'</span><b>'+c.name+'</b><small>'+(open?'Lv.'+state.levels[c.id]:'第 '+c.unlock+' 关')+'</small>'+(state.party.includes(c.id)?'<i>出战</i>':'')+'</button>'+crewUpgradeHTML(state,c.id)+'</article>';
+  const open=ownsCompanion(state,c.id);
+  return '<article class="formation-card'+(open?'':' is-locked')+'"><button class="formation-bench-pick" '+(open?'data-drag-cat="'+c.id+'"':'disabled')+' aria-label="'+c.name+(open?'，拖动上阵':'，通过伙伴委托结识')+'" aria-pressed="false"><span class="formation-card-art">'+catSVG(c.id,true)+'</span><b>'+c.name+'</b><small>'+(open?'Lv.'+state.levels[c.id]:'未结识')+'</small>'+(state.party.includes(c.id)?'<i>出战</i>':'')+'</button>'+crewUpgradeHTML(state,c.id)+'</article>';
  }).join('')+'</div></section>';
 }
 

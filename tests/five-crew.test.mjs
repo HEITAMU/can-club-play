@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {initialState,normalizeState,encodeSave,decodeSave,setParty,inheritanceFor,settleBattle,Battle,CATS,MAX_PARTY,enemiesFor} from '../core.mjs';
+import {initialState,recruitCompanion,normalizeState,encodeSave,decodeSave,setParty,inheritanceFor,settleBattle,Battle,CATS,MAX_PARTY,enemiesFor} from '../core.mjs';
 import {BattleCues,formationPositions} from '../battle-cues.mjs';
-function ready(){const s=initialState();s.highest=60;s.runCleared=60;s.stage=61;s.party=['orange','ink','milk','spark','mint'];return s;}
+function ready(){const s=initialState();s.roster.owned=CATS.map(c=>c.id);s.highest=60;s.runCleared=60;s.stage=61;s.party=['orange','ink','milk','spark','mint'];return s;}
 test('five unique unlocked cats survive save roundtrip; old three-cat saves keep resources and levels',()=>{
  const s=ready();s.levels.orange=19;s.gold=5432;assert.equal(MAX_PARTY,5);assert.deepEqual(decodeSave(encodeSave(s)).party,s.party);
  s.party=s.party.slice(0,3);const restored=decodeSave(encodeSave(s));assert.deepEqual(restored.party,s.party);assert.deepEqual(restored.levels,s.levels);assert.equal(restored.gold,s.gold);
@@ -13,11 +13,7 @@ test('fourth and fifth slots support inherited replacement and swapping without 
  assert.equal(inheritanceFor(s,4,'bolt').from,'mint');assert.ok(setParty(s,4,'bolt'));assert.equal(s.levels.bolt,23);assert.equal(s.levels.mint,1);
  const before={...s.levels};assert.ok(setParty(s,0,'bolt'));assert.deepEqual(s.levels,before);assert.equal(new Set(s.party).size,5);assert.equal(setParty(s,5,'star'),false);
 });
-test('new recruits fill the fourth and fifth free places at level one',()=>{
- const s=ready();s.highest=s.runCleared=7;s.stage=8;s.party=['orange','ink','milk'];s.levels.orange=20;
- let b=new Battle(s);b.result='win';settleBattle(s,b);assert.equal(s.party[3],'spark');assert.equal(s.levels.spark,1);
- s.highest=s.runCleared=14;s.stage=15;b=new Battle(s);b.result='win';settleBattle(s,b);assert.equal(s.party[4],'mint');assert.equal(s.levels.mint,1);assert.equal(s.levels.orange,20);
-});
+test('recruited companions fill free places at level one without copying training',()=>{const s=ready();s.roster.owned=['orange','ink','milk'];s.party=['orange','ink','milk'];s.levels.orange=20;for(const id of ['spark','mint']){s.roster.shards[id]=20;assert.ok(recruitCompanion(s,id));assert.equal(s.levels[id],1);}assert.deepEqual(s.party,['orange','ink','milk','spark','mint']);assert.equal(s.levels.orange,20);});
 test('five-cat ordinary hits follow the living front, with no position buff; boss burst hits all five',()=>{
  const b=new Battle(ready(),{stage:20}),enemy=b.enemies[0];enemy.atk=10;for(const h of b.heroes){h.armor=0;h.magicResist=0;}
  for(let i=0;i<5;i++){enemy.attacks=0;const h=b.heroes[i],hp=h.hp;b.normal(enemy);assert.equal(hp-h.hp,10);h.hp=0;}

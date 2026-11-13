@@ -5,7 +5,7 @@ import {rigPose} from '../rig-motion.mjs';
 import {actionTiming} from '../motion.mjs';
 import {expressionFor} from '../expressions.mjs';
 import {FINISHED_SPARK as ART} from '../finished-spark-data.mjs';
-import {setFinishedCanvasFactory} from '../finished-spark-renderer.mjs?v=0.21.1';
+import {setFinishedCanvasFactory} from '../finished-spark-renderer.mjs?v=0.25.0';
 const require=createRequire(import.meta.url),{createCanvas,loadImage}=require('@napi-rs/canvas'),sharp=require('sharp');
 setFinishedCanvasFactory(createCanvas);const atlas=await loadImage(await sharp(ART.atlas).png().toBuffer());fs.mkdirSync('qa/spark',{recursive:true});
 export function sparkReviewFrame(time=0,kind='idle',face,width=360){
