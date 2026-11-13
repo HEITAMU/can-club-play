@@ -652,6 +652,7 @@ export class NativeGame {
       atlas,
       particles.filter((p) => p.layer === 0),
       can,
+      this.art.image("assets/vfx/shidun-impact-v0211.webp"),
     );
     for (const a of actors.sort((a, b) => points[a.id].y - points[b.id].y)) {
       const p = points[a.id],
@@ -703,6 +704,7 @@ export class NativeGame {
       atlas,
       particles.filter((p) => p.layer !== 0),
       can,
+      this.art.image("assets/vfx/shidun-impact-v0211.webp"),
     );
     this.hitTexts = this.hitTexts.filter((e) => t - e.born < 0.9);
     for (const e of this.hitTexts) {

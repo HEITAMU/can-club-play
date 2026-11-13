@@ -1,5 +1,5 @@
-import {shidunPose} from './shidun-motion.mjs?v=0.21.10';
-import {catAction} from './action-profiles.mjs?v=0.21.10';
+import {shidunPose} from './shidun-motion.mjs?v=0.21.11';
+import {catAction} from './action-profiles.mjs?v=0.21.11';
 // Continuous motion for painted cutout parts. No pose-frame swapping.
 const clamp=n=>Math.max(0,Math.min(1,n));
 export const ease=n=>{const t=clamp(n);return t*t*(3-2*t);};
