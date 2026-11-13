@@ -26,7 +26,6 @@ if (!/^wx[a-f\d]{16}$/.test(appid))
 await fs.rm(out, { recursive: true, force: true });
 await fs.mkdir(out, { recursive: true });
 const list = [
-  "rebuild/orange.webp",
   "anatomy/cats-a-v0200.webp",
   "anatomy/cats-b.webp",
   "anatomy/cats-c.webp",
@@ -38,6 +37,7 @@ const list = [
   "scenes/streets-v019.webp",
   "vfx/effects.webp",
   "vfx/can-rescue-v0192.webp",
+  "rebuild/orange.webp",
 ];
 const assets = {},
   packages = [],
@@ -61,7 +61,8 @@ for (const relative of list) {
       : pipeline.png({ compressionLevel: 9 })
   ).toBuffer();
   if (data.length > 3.8 * 1024 ** 2) throw Error("单图超出分包预算：" + source);
-  if (!group || group.bytes + data.length > 3.8 * 1024 ** 2) {
+  group = packages.find((p) => p.bytes + data.length <= 3.8 * 1024 ** 2);
+  if (!group) {
     group = {
       name: "art" + (packages.length + 1),
       root: "packs/art" + (packages.length + 1) + "/",
