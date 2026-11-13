@@ -3,7 +3,7 @@ const clamp=x=>Math.max(0,Math.min(1,x));
 // Empty/dead slots do not pull an unrelated rear target into the strike.
 export function shidunTargets(enemies,targetId){
  const index=enemies.findIndex(e=>e.id===targetId),front=index===1||index>=3?1:0;
- const rear=enemies.length>2?(front===0?2:enemies.length-1):-1;
+ const rear=index>=2?index:enemies.length>2?(front===0?2:enemies.length-1):-1;
  const ids=new Set([front,1-front,rear]);return enemies.filter((e,i)=>ids.has(i)&&e.hp>0);
 }
 export function shidunPose(actor,time,idleTime=time){
@@ -18,7 +18,7 @@ export function shidunPose(actor,time,idleTime=time){
  }
  const a=actor.action;if(!a||a.elapsed>=a.duration)return p;
  if(a.shieldStrike){const t=a.elapsed,h=a.impactAt;
-  p.shidunCel=t<h*.4?6:t<h?10:t<h+.14?5:t<a.duration-.18?7:11;return p;
+  p.shidunCel=t<h*.4?6:t<h?10:t<h+.25?5:t<a.duration-.18?7:11;return p;
  }
  const t=a.elapsed,h=a.impactAt;
  p.shidunCel=t<a.windup*.45?8:t<a.windup?9:t<h?10:t<h+.12?5:t<a.duration-.12?7:11;
