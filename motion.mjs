@@ -1,4 +1,4 @@
-import {enemyAttackType} from './action-profiles.mjs?v=0.21.0';
+import {enemyAttackType} from './action-profiles.mjs?v=0.22.0';
 // Combat and rendering share a simulation clock. x1 is a deliberate, calmer pace.
 export const battleRate=speed=>speed===2?1.8:.9;
 export function attackStyle(a){
@@ -6,7 +6,9 @@ export function attackStyle(a){
  return ({orange:'melee',ink:'arrow',milk:'milk',spark:'fire',mint:'ice',bolt:'melee',pudding:'melee',star:'star'})[a.catId];
 }
 export function actionTiming(a,kind='normal'){
- const tempo=Math.max(.64,Math.min(1,(a.interval||1.5)/1.25)),windup=(kind==='skill'?.40:.25)*tempo,travel=(attackStyle(a)==='melee'?.20:.29)*tempo,hold=(kind==='skill'?.11:.085)*tempo,recovery=.31*tempo;
+ const tempo=Math.max(.64,Math.min(1,(a.interval||1.5)/1.25));
+ if(a.side==='p'&&a.catId==='orange'&&kind==='normal')return {windup:.30*tempo,travel:.32*tempo,hold:.10*tempo,recovery:.40*tempo,impactAt:.62*tempo,duration:1.12*tempo};
+ const windup=(kind==='skill'?.40:.25)*tempo,travel=(attackStyle(a)==='melee'?.20:.29)*tempo,hold=(kind==='skill'?.11:.085)*tempo,recovery=.31*tempo;
  return {windup,travel,hold,recovery,impactAt:windup+travel,duration:windup+travel+hold+recovery};
 }
 export const unit=n=>Math.min(1,Math.max(0,n));
@@ -41,8 +43,9 @@ export function poseFor(a,time){
 export function travelOffset(actor,pose,source,target,width,height,bodySize=130,targetSize=110,time=0){
  let x=0,y=0;
  if(actor.action&&source&&target){
-  const dx=(target.x-source.x)*width/100,dy=(target.y-source.y)*height/100,distance=Math.hypot(dx,dy),melee=attackStyle(actor)==='melee';
-  const reach=melee?Math.min(distance*.76,Math.max(0,distance-(bodySize+targetSize)*.28)):Math.min(6,distance*.04);
+  const dx=(target.x-source.x)*width/100,dy=(target.y-source.y)*height/100,distance=Math.hypot(dx,dy),planted=actor.catId==='orange'&&actor.action.kind==='skill',melee=attackStyle(actor)==='melee'&&!planted;
+  const contact=actor.catId==='orange'?bodySize*.60+targetSize*.35:(bodySize+targetSize)*.28;
+  const reach=planted?0:melee?Math.min(distance*.76,Math.max(0,distance-contact)):Math.min(6,distance*.04);
   if(distance>0){x=dx/distance*reach*pose.move;y=dy/distance*reach*pose.move;}
  }
  const duration=.22,sinceHit=duration-((actor.hitUntil||0)-time);

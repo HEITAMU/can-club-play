@@ -1,23 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ANATOMY} from '../anatomy-data.mjs';
+import {ARTICULATED} from '../articulated-data.mjs';
+// Fixed five-piece draw-count contracts apply to the seven unchanged rigs.
+// The articulated orange renderer has its own joint/skin/handedness tests.
+const legacyRigs=Object.entries(ANATOMY).filter(([id])=>!ARTICULATED[id]);
 import {renderPuppetFrame} from '../rig-renderer.mjs';
 import {rigPose,rigFor,animationClock,flowTrack} from '../rig-motion.mjs';
 import {actionTiming,MotionOffsets} from '../motion.mjs';
 import {effectEnvelope,impactStyle,shieldTransition} from '../painted-fx.mjs';
 import {Battle,initialState} from '../core.mjs';
 function context(){let m=[1,0,0,1,0,0],stack=[];return {draws:[],globalAlpha:1,setTransform(...v){m=v;},clearRect(){},save(){stack.push({m:[...m],alpha:this.globalAlpha});},restore(){const prev=stack.pop();m=prev.m;this.globalAlpha=prev.alpha;},translate(x,y){m[4]+=m[0]*x+m[2]*y;m[5]+=m[1]*x+m[3]*y;},rotate(t){const [a,b,c,d]=m,C=Math.cos(t),S=Math.sin(t);m[0]=a*C+c*S;m[1]=b*C+d*S;m[2]=-a*S+c*C;m[3]=-b*S+d*C;},scale(x,y){m[0]*=x;m[1]*=x;m[2]*=y;m[3]*=y;},beginPath(){},moveTo(){},lineTo(){},closePath(){},stroke(){},fill(){},drawImage(...args){const [x,y,w,h]=args.slice(-4);this.draws.push({src:args.slice(1,5),alpha:this.globalAlpha,matrix:[...m],points:[[x,y],[x+w,y],[x,y+h],[x+w,y+h]].map(([x,y])=>[m[0]*x+m[2]*y+m[4],m[1]*x+m[3]*y+m[5]])});}};}
-test('separate arms draw once, keep the torso grounded and stay inside the canvas throughout attacks',()=>{
- for(const [id,kit] of Object.entries(ANATOMY))for(const kind of ['normal','skill']){const actor={id,side:'p',catId:id,hp:1},timing=actionTiming(actor,kind);for(let t=0;t<=timing.duration;t+=1/60){const ctx=context();renderPuppetFrame(ctx,id,rigPose(id,{...actor,action:{...timing,kind,elapsed:t}},t),{},144,138);assert.equal(ctx.draws.length,5);for(const arm of ['leftArm','rightArm'])assert.equal(ctx.draws.filter(d=>String(d.src)===String(kit.parts[arm])).length,1);const body=ctx.draws.find(d=>String(d.src)===String(kit.parts.body)),[a,b,c,d,e,f]=body.matrix,foot=rigFor(id).foot;assert.ok(Math.abs(a*.5+c*foot+e-72)<1e-8);assert.ok(Math.abs(b*.5+d*foot+f-(20+foot*100))<1e-8);for(const draw of ctx.draws)for(const [x,y] of draw.points){assert.ok(x>=-1&&x<=145&&y>=-1&&y<=139,`${id} ${kind} bounds ${x},${y}`);}}}
+test('legacy separate arms draw once, keep the torso grounded and stay inside the canvas throughout attacks',()=>{
+ for(const [id,kit] of legacyRigs)for(const kind of ['normal','skill']){const actor={id,side:'p',catId:id,hp:1},timing=actionTiming(actor,kind);for(let t=0;t<=timing.duration;t+=1/60){const ctx=context();renderPuppetFrame(ctx,id,rigPose(id,{...actor,action:{...timing,kind,elapsed:t}},t),{},144,138);assert.equal(ctx.draws.length,5);for(const arm of ['leftArm','rightArm'])assert.equal(ctx.draws.filter(d=>String(d.src)===String(kit.parts[arm])).length,1);const body=ctx.draws.find(d=>String(d.src)===String(kit.parts.body)),[a,b,c,d,e,f]=body.matrix,foot=rigFor(id).foot;assert.ok(Math.abs(a*.5+c*foot+e-72)<1e-8);assert.ok(Math.abs(b*.5+d*foot+f-(20+foot*100))<1e-8);for(const draw of ctx.draws)for(const [x,y] of draw.points){assert.ok(x>=-1&&x<=145&&y>=-1&&y<=139,`${id} ${kind} bounds ${x},${y}`);}}}
 });
 test('expression changes retain opaque fur instead of showing the dark background through the head',()=>{
- for(const [id,kit] of Object.entries(ANATOMY))for(const mix of [.1,.4,.5,.9]){const ctx=context();renderPuppetFrame(ctx,id,rigPose(id,null,0),{},144,138,null,{from:'neutral',to:'hurt',mix});assert.equal(ctx.draws.length,6);for(const src of Object.values(kit.parts))assert.equal(ctx.draws.filter(d=>String(d.src)===String(src)).length,1);const under=ctx.draws.find(d=>String(d.src)===String(kit.faces.neutral)),over=ctx.draws.find(d=>String(d.src)===String(kit.faces.hurt));assert.equal(over.alpha,mix);assert.equal(over.alpha+under.alpha*(1-over.alpha),1);}
+ for(const [id,kit] of legacyRigs)for(const mix of [.1,.4,.5,.9]){const ctx=context();renderPuppetFrame(ctx,id,rigPose(id,null,0),{},144,138,null,{from:'neutral',to:'hurt',mix});assert.equal(ctx.draws.length,6);for(const src of Object.values(kit.parts))assert.equal(ctx.draws.filter(d=>String(d.src)===String(src)).length,1);const under=ctx.draws.find(d=>String(d.src)===String(kit.faces.neutral)),over=ctx.draws.find(d=>String(d.src)===String(kit.faces.hurt));assert.equal(over.alpha,mix);assert.equal(over.alpha+under.alpha*(1-over.alpha),1);}
 });
-test('attacks use the same calm head pixels and opacity as idle, including transitions',()=>{
- for(const [id,kit] of Object.entries(ANATOMY))for(const face of [{from:'neutral',to:'attack',mix:.5},{from:'attack',to:'neutral',mix:.5},{from:'attack',to:'attack',mix:1}]){const ctx=context();renderPuppetFrame(ctx,id,rigPose(id,null,0),{},144,138,null,face);assert.equal(ctx.draws.length,5);assert.equal(ctx.draws.filter(d=>String(d.src)===String(kit.faces.attack)).length,0);assert.equal(ctx.draws.find(d=>String(d.src)===String(kit.faces.neutral)).alpha,1);}
+test('legacy attacks use the same calm head pixels and opacity as idle, including transitions',()=>{
+ for(const [id,kit] of legacyRigs)for(const face of [{from:'neutral',to:'attack',mix:.5},{from:'attack',to:'neutral',mix:.5},{from:'attack',to:'attack',mix:1}]){const ctx=context();renderPuppetFrame(ctx,id,rigPose(id,null,0),{},144,138,null,face);assert.equal(ctx.draws.length,5);assert.equal(ctx.draws.filter(d=>String(d.src)===String(kit.faces.attack)).length,0);assert.equal(ctx.draws.find(d=>String(d.src)===String(kit.faces.neutral)).alpha,1);}
 });
-test('every cat visibly swings its painted weapon or drawing hand at a 48px battle size',()=>{
- for(const [id,kit] of Object.entries(ANATOMY))for(const kind of ['normal','skill']){
+test('each unchanged cat visibly swings its painted weapon or drawing hand at a 48px battle size',()=>{
+ for(const [id,kit] of legacyRigs)for(const kind of ['normal','skill']){
   const actor={id,side:'p',catId:id,hp:1},timing=actionTiming(actor,kind),support=kind==='skill'&&['orange','milk','star'].includes(id),melee=['orange','pudding','bolt'].includes(id)&&!support;
   const times=[melee?timing.windup:timing.windup*.5,melee?timing.impactAt:timing.windup],part=id==='ink'?'rightArm':'leftArm',uv=id==='ink'?[.82,.18]:['orange','pudding'].includes(id)?[.52,.52]:[.80,.20];
   const points=times.map(t=>{const ctx=context();renderPuppetFrame(ctx,id,rigPose(id,{...actor,action:{...timing,kind,elapsed:t}},t,0),{},69.12,66.24);const draw=ctx.draws.find(d=>String(d.src)===String(kit.parts[part])),[tl,tr,bl]=draw.points;return [tl[0]+(tr[0]-tl[0])*uv[0]+(bl[0]-tl[0])*uv[1],tl[1]+(tr[1]-tl[1])*uv[0]+(bl[1]-tl[1])*uv[1]];});

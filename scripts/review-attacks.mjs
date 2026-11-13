@@ -3,13 +3,14 @@ import {createRequire} from 'node:module';
 import fs from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {ANATOMY} from '../anatomy-data.mjs';
+import {ARTICULATED} from '../articulated-data.mjs';
 import {rigPose} from '../rig-motion.mjs';
 import {renderPuppetFrame} from '../rig-renderer.mjs';
 import {actionTiming} from '../motion.mjs';
 import {expressionFor,bowNock} from '../expressions.mjs';
 const require=createRequire(import.meta.url),{createCanvas,loadImage}=require('@napi-rs/canvas');
 process.chdir(fileURLToPath(new URL('..',import.meta.url)));
-const ids=Object.keys(ANATOMY),images=Object.fromEntries(await Promise.all(ids.map(async id=>[id,await loadImage(ANATOMY[id].atlas)])));
+const ids=Object.keys(ANATOMY),images=Object.fromEntries(await Promise.all(ids.map(async id=>[id,await loadImage((ARTICULATED[id]||ANATOMY[id]).atlas)])));
 export function actorFrame(id,elapsed,width=216,kind='normal',face){
  const actor={id,catId:id,side:'p',hp:1},timing=actionTiming(actor,kind);
  if(elapsed>=0&&elapsed<timing.duration)actor.action={kind,...timing,elapsed};

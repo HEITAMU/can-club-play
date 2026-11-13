@@ -26,6 +26,7 @@ if (!/^wx[a-f\d]{16}$/.test(appid))
 await fs.rm(out, { recursive: true, force: true });
 await fs.mkdir(out, { recursive: true });
 const list = [
+  "rebuild/orange.webp",
   "anatomy/cats-a-v0200.webp",
   "anatomy/cats-b.webp",
   "anatomy/cats-c.webp",
@@ -112,7 +113,7 @@ await esbuild.build({
   ],
 });
 const manifest = {
-  version: "0.21.0",
+  version: "0.22.0",
   appid,
   packages: packages.map(({ name, root }) => ({ name, root })),
   assets,
