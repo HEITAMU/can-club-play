@@ -166,7 +166,7 @@ function renderRelics(){
  $$('[data-bag-tab]').forEach(b=>b.onclick=()=>{bagView.tab=b.dataset.bagTab;bagView.page=0;renderRelics();});bindEquipment();
 }
 function showGear(uid){
- const e=state.inventory.items.find(e=>e.id===uid);if(!e)return;openModal('equipment',gearDetailHTML(state,uid,bagView.cat));
+ const e=state.inventory.items.find(e=>e.id===uid);if(!e)return;if(tab!=='cats'){crewMode='equipment';changeTab('cats');}openModal('equipment',gearDetailHTML(state,uid,bagView.cat));
  const update=()=>{persist();renderHeader();refreshEquipment();showGear(uid);};
  $('#gear-equip').onclick=()=>{if(gearOwner(state,uid)===bagView.cat)unequipGear(state,bagView.cat,e.slot);else if(!equipGear(state,uid,bagView.cat,unlocked(state).map(c=>c.id)))return;persist();renderHeader();forceClose();refreshEquipment();};
  $('#gear-enhance')?.addEventListener('click',()=>{if(enhanceGear(state,uid)){update();sound('coin');}});
