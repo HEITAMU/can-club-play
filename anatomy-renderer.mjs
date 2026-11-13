@@ -1,5 +1,5 @@
-import {ANATOMY} from './anatomy-data.mjs?v=0.21.7';
-import {rigFor} from './rig-motion.mjs?v=0.21.7';
+import {ANATOMY} from './anatomy-data.mjs?v=0.21.8';
+import {rigFor} from './rig-motion.mjs?v=0.21.8';
 
 // Sockets are anatomical shoulders, not image-box centers. Each arm appears exactly once.
 const arm=(height,anchor,socket)=>({height,anchor,socket});

@@ -1,6 +1,6 @@
 // 石墩: the punch is shield-triggered; only 护体劲 spends energy.
-// Prototype tuning, not release balance.
-export const SHIELD_PUNCH_DEFAULTS=Object.freeze({startRatio:.30,secondGainRatio:.15,minCharge:1.35,maxCharge:4,shieldCapRatio:.80,lockout:8,punchTravel:.42,recovery:.65,attackRatio:1,shieldRatio:1.6,energyCap:100,selfShieldRatio:.35,normalEnergy:20,absorbEnergy:12,absorbEnergyInterval:.8});
+// Charge restores energy so the second shield does not depend on being attacked.
+export const SHIELD_PUNCH_DEFAULTS=Object.freeze({startRatio:.30,secondGainRatio:.15,minCharge:1.35,shieldCapRatio:.80,lockout:8,punchTravel:.42,recovery:.65,attackRatio:1,shieldRatio:1.6,energyCap:100,selfShieldRatio:.35,normalEnergy:20,chargeEnergyPerSecond:35,absorbEnergy:12,absorbEnergyInterval:.8});
 export function createShieldPunch({maxHp=1000,hp=maxHp,attack=100,energy=0,config={}}={}){
  const cfg={...SHIELD_PUNCH_DEFAULTS,...config};
  return{maxHp,hp,attack,config:cfg,energy:Math.max(0,Math.min(cfg.energyCap,energy)),shield:0,state:'normal',firstAt:null,secondAt:null,addedDuringCharge:0,shieldAtSecond:null,releaseAt:Infinity,hitAt:Infinity,recoverAt:Infinity,controlledUntil:-Infinity,lockoutUntil:-Infinity,absorbEnergyAt:-Infinity,hitDelivered:false,cancelReason:null};
@@ -12,12 +12,11 @@ function cancel(s,now,reason){clearCharge(s);s.cancelReason=reason;s.lockoutUnti
 export function gainShield(s,amount,now,source='ally'){
  if(!Number.isFinite(amount)||amount<=0||s.hp<=0)return[];
  const events=[];
- if(s.state==='charging'&&now>=s.firstAt+s.config.maxCharge)events.push(cancel(s,now,'noSecondShield'));
  const added=Math.max(0,Math.min(amount,s.maxHp*s.config.shieldCapRatio-s.shield));s.shield+=added;
  if(added)events.push({type:'shieldGain',at:now,amount:added,source});
  if(!added||now<s.controlledUntil)return events;
  if(s.state==='normal'&&now>=s.lockoutUntil&&s.shield>=s.maxHp*s.config.startRatio){
-  clearCharge(s);s.state='charging';s.firstAt=now;s.cancelReason=null;
+  clearCharge(s);s.state='charging';s.firstAt=now;s.chargeEnergyAt=now;s.cancelReason=null;
   events.push({type:'chargeStart',at:now,shield:s.shield});
  }else if(s.state==='charging'){
   s.addedDuringCharge+=added;
@@ -44,6 +43,8 @@ export function normalAttackEnergy(s,now){return canNormalAttack(s,now)?gainEner
 // Only real enemy damage absorbed by shield produces energy, with a shared interval.
 export function absorbShieldDamage(s,amount,now){
  const absorbed=loseShield(s,amount),events=absorbed?[{type:'shieldAbsorb',at:now,amount:absorbed}]:[];
+ // A shield-breaking hit cancels before its energy can grant a replacement shield.
+ if(charging(s)&&s.shield<=0)events.push(cancel(s,now,'shieldBroken'));
  if(absorbed&&now>=s.absorbEnergyAt+s.config.absorbEnergyInterval){s.absorbEnergyAt=now;events.push(...gainEnergy(s,s.config.absorbEnergy,now,'absorb'));}
  return events;
 }
@@ -60,8 +61,15 @@ export function tickShieldPunch(s,now,enemies=[]){
  if(s.hp<=0){if(s.state!=='down'){clearCharge(s);s.state='down';events.push({type:'cancel',at:now,reason:'down'});}return events;}
  if(now<s.controlledUntil){s.state='controlled';return events;}
  if(s.state==='controlled'){clearCharge(s);s.state='normal';events.push({type:'controlEnd',at:now});}
+ if(charging(s)&&s.shield<=0){events.push(cancel(s,now,'shieldBroken'));return events;}
+ // Integrate simulation time once; paused/repeated ticks never grant extra energy.
+ if(s.state==='charging'){
+  const until=now;
+  const elapsed=Math.max(0,until-(s.chargeEnergyAt??s.firstAt));
+  s.chargeEnergyAt=Math.max(s.chargeEnergyAt??s.firstAt,until);
+  if(elapsed)events.push(...gainEnergy(s,elapsed*s.config.chargeEnergyPerSecond,until,'charge'));
+ }
  events.push(...castSelfShield(s,now));
- if(s.state==='charging'&&now>=s.firstAt+s.config.maxCharge){events.push(cancel(s,now,'noSecondShield'));return events;}
  if(s.state==='primed'&&now>=s.releaseAt){s.state='punching';events.push({type:'punchStart',at:s.releaseAt});}
  if(s.state==='punching'&&!s.hitDelivered&&now>=s.hitAt){
   s.hitDelivered=true;const raw=s.attack*s.config.attackRatio+s.shieldAtSecond*s.config.shieldRatio;

@@ -1,5 +1,5 @@
-import {CATS,MAX_LEVEL,catStats,upgradeCost,upgradeQuote,unlocked} from './core.mjs?v=0.21.7';
-import {catSVG,icon,relicSVG} from './art.mjs?v=0.21.7';
+import {CATS,MAX_LEVEL,catStats,upgradeCost,upgradeQuote,unlocked} from './core.mjs?v=0.21.8';
+import {catSVG,icon,relicSVG} from './art.mjs?v=0.21.8';
 
 const palettes={
  orange:['#aa875d','#dec394','#f0cd89'],ink:['#738a99','#b4c1c4','#c2d8e3'],
@@ -21,7 +21,7 @@ export function crewSkill(id,level,stats){
   spark:{description:'对全体敌人造成 '+effect(amount(1.6),'damage')+scaling('160% 攻击力')+' 法术伤害，并灼烧目标 '+effect(awake?'6 秒':'4 秒','control')+'，每秒造成 '+effect(amount(.3),'damage')+scaling('30% 攻击力')+' 法术伤害。',passive:'灼烧持续时间由 '+effect('4 秒','control')+' 延长至 '+effect('6 秒','control')+'。'},
   mint:{description:'对当前生命值最高的敌人造成 '+effect(amount(2.3),'damage')+scaling('230% 攻击力')+' 法术伤害，使其 '+effect('眩晕 '+(awake?'2.6':'1.8')+' 秒','control')+' 并打断蓄力。',passive:'眩晕持续时间由 '+effect('1.8 秒','control')+' 延长至 '+effect('2.6 秒','control')+'。'},
   bolt:{description:'使敌方前排目标的当前护甲永久降低 '+effect(awake?'75%':'50%','armor')+'，随后造成 '+effect(amount(3),'damage')+scaling('300% 攻击力')+' 物理伤害。',passive:'技能对当前护甲的削减比例由 '+effect('50%','armor')+' 提高至 '+effect('75%','armor')+'。'},
-  pudding:{description:'满能量为自身增加 '+effect(amount(.35,'hp'),'shield')+scaling('35% 最大生命值')+' 护盾。盾量达到生命 30% 时下蹲蓄力；期间再获生命 15% 的护盾，打出震街拳：100% 攻击力＋锁定盾量的 160% 物理伤害。命中目标所在直线的前后排及另一名前排，最多三人。',passive:'护盾吸收伤害回复 12 能量，间隔 0.8 秒。蓄力时满能量仍可加盾；蓄力最长 4 秒，重拳间隔 8 秒。'},
+  pudding:{description:'满能量为自身增加 '+effect(amount(.35,'hp'),'shield')+scaling('35% 最大生命值')+' 护盾。盾量达到生命 30% 时下蹲蓄力；期间再获生命 15% 的护盾，打出震街拳：100% 攻击力＋锁定盾量的 160% 物理伤害。命中目标所在直线的前后排及另一名前排，最多三人。',passive:'护盾吸收伤害回复 12 能量，间隔 0.8 秒。蓄力每秒回复 35 能量，满能量再次加盾并触发重拳；蓄力无时限，被控制或护盾被打空时中断；重拳间隔 8 秒。'},
   star:{description:'为其他队友回复 '+effect('48 点能量','energy')+'，并为全体队友恢复 '+effect(amount(1.6),'heal')+scaling('160% 攻击力')+' 生命值。',passive:'战斗开始时，额外获得 '+effect('40 点能量','energy')+'。'}
  };
  return skills[id];
