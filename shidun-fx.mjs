@@ -1,7 +1,7 @@
 const clamp=x=>Math.max(0,Math.min(1,x));
 export function sampleShidun(actor,time,p,size,w,h){
  if(actor.catId!=='pudding'||actor.hp<=0)return[];
- const sp=actor.shieldPunch,out=[],base={art:'shidun',x:p.x,y:p.y-size*.52,width:size,height:size,angle:0,alpha:1,layer:2};
+ const sp=actor.shieldPunch,out=[],base={art:'shidun',x:p.x,y:p.y,width:size,height:size,angle:0,alpha:1,layer:2};
  if(sp&&['charging','primed'].includes(sp.state))out.push({...base,stage:'charge',q:clamp((time-sp.firstAt)/sp.config.minCharge),time,layer:0});
  const since=time-(actor.shidunImpactAt??-99);
  if(since>=0&&since<.72)out.push({...base,stage:'impact',q:since/.72,time,span:Math.max(size*2.7,w-p.x),spread:Math.min(h*.5,size*3.4)});
