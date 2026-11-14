@@ -36,7 +36,7 @@
 .game-shell .crew-view[data-mode="equipment"] .equipment-set-strip b,.game-shell .crew-view[data-mode="equipment"] .set-effect-preview{color:#f2dfb5}
 .game-shell .gear-tile,.game-shell .crew-view[data-mode="equipment"] .equipment-bag .gear-tile{background:#d8c4a1 var(--journal-paper);background-size:160px;background-blend-mode:multiply;border:2px solid var(--rarity);border-radius:9px 5px 10px 6px;box-shadow:inset 0 0 0 1px #f5e5be,0 2px 0 #1b303b66}
 .game-shell .gear-empty,.game-shell .crew-view[data-mode="equipment"] .equipment-bag .gear-empty{background:#344b55 var(--journal-paper);background-size:160px;background-blend-mode:multiply;border:1px dashed #7f9086;border-radius:9px 5px 10px 6px;box-shadow:none}
-.game-shell .gear-card-main>.journal-item,.game-shell .equipment-bag .gear-card-main>.journal-item{width:78%!important;height:78%!important;max-width:48px;max-height:48px;opacity:1}
+.game-shell .gear-card-main>:is(.journal-item,.equipment-item,.rune-item),.game-shell .equipment-bag .gear-card-main>:is(.journal-item,.equipment-item,.rune-item){width:88%!important;height:88%!important;max-width:60px;max-height:60px;opacity:1}
 .game-shell .bag-wallet{padding:8px 10px}
 .game-shell .bag-slot-tabs button,.game-shell .bag-toolbar select{background:#425e68 var(--journal-paper);background-size:150px;background-blend-mode:multiply;border:1px solid #819186;border-radius:7px 4px 8px 5px;color:#e8dfc5}
 .game-shell .bag-slot-tabs button[aria-selected=true]{background:#a76c50 var(--journal-paper);background-blend-mode:multiply;border:2px solid #d6aa76;color:#fff0d0}
@@ -59,7 +59,7 @@
 .modal:is([data-kind="equipment"],[data-kind="craft"],[data-kind="material"],[data-kind="dismantle"],[data-kind="inherit"],[data-kind="cat"]) :is(h2,h3,h4){color:#61432e}
 .modal:is([data-kind="equipment"],[data-kind="craft"],[data-kind="material"],[data-kind="dismantle"],[data-kind="inherit"]) :is(p,small){color:#806348}
 .gear-detail-heading{display:flex;align-items:center;gap:12px;padding:3px 24px 14px 0;border-bottom:1px dashed #a4835a}
-.gear-detail-heading>.journal-item{width:58px!important;height:58px!important;flex-shrink:0}
+.gear-detail-heading>:is(.journal-item,.equipment-item,.rune-item){width:58px!important;height:58px!important;flex-shrink:0}
 .gear-detail-heading h2{margin:4px 0!important;font-size:20px!important}
 .gear-detail-heading small{font-size:11px;letter-spacing:1px}
 .modal[data-kind="equipment"] .gear-stats b{background:#d5d7be var(--journal-paper);background-blend-mode:multiply;border:1px solid #a1aa89;color:#52634b;border-radius:7px 4px 8px 5px}
@@ -75,7 +75,7 @@
 @media(max-width:360px){.game-shell .crew-avatar-grid{padding:4px}.game-shell .material-list h3{font-size:8px}.game-shell .crew-view[data-mode="equipment"] .equipment-layout{gap:6px}.gear-detail-heading h2{font-size:17px!important}}
 
 /* Individual semantic art; cells are isolated to prevent neighbour bleeding. */
-.skill-item{background-image:url('./assets/ui/skills-v02643.webp');background-size:400% 200%}
+.skill-item{background-image:url('./assets/ui/skills-v02644.webp');background-size:400% 200%}
 .equipment-item{background-image:url('./assets/ui/equipment-v02643.webp');background-size:400% 600%}
 .rune-item{background-image:url('./assets/ui/runes-v02643.webp');background-size:300% 200%}
 .material-scrap .material-art{background-image:url('./assets/materials/scrap-v02643.webp');background-size:contain;background-position:center;background-repeat:no-repeat}
@@ -87,3 +87,5 @@
 .carrier-sprite{display:block;width:100%;height:100%;background:url('./assets/painted/carriers-v02643.webp') no-repeat;background-size:300% 200%;transform-origin:50% 92%}
 .carrier-drop{position:absolute;left:50%;bottom:-21px;transform:translateX(-50%);display:flex;align-items:center;gap:2px;padding:1px 4px;background:#f2dfb8;border:1px solid #76513a;border-radius:6px;color:#593e2b;font-size:10px;z-index:5}
 .actor.dead .carrier-drop{display:none}
+
+.game-shell .crew-skill-title .crew-skill-icon{width:36px;height:36px;padding:1px}.game-shell .crew-skill-icon>.skill-item{width:32px!important;height:32px!important}
