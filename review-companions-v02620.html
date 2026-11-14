@@ -21,7 +21,7 @@ document.querySelector('#run').onclick=async()=>{
    for(const id of ids){
     click('[data-crew-mode="profile"]');click('[data-crew="'+id+'"]');doc().querySelector('.crew-portrait').scrollIntoView({block:'center'});
     await wait(()=>doc().querySelector('.crew-portrait .rig-ready'));let a=sprite('.crew-portrait .companion-body');await sleep(650);let b=sprite('.crew-portrait .companion-body');
-    assert(Math.abs(a.width-unit*(id==='pudding'?1.22:1))<.03,id+' 养成尺寸');assert(a.pixels>100&&a.hash!==b.hash,id+' 养成动态');
+    assert(Math.abs(a.width-unit*(id==='pudding'?1.22:1))<.03,id+' 养成尺寸');assert(a.pixels>100&&a.hash!==b.hash,id+' 养成动态 '+JSON.stringify({a,b,hidden:doc().hidden}));
     click('[data-crew-mode="equipment"]');await wait(()=>doc().querySelector('.equipment-character .rig-ready'));let c=sprite('.equipment-character .companion-body');await sleep(650);let d=sprite('.equipment-character .companion-body');
     assert(Math.abs(a.width-c.width)<.03,id+' 装备尺寸');assert(JSON.stringify(a.canvas)===JSON.stringify(c.canvas),id+' 画布比例');assert(c.pixels>100&&c.hash!==d.hash,id+' 装备动态');
     figures.push({id,width:a.width,canvas:a.canvas,profileAnimated:true,equipmentAnimated:true});log.textContent='检查中：'+width+' × '+height+'\n'+figures.map(e=>e.id+'：'+e.width.toFixed(2)+'px，养成 / 装备动态通过').join('\n');
