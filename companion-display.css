@@ -133,3 +133,5 @@ html body,body button,body input,body select,body textarea,body h1,body h2,body 
 .crew-view[data-mode="profile"] .crew-growth .growth-material b{font-size:12px}
 
 .crew-view[data-mode="profile"] .crew-hero .crew-actions{order:2}.crew-view[data-mode="profile"] .crew-hero .crew-actions button{flex:none}
+
+.crew-view[data-mode="profile"] .crew-profile>.crew-growth{grid-template-columns:minmax(0,1fr)}
