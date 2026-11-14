@@ -1,3 +1,4 @@
+import {BADGE_NAMES} from './growth-visual.mjs';
 import {ActivityReturn,activityRoute} from './activity-navigation.mjs?v=0.25.1';
 const activityReturn=new ActivityReturn();
 import {rewardIcons} from './loot-icons.mjs?v=0.25.1';
@@ -152,9 +153,14 @@ function equipCrew(id,slot){
 }
 function restartWithCrew(){if(battle)startBattle({farm:farming,stage:battle.stage,arenaTier:battle.arenaTier||0,weeklyTier:battle.weekly?.tier||0,activity:battle.activity?.request||null});}
 function benchCrew(id){if(!removeParty(state,id)){toast('至少保留一位出战伙伴');return;}persist();renderHeader();renderCats();restartWithCrew();toast(cat(id).name+'已下场');}
+function showGrowthSuccess(id,label){
+ for(const hero of document.querySelectorAll('[data-profile-cat="'+id+'"] .crew-hero')){
+  const effect=document.createElement('div');effect.className='growth-success';effect.setAttribute('role','status');effect.textContent=label;hero.append(effect);hero.classList.remove('growth-flash');void hero.offsetWidth;hero.classList.add('growth-flash');setTimeout(()=>{effect.remove();hero.classList.remove('growth-flash');},1800);
+ }
+}
 function bindCrewProfile(root,id){
- root.querySelector('[data-breakthrough]')?.addEventListener('click',()=>{if(!breakthrough(state,id))return;battle?.syncStats(state,{preserveHealthRatio:true});persist();renderHeader();if(modalType==='cat')showCat(id,true);else renderCats();toast(cat(id).name+'突破成功，等级上限 '+levelCap(state,id));});
- root.querySelector('[data-ascend]')?.addEventListener('click',()=>{if(!ascendCompanion(state,id))return;battle?.syncStats(state,{preserveHealthRatio:true});persist();renderHeader();if(modalType==='cat')showCat(id,true);else renderCats();toast(cat(id).name+'升星成功');});
+ root.querySelector('[data-breakthrough]')?.addEventListener('click',()=>{if(!breakthrough(state,id))return;battle?.syncStats(state,{preserveHealthRatio:true});persist();renderHeader();if(modalType==='cat')showCat(id,true);else renderCats();showGrowthSuccess(id,'突破 '+state.breakthroughs[id]+' 阶');toast(cat(id).name+'突破成功，等级上限 '+levelCap(state,id));});
+ root.querySelector('[data-ascend]')?.addEventListener('click',()=>{if(!ascendCompanion(state,id))return;battle?.syncStats(state,{preserveHealthRatio:true});persist();renderHeader();if(modalType==='cat')showCat(id,true);else renderCats();showGrowthSuccess(id,BADGE_NAMES[state.roster.stars[id]]+'晋升');toast(cat(id).name+'获得'+BADGE_NAMES[state.roster.stars[id]]);});
  root.querySelector('[data-companion-contract]')?.addEventListener('click',()=>openStreet('recruit',id));
  root.querySelector('[data-growth-materials]')?.addEventListener('click',()=>openStreet('materials','escort'));
  root.querySelector('[data-upgrade]')?.addEventListener('click',()=>train(id));

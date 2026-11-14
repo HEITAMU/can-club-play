@@ -81,3 +81,16 @@ html body,body button,body input,body select,body textarea,body h1,body h2,body 
 .crew-view[data-mode="profile"] .crew-attributes dl>div:last-child{border-bottom:0}
 .crew-view[data-mode="profile"] .crew-attributes dt{line-height:1.4}
 .crew-view[data-mode="profile"] .crew-attributes dd{flex-shrink:0;padding-left:4px}
+
+.crew-growth-marks{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:5px;flex-wrap:wrap}
+.rank-badge{display:inline-flex;align-items:center;gap:4px;color:#63452d;font-size:10px;vertical-align:middle}.rank-badge svg{width:25px;height:29px;flex:none}.rank-badge b{font-size:10px}
+.breakthrough-marks{display:inline-flex;gap:3px;vertical-align:middle}.breakthrough-marks i{display:grid;place-items:center;width:24px;height:22px;border:1px solid #ac9270;border-radius:4px;background:#b8a68c55;color:#715d47;font:600 10px Arial,sans-serif}.breakthrough-marks i.lit{background:#56a39b;color:#fff;border-color:#367970;box-shadow:inset 0 1px #ade0d3}
+.crew-view[data-mode="profile"] .crew-breakthrough .breakthrough-marks{display:flex;margin:4px 0}.crew-view[data-mode="profile"] .crew-breakthrough .breakthrough-marks i{flex:1}
+.growth-caption{font-size:9px;line-height:1.5;color:#785a38;margin:3px 0}
+.crew-hero{position:relative}.growth-success{position:absolute;inset:30% 4% auto;z-index:5;pointer-events:none;padding:13px 5px;border:2px solid #eac779;border-radius:9px;background:#476e62;color:#fff4ce;text-align:center;font-size:15px;font-weight:700;animation:growth-award 1.8s ease both}
+.growth-flash .crew-portrait:before{content:'';display:block!important;position:absolute;left:50%;top:50%;width:64px;height:64px;margin:-32px;border:3px solid #e9bf56;border-radius:50%;pointer-events:none;animation:growth-ring 1.4s ease-out both}
+.growth-flash .lit,.growth-flash .rank-badge svg{animation:growth-light 1.4s ease-out both}
+@keyframes growth-award{0%{opacity:0;transform:translateY(12px) scale(.85)}20%,75%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-12px)}}
+@keyframes growth-ring{0%{opacity:1;transform:scale(.5)}100%{opacity:0;transform:scale(2.4)}}
+@keyframes growth-light{0%,40%{filter:brightness(1.7)}100%{filter:brightness(1)}}
+@media(prefers-reduced-motion:reduce){.growth-success,.growth-flash .lit,.growth-flash .rank-badge svg{animation:none}.growth-flash .crew-portrait:before{display:none!important}}

@@ -1,3 +1,4 @@
+import {growthMarkHTML} from './growth-visual.mjs';
 import {growthHTML} from './street-ui.mjs?v=0.25.0';
 import {talentCards} from './talents.mjs?v=0.25.0';
 import {CATS,MAX_LEVEL,catStats,upgradeCost,upgradeQuote,unlocked,ownsCompanion,levelCap,breakthroughQuote} from './core.mjs?v=0.25.0';
@@ -56,7 +57,7 @@ export function crewProfileHTML(state,id,{modal=false}={}){
   '<div class="crew-hero"><div class="crew-identity"><span class="crew-role">'+c.job+'</span>'+
   '<'+heading+(modal?' id="modal-title"':'')+'>'+c.name+'</'+heading+'>'+
   '<span class="crew-level">'+(open?'Lv. <b>'+level+'</b>':'等待结识')+'</span>'+
-  '<span class="crew-position">'+(open?crewPosition(state,id):'伙伴委托结识')+'</span></div>'+
+  '<span class="crew-position">'+(open?crewPosition(state,id):'伙伴委托结识')+'</span>'+growthMarkHTML(state,id)+'</div>'+
   '<div class="crew-portrait"><span class="crew-portrait-halo" aria-hidden="true"></span>'+catSVG(id)+'</div>'+growthMarkup+'</div>'+
   '<section class="crew-attributes" aria-label="'+c.name+'的属性">'+
    '<div class="crew-section-label"><h4>人物属性</h4><span>'+(open?'普攻 · '+(stats.normalDamageType==='magic'?'法术':'物理'):'Lv.1 预览')+'</span></div>'+
