@@ -158,3 +158,34 @@ body{background:radial-gradient(ellipse at 22% 30%,#56404d,#292535 75%);color:#f
 .crew-view[data-mode="equipment"] .gear-quick-equip{background:#a6793e;color:#fff1d3}
 .crew-view[data-mode="equipment"] .equipment-bag .bag-pages{color:#77532c;gap:3px}
 .crew-view[data-mode="equipment"] .equipment-bag .bag-pages button{background:#ac824f;width:24px}
+
+/* Square equipment sockets and a local item card. */
+.crew-view[data-mode="equipment"] .equipment-stage{min-height:326px;background:radial-gradient(ellipse at 50% 47%,#f9e8bd,#e2c48b);border:2px solid #b99156}
+.crew-view[data-mode="equipment"] .gear-slot-node{width:48px;height:48px}
+.crew-view[data-mode="equipment"] .gear-orbit-slot{width:48px;height:48px;min-height:0;padding:5px;border-radius:8px;display:grid;place-items:center;background:#f6e4bd;border:1px solid #b48b51;box-shadow:inset 0 1px 3px #aa79462b}
+.crew-view[data-mode="equipment"] .gear-orbit-slot .painted-item{width:35px;height:35px}
+.empty-slot-plus{font-size:27px;line-height:1;color:#ae8751;font-weight:400}
+.crew-view[data-mode="equipment"] .slot-claw{left:10px;top:23px}.crew-view[data-mode="equipment"] .slot-collar{right:10px;top:23px}
+.crew-view[data-mode="equipment"] .slot-coat{left:10px;top:151px}.crew-view[data-mode="equipment"] .slot-brace{right:10px;top:151px}
+.crew-view[data-mode="equipment"] .slot-rune{top:234px}.crew-view[data-mode="equipment"] .equipped-set-tags{top:294px}
+.crew-view[data-mode="equipment"] .equipment-character{top:100px}
+.gear-tile .gear-card-main{padding:6px;justify-content:center!important;align-items:center!important}
+.crew-view[data-mode="equipment"] .equipment-bag .gear-tile{min-height:0;aspect-ratio:1}
+.crew-view[data-mode="equipment"] .equipment-bag .gear-card-main{min-height:0;height:100%}
+.crew-view[data-mode="equipment"] .equipment-bag .gear-card-main>.painted-item{width:32px;height:32px}
+#modal-backdrop:has(.modal[data-kind="equipment"]){background:transparent;backdrop-filter:none}
+.modal[data-kind="equipment"]{position:fixed;margin:0;transform:none;max-height:70dvh;max-width:calc(100vw - 24px);padding:14px 12px 12px;background:#f3e1bd;border:2px solid #a97d43;border-radius:9px;box-shadow:0 5px 20px #35241466}
+.modal[data-kind="equipment"] #modal-close{width:25px;height:25px;top:5px;right:5px}
+.modal[data-kind="equipment"] h2{font-size:15px;line-height:1.4;margin:0 22px 9px 0}
+.modal[data-kind="equipment"] .gear-stats{gap:4px;margin:8px 0}
+.modal[data-kind="equipment"] .gear-stats b{font-size:11px;padding:5px;background:#e7cfa4}
+.modal[data-kind="equipment"] .gear-set-summary{padding:7px 0;border-color:#bd97624d}
+.modal[data-kind="equipment"] .gear-set-summary h3{font-size:12px;margin:0 0 4px}
+.modal[data-kind="equipment"] .gear-set-summary p{font-size:11px;line-height:1.5;margin:3px 0}
+.modal[data-kind="equipment"] .gear-detail-actions .wide{min-height:30px;margin:4px 0;padding:5px;font-size:11px}
+.modal[data-kind="equipment"] .gear-more summary{font-size:10px;color:#846039;padding:6px 0;cursor:pointer}
+.modal[data-kind="equipment"] .gear-small-actions button{padding:5px;font-size:11px}
+.modal[data-kind="equipment"] p.gear-story{font-size:10px;line-height:1.6;margin:7px 0 0;padding-top:7px}
+@media(max-width:350px){.crew-view[data-mode="equipment"] .gear-slot-node,.crew-view[data-mode="equipment"] .gear-orbit-slot{width:40px;height:40px}.crew-view[data-mode="equipment"] .slot-claw,.crew-view[data-mode="equipment"] .slot-coat{left:7px}.crew-view[data-mode="equipment"] .slot-collar,.crew-view[data-mode="equipment"] .slot-brace{right:7px}.crew-view[data-mode="equipment"] .gear-orbit-slot .painted-item{width:30px;height:30px}}
+
+.modal[data-kind="equipment"] #modal-close{background:#9a7048;color:#fff0d2;border-color:#c5a273}
