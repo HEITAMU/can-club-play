@@ -45,11 +45,11 @@ export function travelOffset(actor,pose,source,target,width,height,bodySize=130,
  if(actor.action?.shieldStrike)return {x:0,y:0};
  if(actor.action&&source&&target){
   const dx=(target.x-source.x)*width/100,dy=(target.y-source.y)*height/100,distance=Math.hypot(dx,dy),melee=attackStyle(actor)==='melee';
-  const reach=melee?Math.min(distance*.76,Math.max(0,distance-(bodySize+targetSize)*.28)):Math.min(6,distance*.04);
-  if(distance>0){x=dx/distance*reach*pose.move;y=dy/distance*reach*pose.move;}
+  const reach=melee?Math.min(distance*.76,Math.max(0,distance-(bodySize+targetSize)*.28)):0;
+  if(distance>0){const a=actor.action,approachEnd=a.impactAt*.65,returnAt=a.impactAt+(a.hold||0),move=melee?(a.elapsed<approachEnd?smooth(a.elapsed/approachEnd):a.elapsed<returnAt?1:1-smooth((a.elapsed-returnAt)/(a.duration-returnAt))):0;x=dx/distance*reach*move;y=dy/distance*reach*move;}
  }
  const duration=.22,sinceHit=duration-((actor.hitUntil||0)-time);
- if(actor.hp>0&&sinceHit>=0&&sinceHit<duration){const u=sinceHit/duration;x+=(actor.side==='p'?-1:1)*Math.sin(u*Math.PI)*(1-u)*5;}
+ if(actor.hp>0&&sinceHit>=0&&sinceHit<duration){const u=sinceHit/duration;x+=(actor.side==='p'?-1:1)*Math.sin(u*Math.PI)*(1-u)*1.5;}
  return {x,y};
 }
 // Short tails and curved flight are projectile effects, never source-to-target guides.

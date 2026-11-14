@@ -28,16 +28,29 @@ export function rosterVertex(id,x,y,p){
  dx+=Math.sin(phase-.65)*tail*(id==='pudding'?2.2:4);dy+=Math.cos(phase-.65)*tail*1.5;
  // Action deformation reinforces weight transfer; it never detaches a limb or scales a skull.
  dx+=(p.reach||0)*85*upper;dy+=(p.breath||0)*-30*upper;
- if(id==='pudding'&&p.shidunCharge>0){const q=p.shidunCharge,t=p.shidunTime||0,body=1-smooth((y-410)/65);dx+=Math.sin(t*83)*q*5*body;dy+=Math.cos(t*91)*q*2.5*body;}
+ if(id==='pudding'&&p.shidunCharge>0){const q=p.shidunCharge,t=p.shidunTime||0,body=1-smooth((y-410)/65);dy+=q*3*body;}
  return [x+dx*feet,y+dy*feet];
 }
 function triangle(ctx,image,src,dst){const [a,b,c]=src,[A,B,C]=dst,ux=b[0]-a[0],uy=b[1]-a[1],vx=c[0]-a[0],vy=c[1]-a[1],det=ux*vy-uy*vx,p=((B[0]-A[0])*vy-(C[0]-A[0])*uy)/det,q=((B[1]-A[1])*vy-(C[1]-A[1])*uy)/det,r=((C[0]-A[0])*ux-(B[0]-A[0])*vx)/det,s=((C[1]-A[1])*ux-(B[1]-A[1])*vx)/det;ctx.save();ctx.beginPath();dst.forEach(([x,y],i)=>ctx[i?'lineTo':'moveTo'](x,y));ctx.closePath();ctx.clip();ctx.transform(p,q,r,s,A[0]-p*a[0]-r*a[1],A[1]-q*a[0]-s*a[1]);ctx.drawImage(image,0,0);ctx.restore();}
-export function drawFinishedRoster(ctx,id,pose,atlas,face){
- const cel=id==='bolt'&&pose.boltCel>=0?pose.boltCel:id==='pudding'?Math.round(pose.shidunCel||0):rosterCel(pose),l=layer(id,atlas,cel,face),scale=.91/480,foot=.92;
+function drawRosterCel(ctx,id,pose,atlas,face,override){
+ const cel=override??(id==='bolt'&&pose.boltCel>=0?pose.boltCel:id==='pudding'?Math.round(pose.shidunCel||0):rosterCel(pose)),l=layer(id,atlas,cel,face),scale=.91/480,foot=.92;
  ctx.save();ctx.translate(.5,foot+(pose.sink||0));ctx.rotate(clamp((pose.lean||0)*.22,-.10,.32));ctx.translate(-.5,-foot);ctx.globalCompositeOperation='lighter';
  // Place mesh rows at anatomical boundaries; keep the skull rigid and feet planted.
  const xs=[0,110,256,512],ys=[0,258,335,420,470,518,544],cols=xs.length-1,rows=ys.length-1,points=[];
  for(let y=0;y<=rows;y++)for(let x=0;x<=cols;x++){const px=xs[x],py=ys[y],[dx,dy]=rosterVertex(id,px,py,pose);points.push({src:[l.rect[0]+px*(l.scale||1),l.rect[1]+py*(l.scale||1)],dst:[.5+(dx-256)*scale,foot+(dy-518)*scale]});}
  for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){const a=y*(cols+1)+x,b=a+1,c=a+cols+1,d=c+1;for(const ids of [[a,b,d],[a,d,c]])triangle(ctx,l.image,ids.map(i=>points[i].src),ids.map(i=>points[i].dst));}
  ctx.restore();
+}
+
+// Blend adjacent authored drawings instead of rounding the animation track.
+export function drawFinishedRoster(ctx,id,pose,atlas,face){
+ if(id==='pudding'||(id==='bolt'&&pose.boltCel>=0)){
+  const a=id==='pudding'?pose.shidunFrom:pose.boltFrom,b=id==='pudding'?pose.shidunCel:pose.boltCel,mix=clamp((id==='pudding'?pose.shidunMix:pose.boltMix)??1),alpha=ctx.globalAlpha;
+  if(mix<1){ctx.globalAlpha=alpha*(1-mix);drawRosterCel(ctx,id,pose,atlas,face,a||0);}
+  ctx.globalAlpha=alpha*mix;drawRosterCel(ctx,id,pose,atlas,face,b||0);ctx.globalAlpha=alpha;return;
+ }
+ const value=Math.max(0,Math.min(4,pose.rosterCel||0)),lo=Math.floor(value),hi=Math.ceil(value),mix=value-lo,alpha=ctx.globalAlpha;
+ const a=rosterCel({...pose,rosterCel:lo}),b=rosterCel({...pose,rosterCel:hi});
+ ctx.globalAlpha=alpha*(a===b?1:1-mix);drawRosterCel(ctx,id,pose,atlas,face,a);
+ if(a!==b&&mix>0){ctx.globalAlpha=alpha*mix;drawRosterCel(ctx,id,pose,atlas,face,b);}ctx.globalAlpha=alpha;
 }

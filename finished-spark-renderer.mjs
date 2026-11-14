@@ -1,7 +1,7 @@
 import {FINISHED_SPARK as ART} from './finished-spark-data.mjs?v=0.25.0';
 
 // Every action drawing is one complete character. A limb is never separately
-// mirrored, stretched, crossfaded, or taken from a different character.
+// mirrored, stretched, or taken from a different character.
 let canvasFactory;
 export function setFinishedCanvasFactory(factory){canvasFactory=factory;}
 function canvas(w,h){
@@ -76,8 +76,8 @@ function triangle(ctx,image,src,dst){
  ctx.save();ctx.beginPath();dst.forEach(([x,y],i)=>ctx[i?'lineTo':'moveTo'](x,y));ctx.closePath();ctx.clip();
  ctx.transform(p,q,r,s,A[0]-p*a[0]-r*a[1],A[1]-q*a[0]-s*a[1]);ctx.drawImage(image,0,0);ctx.restore();
 }
-export function drawFinishedSpark(ctx,pose,atlas,face){
- const index=sparkCel(pose),layer=facialLayer(atlas,index,sparkFace(face,index));
+function drawSparkCel(ctx,pose,atlas,face,index){
+ const layer=facialLayer(atlas,index,sparkFace(face,index));
  const [sx,sy]=layer.rect,scale=.91/480,foot=.92;
  ctx.save();ctx.translate(.5,foot+pose.sink);ctx.rotate(clamp(pose.lean*.22,-.10,.32));ctx.translate(-.5,-foot);
  // renderPuppetFrame clears this transparent canvas before drawing. Adjacent
@@ -95,4 +95,12 @@ export function drawFinishedSpark(ctx,pose,atlas,face){
   for(const ids of [[a,b,d],[a,d,c]])triangle(ctx,layer.image,ids.map(i=>points[i].src),ids.map(i=>points[i].dst));
  }
  ctx.restore();
+}
+
+export function drawFinishedSpark(ctx,pose,atlas,face){
+ const value=clamp(pose.sparkCel||0,0,5),lo=Math.floor(value),hi=Math.ceil(value),mix=value-lo,alpha=ctx.globalAlpha;
+ const a=sparkCel({...pose,sparkCel:lo}),b=sparkCel({...pose,sparkCel:hi});
+ ctx.globalAlpha=alpha*(a===b?1:1-mix);drawSparkCel(ctx,pose,atlas,face,a);
+ if(a!==b&&mix>0){ctx.globalAlpha=alpha*mix;drawSparkCel(ctx,pose,atlas,face,b);}
+ ctx.globalAlpha=alpha;
 }

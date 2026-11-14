@@ -43,9 +43,11 @@ export function drawRig(el,id,pose,face,renderSize,frameTime){
  if(width<3||height<3)return false;
  const source=getImage(webAsset(kit?.atlas||el.dataset.atlas),battleSize?3:1);if(!source.ready)return false;
  const cel=[pose.boltCel,pose.shidunCel,Math.round(pose.rosterCel||0),Math.round(pose.sparkCel||0),face?.to].join(':');
- // Keep movement/effects on the main clock; rasterize at most 30 times a second.
+ // Active actions paint at 60 Hz; quiet portraits and idle actors stay at 30 Hz.
+ const active=Math.abs(pose.reach||0)>.004||Math.abs(pose.hand||0)>.09||(pose.rosterCel||0)>.01||(pose.sparkCel||0)>.01||(pose.shidunCel||0)>0||(pose.boltCel??-1)>=0;
+ const interval=active?1/60:1/30;
  // A new action drawing, resize, or recovered canvas still paints immediately.
- if(Number.isFinite(frameTime)&&frameTime>v.frameTime&&frameTime-v.frameTime<1/30-1e-6&&v.cel===cel&&canvas.width===width&&canvas.height===height&&v.last)return true;
+ if(Number.isFinite(frameTime)&&frameTime>v.frameTime&&frameTime-v.frameTime<interval-1e-6&&v.cel===cel&&canvas.width===width&&canvas.height===height&&v.last)return true;
  const signature=[width,height,...Object.values(pose),face?.from,face?.to,face?.mix].join(',');if(v.last===signature&&canvas.width===width&&canvas.height===height)return true;
  if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
  const img=source.img,rows=+el.dataset.rows,row=+el.dataset.row,enemySource=kit?null:[0,row*img.height/rows,img.width/4,img.height/rows];

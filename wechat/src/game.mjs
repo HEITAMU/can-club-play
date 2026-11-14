@@ -741,7 +741,7 @@ export class NativeGame {
         (e.type === "heal" ? "+" : "") + fmt(e.value),
         (p.x * w) / 100,
         (p.y * ah) / 100 - 25 - u * 24,
-        e.crit ? 17 : 13,
+        e.crit ? 13 : 10,
         e.type === "heal" ? "#dcf2a9" : e.crit ? "#ffe1a3" : "#fff1d6",
         850,
         "center",

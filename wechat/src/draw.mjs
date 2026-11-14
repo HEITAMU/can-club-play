@@ -1,14 +1,14 @@
 export const C = {
-  bg: "#294a54",
-  panel: "#42656c",
-  panel2: "#536f76",
+  bg: "#3c2e3d",
+  panel: "#715459",
+  panel2: "#967460",
   ink: "#f5e7c7",
   muted: "#bfd0c3",
   gold: "#e0b574",
   rim: "#8fa69b",
   green: "#a8c9a0",
   paper: "#dfcea6",
-  dark: "#29494c",
+  dark: "#513b36",
   red: "#e99c81",
 };
 export const fmt = (n) =>

@@ -19,7 +19,7 @@ export function rigFor(id){return RIGS[id]||{foot:feet[id]||.92,period:2.7,phase
 const keys=['breath','lean','head','hand','tail','reach','sink','alpha','sparkCel','sparkClock','sparkRecovery','rosterCel','rosterClock','rosterRecovery','rosterSkill'];
 const neutral={breath:0,lean:0,head:0,hand:0,tail:0,reach:0,sink:0,alpha:1,sparkCel:0,sparkClock:0,sparkRecovery:0,rosterCel:0,rosterClock:0,rosterRecovery:0,rosterSkill:0};
 const mix=(a,b,t)=>Object.fromEntries(keys.map(k=>[k,lerp(a[k],b[k],t)]));
-export function blendRigPose(previous,next,dt){return !previous||dt<0?{...next}:mix(previous,next,1-Math.exp(-Math.max(0,dt)/.026));}
+export function blendRigPose(previous,next,dt){return !previous||dt<0?{...next}:dt===0?{...previous}:{...next,...mix(previous,next,1-Math.exp(-Math.max(0,dt)/.065))};}
 export const animationClock=(actor,time,idleTime)=>actor&&time>0?time:idleTime;
 // Monotone cubic interpolation: position and velocity meet at each key, without overshoot.
 export function flowTrack(time,points){
@@ -55,7 +55,7 @@ export function rigPose(id,actor,time,idleTime=time){
  }else if((actor?.burstUntil||0)>time){
   const elapsed=.38-(actor.burstUntil-time),charged={...neutral,breath:-.06,lean:-.07,head:-.08,hand:-.22,tail:-.18},strike={...neutral,breath:.055,lean:.16,head:.1,hand:.32,reach:.045};p=elapsed<.12?mix(charged,strike,ease(elapsed/.12)):mix(strike,idle,ease((elapsed-.12)/.26));
  }
- if((actor?.hitUntil||0)>time){const t=clamp(1-(actor.hitUntil-time)/.22),kick=Math.sin(t*Math.PI);p={...p,lean:p.lean-kick*.10,head:p.head-kick*.13,breath:p.breath-kick*.025};}
+ if((actor?.hitUntil||0)>time){const t=clamp(1-(actor.hitUntil-time)/.22),kick=Math.sin(t*Math.PI);p={...p,lean:p.lean-kick*.009,head:p.head-kick*.035,breath:p.breath-kick*.009};}
  if(actor?.hp<=0){const t=ease((time-(actor.downAt??time))/.55),hero=!!RIGS[id],breath=Math.sin(time*2.4)*.012;p=mix(p,hero?{...neutral,breath:-.36+breath,lean:.74,head:.46,hand:.22,tail:-.22,sink:.025,alpha:1}:{...neutral,breath:-.16,lean:.72,head:.1,sink:.03,alpha:.45},t);}
  if(RIGS[id]&&!['spark','pudding'].includes(id)){
   p.rosterClock=idleTime;const a=actor?.action;
@@ -74,7 +74,7 @@ export function rigPose(id,actor,time,idleTime=time){
    p.sparkRecovery=flowTrack(t,[[0,0],[w,0],[w+.04,1],[e-.08,1],[e,0]]);
   }
  }
- if(id==='bolt'){const a=actor?.action;p.boltCel=a?.kind==='normal'&&a.elapsed<a.duration?(a.elapsed<a.windup?12:a.elapsed<a.windup+.12?13:a.elapsed<a.duration-.18?14:15):-1;}
+ if(id==='bolt'){const a=actor?.action;p.boltFrom=0;p.boltMix=1;p.boltCel=a?.kind==='normal'&&a.elapsed<a.duration?(a.elapsed<a.windup?12:a.elapsed<a.windup+.12?13:a.elapsed<a.duration-.18?14:15):-1;if(p.boltCel>=0){const edges=[0,a.windup,a.windup+.12,a.duration-.18],cels=[12,13,14,15],i=cels.indexOf(p.boltCel);p.boltFrom=i?cels[i-1]:0;p.boltMix=ease((a.elapsed-edges[i])/.075);}}
  if(id==='pudding')Object.assign(p,shidunPose(actor,time,idleTime));
  return p;
 }
