@@ -10,7 +10,7 @@ export function sampleShidun(actor,time,p,size,w,h,feet,centers={},sizes={}){
    // One continuous punch wave from the fist to the actual hit formation.
    const points=targets.map(t=>({x:t.p.x*w/100,y:t.p.y*h/100})),endX=Math.max(...points.map(t=>t.x));
    const low=Math.min(...points.map(t=>t.y)),high=Math.max(...points.map(t=>t.y));
-   out.push({...base,stage:'wave',x:p.x+size*.22,y:p.y,span:Math.max(size*1.5,endX-p.x+size*.7),rise:(low+high)/2-p.y,spread:Math.max(size*1.3,high-low+size*1.2),q:since/.6,time});
+   out.push({...base,stage:'wave',x:p.x,y:p.y,span:Math.max(size*2.7,endX-p.x+size),rise:(low+high)/2-p.y,spread:Math.max(size*1.3,high-low+size*1.2),q:since/.6,time});
    for(const t of targets){const targetSize=Math.max(sizes[t.id]||0,size*.9);out.push({...base,stage:'impact',targetId:t.id,x:t.p.x*w/100,y:t.p.y*h/100,width:targetSize,height:targetSize,q:since/.6,time});}
   }
  }
@@ -35,11 +35,16 @@ export function paintShidun(ctx,p,img){
   }
 
  }else if(p.stage==='wave'){
-  const reach=Math.min(1,.35+p.q*4),length=p.span*reach,spread=p.spread*reach;
+  // Restore the original twelve-frame travelling punch, including its
+  // opening burst and dust tail. Keep its origin and aim tied to this hit.
   ctx.rotate(Math.atan2(p.rise,p.span));
-  ctx.globalAlpha=Math.min(1,(1-p.q)*2);
-  if(img){const frame=3+Math.min(5,Math.floor(p.q*6));ctx.drawImage(img,(frame%3)*512,Math.floor(frame/3)*256,512,256,0,-spread*.5,length,spread);}
-  else{ctx.strokeStyle='#f5cb7e';ctx.lineWidth=6;for(let i=-1;i<=1;i++){ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(length,spread*i*.35);ctx.stroke();}}
+  if(img){
+   const frame=Math.min(11,Math.floor(p.q*12));
+   const advance=1-Math.pow(1-Math.min(1,p.q/.65),2);
+   const width=p.span*(.58+.2*advance)*1.25,height=width*.5;
+   const forward=p.span*.42*advance;
+   ctx.drawImage(img,(frame%3)*512,Math.floor(frame/3)*256,512,256,s*.34+forward-width*.1,s*.02-height*.66,width,height);
+  }else{ctx.strokeStyle='#f5cb7e';ctx.lineWidth=6;for(let i=-1;i<=1;i++){ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(p.span,p.spread*i*.35);ctx.stroke();}}
  }else{
   if(img){const frame=Math.min(11,Math.floor(p.q*12));
    const width=s*1.65,height=width*.5;
