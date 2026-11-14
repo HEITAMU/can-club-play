@@ -1,3 +1,4 @@
+import {CARRIER_ART,carrierPose} from './carrier-art.mjs';
 import {shidunPose} from './shidun-motion.mjs?v=0.25.0';
 import {catAction} from './action-profiles.mjs?v=0.25.0';
 // Continuous motion for painted cutout parts. No pose-frame swapping.
@@ -14,7 +15,7 @@ export const RIGS={
  pudding:{foot:.92,period:2.95,phase:1.8,head:[.45,.29,.30,.25,.48,.48],hand:[.77,.62,.24,.30,.60,.67],tail:[.13,.60,.24,.29,.29,.73],swing:.35},
  star:{foot:.92,period:2.65,phase:3.7,head:[.50,.35,.32,.28,.50,.51],hand:[.76,.56,.17,.34,.64,.70],tail:[.15,.70,.20,.23,.31,.75],swing:.44}
 };
-const feet={dust:.91,box:.86,mop:.90,battery:.84,bag:.91,drone:.87,vacuum:.82,fridge:.92,sign:.92,boxBoss:.935,clock:.89,vendor:.925};
+const feet={carrierScrap:.90,carrierSupplies:.90,dust:.91,box:.86,mop:.90,battery:.84,bag:.91,drone:.87,vacuum:.82,fridge:.92,sign:.92,boxBoss:.935,clock:.89,vendor:.925};
 export function rigFor(id){return RIGS[id]||{foot:feet[id]||.92,period:2.7,phase:Object.keys(feet).indexOf(id)*.7,head:[.5,.30,.42,.34,.5,.60],hand:null,tail:null,swing:.28};}
 const keys=['breath','lean','head','hand','tail','reach','sink','alpha','sparkCel','sparkClock','sparkRecovery','rosterCel','rosterClock','rosterRecovery','rosterSkill'];
 const neutral={breath:0,lean:0,head:0,hand:0,tail:0,reach:0,sink:0,alpha:1,sparkCel:0,sparkClock:0,sparkRecovery:0,rosterCel:0,rosterClock:0,rosterRecovery:0,rosterSkill:0};
@@ -76,6 +77,7 @@ export function rigPose(id,actor,time,idleTime=time){
  }
  if(id==='bolt'){const a=actor?.action;p.boltFrom=0;p.boltMix=1;p.boltCel=a?.kind==='normal'&&a.elapsed<a.duration?(a.elapsed<a.windup?12:a.elapsed<a.windup+.12?13:a.elapsed<a.duration-.18?14:15):-1;if(p.boltCel>=0){const edges=[0,a.windup,a.windup+.12,a.duration-.18],cels=[12,13,14,15],i=cels.indexOf(p.boltCel);p.boltFrom=i?cels[i-1]:0;p.boltMix=ease((a.elapsed-edges[i])/.075);}}
  if(id==='pudding')Object.assign(p,shidunPose(actor,time,idleTime));
+ if(CARRIER_ART[id])Object.assign(p,carrierPose(actor,time));
  return p;
 }
 function weight(point,zone){if(!zone)return 0;const d=Math.hypot((point[0]-zone[0])/zone[2],(point[1]-zone[1])/zone[3]);return 1-ease((d-.30)/.70);}

@@ -32,6 +32,7 @@ const list = [
   "scenes/neighborhood-v0220.webp",
   "finished/pudding-v0216.webp",
   "painted/enemies-a.webp",
+  "painted/carriers-v02651.webp",
   "painted/enemies-b.webp",
   "painted/enemies-c.webp",
   "painted/items.webp",
@@ -65,6 +66,7 @@ for (const relative of list) {
       width: Math.floor(meta.width / 4),
       height: meta.height,
     });
+  if (relative==="painted/carriers-v02651.webp") pipeline.resize({width:512}).png({palette:true,quality:90,effort:10});
   if (relative.startsWith("finished/") && !relative.includes("portrait")) pipeline.resize({width:(relative.includes("v0213")||relative.includes("v0216"))?1024:1536});
   const jpg = (relative.startsWith("scenes/") && !relative.includes("district-"));
   const data = await (

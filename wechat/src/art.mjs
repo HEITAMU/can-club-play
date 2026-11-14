@@ -1,3 +1,4 @@
+import {CARRIER_ATLAS,carrierId} from '../../carrier-art.mjs';
 import {BACKDROP_FRACTION} from '../../battlefield-space.mjs';
 import {FINISHED_ROSTER} from '../../finished-roster-data.mjs';
 import {setRosterCanvasFactory} from '../../finished-roster-renderer.mjs';
@@ -44,10 +45,11 @@ export class NativeArt {
     outcome = null,
     flip = 1,
   ) {
+    id=carrierId(actor)||id;
     const kit = id==='spark'?FINISHED_SPARK:FINISHED_ROSTER[id]||ANATOMY[id],
       foe = foes[id] || foes.dust,
       img = this.image(
-        kit ? kit.atlas : "assets/painted/enemies-" + foe[0] + ".webp",
+        carrierId(actor)?CARRIER_ATLAS:kit ? kit.atlas : "assets/painted/enemies-" + foe[0] + ".webp",
       );
     if (!img) return;
     let cache = this.sprites.get(key);

@@ -1,3 +1,4 @@
+import {CARRIER_ATLAS,CARRIER_ART,carrierId} from './carrier-art.mjs';
 import {layeredScene} from './battlefield-space.mjs';
 import {webAsset} from './web-assets.mjs?v=0.25.1';
 import {companionScale,HEAD_CROPS} from './companion-display.mjs';
@@ -23,6 +24,7 @@ export function paintedCat(id,portrait=false){
  const fallback=`<span class="anatomy-fallback" data-asset="${webAsset(art.portrait)}" style="background-size:100% 100%"></span>`;
  return `<span class="painted-sprite companion-body" data-art="${id}" data-hero="true" data-atlas="${webAsset(art.atlas)}" style="--companion-scale:${companionScale(id)}" aria-hidden="true">${fallback}<canvas class="rig-canvas" aria-hidden="true"></canvas></span>`;
 }
+export function paintedCarrier(actor){const id=carrierId(actor);if(!id)return '';const row=CARRIER_ART[id].row;return `<span class="painted-sprite material-carrier" data-art="${id}" data-hero="false" data-atlas="${CARRIER_ATLAS}" data-asset="${CARRIER_ATLAS}" data-row="${row}" data-rows="2" data-pose="0" style="--atlas:url('${CARRIER_ATLAS}');--sheet-rows:2;background-position:0% ${row*100}%" aria-hidden="true"><canvas class="rig-canvas" aria-hidden="true"></canvas></span>`;}
 export function paintedEnemy(type,boss=false){const id=boss&&type==='box'?'boxBoss':type;const [sheet,row]=foeSheets[id]||foeSheets.dust;return sprite('enemies',sheet,row,4,id);}
 export function paintedPose(root,frame,{actor,time=0,idleTime=time,outcome,preview,renderSize}={}){
  const el=root.matches('.painted-sprite')?root:root.querySelector('.painted-sprite');if(!el)return;

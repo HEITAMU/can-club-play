@@ -1,6 +1,6 @@
 {
-  "version": "0.26.50",
-  "moduleRequestsBefore": 60,
+  "version": "0.26.51",
+  "moduleRequestsBefore": 61,
   "scriptRequestsAfter": 1,
   "cssRequestsBefore": 15,
   "cssRequestsAfter": 1,

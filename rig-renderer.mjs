@@ -1,3 +1,4 @@
+import {CARRIER_ART,paintCarrier} from './carrier-art.mjs';
 import {FINISHED_ROSTER} from './finished-roster-data.mjs?v=0.25.0';
 import {drawFinishedRoster} from './finished-roster-renderer.mjs?v=0.25.0';
 import {FINISHED_SPARK} from './finished-spark-data.mjs?v=0.25.0';
@@ -24,7 +25,8 @@ export function renderPuppetFrame(ctx,id,pose,atlas,width,height,enemySource=nul
  if(FINISHED_ROSTER[id]){drawFinishedRoster(ctx,id,pose,atlas,face);ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;return;}
  if(id==='spark'){drawFinishedSpark(ctx,pose,atlas,face);ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;return;}
  ctx.translate(.5,foot+pose.sink);ctx.rotate(pose.lean*.45);ctx.scale(1-pose.breath*.28,1+pose.breath*.55);ctx.translate(-.5,-foot);
- if(ANATOMY[id])drawAnatomy(ctx,id,pose,atlas,face);
+ if(CARRIER_ART[id])paintCarrier(ctx,atlas,id,pose);
+ else if(ANATOMY[id])drawAnatomy(ctx,id,pose,atlas,face);
  else if(enemySource){ctx.translate(.5,foot);ctx.rotate(pose.head*.35);ctx.scale(1+pose.reach*.4,1-pose.breath*.25);ctx.translate(-.5,-foot);ctx.drawImage(atlas,...enemySource,0,0,1,1);}
  ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;
 }
@@ -42,7 +44,7 @@ export function drawRig(el,id,pose,face,renderSize,frameTime){
  const {canvas,ctx}=v,dpr=Math.min(2,typeof devicePixelRatio==='number'?devicePixelRatio:1),width=Math.max(1,Math.round((battleSize?renderSize:v.width)*(1+PAD_X*2)*dpr)),height=Math.max(1,Math.round((battleSize?renderSize:v.height)*(1+PAD_TOP+PAD_BOTTOM)*dpr));
  if(width<3||height<3)return false;
  const source=getImage(webAsset(kit?.atlas||el.dataset.atlas),battleSize?3:1);if(!source.ready)return false;
- const cel=[pose.boltCel,pose.shidunCel,Math.round(pose.rosterCel||0),Math.round(pose.sparkCel||0),face?.to].join(':');
+ const cel=[pose.carrierCel,pose.carrierFrom,pose.boltCel,pose.shidunCel,Math.round(pose.rosterCel||0),Math.round(pose.sparkCel||0),face?.to].join(':');
  // Active actions paint at 60 Hz; quiet portraits and idle actors stay at 30 Hz.
  const active=Math.abs(pose.reach||0)>.004||Math.abs(pose.hand||0)>.09||(pose.rosterCel||0)>.01||(pose.sparkCel||0)>.01||(pose.shidunCel||0)>0||(pose.boltCel??-1)>=0;
  const interval=active?1/60:1/30;
