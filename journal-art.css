@@ -78,7 +78,7 @@
 .skill-item{background-image:url('./assets/ui/skills-v02644.webp');background-size:400% 200%}
 .equipment-item{background-image:url('./assets/ui/equipment-v02643.webp');background-size:400% 600%}
 .rune-item{background-image:url('./assets/ui/runes-v02643.webp');background-size:300% 200%}
-.material-scrap .material-art{background-image:url('./assets/materials/scrap-v02643.webp');background-size:contain;background-position:center;background-repeat:no-repeat}
+.material-icon.painted-material.material-scrap>.material-art{background-image:url('./assets/materials/scrap-v02643.webp');background-size:contain;background-position:center;background-repeat:no-repeat}
 .bag-page .material-tile{display:grid;grid-template-rows:1fr 11px 17px;gap:0;padding:3px 0 0;overflow:hidden;align-items:center;justify-items:center;min-height:78px}
 .material-visual{width:100%;display:flex;align-items:center;justify-content:center}
 .bag-page .material-amount{width:100%;height:17px;display:grid;place-items:center;background:#d5b98b;border-top:1px solid #9d794f;font-variant-numeric:tabular-nums}
@@ -91,7 +91,7 @@
 
 /* Stable, content-centred slots, independent of legacy flex alignment. */
 .game-shell .gear-card-main,.game-shell .crew-view[data-mode="equipment"] .gear-card-main,.game-shell .crew-view[data-mode="equipment"] .gear-orbit-slot{display:grid;place-items:center;padding:0;gap:0;line-height:0;overflow:hidden}
-.game-shell .centred-item{background:none!important;display:block;aspect-ratio:1;flex:none;margin:0!important}
+.centred-item{background:none!important;display:block;aspect-ratio:1;flex:none;margin:0!important}
 .centred-item>svg{display:block;width:100%;height:100%;overflow:hidden}
 .game-shell .gear-card-main>.centred-item{width:82%!important;height:82%!important;max-width:56px;max-height:56px}
 .game-shell .crew-view[data-mode="equipment"] .gear-orbit-slot>.centred-item{width:80%!important;height:80%!important;max-width:none;max-height:none}
