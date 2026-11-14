@@ -1,0 +1,107 @@
+{
+  "version": "0.26.6",
+  "moduleRequestsBefore": 49,
+  "scriptRequestsAfter": 1,
+  "cssRequestsBefore": 10,
+  "cssRequestsAfter": 1,
+  "assets": [
+    {
+      "source": "./assets/finished/orange-v0213.webp",
+      "path": "./assets/mobile/orange-v0213-mobile-v0251.webp",
+      "originalBytes": 1052434,
+      "bytes": 220876
+    },
+    {
+      "source": "./assets/finished/orange-portrait-v0213.webp",
+      "path": "./assets/mobile/orange-portrait-v0213-mobile-v0251.webp",
+      "originalBytes": 92252,
+      "bytes": 20208
+    },
+    {
+      "source": "./assets/finished/ink-v0213.webp",
+      "path": "./assets/mobile/ink-v0213-mobile-v0251.webp",
+      "originalBytes": 1045092,
+      "bytes": 239702
+    },
+    {
+      "source": "./assets/finished/ink-portrait-v0213.webp",
+      "path": "./assets/mobile/ink-portrait-v0213-mobile-v0251.webp",
+      "originalBytes": 87310,
+      "bytes": 20312
+    },
+    {
+      "source": "./assets/finished/milk-v0213.webp",
+      "path": "./assets/mobile/milk-v0213-mobile-v0251.webp",
+      "originalBytes": 900232,
+      "bytes": 194820
+    },
+    {
+      "source": "./assets/finished/milk-portrait-v0213.webp",
+      "path": "./assets/mobile/milk-portrait-v0213-mobile-v0251.webp",
+      "originalBytes": 72220,
+      "bytes": 16464
+    },
+    {
+      "source": "./assets/finished/mint-v0213.webp",
+      "path": "./assets/mobile/mint-v0213-mobile-v0251.webp",
+      "originalBytes": 937846,
+      "bytes": 202974
+    },
+    {
+      "source": "./assets/finished/mint-portrait-v0213.webp",
+      "path": "./assets/mobile/mint-portrait-v0213-mobile-v0251.webp",
+      "originalBytes": 73558,
+      "bytes": 16970
+    },
+    {
+      "source": "./assets/finished/bolt-v0216.webp",
+      "path": "./assets/mobile/bolt-v0216-mobile-v0251.webp",
+      "originalBytes": 1192328,
+      "bytes": 277660
+    },
+    {
+      "source": "./assets/finished/bolt-portrait-v0213.webp",
+      "path": "./assets/mobile/bolt-portrait-v0213-mobile-v0251.webp",
+      "originalBytes": 76612,
+      "bytes": 17636
+    },
+    {
+      "source": "./assets/finished/star-v0213.webp",
+      "path": "./assets/mobile/star-v0213-mobile-v0251.webp",
+      "originalBytes": 1083114,
+      "bytes": 242700
+    },
+    {
+      "source": "./assets/finished/star-portrait-v0213.webp",
+      "path": "./assets/mobile/star-portrait-v0213-mobile-v0251.webp",
+      "originalBytes": 89062,
+      "bytes": 20378
+    },
+    {
+      "source": "./assets/finished/pudding-v0216.webp",
+      "path": "./assets/mobile/pudding-v0216-mobile-v0251.webp",
+      "originalBytes": 766334,
+      "bytes": 179478
+    },
+    {
+      "source": "./assets/finished/pudding-portrait-v0216.webp",
+      "path": "./assets/mobile/pudding-portrait-v0216-mobile-v0251.webp",
+      "originalBytes": 60752,
+      "bytes": 13872
+    },
+    {
+      "source": "./assets/finished/spark-v0211.webp",
+      "path": "./assets/mobile/spark-v0211-mobile-v0251.webp",
+      "originalBytes": 1019352,
+      "bytes": 220638
+    },
+    {
+      "source": "./assets/finished/spark-portrait-v0211.webp",
+      "path": "./assets/mobile/spark-portrait-v0211-mobile-v0251.webp",
+      "originalBytes": 58408,
+      "bytes": 10480
+    }
+  ],
+  "originalArtBytes": 8606906,
+  "mobileArtBytes": 1915168
+}

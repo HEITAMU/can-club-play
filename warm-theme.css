@@ -117,3 +117,15 @@ body{background:radial-gradient(ellipse at 22% 30%,#56404d,#292535 75%);color:#f
 .crew-view[data-mode="profile"] .crew-growth .crew-breakthrough{background:#faedcf;border-color:#c3a16b;padding:7px}
 .crew-view[data-mode="profile"] .crew-growth .crew-actions{margin:0}
 .crew-view[data-mode="profile"] .crew-profile{row-gap:10px}
+
+/* Give the portrait more room while keeping the stat list compact. */
+.crew-view[data-mode="profile"] .crew-profile{grid-template-columns:minmax(0,1fr) 46%}
+.crew-view[data-mode="profile"] .crew-attributes{padding:7px 8px;align-self:start}
+.crew-view[data-mode="profile"] .crew-attributes dl{gap:2px}
+.crew-view[data-mode="profile"] .crew-attributes dt{margin:0;font-size:9px}
+.crew-view[data-mode="profile"] .crew-attributes dd{font-size:13px;line-height:1.15}
+.crew-view[data-mode="profile"] .crew-attributes .crew-section-label{margin-bottom:6px}
+.crew-view[data-mode="profile"] .crew-attributes .crew-section-label span{display:none}
+.crew-view[data-mode="profile"] .crew-hero{min-height:159px}
+.crew-view[data-mode="profile"] .crew-portrait{left:50%;transform:translateX(-50%);bottom:5px}
+@media(max-width:350px){.crew-view[data-mode="profile"] .crew-profile{grid-template-columns:minmax(0,1fr) 46%}.crew-view[data-mode="profile"] .crew-attributes{padding:7px}.crew-view[data-mode="profile"] .crew-hero{min-height:150px}}
