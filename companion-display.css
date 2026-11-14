@@ -44,7 +44,7 @@
 .crew-view[data-mode="equipment"] .equipment-stage{padding-top:244px;min-height:330px}
 .crew-view[data-mode="equipment"] .equipment-bag{height:330px;min-height:330px}
 .crew-view[data-mode="equipment"] .equipment-character{width:58%;max-width:130px;height:150px;top:24px}
-.crew-view[data-mode="equipment"] .equipment-character>.companion-body{--companion-size:calc(var(--equipment-unit,100px)*var(--companion-scale,1))}
+.crew-view[data-mode="equipment"] .equipment-character>.companion-body{--companion-size:calc(var(--companion-unit,52px)*var(--companion-scale,1))}
 .crew-view[data-mode="equipment"] .slot-coat,.crew-view[data-mode="equipment"] .slot-brace{top:126px}
 .crew-view[data-mode="equipment"] .slot-rune{top:190px}
 

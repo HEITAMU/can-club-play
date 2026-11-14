@@ -21,7 +21,7 @@ test('downward removal leaves the other cat in place, conserves gear and trainin
 });
 test('finger drops resolve in the gaps around sprites and downward into the bench, never outside',()=>{
  const b={left:10,top:100,right:350,bottom:460,width:340,height:360},bench={left:10,right:350,top:470,bottom:550};
- assert.equal(formationTarget(98,270,b,bench,true),2);assert.equal(formationTarget(105,345,b,bench,true),3);assert.equal(formationTarget(240,400,b,bench,true),1);
+ assert.equal(formationTarget(98,205,b,bench,true),2);assert.equal(formationTarget(105,300,b,bench,true),3);assert.equal(formationTarget(240,400,b,bench,true),1);
  assert.equal(formationTarget(90,485,b,bench,true),'bench');assert.equal(formationTarget(90,485,b,bench,false),null);assert.equal(formationTarget(420,300,b,bench,true),null);
 });
 test('formation exposes only owned companions and five enabled destinations',()=>{

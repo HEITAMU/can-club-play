@@ -42,3 +42,12 @@
 .commission-board #street-fight{min-height:43px;font-size:15px;background:#ad6949;color:#fff0cd;border-color:#d7a477;border-bottom:3px solid #74472f;border-radius:9px}
 .commission-board #street-fight:disabled{background:#7a827f;border-color:#9eaaa3;color:#e8e8d9;opacity:1}
 .commission-board .street-recruit{background:#3d5e60;border:1px solid #7d9c8c;border-radius:9px;padding:10px;margin-top:10px}.commission-board .street-recruit .reward-chip>b{color:#f4d495}
+
+.commission-tier-picker{margin:14px 0;padding:12px;background:#d7c39e url('./assets/ui/paper-grain-v02642.webp') center/240px;border:2px solid #94704a;border-radius:10px 6px 12px 7px;box-shadow:inset 0 0 0 1px #f4e2bd}
+.tier-picker-heading{display:flex;justify-content:space-between;align-items:center;padding-bottom:9px;margin-bottom:9px;border-bottom:1px dashed #a0845f;color:#65482f;font-size:11px}.tier-picker-heading>b{color:#75502f;font-size:14px}
+.commission-tier-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.commission-tier{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:72px;padding:7px 3px;color:#765638;background:#f0dfba;border:1px solid #a78b60;border-bottom:3px solid #997047;border-radius:7px 4px 8px 5px;box-shadow:inset 0 1px #fff3d7}
+.commission-tier>b{font-size:21px;line-height:23px}.commission-tier>small{font-size:10px}.tier-pin{position:absolute;top:5px;left:7px;font-size:10px;color:#ae8855}
+.commission-tier.is-cleared{background:#d3d7bd;color:#4a6758;border-color:#8a9c80}.commission-tier.is-cleared .tier-pin{color:#53725c}
+.commission-tier[aria-pressed=true]{background:#d7a456;color:#4b3424;border:2px solid #80552f;box-shadow:inset 0 0 0 2px #f8d991,0 2px 0 #8e683d;transform:translateY(-1px)}
+.commission-tier:disabled{opacity:.65;background:#c9c4b2;border-color:#a9a08a;color:#7b7768;box-shadow:none}.tier-window-nav{display:flex;justify-content:space-between;margin-top:8px}.tier-window-nav button{width:44px;height:32px;background:#e9d6ad;border:1px solid #a38658;border-radius:6px;color:#715134}

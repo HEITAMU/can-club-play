@@ -254,8 +254,9 @@ function openDistrict(place){
  if(place==='challenges'){openModal('arena','<button id="open-journal" class="primary wide">猫巷手账 · 每日委托与成长之路</button>'+weeklyHTML(state)+arenaHTML(state));$('#open-journal').onclick=()=>openDistrict('journal');$$('[data-weekly]').forEach(b=>b.onclick=()=>{forceClose();changeTab('battle');startBattle({weeklyTier:+b.dataset.weekly});});$$('[data-arena-tier]').forEach(b=>b.onclick=()=>{const tier=+b.dataset.arenaTier;if(!arenaOpen(state,tier))return;forceClose();changeTab('battle');startBattle({arenaTier:tier});});}
 }
 const streetView={group:'recruit',id:'milk',tier:1};
-function openStreet(group=streetView.group,id){if(group!==streetView.group||id&&id!==streetView.id)streetView.tier=1;streetView.group=group;if(id)streetView.id=id;openModal('street',streetHTML(state,streetView));
+function openStreet(group=streetView.group,id){if(group!==streetView.group||id&&id!==streetView.id)streetView.tier=1;streetView.group=group;if(id)streetView.id=id;const html=streetHTML(state,streetView);if(modalType==='street'&&!$('#modal-backdrop').hidden){const panel=$('#modal'),scroll=panel.scrollTop,focused=document.activeElement,keys=['streetChoice','streetGroup','streetLevel','streetTier'],key=keys.find(k=>focused?.dataset?.[k]!==undefined),value=key?focused.dataset[key]:null;$('#modal-content').innerHTML=html;panel.scrollTop=scroll;if(key){const attr='data-'+key.replace(/[A-Z]/g,c=>'-'+c.toLowerCase());[...panel.querySelectorAll('['+attr+']')].find(e=>e.getAttribute(attr)===value)?.focus({preventScroll:true});}}else openModal('street',html);
  $$('[data-street-group]').forEach(b=>b.onclick=()=>openStreet(b.dataset.streetGroup));$$('[data-street-choice]').forEach(b=>b.onclick=()=>{streetView.tier=1;openStreet(group,b.dataset.streetChoice);});
+ $$('[data-street-level]').forEach(b=>b.onclick=()=>{streetView.tier=+b.dataset.streetLevel;openStreet();});
  $$('[data-street-tier]').forEach(b=>b.onclick=()=>{streetView.tier+=+b.dataset.streetTier;openStreet();});
  $('#street-fight').onclick=()=>{const q=streetSelection(state,streetView);if(!q.open)return;forceClose();changeTab('battle');startBattle({activity:q.request});};
  const recruitButton=$('#recruit-current');if(recruitButton)recruitButton.onclick=()=>{if(recruitCompanion(state,streetView.id)){persist();renderHeader();renderParty();openStreet();toast(cat(streetView.id).name+'加入了远征队');}};
@@ -305,9 +306,7 @@ function frame(now){requestAnimationFrame(frame);const dt=lastStamp?Math.min(.1,
  if(!document.hidden&&now-idlePaintStamp>=1000/30){idlePaintStamp=now;for(const sprite of $$('.companion-body')){
   if(sprite.closest('#actors,.formation-ghost,[hidden]'))continue;
   const box=sprite.getBoundingClientRect();if(!box.width||!box.height||box.bottom<0||box.top>innerHeight)continue;
-  const equipment=sprite.closest('.equipment-character');
-  const unit=equipment?equipment.clientWidth:arenaMetrics.size;
-  if(equipment)equipment.style.setProperty('--equipment-unit',unit+'px');
+  const unit=arenaMetrics.size;
   setPose(sprite,0,{time:ambientTime,idleTime:ambientTime,renderSize:companionSize(unit,sprite.dataset.art)});
  }}
  if(now-renderStamp>100){if(tab==='battle')renderVitals();renderStamp=now;}
