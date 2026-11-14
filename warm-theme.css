@@ -287,3 +287,92 @@ body{background:radial-gradient(ellipse at 22% 30%,#56404d,#292535 75%);color:#f
 @keyframes stall-sway{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
 @keyframes stall-coin{0%,100%{transform:translateY(1px)}50%{transform:translateY(-3px)}}
 @media(prefers-reduced-motion:reduce){.has-income .income-stall,.has-income .income-coin{animation:none}}
+
+/* A small supply tin, always travelling with the expedition. */
+.club-can{display:inline-flex;flex:none;align-items:center;justify-content:center;width:25px;pointer-events:none}
+.crew-view>.crew-modes{align-items:center;gap:8px}
+.crew-view>.crew-modes>button{flex:1}
+.bag-wallet .club-can{margin-right:auto}
+#arena #actors,#arena #combat-effects,#arena #fx{position:absolute;inset:0 0 76px;pointer-events:none}
+#arena #actors{z-index:3}
+#arena .boss-hud{position:absolute;z-index:7;left:12px;right:86px;bottom:12px;height:55px;min-height:0;padding:7px 9px 6px;border:1px solid #c7a06a;border-radius:11px 9px 12px 8px;background:#513822ed;box-shadow:0 2px 4px #34251840}
+#arena .boss-heading{height:14px;gap:5px}.boss-hud .boss-kicker{display:none}
+#arena .boss-heading b{font-size:11px;letter-spacing:.04em;color:#ffe2b5;white-space:nowrap}
+#arena #boss-health{font:10px Arial,sans-serif;color:#edcc9b;margin-left:auto}
+#arena .boss-health-track{height:7px;margin-top:5px;border:1px solid #8e5e33;border-radius:5px;background:#2f241b;overflow:hidden}
+#arena #boss-health-fill{height:100%;background:linear-gradient(90deg,#ba553b,#e79b61);border-radius:4px;transition:width .15s linear}
+#arena .boss-cue{margin-top:3px;line-height:11px;font-size:8px;color:#e4b87e}
+#arena #boss-countdown{font-size:9px}.boss-charge-track{display:none}
+#arena .boss-hud[data-state="charging"]{border-color:#efb15e;background:#733c24ee}
+#arena .actor.boss>.hp-track{visibility:hidden}
+.can-supply{position:absolute;z-index:8;right:12px;bottom:10px;width:61px;height:65px;padding:0;border:0;border-radius:0;background:none;color:#ffe7b9;box-shadow:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;touch-action:manipulation}
+#can-icon{display:block;width:45px;height:43px;filter:drop-shadow(0 2px 2px #34271c88)}
+#can-icon .painted-item{width:45px!important;height:45px!important}
+.can-supply #can-label{font-size:9px;line-height:14px;background:#654427da;padding:0 5px;border-radius:4px;color:#ffe8b9;font-weight:600}
+.can-supply #can-sub{display:none}.can-supply #can-status{position:absolute;right:-2px;top:1px;border-radius:5px;background:#684322;color:#ffe9b0;font-size:9px;padding:2px 4px;line-height:11px;white-space:nowrap}
+.can-supply .can-progress-track{position:absolute;left:10px;right:10px;bottom:1px;height:4px;background:#392b1f;border:1px solid #a07c45;border-radius:4px;overflow:hidden}
+.can-supply .can-progress-track i{display:block;height:100%;background:#efc668}
+.can-supply.ready #can-icon{animation:supply-breathe 2.8s ease-in-out infinite}
+.can-supply:disabled{opacity:.72;background:none;box-shadow:none;filter:none}
+.can-supply.interrupt-ready #can-status{background:#ad512d;color:#fff1be}
+@keyframes supply-breathe{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-2px) rotate(3deg)}}
+.battle-options{height:33px;min-height:33px;background:#725236;padding:3px 10px;align-items:center;border-top:1px solid #b38a58}
+.battle-options .text-btn,.battle-options .power{color:#f0d6ad}
+.battle-options .power{margin-left:auto}
+.battle-options .speed-button{width:36px;min-height:25px;height:25px;padding:0;border:1px solid #c39b62;background:#946c40;color:#f9e2b5;font-size:11px}
+
+/* The same inventory cell measures the bag, equipment drawer and portraits. */
+.game-shell{container-type:inline-size;--inventory-cell:58px}
+@supports(width:1cqw){.game-shell{--inventory-cell:clamp(46px,calc((100cqw - 82px)/5.2),70px)}}
+.crew-view[data-mode="equipment"] .equipment-layout{grid-template-columns:minmax(0,1fr) calc(var(--inventory-cell)*2 + 21px);gap:10px;align-items:stretch}
+.crew-view[data-mode="equipment"] .equipment-bag{height:252px;min-height:252px;display:flex;flex-direction:column;padding:7px}
+.crew-view[data-mode="equipment"] .equipment-bag-heading{flex:none;margin-bottom:7px;font-size:11px}
+.crew-view[data-mode="equipment"] .equipment-bag .gear-list{flex:1;min-height:0;max-height:none;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;grid-template-columns:repeat(2,var(--inventory-cell));grid-auto-rows:var(--inventory-cell);gap:5px;align-content:start;padding-bottom:3px;scrollbar-width:thin;scrollbar-color:#b0804f transparent}
+.crew-view[data-mode="equipment"] .equipment-bag .gear-tile,.crew-view[data-mode="equipment"] .equipment-bag .gear-empty{width:var(--inventory-cell);height:var(--inventory-cell);min-height:0;aspect-ratio:1}
+.bag-page .gear-list,.bag-page .material-list{grid-template-columns:repeat(auto-fill,var(--inventory-cell));grid-auto-rows:var(--inventory-cell);gap:5px;justify-content:start;align-content:start}
+.bag-page .gear-tile,.bag-page .gear-empty,.bag-page .material-list article{width:var(--inventory-cell);height:var(--inventory-cell);min-height:0;aspect-ratio:1}
+.bag-page .gear-card-main{padding:4px;min-height:0;height:100%}.bag-page .gear-card-main>.painted-item{width:32px;height:32px}
+.bag-page .material-list article{padding:3px;gap:1px;border-radius:8px}.bag-page .material-list .painted-item,.bag-page .material-list svg{width:23px!important;height:23px!important}.bag-page .material-list h3{font-size:8px;line-height:10px;margin:0}.bag-page .material-list b{font:10px Arial,sans-serif}
+.crew-view #crew-detail,.crew-view[data-mode="equipment"] #crew-detail{display:block;padding-bottom:10px}
+.crew-view .crew-equipment{padding-bottom:0}
+.crew-avatar-grid{display:grid;grid-template-columns:repeat(auto-fill,var(--inventory-cell));grid-auto-rows:var(--inventory-cell);gap:5px;margin-top:14px;padding:0 0 10px;align-content:start;background:none;border:0}
+.crew-avatar-grid .crew-roster-card{width:var(--inventory-cell);min-width:0;height:var(--inventory-cell);padding:0;background:none;border:0;box-shadow:none}
+.crew-view .crew-avatar-grid .crew-pick{width:100%;height:100%;min-height:0;padding:3px!important;border:1px solid #c29b66;border-radius:8px;background:#f0d6af;box-shadow:inset 0 1px #fff0cf;display:grid;place-items:center;position:relative}
+.crew-view .crew-avatar-grid .crew-pick[aria-pressed="true"]{border:2px solid #eec16b;background:#d5a76b;box-shadow:inset 0 0 0 1px #956136}
+.crew-view .crew-avatar-grid .crew-pick-art{width:100%;height:100%;position:relative;overflow:hidden;border-radius:5px}
+.crew-view .crew-avatar-grid .crew-pick-art>.painted-sprite{width:calc(var(--inventory-cell)*1.3);height:calc(var(--inventory-cell)*1.3);left:50%;top:1px;transform:translateX(-50%)}
+.crew-avatar-grid .crew-in-party{display:none}
+
+/* Hand-painted gathering courtyard, with loose standing places, not cards. */
+.crew-view[data-mode="formation"]{overflow-y:auto;display:block;overscroll-behavior:contain}
+.crew-formation{padding-bottom:8px}.formation-heading{margin:4px 0 8px;color:#f6dfb6}
+.formation-heading h3{display:flex;align-items:center;gap:6px;font-size:13px}.formation-heading h3 small,.formation-heading>span{color:#e7c79c}
+.formation-board{height:clamp(288px,46dvh,400px);border:0;border-radius:17px 12px 20px 13px;isolation:isolate;overflow:visible;background:#c39259 url('./assets/scenes/formation-courtyard-v02619.webp') center/cover;box-shadow:inset 0 0 0 2px #ac7b48,inset 0 0 12px #85573150}
+.formation-board:before{display:none}.formation-column{top:13px;color:#79532c;font-size:10px;text-shadow:0 1px #f7dda2}.formation-column.front{color:#79532c}
+.formation-slot{width:96px;height:90px;border:0;border-radius:0;background:none;padding:0 0 6px;color:#58351f;outline:none;box-shadow:none;justify-content:flex-end;isolation:isolate}
+.formation-slot:before{left:22%;right:22%;height:10px;bottom:18px;border:0;background:#734e2833;border-radius:50%;box-shadow:0 0 6px #734e281a}
+.formation-slot-art,.formation-slot-art .painted-sprite{width:72px;height:72px}
+.formation-slot b{font-size:10px;line-height:13px;font-weight:600;color:#633e23;text-shadow:0 1px #f2d59d}
+.formation-slot.is-empty{background:none;border:0}.formation-slot.is-empty:before{left:28%;right:28%;bottom:28px;background:#90633721;box-shadow:0 0 4px #c49e6a}
+.formation-slot-art>i{font-size:24px;color:#966739;opacity:.7}
+.crew-formation .formation-slot.is-selected,.crew-formation .formation-slot.is-drop-target{outline:none;background:none;filter:drop-shadow(0 0 4px #ffe7a4)}
+.formation-slot.is-selected:before,.formation-slot.is-drop-target:before{left:15%;right:15%;background:#fce2a3;border:2px solid #a36836;box-shadow:0 0 9px #f4d693;height:15px}
+.formation-bench-zone{margin-top:9px;padding:8px 0 0;border-top:1px solid #c3996599;transition:background .12s}
+.formation-bench-heading{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#f5dcb2;margin-bottom:7px}
+.formation-dismiss{padding:4px 8px;border:0;border-radius:7px;background:#6c492d;color:#e6c493;font-size:10px;box-shadow:none}
+.formation-bench{display:grid;grid-template-columns:repeat(auto-fill,var(--inventory-cell));gap:6px}
+.formation-bench-pick{width:var(--inventory-cell);height:var(--inventory-cell);padding:0;display:grid;place-items:center;overflow:hidden;border:1px solid #c09862;border-radius:8px;background:#edd0a4;color:#6f492b;box-shadow:none}
+.formation-card-art{width:100%;height:100%;overflow:hidden;position:relative}.formation-card-art .painted-sprite{width:calc(var(--inventory-cell)*1.3);height:calc(var(--inventory-cell)*1.3);position:absolute;left:50%;top:1px;transform:translateX(-50%)}
+.formation-bench-pick>i{top:auto;bottom:1px;right:2px;border:0;background:#795330cf;color:#fbe4b6;font-size:7px;padding:1px 3px}
+.formation-bench-zone.is-drop-target{background:#d3a05d44}.formation-bench-zone.is-drop-target .formation-dismiss{background:#ecc47e;color:#6b4122}
+.formation-hint{min-height:16px;margin:8px 0 0;font-size:10px;color:#e8c99c;line-height:16px}
+.is-drag-source>.formation-slot-art,.is-drag-source>.formation-card-art{opacity:.15}
+.formation-ghost{position:fixed;left:0;top:0;z-index:250;width:76px;height:76px;padding:0;border:0;border-radius:0;background:none;box-shadow:none;pointer-events:none;will-change:transform;filter:drop-shadow(0 3px 2px #63402455)}
+.formation-ghost .formation-slot-art,.formation-ghost .formation-card-art{width:76px;height:76px;overflow:visible}
+.formation-ghost .painted-sprite{width:76px!important;height:76px!important;position:relative;left:auto;top:auto;transform:none}
+@media(prefers-reduced-motion:reduce){.can-supply.ready #can-icon{animation:none}}
+.crew-view[data-mode="formation"]{background:#826044}
+.crew-view[data-mode="formation"] .crew-modes button{color:#ead0a9}
+.crew-view[data-mode="formation"] .crew-modes button[aria-pressed="true"]{color:#fff0cb;border-bottom-color:#f1c270}
+.formation-board .formation-column{z-index:1;background:#f3d198db;border-radius:5px;padding:2px 5px;font-weight:600}
+#other-view{padding-bottom:0}

@@ -1,83 +1,87 @@
 import {CATS,ownsCompanion,MAX_PARTY,inheritanceFor} from './core.mjs?v=0.25.0';
-import {catSVG} from './art.mjs?v=0.25.0';
-import {crewUpgradeHTML} from './crew-profile.mjs?v=0.25.0';
-
+import {catSVG,icon} from './art.mjs?v=0.25.0';
 const name=id=>CATS.find(c=>c.id===id)?.name||'伙伴';
-const slots=[[71,36],[71,72],[27,23],[27,54],[27,85]];
+export const FORMATION_SLOTS=[[70,35],[70,71],[28,24],[28,51],[28,79]];
 export function crewFormationHTML(state){
- return '<section class="crew-formation" aria-label="拖动调整阵容"><div class="formation-heading"><h3>出战阵容 <small>'+state.party.length+' / '+MAX_PARTY+'</small></h3><span>面向敌人 →</span></div><div class="formation-board"><span class="formation-column back">后排</span><span class="formation-column front">前排</span>'+slots.map(([x,y],i)=>{
-  const id=state.party[i],available=i<=state.party.length;
-  return '<button class="formation-slot'+(id?'':' is-empty')+'" data-formation-slot="'+i+'" '+(id?'data-drag-cat="'+id+'"':'')+' '+(!available?'disabled':'')+' style="left:'+x+'%;top:'+y+'%" aria-label="'+(i<2?'前排 '+(i+1):'后排 '+(i-1))+'，'+(id?name(id)+'，可拖动换位':available?'空位，可拖入伙伴':'待上阵')+'"><span class="formation-slot-art">'+(id?catSVG(id,true):'<i>＋</i>')+'</span><b>'+ (id?name(id):'空位')+'</b><small>'+(id?'Lv.'+state.levels[id]:available?'拖入伙伴':'—')+'</small></button>';
- }).join('')+'</div><p class="formation-hint" role="status" aria-live="polite"></p><div class="formation-heading bench-heading"><h3>所有伙伴</h3></div><div class="formation-bench">'+CATS.map(c=>{
-  const open=ownsCompanion(state,c.id);
-  return '<article class="formation-card'+(open?'':' is-locked')+'"><button class="formation-bench-pick" '+(open?'data-drag-cat="'+c.id+'"':'disabled')+' aria-label="'+c.name+(open?'，拖动上阵':'，通过伙伴委托结识')+'" aria-pressed="false"><span class="formation-card-art">'+catSVG(c.id,true)+'</span><b>'+c.name+'</b><small>'+(open?'Lv.'+state.levels[c.id]:'未结识')+'</small>'+(state.party.includes(c.id)?'<i>出战</i>':'')+'</button>'+crewUpgradeHTML(state,c.id)+'</article>';
- }).join('')+'</div></section>';
+ return '<section class="crew-formation" aria-label="拖动调整阵容"><div class="formation-heading"><h3>'+icon('can',22)+'出战阵容 <small>'+state.party.filter(Boolean).length+' / '+MAX_PARTY+'</small></h3><span>面向敌人 →</span></div><div class="formation-board"><span class="formation-column back">后排</span><span class="formation-column front">前排</span>'+FORMATION_SLOTS.map(([x,y],i)=>{
+  const id=state.party[i];
+  return '<button class="formation-slot'+(id?'':' is-empty')+'" data-formation-slot="'+i+'" '+(id?'data-drag-cat="'+id+'"':'')+' style="left:'+x+'%;top:'+y+'%" aria-label="'+(i<2?'前排 '+(i+1):'后排 '+(i-1))+'，'+(id?name(id)+'，可拖动换位':'空位，可拖入伙伴')+'"><span class="formation-slot-art">'+(id?catSVG(id,true):'<i>＋</i>')+'</span>'+(id?'<b>'+name(id)+'</b>':'')+'</button>';
+ }).join('')+'</div><div class="formation-bench-zone" data-formation-bench><div class="formation-bench-heading"><b>伙伴</b><button class="formation-dismiss" aria-label="将选中伙伴下场">↓ 下拖下场</button></div><div class="formation-bench">'+CATS.filter(c=>ownsCompanion(state,c.id)).map(c=>'<button class="formation-bench-pick'+(state.party.includes(c.id)?' is-deployed':'')+'" data-drag-cat="'+c.id+'" aria-label="'+c.name+'，拖动上阵" aria-pressed="false"><span class="formation-card-art">'+catSVG(c.id,true)+'</span>'+(state.party.includes(c.id)?'<i>出战</i>':'')+'</button>').join('')+'</div></div><p class="formation-hint" role="status" aria-live="polite">拖动换位 · 下拖下场</p></section>';
 }
-
 export function formationDropText(state,id,slot){
  const transfer=inheritanceFor(state,slot,id),old=state.party[slot];
  return transfer?name(id)+'继承 Lv.'+transfer.fromLevel+' · '+name(old)+'转为 Lv.'+transfer.toLevel:state.party.includes(id)?name(id)+(old?'与'+name(old)+'交换站位':'移动到空位'):name(id)+(old?'替换'+name(old):'上阵');
 }
-
-// Pointer events work with a finger, mouse or pen; selecting then tapping a
-// position is also available to keyboard and assistive-technology users.
-export function bindFormationDrag(root,{scrollElement,onDrop,describe}){
- const hint=root.querySelector('.formation-hint'),defaultHint=hint.textContent;
- let selected=null,drag=null,ghost=null,frame=0,suppressUntil=0;
- const slots=[...root.querySelectorAll('[data-formation-slot]')];
+// Each half of the courtyard has generous contiguous landing zones; a finger
+// need not hit the small sprite. The board and bench never overlap as targets.
+export function formationTarget(x,y,board,bench,fromBoard=false){
+ if(fromBoard&&y>=bench.top-6&&x>=bench.left-20&&x<=bench.right+20)return 'bench';
+ if(x<board.left-18||x>board.right+18||y<board.top-16||y>board.bottom+8)return null;
+ const nx=(x-board.left)/board.width*100,ny=(y-board.top)/board.height*100;
+ let best=null,distance=Infinity;
+ FORMATION_SLOTS.forEach(([sx,sy],i)=>{const d=(nx-sx)**2+(ny-sy)**2;if(d<distance){distance=d;best=i;}});
+ return best;
+}
+export function bindFormationDrag(root,{scrollElement,onDrop,onRemove,describe}){
+ const hint=root.querySelector('.formation-hint'),defaultHint=hint.textContent,board=root.querySelector('.formation-board'),bench=root.querySelector('[data-formation-bench]'),slots=[...root.querySelectorAll('[data-formation-slot]')];
+ let selected=null,drag=null,ghost=null,frame=0,suppressUntil=0,lastTarget=null;
  const setHint=text=>{if(hint.textContent!==text)hint.textContent=text;};
  function highlight(){for(const b of root.querySelectorAll('[data-drag-cat]')){b.classList.toggle('is-selected',b.dataset.dragCat===selected);b.setAttribute('aria-pressed',String(b.dataset.dragCat===selected));}}
- function targetAt(x,y){const slot=document.elementFromPoint(x,y)?.closest('[data-formation-slot]');return slot&&root.contains(slot)&&!slot.disabled?slot:null;}
+ const targetAt=(x,y)=>formationTarget(x,y,board.getBoundingClientRect(),bench.getBoundingClientRect(),drag?.fromBoard);
  function preview(){
-  if(!drag?.active)return;
-  const target=targetAt(drag.x,drag.y);
-  for(const slot of slots)slot.classList.toggle('is-drop-target',slot===target);
-  setHint(target?describe(drag.id,+target.dataset.formationSlot):'拖到高亮站位后松手');
+  if(!drag?.active)return;const target=targetAt(drag.x,drag.y);
+  if(target===lastTarget)return;lastTarget=target;
+  for(const slot of slots)slot.classList.toggle('is-drop-target',+slot.dataset.formationSlot===target);
+  bench.classList.toggle('is-drop-target',target==='bench');
+  setHint(target==='bench'?'松手下场':typeof target==='number'?describe(drag.id,target):defaultHint);
  }
  function animate(){
   if(!drag?.active)return;
-  const bounds=scrollElement.getBoundingClientRect(),edge=42;
-  const speed=drag.y<bounds.top+edge?-Math.min(12,(bounds.top+edge-drag.y)*.3):drag.y>bounds.bottom-edge?Math.min(12,(drag.y-bounds.bottom+edge)*.3):0;
-  if(speed)scrollElement.scrollTop+=speed;
+  // Moving the ghost is one compositor transform per frame; never re-render the
+  // dragged character or let the portrait's idle canvas erase the drag image.
+  ghost.style.transform=`translate3d(${drag.x-38}px,${drag.y-70}px,0)`;
+  const bounds=scrollElement.getBoundingClientRect();
+  if(drag.y<bounds.top+24)scrollElement.scrollTop-=6;
+  else if(drag.y>bounds.bottom-20)scrollElement.scrollTop+=6;
   preview();frame=requestAnimationFrame(animate);
  }
  function clear(){
   cancelAnimationFrame(frame);ghost?.remove();ghost=null;
-  root.classList.remove('is-dragging');for(const slot of slots)slot.classList.remove('is-drop-target');
-  if(drag&&drag.source.hasPointerCapture?.(drag.pointer))drag.source.releasePointerCapture(drag.pointer);
-  drag=null;setHint(defaultHint);
+  root.classList.remove('is-dragging');root.querySelectorAll('.is-drag-source').forEach(n=>n.classList.remove('is-drag-source'));
+  for(const slot of slots)slot.classList.remove('is-drop-target');bench.classList.remove('is-drop-target');
+  const pointer=drag?.pointer,source=drag?.source;drag=null;lastTarget=null;if(pointer!==undefined&&source?.hasPointerCapture?.(pointer))source.releasePointerCapture(pointer);
+  setHint(defaultHint);
  }
  function down(e){
   if(e.button!==0||drag||e.isPrimary===false)return;
   const source=e.target.closest('[data-drag-cat]');if(!source||!root.contains(source)||source.disabled)return;
-  drag={id:source.dataset.dragCat,source,pointer:e.pointerId,startX:e.clientX,startY:e.clientY,x:e.clientX,y:e.clientY,active:false};
+  drag={id:source.dataset.dragCat,source,fromBoard:source.hasAttribute('data-formation-slot'),pointer:e.pointerId,startX:e.clientX,startY:e.clientY,x:e.clientX,y:e.clientY,active:false};
   source.setPointerCapture(e.pointerId);
  }
  function move(e){
   if(!drag||e.pointerId!==drag.pointer)return;
   drag.x=e.clientX;drag.y=e.clientY;
-  if(!drag.active&&Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)<7)return;
+  if(!drag.active&&Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)<5)return;
   e.preventDefault();
   if(!drag.active){
    drag.active=true;selected=null;highlight();root.classList.add('is-dragging');
    ghost=document.createElement('div');ghost.className='formation-ghost';ghost.setAttribute('aria-hidden','true');
-   ghost.innerHTML=drag.source.innerHTML;
-   const originals=drag.source.querySelectorAll('canvas');ghost.querySelectorAll('canvas').forEach((canvas,i)=>canvas.getContext('2d').drawImage(originals[i],0,0));
-   document.body.append(ghost);frame=requestAnimationFrame(animate);
+   const art=drag.source.querySelector('.formation-slot-art,.formation-card-art');ghost.append(art.cloneNode(true));
+   const originals=art.querySelectorAll('canvas');ghost.querySelectorAll('canvas').forEach((canvas,i)=>{canvas.width=originals[i].width;canvas.height=originals[i].height;canvas.getContext('2d').drawImage(originals[i],0,0);});
+   document.body.append(ghost);root.querySelectorAll('[data-drag-cat="'+drag.id+'"]').forEach(n=>n.classList.add('is-drag-source'));animate();
   }
-  ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';preview();
  }
  function up(e){
   if(!drag||e.pointerId!==drag.pointer)return;
-  const id=drag.id,active=drag.active,target=active?targetAt(e.clientX,e.clientY):null;
-  clear();
-  if(active){e.preventDefault();suppressUntil=performance.now()+350;if(target)requestAnimationFrame(()=>onDrop(id,+target.dataset.formationSlot));}
+  const {id,active}=drag,target=active?targetAt(e.clientX,e.clientY):null;clear();
+  if(active){e.preventDefault();suppressUntil=performance.now()+400;if(target==='bench')onRemove(id);else if(typeof target==='number')onDrop(id,target);}
  }
  function click(e){
   if(performance.now()<suppressUntil){e.preventDefault();e.stopPropagation();return;}
+  if(e.target.closest('.formation-dismiss')){if(selected){const id=selected;selected=null;highlight();onRemove(id);}return;}
   const slot=e.target.closest('[data-formation-slot]'),source=e.target.closest('[data-drag-cat]');
-  if(slot&&!slot.disabled&&selected){const id=selected;selected=null;highlight();onDrop(id,+slot.dataset.formationSlot);return;}
-  if(source&&!source.disabled){selected=selected===source.dataset.dragCat?null:source.dataset.dragCat;highlight();setHint(selected?'已选 '+name(selected)+' · 点击站位上阵':defaultHint);}
+  if(slot&&selected){const id=selected;selected=null;highlight();onDrop(id,+slot.dataset.formationSlot);return;}
+  if(source){selected=selected===source.dataset.dragCat?null:source.dataset.dragCat;highlight();setHint(selected?'已选 '+name(selected)+' · 点击站位或下场':defaultHint);}
  }
  function cancel(){clear();selected=null;highlight();}
  function key(e){if(e.key==='Escape')cancel();}

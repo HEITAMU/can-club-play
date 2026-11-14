@@ -16,9 +16,9 @@ test('ranged normal attacks remain at formation while melee approaches, holds an
   }else assert.ok(points.every(p=>p.x===0&&p.y===0),catId);
  }
 });
-test('inventory grid pagination includes each unequipped item once and preserves IDs',()=>{
+test('scrollable inventory includes every unequipped item once without pages',()=>{
  const s=initialState(),sample=s.inventory.items.find(e=>e.slot!=='rune');s.inventory.equipped={};
  s.inventory.items=Array.from({length:35},(_,i)=>({...sample,id:'e'+i}));
- const found=[];for(let page=0;page<3;page++){const html=inventoryHTML(s,{tab:'equipment',page});found.push(...[...html.matchAll(/data-gear="([^"]+)"/g)].map(m=>m[1]));}
+ const html=inventoryHTML(s,{tab:'equipment',page:0}),found=[...html.matchAll(/data-gear="([^"]+)"/g)].map(m=>m[1]);assert.ok(!html.includes('data-page='));
  assert.equal(found.length,35);assert.equal(new Set(found).size,35);
 });
