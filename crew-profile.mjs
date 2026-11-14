@@ -40,7 +40,7 @@ export function crewRosterHTML(state,selected){
  return CATS.filter(c=>ownsCompanion(state,c.id)).map(c=>{
   const open=ownsCompanion(state,c.id);
   return '<article class="crew-roster-card"><button class="crew-pick'+(open?'':' is-locked')+'" data-crew="'+c.id+'" aria-pressed="'+(selected===c.id)+'" aria-label="查看'+c.name+(open?'':'，通过伙伴委托结识')+'">'+
-   '<span class="crew-pick-art">'+catSVG(c.id,true)+'</span><b>'+c.name+'</b><small>'+(open?'Lv.'+state.levels[c.id]:'未结识')+'</small>'+
+   '<span class="crew-pick-art">'+catSVG(c.id,true)+'</span>'+
    (state.party.includes(c.id)?'<i class="crew-in-party" aria-label="出战中"></i>':'')+'</button>'+crewUpgradeHTML(state,c.id)+'</article>';
  }).join('');
 }

@@ -260,3 +260,15 @@ body{background:radial-gradient(ellipse at 22% 30%,#56404d,#292535 75%);color:#f
 .set-effect-preview>span.active{color:#62401d}
 .crew-view .crew-roster-card{flex:0 0 104px;min-width:104px}
 .crew-view .crew-roster-card .crew-pick{width:100%;min-width:0}
+
+/* Compact navigation, with currency owned by the bag page. */
+.crew-view>.crew-roster,.crew-view[data-mode="equipment"]>.crew-roster{flex-basis:48px;min-height:48px;padding:4px 12px;gap:8px}
+.crew-view .crew-roster-card{flex:0 0 40px;min-width:40px}
+.crew-view .crew-roster-card .crew-pick{display:grid;grid-template-columns:1fr;grid-template-rows:1fr;place-items:center;width:40px;height:40px;min-height:40px;padding:1px!important;border-radius:8px}
+.crew-view .crew-pick-art{grid-row:auto;width:34px;height:34px;overflow:hidden;border-radius:6px}
+.crew-view .crew-pick-art>.painted-sprite{width:48px;height:48px;position:absolute;left:-7px;top:0}
+.crew-view .crew-pick b,.crew-view .crew-pick small{display:none}
+.bag-wallet{display:flex;align-items:center;gap:18px;padding:1px 0 8px;color:#78522f;border-bottom:1px solid #b38f5a55}
+.bag-wallet>span{display:flex;align-items:center;gap:5px}.bag-wallet b{font:600 13px Arial,system-ui,sans-serif;font-variant-numeric:tabular-nums}.bag-wallet small{font-size:10px}
+.crew-view>.crew-roster{overflow-y:hidden;scrollbar-width:none}
+.crew-view>.crew-roster::-webkit-scrollbar{display:none}
