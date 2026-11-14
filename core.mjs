@@ -18,14 +18,14 @@ import {CAN_TIMING,canHitAt,canDuration,canTargetOrder} from './can-timing.mjs?v
 import {heroCombatStats,enemyCombatStats,mitigatedDamage} from './combat-stats.mjs?v=0.25.0';
 export const VERSION=1, MAX_STAGE=600, MAX_LEVEL=100, MAX_PARTY=5;
 export const CATS=[
- {id:'orange',name:'橘座',job:'前排守护',tag:'守护',color:'#edab62',accent:'#c8793b',unlock:0,hp:205,atk:17,skill:'锅盖护体',desc:'举起锅盖：获得自身生命 45% 的护盾，并为队友提供 12% 护盾。',passive:'5 级：受到伤害降低 15%。',quote:'这条街的罐头，我罩了。',gear:'pan'},
- {id:'ink',name:'阿墨',job:'单体输出',tag:'突袭',color:'#42465c',accent:'#929db5',unlock:0,hp:116,atk:25,skill:'飞鱼三连',desc:'连续命中生命最低的敌人，合计造成 330% 攻击力的物理伤害，本次攻击额外获得 25 点护甲穿透。',passive:'5 级：暴击率额外提高 15 个百分点。',quote:'别眨眼，鱼已经到了。',gear:'scarf'},
- {id:'milk',name:'奶盖',job:'全队治疗',tag:'支援',color:'#f8ead8',accent:'#c6a2bf',unlock:3,hp:145,atk:13,skill:'热牛奶时间',desc:'治疗全体队友，数值相当于奶盖最大生命的 28%。',passive:'5 级：普攻回复的能量从 22 提高到 32。',quote:'打完这一架，记得吃饭。',gear:'nurse'},
- {id:'spark',name:'火花',job:'群体灼烧',tag:'爆发',color:'#d98f75',accent:'#8f494b',unlock:8,hp:112,atk:27,skill:'提灯燎原',desc:'对全体敌人造成 160% 攻击力的法术伤害，并施加每秒 30% 攻击力的法术灼烧。',passive:'5 级：灼烧持续时间从 4 秒提高到 6 秒。',quote:'灯还亮着，跟紧我。',gear:'goggles'},
- {id:'mint',name:'薄荷',job:'眩晕控制',tag:'控制',color:'#a9d4c1',accent:'#4a8d83',unlock:15,hp:133,atk:22,skill:'冰镇气泡',desc:'优先打断蓄力中的敌人，其次压制治疗者，造成 230% 攻击力的法术伤害，眩晕 1800 毫秒并打断蓄力。',passive:'5 级：眩晕时间提高到 2600 毫秒。',quote:'别急，先冷静一下。',gear:'hood'},
- {id:'bolt',name:'扳手',job:'破甲专家',tag:'破甲',color:'#adbacb',accent:'#636e8b',unlock:25,hp:162,atk:24,skill:'扳手大修',desc:'先降低目标 40% 当前护甲（最多降低开场护甲的 80%），再造成 300% 攻击力的物理伤害。',passive:'5 级：护甲降低幅度提高到 60%。',quote:'修不好，就再拧一下。',gear:'helmet'},
- {id:'pudding',name:'石墩',job:'前排输出',tag:'输出',color:'#757780',accent:'#c69358',unlock:40,hp:235,atk:22,skill:'护体劲 · 震街拳',desc:'满能量获得自身生命 35% 的护盾。盾量达到生命 30% 后蓄力；期间再获得生命 15% 的护盾，对位有人时原地出拳，对位空缺时移至另一目标前方，攻击对应前排及其身后上下两名后排，最多 3 个目标。对应前排空缺时改打另一前排；前排全部倒下后随机攻击一名后排，伤害为 100% 攻击＋锁定盾量的 160%。蓄力无时限，被控制或护盾被打空时中断；出拳时清空护盾，伤害按清空前锁定盾量计算；重拳间隔 8 秒。',passive:'护盾吸收伤害回复 12 能量，间隔 1000 毫秒；蓄力每秒回复 35 能量，满能量再次加盾并触发重拳。',quote:'站稳，再出拳。',gear:'cape'},
- {id:'star',name:'星斑',job:'能量辅助',tag:'支援',color:'#c4b1df',accent:'#78669f',unlock:60,hp:150,atk:19,skill:'今晚有星星',desc:'为其他队友回复 36 能量，并治疗相当于星斑攻击 160% 的生命。',passive:'5 级：开场拥有 40 点能量。',quote:'许个愿，然后自己去实现。',gear:'wizard'}
+ {id:'orange',name:'橘座',job:'前排守护',tag:'守护',color:'#edab62',accent:'#c8793b',unlock:0,hp:205,atk:17,skill:'锅盖护体',desc:'获得自身最大生命 45% 的护盾，并为队友提供 12% 护盾。',passive:'受到伤害降低 15%。',quote:'这条街的罐头，我罩了。',gear:'pan'},
+ {id:'ink',name:'阿墨',job:'单体输出',tag:'突袭',color:'#42465c',accent:'#929db5',unlock:0,hp:116,atk:25,skill:'飞鱼三连',desc:'连续命中生命最低的敌人，合计造成 330% 攻击力的物理伤害，本次攻击额外获得 25 点护甲穿透。',passive:'暴击率额外提高 15 个百分点。',quote:'别眨眼，鱼已经到了。',gear:'scarf'},
+ {id:'milk',name:'奶盖',job:'全队治疗',tag:'支援',color:'#f8ead8',accent:'#c6a2bf',unlock:3,hp:145,atk:13,skill:'热牛奶时间',desc:'治疗全体队友，数值相当于奶盖最大生命的 28%。',passive:'普攻额外回复 10 能量。',quote:'打完这一架，记得吃饭。',gear:'nurse'},
+ {id:'spark',name:'火花',job:'群体灼烧',tag:'爆发',color:'#d98f75',accent:'#8f494b',unlock:8,hp:112,atk:27,skill:'提灯燎原',desc:'对全体敌人造成 160% 攻击力的法术伤害，并施加每秒 30% 攻击力的法术灼烧。',passive:'灼烧持续时间延长 2 秒。',quote:'灯还亮着，跟紧我。',gear:'goggles'},
+ {id:'mint',name:'薄荷',job:'眩晕控制',tag:'控制',color:'#a9d4c1',accent:'#4a8d83',unlock:15,hp:133,atk:22,skill:'冰镇气泡',desc:'优先打断蓄力中的敌人，其次压制治疗者，造成 230% 攻击力的法术伤害，眩晕 1.8 秒并打断蓄力。',passive:'眩晕持续时间延长 0.8 秒。',quote:'别急，先冷静一下。',gear:'hood'},
+ {id:'bolt',name:'扳手',job:'破甲专家',tag:'破甲',color:'#adbacb',accent:'#636e8b',unlock:25,hp:162,atk:24,skill:'扳手大修',desc:'先降低目标 40% 当前护甲（最多降低开场护甲的 80%），再造成 300% 攻击力的物理伤害。',passive:'技能护甲削减提高 20 个百分点。',quote:'修不好，就再拧一下。',gear:'helmet'},
+ {id:'pudding',name:'石墩',job:'前排输出',tag:'输出',color:'#757780',accent:'#c69358',unlock:40,hp:235,atk:22,skill:'护体劲 · 震街拳',desc:'获得 35% 最大生命值的护盾。护盾达到 30% 最大生命值时蓄力，每秒回复 35 能量；再获得 15% 最大生命值的护盾后，消耗当前护盾，对目标前排及其身后两名敌人造成 180% 当前护盾值的物理伤害。护盾破裂或受到控制时中断蓄力。冷却 8 秒。',passive:'有护盾时，承伤回能翻倍。',quote:'站稳，再出拳。',gear:'cape'},
+ {id:'star',name:'星斑',job:'能量辅助',tag:'支援',color:'#c4b1df',accent:'#78669f',unlock:60,hp:150,atk:19,skill:'今晚有星星',desc:'为其他队友回复 36 能量，并治疗相当于星斑攻击 160% 的生命。',passive:'开场拥有 40 点能量。',quote:'许个愿，然后自己去实现。',gear:'wizard'}
 ];
 export const RELICS=[
  {id:'claw',name:'金属猫爪',desc:'全队攻击 +12%',icon:'claw',color:'#f2a278'},
@@ -181,12 +181,12 @@ export class Battle {
  harm(target,raw,source,{crit=false,type=source?.normalDamageType||'physical',bonusPen=0,reflect=true,dot=false,element}={}){
   if(!target||target.hp<=0)return 0;const ramp=1000000+Math.max(0,integer(this.time*1000)-40000)*25;target.hp=integer(target.hp);target.shield=integer(target.shield);
   let amount=mulDiv(mitigatedDamage(integer(raw),target,source,type,bonusPen),ramp,1000000);
-  if(target.catId==='orange'&&target.level>=5)amount=mulDiv(amount,85);
+  if(target.catId==='orange'&&target.level>=5)amount=mulDiv(amount,100-skillTuning(target.skillRank).orangeGuard);
   if(source?.side==='p'&&target.boss)amount*=this.buff.boss;
   if(!dot&&source?.catId==='ink'&&source.level>=40&&target.hp<mulDiv(target.maxHp,40))amount=mulDiv(amount,125);
-  if(!dot&&source?.side==='p'&&target.stun>0&&this.heroes.some(h=>h.catId==='mint'&&h.level>=40&&h.hp>0))amount=mulDiv(amount,115);
+  if(!dot&&source?.side==='p'&&target.stun>0){const mint=this.heroes.find(h=>h.catId==='mint'&&h.level>=40&&h.hp>0);if(mint)amount=mulDiv(amount,100+skillTuning(mint.skillRank).mintVulnerable);}
   if(source?.side==='p'&&type==='physical'&&target.armor<target.initialArmor*.5&&this.heroes.some(h=>h.catId==='bolt'&&h.level>=80&&h.hp>0))amount=mulDiv(amount,115);
-  if(!dot&&target.catId==='pudding'&&target.level>=40)amount=mulDiv(amount,90);
+  if(target.catId==='pudding'&&target.level>=40&&target.shield>0)amount=mulDiv(amount,90);
   if(target.adaptive&&!dot){target.sameHit=target.lastHitType===type?Math.min(60,(target.sameHit||0)+12):0;target.lastHitType=type;amount=mulDiv(amount,100-target.sameHit);}
   if(!dot&&source?.gearSets?.includes('hunt')&&target.hp<mulDiv(target.maxHp,50))amount=mulDiv(amount,130);
   if(source?.gearSets?.includes('ember')&&target.burnTime>0)amount=mulDiv(amount,125);
@@ -197,12 +197,12 @@ export class Battle {
   if(target.hp<=0){target.downAt=this.eventAt??this.time;target.action=null;this.emit('down',source,target);if(target.side==='e')this.kills++;if(source?.catId==='ink'&&source.level>=80)source.energy=Math.min(100,source.energy+35);}
   const at=this.eventAt??this.time,hitEnergy=target.side==='p'&&source?.side==='e'&&target.hp>0&&hit+shield>0&&!dot&&reflect&&at>=(target.hitEnergyAt??-Infinity)+1;
   if(hitEnergy){target.hitEnergyAt=at;if(!(target.shieldPunch&&shield>0))target.energy=Math.min(100,target.energy+8);}
-  if(target.catId==='pudding'&&target.shieldPunch&&shield>0&&target.hp>0){const sp=target.shieldPunch;sp.deferSelfShield=target.normalRound===this.round;sp.hp=target.hp;sp.energy=target.energy;sp.shield=target.shield+shield;this.shieldEvents(target,absorbShieldDamage(sp,shield,at,{energy:hitEnergy}));}
+  if(target.catId==='pudding'&&target.shieldPunch&&shield>0&&target.hp>0){const sp=target.shieldPunch;sp.deferSelfShield=target.normalRound===this.round;sp.hp=target.hp;sp.energy=target.energy;sp.config.absorbEnergy=target.level>=5?16:8;sp.shield=target.shield+shield;this.shieldEvents(target,absorbShieldDamage(sp,shield,at,{energy:hitEnergy}));}
   if(target.rune==='steadfast'&&!target.runeUsed&&target.hp>0&&target.hp<mulDiv(target.maxHp,30)){target.runeUsed=true;this.shield(target,mulDiv(target.maxHp,8),target);}
   if(reflect&&target.side==='p'&&source?.side==='e'&&source.hp>0&&(target.gearSets?.includes('thorn')||this.buff.reflect>0))this.harm(source,mulDiv(hit+shield,target.gearSets?.includes('thorn')?15:this.buff.reflect),target,{reflect:false,type});return hit;
  }
- heal(target,amount,source){if(target.hp<=0)return;amount=integer(amount);target.hp=integer(target.hp);if(source?.gearSets?.includes('spring'))amount=mulDiv(amount,125);if(source?.rune==='warmth'&&target.hp<mulDiv(target.maxHp,50))amount=mulDiv(amount,110);if(target.scorchedUntil>this.time)amount=mulDiv(amount,50);const overflow=Math.max(0,amount-(target.maxHp-target.hp));const n=Math.min(target.maxHp-target.hp,amount);target.hp+=n;if(n>1)this.emit('heal',source,target,n);if(source?.catId==='milk'&&source.level>=40&&overflow>0)this.shield(target,Math.min(mulDiv(target.maxHp,8),mulDiv(overflow,30)),source);}
- shieldFactor(target){return mulDiv(target.gearSets?.includes('guard')?120:100,target.rune==='bulwark'?108:100);}
+ heal(target,amount,source){if(target.hp<=0)return;amount=integer(amount);target.hp=integer(target.hp);if(source?.gearSets?.includes('spring'))amount=mulDiv(amount,125);if(source?.rune==='warmth'&&target.hp<mulDiv(target.maxHp,50))amount=mulDiv(amount,110);if(target.scorchedUntil>this.time)amount=mulDiv(amount,50);const overflow=Math.max(0,amount-(target.maxHp-target.hp));const n=Math.min(target.maxHp-target.hp,amount);target.hp+=n;if(n>1)this.emit('heal',source,target,n);if(source?.catId==='milk'&&source.level>=40&&overflow>0)this.shield(target,Math.min(mulDiv(target.maxHp,skillTuning(source.skillRank).milkOverflowCap),mulDiv(overflow,skillTuning(source.skillRank).milkOverflow)),source);}
+ shieldFactor(target){return mulDiv(mulDiv(target.gearSets?.includes('guard')?120:100,target.rune==='bulwark'?108:100),target.catId==='pudding'&&target.level>=80?120:100);}
  shield(target,amount,source){if(target.hp<=0)return;amount=mulDiv(integer(amount),this.shieldFactor(target));if(target.shieldPunch){const sp=target.shieldPunch;sp.hp=target.hp;sp.energy=target.energy;sp.shield=target.shield;this.shieldEvents(target,gainShield(sp,amount,this.eventAt??this.time,source?.id||'ally'));return;}const added=Math.min(amount,target.maxHp-target.shield);target.shield+=added;this.emit('shield',source,target,added);}
  shieldEvents(h,events){
   const sp=h.shieldPunch;h.energy=sp.energy;h.shield=sp.shield;h.shieldState=sp.state;
@@ -213,12 +213,12 @@ export class Battle {
    if(e.type==='secondTrigger')this.emit('status',h,h,0,{text:'震街拳就绪',at:e.at});
    if(e.type==='cancel'){h.action=null;this.emit('cancel',h,h,0,{at:e.at});}
    if(e.type==='punchStart'){this.turnActor=h.id;this.turnStarted=true;const target=shidunTarget(this.enemies,h.shieldTargetId,this.rng);h.shieldTargetId=target?.id;h.action={kind:'skill',windup:0,travel:sp.config.punchTravel,impactAt:sp.config.punchTravel,hold:.08,duration:sp.config.punchTravel+sp.config.recovery,elapsed:Math.max(0,this.time-e.at),released:true,impacted:false,targetId:target?.id,shieldStrike:true,shieldReposition:target?.id!==this.enemies[h.formationSlot===1||h.formationSlot===4?1:0]?.id};this.emit('windup',h,target,0,{kind:'skill',style:'melee',windup:0,at:e.at});this.emit('release',h,target,0,{kind:'skill',style:'melee',travel:sp.config.punchTravel,at:e.at});}
-   if(e.type==='punchHit'){const target=shidunTarget(this.enemies,h.shieldTargetId,this.rng);h.shieldTargetId=target?.id;if(h.action)h.action.targetId=target?.id;const targets=shidunTargets(this.enemies,h.shieldTargetId);if(h.level>=80){h.energy=Math.min(100,h.energy+20);sp.energy=h.energy;}h.shidunImpactAt=e.at;h.shidunHitTargets=targets.map(x=>x.id);this.eventAt=e.at;this.emit('skill',h,h,0,{text:'震街拳',targets:targets.map(x=>x.id),shieldPunch:true});for(const enemy of targets)this.harm(enemy,mulDiv(h.atk,skillTuning(h.skillRank).puddingHit)+mulDiv(e.shieldAtSecond,skillTuning(h.skillRank).puddingShieldHit),h,{type:'physical'});this.eventAt=null;if(h.action)h.action.impacted=true;}
+   if(e.type==='punchHit'){const target=shidunTarget(this.enemies,h.shieldTargetId,this.rng);h.shieldTargetId=target?.id;if(h.action)h.action.targetId=target?.id;const targets=shidunTargets(this.enemies,h.shieldTargetId);h.shidunImpactAt=e.at;h.shidunHitTargets=targets.map(x=>x.id);this.eventAt=e.at;this.emit('skill',h,h,0,{text:'震街拳',targets:targets.map(x=>x.id),shieldPunch:true});for(const enemy of targets)this.harm(enemy,mulDiv(e.shieldAtSecond,skillTuning(h.skillRank).puddingShieldHit),h,{type:'physical'});this.eventAt=null;if(h.action)h.action.impacted=true;}
    if(e.type==='normal'){h.action=null;h.wait=Math.max(h.wait,.25);}
   }
  }
  updateShieldWarrior(h){const sp=h.shieldPunch;sp.deferSelfShield=h.normalRound===this.round;sp.hp=h.hp;sp.maxHp=h.maxHp;sp.energy=h.energy;sp.shield=Math.min(h.shield,mulDiv(h.maxHp,80));sp.attack=h.atk;if(h.stun>0&&sp.state!=='controlled')this.shieldEvents(h,controlShieldPunch(sp,this.time,h.stun));this.shieldEvents(h,tickShieldPunch(sp,this.time,[],{allowRelease:this.turnActor===h.id&&!this.canSequence}));if(h.action?.shieldStrike)h.action.elapsed=this.time-sp.releaseAt;return ['charging','primed','punching','controlled'].includes(sp.state);}
- applyBurn(target,damage,seconds,source){if(source?.catId==='spark'&&source.level>=40)damage=mulDiv(integer(damage),120);if(target.burnTime<=0||damage>=target.burn){target.burn=integer(damage);target.burnSource=source;}target.burnTime=Math.max(target.burnTime,seconds);}
+ applyBurn(target,damage,seconds,source){if(target.hp<=0)return;if(source?.catId==='spark'&&source.level>=5&&skillTuning(source.skillRank).sparkDetonate&&target.burnSource===source&&target.burnTime>0){const burst=mulDiv(target.burn,Math.round(target.burnTime*1000)*skillTuning(source.skillRank).sparkDetonate,100000);this.harm(target,burst,source,{type:'magic',dot:true,element:'fire'});if(target.hp<=0)return;}if(source?.catId==='spark'&&source.level>=40)damage=mulDiv(integer(damage),120);if(target.burnTime<=0||damage>=target.burn){target.burn=integer(damage);target.burnSource=source;}target.burnTime=Math.max(target.burnTime,seconds);}
  targetFor(actor,kind='normal'){
   if(kind==='skill'&&['orange','milk','star'].includes(actor.catId))return actor;
   const foes=this.alive(actor.side==='p'?'e':'p');if(!foes.length)return null;
@@ -241,13 +241,13 @@ export class Battle {
  advanceAction(actor,dt){const a=actor.action;if(!a)return;a.elapsed+=dt;
   if(!a.released&&a.elapsed>=a.windup){a.released=true;const target=this.targetFor(actor,a.kind);if(target)a.targetId=target.id;this.emit('release',actor,target,0,{kind:a.kind,style:attackStyle(actor),travel:a.travel,at:this.time-Math.max(0,a.elapsed-a.windup)});}
   if(!a.impacted&&a.elapsed>=a.impactAt){a.impacted=true;const target=this.targetFor(actor,a.kind);if(target)a.targetId=target.id;this.eventAt=this.time-Math.max(0,a.elapsed-a.impactAt);if(a.kind==='skill')this.skill(actor);else this.normal(actor);this.eventAt=null;}
-  if(a.kind==='skill'&&actor.catId==='ink'&&a.comboLeft){while(a.comboLeft&&a.elapsed+1e-9>=a.impactAt+(3-a.comboLeft)*.12){this.eventAt=this.time-Math.max(0,a.elapsed-(a.impactAt+(3-a.comboLeft)*.12));const target=this.enemies.find(e=>e.id===a.targetId);this.harm(target,Math.floor((mulDiv(actor.atk,skillTuning(actor.skillRank).inkHit)+(3-a.comboLeft))/3),actor,{type:'physical',bonusPen:skillTuning(actor.skillRank).inkPen});a.comboLeft--;this.eventAt=null;}}
+  if(a.kind==='skill'&&actor.catId==='ink'&&a.comboLeft){while(a.comboLeft&&a.elapsed+1e-9>=a.impactAt+(3-a.comboLeft)*.12){this.eventAt=this.time-Math.max(0,a.elapsed-(a.impactAt+(3-a.comboLeft)*.12));let target=this.enemies.find(e=>e.id===a.targetId);if((!target||target.hp<=0)&&skillTuning(actor.skillRank).inkRetarget){target=this.targetFor(actor,'skill');if(target)a.targetId=target.id;}this.harm(target,Math.floor((mulDiv(actor.atk,skillTuning(actor.skillRank).inkHit)+(3-a.comboLeft))/3),actor,{type:'physical',bonusPen:skillTuning(actor.skillRank).inkPen});a.comboLeft--;this.eventAt=null;}}
   if(a.elapsed>=a.duration)actor.action=null;
  }
  normal(actor){if(actor.catId==='pudding'){if(actor.selfShieldRound===this.round)return;actor.normalRound=this.round;actor.shieldPunch.deferSelfShield=true;}const target=this.targetFor(actor);if(!target)return;const crit=actor.side==='p'&&Math.floor(this.rng()*100)<actor.crit;const dealt=this.harm(target,mulDiv(actor.atk,crit?180:100),actor,{crit,type:actor.normalDamageType});
   if(actor.ambusher&&(actor.attacks||0)%3===2&&target.hp>0&&dealt>0){target.energy=Math.max(0,target.energy-12);if(target.shieldPunch)target.shieldPunch.energy=target.energy;this.emit('status',actor,target,0,{text:'能量 -12'});}
   if(actor.side==='p'){actor.runeAttacks++;if(actor.rune==='followup'&&actor.runeAttacks%4===0&&target.hp>0)this.harm(target,mulDiv(actor.atk,40),actor,{type:actor.normalDamageType});}
-  if(actor.catId==='bolt'&&actor.level>=40&&target.armor>target.initialArmor*.4)target.armor=Math.max(mulDiv(target.initialArmor,40),target.armor-2);
+  if(actor.catId==='bolt'&&actor.level>=40){const tune=skillTuning(actor.skillRank);if(target.armor>mulDiv(target.initialArmor,tune.boltFloor))target.armor=Math.max(mulDiv(target.initialArmor,tune.boltFloor),target.armor-tune.boltNormal);}
   if(actor.side==='p'){actor.energy=Math.min(100,actor.energy+(actor.catId==='milk'&&actor.level>=5?32:22)+(actor.gearSets?.includes('clock')?8:0));if(crit&&(this.buff.burn>0||actor.gearSets?.includes('ember')))this.applyBurn(target,mulDiv(actor.atk,actor.gearSets?.includes('ember')?30:this.buff.burn),2,actor);}
   else {actor.attacks++;if(actor.type==='mop'){target.wait+=.28;this.emit('status',actor,target,0,{text:'迟缓'});}if(actor.type==='bag'&&actor.attacks%3===0&&this.alive('e').length){const ally=this.alive('e').reduce((a,b)=>a.hp/a.maxHp<b.hp/b.maxHp?a:b);this.heal(ally,mulDiv(actor.maxHp,12),actor);}}
  }
@@ -258,13 +258,13 @@ export class Battle {
   if(h.catId==='milk'&&h.level>=80)for(const p of ps){p.burn=0;p.burnTime=0;p.burnSource=null;}
   if(h.catId==='spark'&&h.level>=80)for(const e of es)e.scorchedUntil=this.time+4;
   if(h.catId==='orange'){this.shield(h,mulDiv(h.maxHp,sk.orangeSelf),h);for(const p of ps.filter(x=>x!==h))this.shield(p,mulDiv(p.maxHp,sk.orangeTeam),h);}
-  if(h.catId==='ink'){t=es.reduce((a,b)=>a.hp<b.hp?a:b);const hits=h.action?1:3;for(let i=0;i<hits;i++)this.harm(t,Math.floor((mulDiv(h.atk,sk.inkHit)+i)/3),h,{type:'physical',bonusPen:sk.inkPen});if(h.action){h.action.targetId=t.id;h.action.comboLeft=2;}}
+  if(h.catId==='ink'){t=es.reduce((a,b)=>a.hp<b.hp?a:b);const hits=h.action?1:3;for(let i=0;i<hits;i++){if(t.hp<=0&&sk.inkRetarget)t=this.targetFor(h,'skill')||t;this.harm(t,Math.floor((mulDiv(h.atk,sk.inkHit)+i)/3),h,{type:'physical',bonusPen:sk.inkPen});}if(h.action){h.action.targetId=t.id;h.action.comboLeft=2;}}
   if(h.catId==='milk')for(const p of ps)this.heal(p,mulDiv(h.maxHp,sk.milkHeal),h);
-  if(h.catId==='spark')for(const e of es){this.harm(e,mulDiv(h.atk,sk.sparkHit),h,{type:'magic'});this.applyBurn(e,mulDiv(h.atk,sk.sparkBurn),h.level>=5?6:4,h);}
+  if(h.catId==='spark')for(const e of es){this.harm(e,mulDiv(h.atk,sk.sparkHit),h,{type:'magic'});this.applyBurn(e,mulDiv(h.atk,sk.sparkBurn),h.level>=5?sk.sparkDuration:4,h);}
   if(h.catId==='mint'){t=this.targetFor(h,'skill');this.harm(t,mulDiv(h.atk,sk.mintHit),h,{type:'magic'});if(h.level>=80)t.magicResist=mulDiv(t.magicResist,80);t.stun=(h.level>=5?2.6:1.8)+sk.mintStun;if(t.charge>0){t.charge=0;t.skillWait=5;this.emit('interrupt',h,t,0,{text:'已打断'});}}
   if(h.catId==='bolt'){t.armor=Math.min(t.armor,Math.max(mulDiv(t.initialArmor,20),mulDiv(t.armor,100-(h.level>=5?60:40)-sk.boltShred)));this.harm(t,mulDiv(h.atk,sk.boltHit),h,{type:'physical'});this.emit('status',h,t,0,{text:'破甲'});}
   if(h.catId==='pudding')this.shield(h,mulDiv(h.maxHp,sk.puddingSelf),h);
-  if(h.catId==='star')for(const p of ps){if(p!==h)p.energy=Math.min(100,p.energy+(h.level>=80?44:36)+sk.starEnergy);this.heal(p,mulDiv(h.atk,sk.starHeal),h);}
+  if(h.catId==='star')for(const p of ps){if(p!==h){const energy=(h.level>=80?44:36)+sk.starEnergy,overflow=Math.max(0,p.energy+energy-100);p.energy=Math.min(100,p.energy+energy);if(sk.starOverflow&&overflow>0)this.shield(p,Math.min(mulDiv(p.maxHp,8),mulDiv(p.maxHp,overflow,500)),h);}this.heal(p,mulDiv(h.atk,sk.starHeal),h);}
   this.runeSkill(h);
  }
  openCan(){
@@ -283,7 +283,7 @@ export class Battle {
   while(c.next<c.targets.length&&age+1e-9>=canHitAt(c.next)){this.eventAt=c.born+canHitAt(c.next);const id=c.targets[c.next++],e=this.enemies.find(e=>e.id===id);if(e?.hp>0)this.harm(e,c.attack,c.source,{type:'physical'});}
   this.eventAt=null;this.canEvent=false;if(this.time+1e-9>=c.until)this.canSequence=null;
  }
- syncStats(s,{preserveHealthRatio=false}={}){this.buff=buffs(s);for(const h of this.heroes){const n=catStats(s,h.catId,h.gear),oldMax=h.maxHp,ratio=h.hp/oldMax,add=n.hp-oldMax;h.maxHp=n.hp;if(h.hp>0)h.hp=preserveHealthRatio?resizeAmount(h,'hp',oldMax,n.hp):clamp(h.hp+Math.max(0,add),1,h.maxHp);h.shield=Math.min(n.hp,preserveHealthRatio?resizeAmount(h,'shield',oldMax,n.hp):h.shield);if(h.shieldPunch)h.shieldPunch.config.selfShieldRatio=mulDiv(skillTuning(n.skillRank).puddingSelf,this.shieldFactor(h));for(const key of ['atk','crit','level','stars','skillRank','armor','magicResist','armorPen','magicPen','normalDamageType','skillDamageType'])h[key]=n[key];}}
+ syncStats(s,{preserveHealthRatio=false}={}){this.buff=buffs(s);for(const h of this.heroes){const n=catStats(s,h.catId,h.gear),oldMax=h.maxHp,ratio=h.hp/oldMax,add=n.hp-oldMax;h.maxHp=n.hp;if(h.hp>0)h.hp=preserveHealthRatio?resizeAmount(h,'hp',oldMax,n.hp):clamp(h.hp+Math.max(0,add),1,h.maxHp);h.shield=Math.min(n.hp,preserveHealthRatio?resizeAmount(h,'shield',oldMax,n.hp):h.shield);if(h.shieldPunch)h.shieldPunch.config.selfShieldRatio=mulDiv(skillTuning(n.skillRank).puddingSelf,this.shieldFactor({...h,level:n.level}));for(const key of ['atk','crit','level','stars','skillRank','armor','magicResist','armorPen','magicPen','normalDamageType','skillDamageType'])h[key]=n[key];}}
  checkEnd(){if(!this.alive('e').length){if(!this.canSequence)this.result='win';}else if(!this.alive('p').length||this.round>30||this.time>=600)this.result='lose';return this.result;}
  tick(dt){if(this.result)return this.events.splice(0);dt=clamp(dt,0,.25);const beforeMs=integer(this.time*1000);this.stepStart=this.time;this.time+=dt;const dtMs=integer(this.time*1000)-beforeMs;this.canCd=Math.max(0,this.canCd-dt);
   this.advanceCan();

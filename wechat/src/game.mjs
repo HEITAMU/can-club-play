@@ -1,3 +1,4 @@
+import {SKILL_STUDY,skillSummary} from '../../skill-training.mjs';
 import {damageTextStyle} from '../../damage-text-style.mjs';
 import {groundFootY} from '../../battlefield-space.mjs';
 import {STREET_GROUPS,streetChoices,streetSelection,activityDrops} from '../../street-ui.mjs';
@@ -999,7 +1000,7 @@ export class NativeGame {
     );
     rich(c, skill.passive, 30, y + 46, 330);
     y += passiveH + 14;
-    for(const t of talentCards(a.id,level)){const th=rich(c,t.desc,30,0,330,{draw:false,size:12,line:19})+62;box(c,14,y,362,th,C.panel,C.rim,12);text(c,t.name+' · '+(t.active?'已解锁':'Lv.'+t.level+' 解锁'),30,y+25,15,t.active?C.gold:C.muted,700);rich(c,t.desc,30,y+49,330,{size:12,line:19});y+=th+14;}
+    for(const t of talentCards(a.id,level,st.skillRank)){const th=rich(c,t.desc,30,0,330,{draw:false,size:12,line:19})+62;box(c,14,y,362,th,C.panel,C.rim,12);text(c,t.name+' · '+(t.active?'技能 Lv.'+t.rank:'角色 Lv.'+t.level+' 解锁'),30,y+25,15,t.active?C.gold:C.muted,700);rich(c,t.desc,30,y+49,330,{size:12,line:19});y+=th+14;}
 
     if(open)y=this.drawGrowth(y,a.id);
     if (open) {
@@ -1220,10 +1221,10 @@ export class NativeGame {
     this.button('street-fight',q.open?(q.rewardable?'挑战':'练习 · 无奖励'):'未开启',14,y,362,38,()=>{if(q.open){this.change('battle');this.start(true,{activity:q.request});}},{disabled:!q.open,fill:C.gold,color:C.dark});y+=58;
     if(q.kind==='recruit'){const owned=G.ownsCompanion(s,v.id),have=s.roster.shards[v.id]||0;this.button('street-recruit',owned?'已结识':'结识 · '+have+' / 20',14,y,362,36,()=>{if(G.recruitCompanion(s,v.id)){this.save();if(s.party.includes(v.id))this.start(true,{activity:this.battle?.activity?.request});this.toast(cat(v.id).name+'加入了远征队');}},{disabled:owned||have<20});y+=55;}return y;
   }
-  drawGrowth(y,id){const c=this.ctx,s=this.state,b=G.breakthroughQuote(s,id),a=G.starQuote(s,id);text(c,'突破 '+b.rank+' / 3',20,y+22,18,C.gold,800);y+=42;
+  drawGrowth(y,id){const c=this.ctx,s=this.state,b=G.breakthroughQuote(s,id),a=G.starQuote(s,id);text(c,SKILL_STUDY[id].name+' · Lv.'+(b.rank+1),20,y+22,18,C.gold,800);y+=42;y+=rich(c,b.maxed?skillSummary(id,b.rank):'下一级：'+skillSummary(id,b.rank+1),20,y,350,{size:12,line:19})+20;
     y+=rich(c,'徽章 '+s.badges+'/'+b.cost+' · 训练笔记 '+s.growth.notes+'/'+b.notes+' · 历练印记 '+s.growth.seals+'/'+b.seals,20,y,350,{size:12,line:19})+20;
-    this.button('breakthrough-'+id,b.maxed?'突破已完成':s.levels[id]<b.requiredLevel?'Lv.'+b.requiredLevel+' 可突破':'突破',14,y,362,35,()=>{if(G.breakthrough(s,id)){this.battle?.syncStats(s,{preserveHealthRatio:true});this.save();this.toast('突破成功');}},{disabled:b.maxed||s.levels[id]<b.requiredLevel||!b.canAfford});y+=47;this.button('growth-materials','获取突破材料',14,y,362,32,()=>this.openStreet('materials','escort'));y+=58;
-    text(c,'升星 '+a.rank+' / 5',20,y+20,18,C.gold,800);y+=40;y+=rich(c,'3 星 · '+a.talent,20,y,350,{size:12,line:19})+20;
+    this.button('breakthrough-'+id,b.maxed?'已满级':'研习',14,y,362,35,()=>{if(G.breakthrough(s,id)){this.battle?.syncStats(s,{preserveHealthRatio:true});this.save();this.toast('技能升级');}},{disabled:b.maxed||s.levels[id]<b.requiredLevel||!b.canAfford});y+=47;this.button('growth-materials','获取研习材料',14,y,362,32,()=>this.openStreet('materials','escort'));y+=58;
+    text(c,'升星 '+a.rank+' / 5',20,y+20,18,C.gold,800);y+=40;y+=rich(c,'生命、攻击 +'+(4*a.rank)+'%',20,y,350,{size:12,line:19})+20;
     text(c,'信物 '+a.have+'/'+a.shards+' · 训练笔记 '+s.growth.notes+'/'+a.notes,20,y+15,12,C.ink);y+=36;this.button('ascend-'+id,a.maxed?'已满星':'升至 '+(a.rank+1)+' 星',14,y,362,35,()=>{if(G.ascendCompanion(s,id)){this.battle?.syncStats(s,{preserveHealthRatio:true});this.save();this.toast('升星成功');}},{disabled:a.maxed||a.have<a.shards||s.growth.notes<a.notes});y+=47;this.button('growth-shards','获取'+cat(id).name+'信物',14,y,362,32,()=>this.openStreet('recruit',id));return y+55;
   }
   async watchBusinessBoost() {

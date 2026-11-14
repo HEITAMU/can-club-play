@@ -1,7 +1,7 @@
 import {integer,mulDiv,accrueUnits} from './integer-math.mjs?v=0.25.1';
 // 石墩: the punch is shield-triggered; only 护体劲 spends energy.
 // Charge restores energy so the second shield does not depend on being attacked.
-export const SHIELD_PUNCH_DEFAULTS=Object.freeze({startRatio:30,secondGainRatio:15,minCharge:1.35,shieldCapRatio:80,lockout:8,punchTravel:.42,recovery:.65,attackRatio:100,shieldRatio:160,energyCap:100,selfShieldRatio:35,normalEnergy:20,chargeEnergyPerSecond:35,absorbEnergy:12,absorbEnergyInterval:1});
+export const SHIELD_PUNCH_DEFAULTS=Object.freeze({startRatio:30,secondGainRatio:15,minCharge:1.35,shieldCapRatio:80,lockout:8,punchTravel:.42,recovery:.65,attackRatio:0,shieldRatio:180,energyCap:100,selfShieldRatio:35,normalEnergy:20,chargeEnergyPerSecond:35,absorbEnergy:8,absorbEnergyInterval:1});
 export function createShieldPunch({maxHp=1000,hp=maxHp,attack=100,energy=0,config={}}={}){
  const cfg={...SHIELD_PUNCH_DEFAULTS,...config};
  return{maxHp,hp,attack,config:cfg,energy:Math.max(0,Math.min(cfg.energyCap,energy)),shield:0,state:'normal',firstAt:null,secondAt:null,addedDuringCharge:0,shieldAtSecond:null,releaseAt:Infinity,hitAt:Infinity,recoverAt:Infinity,controlledUntil:-Infinity,lockoutUntil:-Infinity,absorbEnergyAt:-Infinity,hitDelivered:false,cancelReason:null};
@@ -72,9 +72,9 @@ export function tickShieldPunch(s,now,enemies=[],{allowRelease=true}={}){
  }
  events.push(...castSelfShield(s,now));
  if(s.state==='primed'&&now>=s.releaseAt&&!allowRelease){const delay=now-s.releaseAt;s.releaseAt+=delay;s.hitAt+=delay;s.recoverAt+=delay;}
- if(s.state==='primed'&&now>=s.releaseAt&&allowRelease){s.state='punching';s.shield=0;events.push({type:'punchStart',at:s.releaseAt});}
+ if(s.state==='primed'&&now>=s.releaseAt&&allowRelease){s.state='punching';s.shieldAtSecond=s.shield;s.shield=0;events.push({type:'punchStart',at:s.releaseAt});}
  if(s.state==='punching'&&!s.hitDelivered&&now>=s.hitAt){
-  s.hitDelivered=true;const raw=mulDiv(s.attack,s.config.attackRatio)+mulDiv(s.shieldAtSecond,s.config.shieldRatio);
+  s.hitDelivered=true;const raw=mulDiv(s.shieldAtSecond,s.config.shieldRatio);
   const hits=enemies.filter(e=>e.hp>0&&e.side!=='ally').map(e=>({targetId:e.id,rawDamage:raw,damage:mulDiv(raw,100,100+Math.max(0,(e.armor||0)-(e.armorPenTaken||0)))}));
   events.push({type:'punchHit',at:s.hitAt,shieldAtSecond:s.shieldAtSecond,hits});s.lockoutUntil=s.hitAt+s.config.lockout;
  }
@@ -82,7 +82,7 @@ export function tickShieldPunch(s,now,enemies=[],{allowRelease=true}={}){
  return events;
 }
 export function shieldPunchPose(s,now){
- if(charging(s)){const q=Math.max(0,Math.min(1,(now-s.firstAt)/s.config.minCharge)),pulse=Math.sin(now*10)*.008;return{time:now,near:1.65*q,far:-.25*q,lean:-.09*q,head:.04,breath:-.065*q+pulse,tail:-.1,face:'skill',run:0,bob:0,phase:s.state==='primed'?'锁定盾量':'蓄力',windup:q,charge:Math.min(1,s.shield*100/s.maxHp/s.config.shieldCapRatio),shoulderShift:-.015*q};}
+ if(charging(s)){const q=Math.max(0,Math.min(1,(now-s.firstAt)/s.config.minCharge)),pulse=Math.sin(now*10)*.008;return{time:now,near:1.65*q,far:-.25*q,lean:-.09*q,head:.04,breath:-.065*q+pulse,tail:-.1,face:'skill',run:0,bob:0,phase:'蓄力',windup:q,charge:Math.min(1,s.shield*100/s.maxHp/s.config.shieldCapRatio),shoulderShift:-.015*q};}
  if(s.state==='punching'){const q=Math.max(0,Math.min(1,(now-s.releaseAt)/s.config.punchTravel)),back=Math.max(0,Math.min(1,(now-s.hitAt-.08)/(s.config.recovery-.08))),attack=Math.sin(q*Math.PI/2)*(1-back);return{time:now,near:1.65*(1-q)-.75*attack,far:-.25+.15*attack,lean:.14*attack,head:-.02,breath:.018*attack,tail:.13*attack,face:back>.6?'neutral':'attack',run:0,bob:0,phase:now<s.hitAt?'轰拳':'收拳',charge:Math.max(0,1-back),shoulderShift:.20*attack,armScale:1+.25*attack,punch:attack};}
  return{time:now,near:0,far:0,lean:s.state==='controlled'?-.08:0,head:s.state==='controlled'?-.10:0,breath:Math.sin(now*2.4)*.012,tail:Math.sin(now*3)*.07,face:s.state==='controlled'?'blink':'neutral',run:0,bob:0,phase:s.state==='controlled'?'受控':'普通状态',charge:0,shoulderShift:0};
 }

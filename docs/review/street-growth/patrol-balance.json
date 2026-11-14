@@ -47,40 +47,40 @@
         {
           "seed": 527,
           "result": "lose",
-          "time": 204.4,
-          "round": 18,
+          "time": 214,
+          "round": 19,
           "power": 206257,
           "survivors": 0
         },
         {
           "seed": 941,
           "result": "lose",
-          "time": 204.4,
-          "round": 18,
+          "time": 214,
+          "round": 19,
           "power": 206257,
           "survivors": 0
         },
         {
           "seed": 2027,
           "result": "lose",
-          "time": 204.4,
-          "round": 18,
+          "time": 214,
+          "round": 19,
           "power": 206257,
           "survivors": 0
         },
         {
           "seed": 4093,
           "result": "lose",
-          "time": 204.4,
-          "round": 18,
+          "time": 259.4,
+          "round": 24,
           "power": 206257,
           "survivors": 0
         },
         {
           "seed": 8191,
           "result": "lose",
-          "time": 204.4,
-          "round": 18,
+          "time": 214,
+          "round": 19,
           "power": 206257,
           "survivors": 0
         }
@@ -100,23 +100,23 @@
         {
           "seed": 527,
           "result": "win",
-          "time": 207.7,
-          "round": 16,
+          "time": 211.6,
+          "round": 17,
           "power": 290439,
           "survivors": 5
         },
         {
           "seed": 941,
           "result": "win",
-          "time": 208.3,
-          "round": 16,
+          "time": 213.1,
+          "round": 17,
           "power": 290439,
           "survivors": 5
         },
         {
           "seed": 2027,
           "result": "win",
-          "time": 207.7,
+          "time": 208,
           "round": 16,
           "power": 290439,
           "survivors": 5
@@ -124,15 +124,15 @@
         {
           "seed": 4093,
           "result": "win",
-          "time": 208.3,
-          "round": 16,
+          "time": 212.7,
+          "round": 17,
           "power": 290439,
           "survivors": 5
         },
         {
           "seed": 8191,
           "result": "win",
-          "time": 211.6,
+          "time": 212.7,
           "round": 17,
           "power": 290439,
           "survivors": 5
@@ -140,8 +140,8 @@
       ]
     },
     {
-      "name": "护盾反击、破甲与灼烧，130 级",
-      "level": 130,
+      "name": "护盾反击、破甲与灼烧，135 级",
+      "level": 135,
       "party": [
         "orange",
         "pudding",
@@ -153,42 +153,42 @@
         {
           "seed": 527,
           "result": "win",
-          "time": 159.3,
-          "round": 13,
-          "power": 228668,
-          "survivors": 5
+          "time": 197.6,
+          "round": 22,
+          "power": 238282,
+          "survivors": 2
         },
         {
           "seed": 941,
           "result": "win",
-          "time": 162.5,
-          "round": 13,
-          "power": 228668,
-          "survivors": 5
+          "time": 191.8,
+          "round": 21,
+          "power": 238282,
+          "survivors": 2
         },
         {
           "seed": 2027,
           "result": "win",
-          "time": 159.3,
-          "round": 13,
-          "power": 228668,
-          "survivors": 5
+          "time": 190.3,
+          "round": 20,
+          "power": 238282,
+          "survivors": 2
         },
         {
           "seed": 4093,
           "result": "win",
-          "time": 159.3,
-          "round": 13,
-          "power": 228668,
-          "survivors": 5
+          "time": 195.6,
+          "round": 21,
+          "power": 238282,
+          "survivors": 2
         },
         {
           "seed": 8191,
           "result": "win",
-          "time": 159.4,
-          "round": 13,
-          "power": 228668,
-          "survivors": 5
+          "time": 200.2,
+          "round": 22,
+          "power": 238282,
+          "survivors": 2
         }
       ]
     }

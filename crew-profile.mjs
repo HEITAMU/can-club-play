@@ -1,4 +1,4 @@
-import {skillTuning,skillSummary} from './skill-training.mjs';
+import {skillTuning,skillSummary,SKILL_STUDY} from './skill-training.mjs';
 import {badgeHTML} from './growth-visual.mjs';
 import {growthHTML} from './street-ui.mjs?v=0.25.0';
 import {talentCards} from './talents.mjs?v=0.25.0';
@@ -18,14 +18,14 @@ const scaling=text=>'<span class="skill-scaling">（'+text+'）</span>';
 export function crewSkill(id,level,stats){
  const sk=skillTuning(stats.skillRank),awake=level>=5,amount=(ratio,stat='atk')=>Math.round(stats[stat]*ratio).toLocaleString('zh-CN');
  const skills={
-  orange:{description:'为自身提供 '+effect(amount(sk.orangeSelf/100,'hp'),'shield')+scaling(''+sk.orangeSelf+'% 最大生命值')+' 护盾，并为其他队友提供相当于各自 '+effect(''+sk.orangeTeam+'% 最大生命值','shield')+' 的护盾。',passive:'受到的伤害降低 '+effect('15%','shield')+'。'},
-  ink:{description:'向当前生命值最低的敌人发起三连击，合计造成 '+effect(amount(sk.inkHit/100),'damage')+scaling(''+sk.inkHit+'% 攻击力')+' 物理伤害。本次攻击额外获得 '+effect(''+sk.inkPen+' 点护甲穿透','armor')+'。',passive:'暴击率提高 '+effect('15 个百分点','damage')+'。'},
-  milk:{description:'为全体队友恢复 '+effect(amount(sk.milkHeal/100,'hp'),'heal')+scaling('奶盖最大生命值的 '+sk.milkHeal+'%')+' 生命值。',passive:'普攻回复的能量由 '+effect('22','energy')+' 点提高至 '+effect('32','energy')+' 点。'},
-  spark:{description:'对全体敌人造成 '+effect(amount(sk.sparkHit/100),'damage')+scaling(sk.sparkHit+'% 攻击力')+' 法术伤害，并灼烧目标 '+effect(awake?'6 秒':'4 秒','control')+'，每秒造成 '+effect(amount(sk.sparkBurn/100*(level>=40?1.2:1)),'damage')+scaling((sk.sparkBurn*(level>=40?1.2:1))+'% 攻击力')+' 法术伤害。',passive:'灼烧持续时间由 '+effect('4 秒','control')+' 延长至 '+effect('6 秒','control')+'。'},
-  mint:{description:'优先攻击蓄力中的敌人，其次选择治疗者，再选择生命最高者，造成 '+effect(amount(sk.mintHit/100),'damage')+scaling(''+sk.mintHit+'% 攻击力')+' 法术伤害，使其 '+effect('眩晕 '+Math.round((awake?2600:1800)+sk.mintStun*1000)+' 毫秒','control')+' 并打断蓄力。',passive:'眩晕持续时间由 '+effect('1800 毫秒','control')+' 延长至 '+effect('2600 毫秒','control')+'。'},
-  bolt:{description:'使敌方前排目标的当前护甲降低 '+effect(((awake?60:40)+sk.boltShred)+'%','armor')+'（最多降低开场护甲的 80%），随后造成 '+effect(amount(sk.boltHit/100),'damage')+scaling(''+sk.boltHit+'% 攻击力')+' 物理伤害。',passive:'技能对当前护甲的削减比例由 '+effect('40%','armor')+' 提高至 '+effect('60%','armor')+'。'},
-  pudding:{description:'满能量为自身增加 '+effect(amount(sk.puddingSelf/100,'hp'),'shield')+scaling(sk.puddingSelf+'% 最大生命值')+' 护盾。盾量达到生命 30% 时下蹲蓄力；期间再获生命 15% 的护盾，打出震街拳：'+sk.puddingHit+'% 攻击力＋锁定盾量的 '+sk.puddingShieldHit+'% 物理伤害。命中目标所在前排及其身后两名后排，最多三人。',passive:'吸收伤害回复 12 能量（间隔 1000 毫秒）；蓄力每秒回复 35 能量。重拳冷却 8 秒。'},
-  star:{description:'为其他队友回复 '+effect(((level>=80?44:36)+sk.starEnergy)+' 点能量','energy')+'，并为全体队友恢复 '+effect(amount(sk.starHeal/100),'heal')+scaling(sk.starHeal+'% 攻击力')+' 生命值。',passive:'战斗开始时，额外获得 '+effect('40 点能量','energy')+'。'}
+  orange:{description:'自身获得 '+effect(amount(sk.orangeSelf/100,'hp'),'shield')+scaling(''+sk.orangeSelf+'% 最大生命值')+' 护盾，其他队友获得各自 '+effect(''+sk.orangeTeam+'% 最大生命值','shield')+' 护盾。',passive:'受到的伤害降低 '+effect(sk.orangeGuard+'%','shield')+'。'},
+  ink:{description:'三连击攻击生命值最低的敌人，合计造成 '+effect(amount(sk.inkHit/100),'damage')+scaling(''+sk.inkHit+'% 攻击力')+' 物理伤害，获得 '+effect(''+sk.inkPen+' 点护甲穿透','armor')+'。'+(sk.inkRetarget?'目标死亡后，剩余攻击转向生命值最低的敌人。':''),passive:'暴击率提高 '+effect('15 个百分点','damage')+'。'},
+  milk:{description:'为全体队友恢复 '+effect(amount(sk.milkHeal/100,'hp'),'heal')+scaling('奶盖最大生命值的 '+sk.milkHeal+'%')+' 生命值。',passive:'普攻额外回复 '+effect('10','energy')+' 能量。'},
+  spark:{description:'对全体敌人造成 '+effect(amount(sk.sparkHit/100),'damage')+scaling(sk.sparkHit+'% 攻击力')+' 法术伤害，并灼烧目标 '+effect(awake?sk.sparkDuration+' 秒':'4 秒','control')+'，每秒造成 '+effect(amount(sk.sparkBurn/100*(level>=40?1.2:1)),'damage')+scaling((sk.sparkBurn*(level>=40?1.2:1))+'% 攻击力')+' 法术伤害。',passive:'灼烧持续时间延长 '+effect((sk.sparkDuration-4)+' 秒','control')+'。'+(sk.sparkDetonate?'再次施加灼烧时，立即造成剩余灼烧伤害的 50%。':'')},
+  mint:{description:'攻击一名敌人，造成 '+effect(amount(sk.mintHit/100),'damage')+scaling(''+sk.mintHit+'% 攻击力')+' 法术伤害，使其 '+effect('眩晕 '+((awake?2.6:1.8)+sk.mintStun).toFixed(1)+' 秒','control')+'。优先攻击蓄力中的敌人，其次为治疗者。',passive:'眩晕持续时间延长 '+effect('0.8 秒','control')+'。'},
+  bolt:{description:'使敌方前排目标的当前护甲降低 '+effect(((awake?60:40)+sk.boltShred)+'%','armor')+'（下限为初始护甲的 20%），随后造成 '+effect(amount(sk.boltHit/100),'damage')+scaling(''+sk.boltHit+'% 攻击力')+' 物理伤害。',passive:'技能护甲削减提高 '+effect('20 个百分点','armor')+'。'},
+  pudding:{description:'获得 '+effect(amount(sk.puddingSelf/100,'hp'),'shield')+scaling(sk.puddingSelf+'% 最大生命值')+' 护盾。护盾达到 30% 最大生命值时蓄力，每秒回复 35 能量；再获得 15% 最大生命值的护盾后，消耗当前护盾，对目标前排及其身后两名敌人造成 '+effect(sk.puddingShieldHit+'% 当前护盾值','damage')+' 的物理伤害。护盾破裂或受到控制时中断蓄力。冷却 8 秒。',passive:'有护盾时，承伤回能翻倍。'},
+  star:{description:'为其他队友回复 '+effect(((level>=80?44:36)+sk.starEnergy)+' 点能量','energy')+'，并为全体队友恢复 '+effect(amount(sk.starHeal/100),'heal')+scaling(sk.starHeal+'% 攻击力')+' 生命值。'+(sk.starOverflow?'每溢出 10 点能量，转为目标最大生命值 2% 的护盾，上限 8%。':''),passive:'战斗开始时，额外获得 '+effect('40 点能量','energy')+'。'}
  };
  return skills[id];
 }
@@ -47,7 +47,7 @@ export function crewRosterHTML(state,selected){
 }
 export function crewProfileHTML(state,id,{modal=false}={}){
  const c=CATS.find(c=>c.id===id),open=ownsCompanion(state,c.id),level=state.levels[id],stats=catStats(state,id),cap=levelCap(state,id),bq=breakthroughQuote(state,id);
- const skill=crewSkill(id,level,stats),awake=open&&level>=5,[wash,rim,accent]=palettes[id],cost=upgradeCost(level);
+ const skill=crewSkill(id,level,stats),study=SKILL_STUDY[id],studyHTML='<details class="skill-level-list"><summary>技能升级</summary>'+[0,1,2,3].map(r=>'<div class="'+(r===stats.skillRank?'current':'')+'"><b>Lv.'+(r+1)+'</b> '+skillSummary(id,r)+'</div>').join('')+'</details>',awake=open&&level>=5,[wash,rim,accent]=palettes[id],cost=upgradeCost(level);
  const heading=modal?'h2':'h3',canInherit=open&&unlocked(state).some(d=>state.levels[d.id]>level);
  const growthMarkup=open?'<section class="crew-growth" aria-label="伙伴养成">'+growthHTML(state,id)+'</section>':'';
  const upgradeMarkup=open?'<div class="crew-actions"><button class="primary crew-upgrade" data-upgrade="'+id+'" data-profile-upgrade '+(level>=cap||state.gold<cost?'disabled':'')+'>'+icon('coin',20)+'<span>'+(level>=cap?'已满级':'升级 · '+number(cost))+'</span></button>'+(canInherit?'<button class="secondary crew-inherit" data-inherit-open="'+id+'">培养继承</button>':'')+'</div>':'<div class="crew-locked-note">尚未结识</div>';
@@ -61,8 +61,8 @@ export function crewProfileHTML(state,id,{modal=false}={}){
    '<div class="crew-section-label"><h4>人物属性</h4><span>'+(open?'普攻 · '+(stats.normalDamageType==='magic'?'法术':'物理'):'Lv.1 预览')+'</span></div>'+
    '<dl>'+[['生命',number(stats.hp)],['攻击',number(stats.atk)],['暴击',stats.crit+'<small>%</small>'],['护甲',stats.armor],['魔抗',stats.magicResist],['护甲穿透',stats.armorPen],['法术穿透',stats.magicPen]].map(([label,value])=>'<div><dt>'+label+'</dt><dd>'+value+'</dd></div>').join('')+'</dl></section>'+
   growthMarkup+'<section class="crew-skills" aria-label="'+c.name+'的技能"><div class="crew-section-label"><h4>角色技能</h4></div>'+
-  '<div class="crew-active-skill"><div class="crew-skill-title"><span class="crew-skill-icon">'+skillSVG(id)+'</span><h4>'+c.skill+'</h4><span>主动 · Lv.'+(stats.skillRank+1)+'</span></div>'+
-  '<p class="crew-skill-description">'+skill.description+'</p><details class="skill-level-list"><summary>查看技能等级效果</summary>'+[0,1,2,3].map(r=>'<div class="'+(r===stats.skillRank?'current':'')+'"><b>Lv.'+(r+1)+'</b> '+skillSummary(id,r)+'</div>').join('')+'</details></div>'+
-  '<div class="crew-passive '+(awake?'is-awake':'is-dormant')+'"><span class="crew-passive-mark" aria-hidden="true">'+icon(awake?'star':'paw',23)+'</span><div><div class="crew-passive-title"><b>'+passiveNames[id]+'</b><span>'+(awake?'被动 · 已觉醒':'被动 · Lv.5 解锁')+'</span></div><p>'+skill.passive+'</p></div></div>'+talentCards(id,level).map(t=>'<div class="crew-passive '+(t.active?'is-awake':'is-dormant')+'"><div><div class="crew-passive-title"><b>'+t.name+'</b><span>'+ (t.active?'被动 · 已解锁':'被动 · Lv.'+t.level+' 解锁')+'</span></div><p>'+t.desc+'</p></div></div>').join('')+'</section>'+
+  '<div class="crew-active-skill"><div class="crew-skill-title"><span class="crew-skill-icon">'+skillSVG(id)+'</span><h4>'+c.skill+'</h4><span>主动 · Lv.'+(study.index===0?stats.skillRank+1:1)+'</span></div>'+
+  '<p class="crew-skill-description">'+skill.description+'</p>'+(study.index===0?studyHTML:'')+'</div>'+
+  '<div class="crew-passive '+(awake?'is-awake':'is-dormant')+'"><span class="crew-passive-mark" aria-hidden="true">'+icon(awake?'star':'paw',23)+'</span><div><div class="crew-passive-title"><b>'+passiveNames[id]+'</b><span>'+(awake?'被动 · Lv.'+(study.index===1?stats.skillRank+1:1):'被动 · 角色 Lv.5 解锁')+'</span></div><p>'+skill.passive+'</p>'+(study.index===1?studyHTML:'')+'</div></div>'+talentCards(id,level,stats.skillRank).map(t=>'<div class="crew-passive '+(t.active?'is-awake':'is-dormant')+'"><div><div class="crew-passive-title"><b>'+t.name+'</b><span>'+ (t.active?'被动 · Lv.'+t.rank:'被动 · 角色 Lv.'+t.level+' 解锁')+'</span></div><p>'+t.desc+'</p>'+(t.trainable?studyHTML:'')+'</div></div>').join('')+'</section>'+
   '</article>';
 }
