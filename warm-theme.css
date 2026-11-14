@@ -214,3 +214,9 @@ body{background:radial-gradient(ellipse at 22% 30%,#56404d,#292535 75%);color:#f
 .equipment-set-strip{margin-top:9px;padding:8px 10px;border:1px solid #b78d52;border-radius:8px;background:#e5c68d;color:#72502b}
 .equipment-set-strip:empty{display:none}.equipment-set-strip>div{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-size:10px;line-height:1.5}.equipment-set-strip b{font-size:12px}.equipment-set-strip small{font-size:10px;font-weight:400}.equipment-set-strip span{color:#896e49}.equipment-set-strip .active{color:#62401d}
 .crew-view[data-mode="equipment"] .equipment-layout{align-items:stretch}
+
+/* Hand-painted workshop stays behind the equipment controls. */
+#other-view:has(.crew-view[data-mode="equipment"]){background:#846044 url('./assets/scenes/equipment-workshop-v02612.webp') center bottom / 100% 100% no-repeat}
+.crew-view[data-mode="equipment"]{background:linear-gradient(180deg,#4d301d69 0%,#68412638 64%,transparent 84%);min-height:100%}
+.crew-view[data-mode="equipment"]>.crew-roster{background:#654324b8;box-shadow:none;border-bottom:1px solid #d4ad6a66}
+.crew-view[data-mode="equipment"] .equipment-stage{background:radial-gradient(ellipse at 50% 43%,#fff0cff5,#e4c38ee8)}
