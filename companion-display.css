@@ -39,3 +39,11 @@
 .formation-slot b{color:#fff1d5;text-shadow:0 1px 2px #463426,0 0 4px #463426}
 .formation-slot:before{background:#30251e40}
 .formation-slot-art>i{color:#ead8bd;text-shadow:0 1px 2px #493c2b}
+
+/* Equipment is the sole full-body display-size exception. */
+.crew-view[data-mode="equipment"] .equipment-stage{padding-top:244px;min-height:330px}
+.crew-view[data-mode="equipment"] .equipment-bag{height:330px;min-height:330px}
+.crew-view[data-mode="equipment"] .equipment-character{width:58%;max-width:130px;height:150px;top:24px}
+.crew-view[data-mode="equipment"] .equipment-character>.companion-body{--companion-size:calc(var(--equipment-unit,100px)*var(--companion-scale,1))}
+.crew-view[data-mode="equipment"] .slot-coat,.crew-view[data-mode="equipment"] .slot-brace{top:126px}
+.crew-view[data-mode="equipment"] .slot-rune{top:190px}

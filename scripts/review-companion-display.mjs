@@ -46,8 +46,9 @@ try{
    const gear=page.locator(`.equipment-character .companion-body[data-art="${id}"]`);
    await page.waitForSelector(`.equipment-character .rig-ready[data-art="${id}"]`);
    const c=await gear.evaluate(spriteData);await waitForChange(gear,c.hash);const d=await gear.evaluate(spriteData);
-   assert.ok(Math.abs(c.width-a.width)<.03,`${id} equipment matches profile`);
-   assert.deepEqual(c.canvas,a.canvas,`${id} canvas resolution is identical`);
+   const displayUnit=await page.locator('.equipment-character').evaluate(e=>e.clientWidth);
+   assert.ok(Math.abs(c.width-companionSize(displayUnit,id))<.03,`${id} equipment fits its display area`);
+   assert.ok(c.canvas[0]>a.canvas[0],`${id} equipment uses a larger rendered canvas`);
    assert.ok(c.pixels>100&&c.hash!==d.hash,`${id} equipment idle is alive`);
    figures.push({id,size:a.width,canvas:a.canvas,profileAnimated:a.hash!==b.hash,equipmentAnimated:c.hash!==d.hash});
   }

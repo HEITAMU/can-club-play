@@ -262,7 +262,10 @@ function frame(now){requestAnimationFrame(frame);const dt=lastStamp?Math.min(.1,
  if(!document.hidden&&now-idlePaintStamp>=1000/30){idlePaintStamp=now;for(const sprite of $$('.companion-body')){
   if(sprite.closest('#actors,.formation-ghost,[hidden]'))continue;
   const box=sprite.getBoundingClientRect();if(!box.width||!box.height||box.bottom<0||box.top>innerHeight)continue;
-  setPose(sprite,0,{time:ambientTime,idleTime:ambientTime,renderSize:companionSize(arenaMetrics.size,sprite.dataset.art)});
+  const equipment=sprite.closest('.equipment-character');
+  const unit=equipment?equipment.clientWidth:arenaMetrics.size;
+  if(equipment)equipment.style.setProperty('--equipment-unit',unit+'px');
+  setPose(sprite,0,{time:ambientTime,idleTime:ambientTime,renderSize:companionSize(unit,sprite.dataset.art)});
  }}
  if(now-renderStamp>100){if(tab==='battle')renderVitals();$('#farm').textContent=battle?.activity||battle?.mode==='arena'?'返回普通巡逻':farming?'返回主线闯关':'去练练 · 旧关刷币';renderStamp=now;}
  if(now-idleStamp>1200){accrueIdle(state);renderHeader();idleStamp=now;}
