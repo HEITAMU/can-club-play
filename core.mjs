@@ -135,7 +135,7 @@ export class Battle {
   this.weekly=weekly;
   this.mode=this.activity?'activity':arenaTier?'arena':'patrol';this.arenaTier=arenaTier;this.arenaRule=arenaTier?arenaInfo(arenaTier):null;
   if(arenaTier){stage=15+(arenaTier-1)*5;seed=arenaTier*173+37;farm=false;}
-  this.stage=stage;this.farm=farm;this.time=0;this.result=null;this.resolved=false;this.rng=seeded(seed);this.events=[];this.kills=0;this.canCd=0;this.buff=buffs(s);this.fxSerial=0;
+  this.stage=stage;this.farm=farm;this.time=0;this.result=null;this.resolved=false;this.rng=seeded(seed);this.events=[];this.kills=0;this.canCd=0;this.buff=buffs(s);this.fxSerial=0;this.round=0;this.turnQueue=[];this.turnActor=null;this.turnStarted=false;this.turnGapUntil=0;
   this.heroes=s.party.map((id,i)=>{const c=CATS.find(c=>c.id===id),st=catStats(s,id);return {...st,interval:st.interval/1000,id:'p'+i,catId:id,name:c.name,side:'p',maxHp:st.hp,hp:st.hp,energy:Math.min(99,this.buff.energy+(id==='star'&&st.level>=5?40:0)),shield:st.hp*this.buff.shield,wait:.3+i*.15,stun:0,burn:0,burnTime:0,burnSource:null};});
   for(const h of this.heroes){h.gearSets=h.gear.sets;h.rune=h.gear.rune;h.runeAttacks=0;h.nextRuneSkill=0;h.runeUsed=false;h.shield=0;h.nextGearHeal=6;}
   for(const h of this.heroes)if(h.catId==='pudding'){h.shieldPunch=createShieldPunch({maxHp:h.maxHp,hp:h.hp,attack:h.atk,energy:h.energy,config:{selfShieldRatio:mulDiv(SHIELD_PUNCH_DEFAULTS.selfShieldRatio,this.shieldFactor(h)),chargeEnergyPerSecond:SHIELD_PUNCH_DEFAULTS.chargeEnergyPerSecond+(h.stars>=3?3:0)}});h.shieldPunch.shield=h.shield;h.shieldState='normal';}
@@ -143,6 +143,22 @@ export class Battle {
   if(weekly){for(const e of this.enemies){Object.assign(e,enemyCombatStats(e.type,15+arenaTier*4,false));const strength=[1,1.6,4][weeklyTier-1];e.maxHp=Math.round(e.maxHp*strength);e.hp=e.maxHp;e.atk=Math.round(e.atk*[1,1.25,2][weeklyTier-1]);e.arenaHealer=false;e.boss=false;if(weekly.type==='iron'&&this.enemies.indexOf(e)<2){e.armor=150+weeklyTier*25;e.magicResist=12;}if(weekly.type==='recovery'&&e.id==='e2')e.arenaHealer=true;if(weekly.type==='burst'&&e.id==='e0'){e.boss=true;e.skillWait=6;}if(weekly.type==='haste')e.interval*=.8;e.initialArmor=e.armor;}}
   if(this.heroes.some(h=>h.catId==='star'&&h.level>=40))for(const h of this.heroes)if(h.catId!=='star')h.energy=Math.min(99,h.energy+12);
   for(const h of this.heroes)if(h.gearSets.includes('guard'))this.shield(h,mulDiv(h.maxHp,25),h);
+ }
+ // One actor owns the action lane until recovery finishes. A round visits each living actor once.
+ finishTurn(){this.turnActor=null;this.turnStarted=false;this.turnGapUntil=this.time+.12;}
+ selectTurn(){
+  const all=[...this.heroes,...this.enemies];
+  if(this.turnActor){const a=all.find(x=>x.id===this.turnActor);if(!a||a.hp<=0||this.turnStarted&&!a.action&&!(a.charge>0)&&!(a.burstUntil>this.time)&&a.shieldPunch?.state!=='punching'){this.finishTurn();}else return;}
+  if(this.canSequence||this.time<this.turnGapUntil)return;
+  const existing=all.find(a=>a.hp>0&&(a.action||a.charge>0||a.shieldPunch?.state==='punching'));
+  if(existing){this.turnActor=existing.id;this.turnStarted=true;return;}
+  if(!this.turnQueue.length){this.round++;this.turnQueue=all.filter(a=>a.hp>0).sort((a,b)=>a.interval-b.interval||all.indexOf(a)-all.indexOf(b)).map(a=>a.id);}
+  this.turnQueue=this.turnQueue.filter(id=>all.some(a=>a.id===id&&a.hp>0));
+  const index=this.turnQueue.findIndex(id=>{const a=all.find(x=>x.id===id);return a.wait<=0||a.shieldPunch?.state==='primed'&&a.shieldPunch.releaseAt<=this.time;});
+  if(index<0)return;
+  const nextId=this.turnQueue.splice(index,1)[0],a=all.find(x=>x.id===nextId);
+  if(a.stun>0){this.emit('skip',a,a,0,{round:this.round,text:'眩晕'});this.turnGapUntil=this.time+.12;return;}
+  this.turnActor=a.id;this.turnStarted=false;this.turnStartAt=Math.max(this.stepStart??this.time,this.turnGapUntil,a.readyAt??0);this.emit('turn',a,a,0,{round:this.round});
  }
  alive(side){return (side==='p'?this.heroes:this.enemies).filter(x=>x.hp>0);}
  frontlines(){return this.alive('p').slice(0,2);}
@@ -180,12 +196,12 @@ export class Battle {
    if(e.type==='chargeStart'){h.shieldTargetId=this.targetFor(h)?.id;h.action=null;this.emit('status',h,h,0,{text:'蓄盾',at:e.at});}
    if(e.type==='secondTrigger')this.emit('status',h,h,0,{text:'震街拳就绪',at:e.at});
    if(e.type==='cancel'){h.action=null;this.emit('cancel',h,h,0,{at:e.at});}
-   if(e.type==='punchStart'){const target=this.enemies.find(x=>x.id===h.shieldTargetId&&x.hp>0)||this.alive('e')[0];h.shieldTargetId=target?.id;h.action={kind:'skill',windup:0,travel:sp.config.punchTravel,impactAt:sp.config.punchTravel,hold:.08,duration:sp.config.punchTravel+sp.config.recovery,elapsed:Math.max(0,this.time-e.at),released:true,impacted:false,targetId:target?.id,shieldStrike:true};this.emit('windup',h,target,0,{kind:'skill',style:'melee',windup:0,at:e.at});this.emit('release',h,target,0,{kind:'skill',style:'melee',travel:sp.config.punchTravel,at:e.at});}
+   if(e.type==='punchStart'){this.turnActor=h.id;this.turnStarted=true;const target=this.enemies.find(x=>x.id===h.shieldTargetId&&x.hp>0)||this.alive('e')[0];h.shieldTargetId=target?.id;h.action={kind:'skill',windup:0,travel:sp.config.punchTravel,impactAt:sp.config.punchTravel,hold:.08,duration:sp.config.punchTravel+sp.config.recovery,elapsed:Math.max(0,this.time-e.at),released:true,impacted:false,targetId:target?.id,shieldStrike:true};this.emit('windup',h,target,0,{kind:'skill',style:'melee',windup:0,at:e.at});this.emit('release',h,target,0,{kind:'skill',style:'melee',travel:sp.config.punchTravel,at:e.at});}
    if(e.type==='punchHit'){if(h.level>=80){h.energy=Math.min(100,h.energy+20);sp.energy=h.energy;}h.shidunImpactAt=e.at;this.eventAt=e.at;this.emit('skill',h,h,0,{text:'震街拳',targets:shidunTargets(this.enemies,h.shieldTargetId).map(x=>x.id),shieldPunch:true});for(const enemy of shidunTargets(this.enemies,h.shieldTargetId))this.harm(enemy,h.atk+mulDiv(e.shieldAtSecond,160),h,{type:'physical'});this.eventAt=null;if(h.action)h.action.impacted=true;}
    if(e.type==='normal'){h.action=null;h.wait=Math.max(h.wait,.25);}
   }
  }
- updateShieldWarrior(h){const sp=h.shieldPunch;sp.hp=h.hp;sp.maxHp=h.maxHp;sp.energy=h.energy;sp.shield=Math.min(h.shield,mulDiv(h.maxHp,80));sp.attack=h.atk;if(h.stun>0&&sp.state!=='controlled')this.shieldEvents(h,controlShieldPunch(sp,this.time,h.stun));this.shieldEvents(h,tickShieldPunch(sp,this.time));if(h.action?.shieldStrike)h.action.elapsed=this.time-sp.releaseAt;return ['charging','primed','punching','controlled'].includes(sp.state);}
+ updateShieldWarrior(h){const sp=h.shieldPunch;sp.hp=h.hp;sp.maxHp=h.maxHp;sp.energy=h.energy;sp.shield=Math.min(h.shield,mulDiv(h.maxHp,80));sp.attack=h.atk;if(h.stun>0&&sp.state!=='controlled')this.shieldEvents(h,controlShieldPunch(sp,this.time,h.stun));this.shieldEvents(h,tickShieldPunch(sp,this.time,[],{allowRelease:this.turnActor===h.id&&!this.canSequence}));if(h.action?.shieldStrike)h.action.elapsed=this.time-sp.releaseAt;return ['charging','primed','punching','controlled'].includes(sp.state);}
  applyBurn(target,damage,seconds,source){if(source?.catId==='spark'&&source.stars>=3)seconds+=1;if(source?.catId==='spark'&&source.level>=40)damage=mulDiv(integer(damage),120);if(target.burnTime<=0||damage>=target.burn){target.burn=integer(damage);target.burnSource=source;}target.burnTime=Math.max(target.burnTime,seconds);}
  targetFor(actor,kind='normal'){
   if(kind==='skill'&&['orange','milk','star'].includes(actor.catId))return actor;
@@ -202,9 +218,9 @@ export class Battle {
   if(actor.catId==='spark')return this.alive('e');
   const target=this.targetFor(actor,'skill');return target?[target]:[];
  }
- beginAction(actor,kind){const target=this.targetFor(actor,kind);if(!target)return;
-  actor.action={kind,...actionTiming(actor,kind),elapsed:Math.max(0,-actor.wait),released:false,impacted:false,targetId:target.id};
-  actor.wait=actor.interval+Math.min(0,actor.wait);this.emit('windup',actor,target,0,{kind,style:attackStyle(actor),at:this.time-actor.action.elapsed,windup:actor.action.windup});this.advanceAction(actor,0);
+ beginAction(actor,kind){if(this.turnActor&&this.turnActor!==actor.id)return false;this.turnActor=actor.id;this.turnStarted=true;const target=this.targetFor(actor,kind);if(!target)return;
+  actor.action={kind,...actionTiming(actor,kind),elapsed:Math.max(0,this.time-(this.turnStartAt??this.time)),released:false,impacted:false,targetId:target.id};
+  actor.wait=actor.interval;this.emit('windup',actor,target,0,{kind,style:attackStyle(actor),at:this.time-actor.action.elapsed,windup:actor.action.windup});this.advanceAction(actor,0);
  }
  advanceAction(actor,dt){const a=actor.action;if(!a)return;a.elapsed+=dt;
   if(!a.released&&a.elapsed>=a.windup){a.released=true;const target=this.targetFor(actor,a.kind);if(target)a.targetId=target.id;this.emit('release',actor,target,0,{kind:a.kind,style:attackStyle(actor),travel:a.travel,at:this.time-Math.max(0,a.elapsed-a.windup)});}
@@ -251,16 +267,19 @@ export class Battle {
   this.eventAt=null;this.canEvent=false;if(this.time+1e-9>=c.until)this.canSequence=null;
  }
  syncStats(s,{preserveHealthRatio=false}={}){this.buff=buffs(s);for(const h of this.heroes){const n=catStats(s,h.catId,h.gear),oldMax=h.maxHp,ratio=h.hp/oldMax,add=n.hp-oldMax;h.maxHp=n.hp;if(h.hp>0)h.hp=preserveHealthRatio?resizeAmount(h,'hp',oldMax,n.hp):clamp(h.hp+Math.max(0,add),1,h.maxHp);h.shield=Math.min(n.hp,preserveHealthRatio?resizeAmount(h,'shield',oldMax,n.hp):h.shield);if(h.shieldPunch)h.shieldPunch.config.chargeEnergyPerSecond+=((n.stars>=3?1:0)-(h.stars>=3?1:0))*3;for(const key of ['atk','interval','attackSpeed','crit','level','stars','armor','magicResist','armorPen','magicPen','normalDamageType','skillDamageType'])h[key]=key==='interval'?n[key]/1000:n[key];}}
- checkEnd(){if(!this.alive('e').length){if(!this.canSequence)this.result='win';}else if(!this.alive('p').length||this.time>=(this.activity?90:75))this.result='lose';return this.result;}
- tick(dt){if(this.result)return this.events.splice(0);dt=clamp(dt,0,.25);const beforeMs=integer(this.time*1000);this.time+=dt;const dtMs=integer(this.time*1000)-beforeMs;this.canCd=Math.max(0,this.canCd-dt);
+ checkEnd(){if(!this.alive('e').length){if(!this.canSequence)this.result='win';}else if(!this.alive('p').length||this.round>30||this.time>=600)this.result='lose';return this.result;}
+ tick(dt){if(this.result)return this.events.splice(0);dt=clamp(dt,0,.25);const beforeMs=integer(this.time*1000);this.stepStart=this.time;this.time+=dt;const dtMs=integer(this.time*1000)-beforeMs;this.canCd=Math.max(0,this.canCd-dt);
   this.advanceCan();
+  for(const a of [...this.heroes,...this.enemies]){if(!a.action){const old=a.wait;a.wait=Math.max(0,a.wait-dt);if(old>0&&a.wait===0)a.readyAt=this.time-dt+old;}}
+  this.selectTurn();
   // Let the lid leave the screen before loot or the next wave can cover it.
   if(!this.alive('e').length){this.checkEnd();return this.events.splice(0);}
-  for(const a of [...this.heroes,...this.enemies]){if(a.hp<=0){if(a.shieldPunch)this.updateShieldWarrior(a);continue;}a.stun=Math.max(0,a.stun-dt);if(a.burnTime>0){const burnMs=Math.min(dtMs,integer(a.burnTime*1000));a.burnTime=Math.max(0,integer(a.burnTime*1000)-burnMs)/1000;a.burnStepMs=(a.burnStepMs||0)+burnMs;while(a.burnStepMs>=200||a.burnTime===0&&a.burnStepMs>0){const step=Math.min(200,a.burnStepMs);a.burnStepMs-=step;const raw=accrueUnits(a,'burnRemainder',a.burn,step);if(raw)this.harm(a,raw,a.burnSource,{type:'magic',dot:true,reflect:false});}}if(a.side==='p'&&a.gearSets?.includes('spring')&&this.time>=a.nextGearHeal){a.nextGearHeal=this.time+6;this.heal(a,mulDiv(a.maxHp,5),a);}if(a.side==='p'&&this.buff.regen>0)a.hp=Math.min(a.maxHp,a.hp+accrueUnits(a,'regenRemainder',mulDiv(a.maxHp,this.buff.regen),dtMs));if(a.hp<=0)continue;if(a.shieldPunch&&this.updateShieldWarrior(a))continue;if(a.stun>0){if(a.action){a.action=null;this.emit('cancel',a,a);}continue;}
+  for(const a of [...this.heroes,...this.enemies]){if(a.hp<=0){if(a.shieldPunch)this.updateShieldWarrior(a);continue;}a.stun=Math.max(0,a.stun-dt);if(a.burnTime>0){const burnMs=Math.min(dtMs,integer(a.burnTime*1000));a.burnTime=Math.max(0,integer(a.burnTime*1000)-burnMs)/1000;a.burnStepMs=(a.burnStepMs||0)+burnMs;while(a.burnStepMs>=200||a.burnTime===0&&a.burnStepMs>0){const step=Math.min(200,a.burnStepMs);a.burnStepMs-=step;const raw=accrueUnits(a,'burnRemainder',a.burn,step);if(raw)this.harm(a,raw,a.burnSource,{type:'magic',dot:true,reflect:false});}}if(a.side==='p'&&a.gearSets?.includes('spring')&&this.time>=a.nextGearHeal){a.nextGearHeal=this.time+6;this.heal(a,mulDiv(a.maxHp,5),a);}if(a.side==='p'&&this.buff.regen>0)a.hp=Math.min(a.maxHp,a.hp+accrueUnits(a,'regenRemainder',mulDiv(a.maxHp,this.buff.regen),dtMs));if(a.hp<=0)continue;if(this.canSequence&&a.shieldPunch?.state==='punching'){a.shieldPunch.hitAt+=dt;a.shieldPunch.recoverAt+=dt;}if(a.shieldPunch&&this.updateShieldWarrior(a)){if(a.id===this.turnActor&&!a.action)this.turnStarted=true;continue;}if(a.stun>0){if(a.action){a.action=null;this.emit('cancel',a,a);}continue;}
    if(a.barrierCycle&&this.time>=a.nextBarrier){a.nextBarrier=this.time+a.barrierCycle;if(a.burnTime<=0){this.shield(a,mulDiv(a.maxHp,a.barrierRatio),a);this.emit('status',a,a,0,{text:'冷库补盾'});}else this.emit('status',a,a,0,{text:'灼烧阻断补盾'});}
+   if(a.id!==this.turnActor||this.canSequence)continue;
    if(a.arenaHealer&&this.time>=a.nextHeal){a.nextHeal=this.time+5;for(const ally of this.enemies.slice(0,2))if(ally.hp>0)this.heal(ally,mulDiv(ally.maxHp,a.healRatio||16),a);this.emit('status',a,a,0,{text:'补给前排'});}
-   if(a.side==='e'&&a.boss){a.skillWait-=dt;if(a.charge>0){a.charge-=dt;if(a.charge<=0){for(const p of this.alive('p'))this.harm(p,mulDiv(a.atk,155),a,{type:a.skillDamageType});a.skillWait=a.burstCooldown||7;a.burstUntil=this.time+.38;this.emit('burst',a,a);}continue;}if(a.skillWait<=0){a.action=null;a.charge=2;this.emit('charge',a,a,0,{text:'正在蓄力'});continue;}}
-   a.wait-=dt;if(a.action)this.advanceAction(a,dt);else if(a.wait<=0)this.beginAction(a,a.side==='p'&&a.catId!=='pudding'&&a.energy>=100?'skill':'normal');
+   if(a.side==='e'&&a.boss){a.skillWait-=dt;if(a.charge>0){a.charge-=dt;if(a.charge<=0){for(const p of this.alive('p'))this.harm(p,mulDiv(a.atk,155),a,{type:a.skillDamageType});a.skillWait=a.burstCooldown||7;a.burstUntil=this.time+.38;this.emit('burst',a,a);}continue;}if(a.skillWait<=0){a.action=null;a.charge=2;this.turnStarted=true;this.emit('charge',a,a,0,{text:'正在蓄力'});continue;}}
+   if(a.action)this.advanceAction(a,dt);else if(!this.turnStarted)this.beginAction(a,a.side==='p'&&a.catId!=='pudding'&&a.energy>=100?'skill':'normal');
   }this.checkEnd();return this.events.splice(0);
  }
 }

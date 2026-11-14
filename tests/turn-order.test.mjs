@@ -1,0 +1,8 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {Battle,initialState} from '../core.mjs';
+import {crewRosterHTML} from '../crew-profile.mjs';
+function make(){const s=initialState();s.party=['orange','pudding','mint','spark','star'];const b=new Battle(s,{stage:20});for(const a of [...b.heroes,...b.enemies]){a.hp=a.maxHp=100000;a.wait=0;a.atk=2;}return b;}
+test('rounds grant one exclusive action lane, including bosses and shield punches',()=>{const b=make(),visited=new Map();let starts=0;for(let i=0;i<12000&&!b.result;i++){const es=b.tick(.02);const acting=[...b.heroes,...b.enemies].filter(a=>a.hp>0&&(a.action||a.charge>0||a.burstUntil>b.time));assert.ok(acting.length<=1,acting.map(a=>a.id).join(','));for(const e of es.filter(e=>e.type==='turn')){starts++;const seen=visited.get(e.round)||new Set();assert.ok(!seen.has(e.from));seen.add(e.from);visited.set(e.round,seen);} }assert.ok(starts>30);assert.ok(visited.size>3);});
+test('a dead queued unit is skipped and a stun consumes its place without striking',()=>{const b=make();b.heroes[1].hp=0;b.heroes[2].stun=99;const events=[];for(let i=0;i<2000&&b.round<2;i++)events.push(...b.tick(.02));assert.ok(events.some(e=>e.type==='skip'&&e.from==='p2'));assert.ok(!events.some(e=>e.type==='windup'&&['p1','p2'].includes(e.from)));assert.ok(events.some(e=>e.type==='windup'&&e.from.startsWith('e')));});
+test('companion chooser contains owned partners only',()=>{const s=initialState(),html=crewRosterHTML(s,'orange');assert.equal((html.match(/data-crew=/g)||[]).length,2);assert.ok(!html.includes('未结识'));assert.ok(!html.includes('data-crew="milk"'));});

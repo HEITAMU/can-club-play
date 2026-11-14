@@ -37,7 +37,7 @@ export function crewUpgradeHTML(state,id){
  return '<button class="crew-quick-upgrade" data-upgrade="'+id+'" data-upgrade-count="10" '+(!open||!quote.levels||state.gold<quote.cost?'disabled':'')+' aria-label="'+c.name+'升'+quote.levels+'级，花费'+quote.cost+'鱼币"><small>'+ (quote.levels?'＋'+quote.levels+'级':'升级')+'</small><span>'+(!open?'未结识':!quote.levels?'已满级':number(quote.cost)+' 鱼币')+'</span></button>';
 }
 export function crewRosterHTML(state,selected){
- return CATS.map(c=>{
+ return CATS.filter(c=>ownsCompanion(state,c.id)).map(c=>{
   const open=ownsCompanion(state,c.id);
   return '<article class="crew-roster-card"><button class="crew-pick'+(open?'':' is-locked')+'" data-crew="'+c.id+'" aria-pressed="'+(selected===c.id)+'" aria-label="查看'+c.name+(open?'':'，通过伙伴委托结识')+'">'+
    '<span class="crew-pick-art">'+catSVG(c.id,true)+'</span><b>'+c.name+'</b><small>'+(open?'Lv.'+state.levels[c.id]:'未结识')+'</small>'+

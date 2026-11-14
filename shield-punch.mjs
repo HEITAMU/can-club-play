@@ -57,7 +57,7 @@ export function controlShieldPunch(s,now,duration=1){
  clearCharge(s);s.state='controlled';return[{type:'controlStart',at:now}];
 }
 export function cleanseShieldPunch(s,now){s.controlledUntil=now;if(s.state==='controlled'){clearCharge(s);s.state='normal';}return[{type:'controlEnd',at:now}];}
-export function tickShieldPunch(s,now,enemies=[]){
+export function tickShieldPunch(s,now,enemies=[],{allowRelease=true}={}){
  const events=[];
  if(s.hp<=0){if(s.state!=='down'){clearCharge(s);s.state='down';events.push({type:'cancel',at:now,reason:'down'});}return events;}
  if(now<s.controlledUntil){s.state='controlled';return events;}
@@ -71,7 +71,8 @@ export function tickShieldPunch(s,now,enemies=[]){
   if(elapsed)events.push(...gainEnergy(s,accrueUnits(s,'chargeRemainder',s.config.chargeEnergyPerSecond,elapsed),until,'charge'));
  }
  events.push(...castSelfShield(s,now));
- if(s.state==='primed'&&now>=s.releaseAt){s.state='punching';s.shield=0;events.push({type:'punchStart',at:s.releaseAt});}
+ if(s.state==='primed'&&now>=s.releaseAt&&!allowRelease){const delay=now-s.releaseAt;s.releaseAt+=delay;s.hitAt+=delay;s.recoverAt+=delay;}
+ if(s.state==='primed'&&now>=s.releaseAt&&allowRelease){s.state='punching';s.shield=0;events.push({type:'punchStart',at:s.releaseAt});}
  if(s.state==='punching'&&!s.hitDelivered&&now>=s.hitAt){
   s.hitDelivered=true;const raw=mulDiv(s.attack,s.config.attackRatio)+mulDiv(s.shieldAtSecond,s.config.shieldRatio);
   const hits=enemies.filter(e=>e.hp>0&&e.side!=='ally').map(e=>({targetId:e.id,rawDamage:raw,damage:mulDiv(raw,100,100+Math.max(0,(e.armor||0)-(e.armorPenTaken||0)))}));
