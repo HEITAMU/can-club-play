@@ -131,3 +131,5 @@ html body,body button,body input,body select,body textarea,body h1,body h2,body 
 .crew-view[data-mode="profile"] .crew-growth .growth-footer>button{flex:none;min-width:76px;min-height:38px;margin:0;padding:6px 9px;font-size:12px}
 .crew-view[data-mode="profile"] .crew-growth .growth-material>span:not(.material-icon){font-size:11px}
 .crew-view[data-mode="profile"] .crew-growth .growth-material b{font-size:12px}
+
+.crew-view[data-mode="profile"] .crew-hero .crew-actions{order:2}.crew-view[data-mode="profile"] .crew-hero .crew-actions button{flex:none}
