@@ -131,14 +131,30 @@ body{background:radial-gradient(ellipse at 22% 30%,#56404d,#292535 75%);color:#f
 @media(max-width:350px){.crew-view[data-mode="profile"] .crew-profile{grid-template-columns:minmax(0,1fr) 46%}.crew-view[data-mode="profile"] .crew-attributes{padding:7px}.crew-view[data-mode="profile"] .crew-hero{min-height:150px}}
 
 /* Dark warm ground makes the three light panels stand apart. */
-.crew-view[data-mode="profile"]{background:#846044;color:#f7e6c5}
-#main:has(.crew-view[data-mode="profile"]),#other-view:has(.crew-view[data-mode="profile"]){background:#846044}
-.crew-view[data-mode="profile"]>.view-heading h2,.crew-view[data-mode="profile"] .crew-identity h3{color:#ffedcb}
-.crew-view[data-mode="profile"] .crew-level{color:#edcf9f}
-.crew-view[data-mode="profile"]>.crew-modes{border-bottom-color:#e2bb7955}
-.crew-view[data-mode="profile"] .crew-modes button{color:#e4c7a0}
-.crew-view[data-mode="profile"] .crew-modes button[aria-pressed=true]{color:#fff0cb;border-bottom-color:#f1c675}
-.crew-view[data-mode="profile"]>.crew-roster{background:#765338;border-top-color:#b58b59}
-.crew-view[data-mode="profile"] .crew-pick b{color:#fff0d0}
-.crew-view[data-mode="profile"] .crew-pick small{color:#e7c69b}
-.crew-view[data-mode="profile"] .crew-pick[aria-pressed=true]{border-bottom-color:#f1c675}
+.crew-view:is([data-mode="profile"],[data-mode="equipment"]){background:#846044;color:#f7e6c5}
+#main:has(.crew-view:is([data-mode="profile"],[data-mode="equipment"])),#other-view:has(.crew-view:is([data-mode="profile"],[data-mode="equipment"])){background:#846044}
+.crew-view:is([data-mode="profile"],[data-mode="equipment"])>.view-heading h2,.crew-view:is([data-mode="profile"],[data-mode="equipment"]) .crew-identity h3{color:#ffedcb}
+.crew-view:is([data-mode="profile"],[data-mode="equipment"]) .crew-level{color:#edcf9f}
+.crew-view:is([data-mode="profile"],[data-mode="equipment"])>.crew-modes{border-bottom-color:#e2bb7955}
+.crew-view:is([data-mode="profile"],[data-mode="equipment"]) .crew-modes button{color:#e4c7a0}
+.crew-view:is([data-mode="profile"],[data-mode="equipment"]) .crew-modes button[aria-pressed=true]{color:#fff0cb;border-bottom-color:#f1c675}
+.crew-view:is([data-mode="profile"],[data-mode="equipment"])>.crew-roster{background:#765338;border-top-color:#b58b59;box-shadow:0 -5px 12px #846044;scrollbar-color:#b18b5b #765338}
+.crew-view:is([data-mode="profile"],[data-mode="equipment"]) .crew-pick b{color:#fff0d0}
+.crew-view:is([data-mode="profile"],[data-mode="equipment"]) .crew-pick small{color:#e7c69b}
+.crew-view:is([data-mode="profile"],[data-mode="equipment"]) .crew-pick[aria-pressed=true]{border-bottom-color:#f1c675}
+
+/* Equipment uses the same dark ground and light framed work areas. */
+.crew-view[data-mode="equipment"] .equipment-heading{border-bottom-color:#e2bb7955;color:#edcf9f}
+.crew-view[data-mode="equipment"] .equipment-heading h3{color:#ffedcb}
+.crew-view[data-mode="equipment"] .equipment-heading>span{color:#edcf9f}
+.crew-view[data-mode="equipment"] .equipment-heading>button{background:#e5c68d;color:#684522;border:1px solid #bd955d;border-radius:7px;padding:5px 10px}
+.crew-view[data-mode="equipment"] .equipment-layout{gap:9px;align-items:start}
+.crew-view[data-mode="equipment"] .equipment-stage{background:#ead3a2;border:1px solid #ad8550;border-radius:11px;min-height:330px;box-shadow:inset 0 1px #fff1cc}
+.crew-view[data-mode="equipment"] .equipment-bag{background:#edd0b2;border:1px solid #b88659;border-radius:11px;padding:7px;min-height:330px;box-shadow:inset 0 1px #fff0da}
+.crew-view[data-mode="equipment"] .gear-orbit-slot{background:#f8ebcd;border:1px solid #c1a06b;box-shadow:inset 0 1px #fff6df}
+.crew-view[data-mode="equipment"] .gear-orbit-slot.selected{background:#f5d899;outline:2px solid #ac783c;outline-offset:0}
+.crew-view[data-mode="equipment"] .equipment-bag .gear-list{gap:5px}
+.crew-view[data-mode="equipment"] .equipment-bag .gear-empty{background:#f5e3c3;border-color:#c5a272}
+.crew-view[data-mode="equipment"] .gear-quick-equip{background:#a6793e;color:#fff1d3}
+.crew-view[data-mode="equipment"] .equipment-bag .bag-pages{color:#77532c;gap:3px}
+.crew-view[data-mode="equipment"] .equipment-bag .bag-pages button{background:#ac824f;width:24px}

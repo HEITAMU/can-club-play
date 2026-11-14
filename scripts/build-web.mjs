@@ -6,7 +6,7 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const require=createRequire(path.join(root,'wechat/package.json')),sharp=require('sharp'),esbuild=require('esbuild');
 const {FINISHED_ROSTER}=await import('../finished-roster-data.mjs');
 const {FINISHED_SPARK}=await import('../finished-spark-data.mjs');
-const version='0.26.7',map={},audit=[];
+const version='0.26.8',map={},audit=[];
 await fs.mkdir(path.join(root,'assets/mobile'),{recursive:true});
 for(const art of [...Object.values(FINISHED_ROSTER),{...FINISHED_SPARK,portrait:'./assets/finished/spark-portrait-v0211.webp'}]){
  for(const [kind,source] of [['atlas',art.atlas],['portrait',art.portrait]]){
@@ -22,6 +22,6 @@ const css=(await Promise.all(sheets.map(s=>fs.readFile(path.join(root,s+'.css'),
 const minified=await esbuild.transform(css,{loader:'css',target:'safari15',minify:true});
 await fs.writeFile(path.join(root,'game.bundle.css'),minified.code);
 const report={version,moduleRequestsBefore:Object.keys(result.metafile.inputs).length,scriptRequestsAfter:1,cssRequestsBefore:sheets.length,cssRequestsAfter:1,assets:audit,originalArtBytes:audit.reduce((n,a)=>n+a.originalBytes,0),mobileArtBytes:audit.reduce((n,a)=>n+a.bytes,0)};
-await fs.mkdir(path.join(root,'docs/review/polish-v0267'),{recursive:true});
-await fs.writeFile(path.join(root,'docs/review/polish-v0267/build.json'),JSON.stringify(report,null,2)+'\n');
+await fs.mkdir(path.join(root,'docs/review/polish-v0268'),{recursive:true});
+await fs.writeFile(path.join(root,'docs/review/polish-v0268/build.json'),JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify({...report,assets:report.assets.length}));
