@@ -1,3 +1,4 @@
+import {paintRain} from './scene-weather.mjs';
 import {battleReport} from './battle-flow.mjs';
 import {resultHTML} from './battle-result.mjs';
 import {MATERIAL_INFO,materialHave} from './material-info.mjs';
@@ -187,7 +188,7 @@ function equipCrew(id,slot){
  restartWithCrew();
  toast(message);
 }
-function restartWithCrew(){if(battle)startBattle({farm:farming,stage:battle.stage,arenaTier:battle.arenaTier||0,weeklyTier:battle.weekly?.tier||0,activity:battle.activity?.request||null});}
+function restartWithCrew(){if(!battle)return;const request={stage:battle.stage,arenaTier:battle.arenaTier||0,weeklyTier:battle.weekly?.tier||0,activity:battle.activity?.request||null};if(state.battleReport){battle=new Battle(state,request);running=false;renderStageHeader();renderActors();return;}startBattle(request);}
 function benchCrew(id){if(!removeParty(state,id)){toast('至少保留一位出战伙伴');return;}persist();renderHeader();renderCats();restartWithCrew();toast(cat(id).name+'已下场');}
 function showGrowthSuccess(id,label){
  for(const hero of document.querySelectorAll('[data-profile-cat="'+id+'"] .crew-hero')){
@@ -254,12 +255,12 @@ function openDistrict(place){
  if(place==='challenges'){openModal('arena','<button id="open-journal" class="primary wide">猫巷手账 · 每日委托与成长之路</button>'+weeklyHTML(state)+arenaHTML(state));$('#open-journal').onclick=()=>openDistrict('journal');$$('[data-weekly]').forEach(b=>b.onclick=()=>{forceClose();changeTab('battle');startBattle({weeklyTier:+b.dataset.weekly});});$$('[data-arena-tier]').forEach(b=>b.onclick=()=>{const tier=+b.dataset.arenaTier;if(!arenaOpen(state,tier))return;forceClose();changeTab('battle');startBattle({arenaTier:tier});});}
 }
 const streetView={group:'recruit',id:'milk',tier:1};
-function openStreet(group=streetView.group,id){if(group!==streetView.group||id&&id!==streetView.id)streetView.tier=1;streetView.group=group;if(id)streetView.id=id;const html=streetHTML(state,streetView);if(modalType==='street'&&!$('#modal-backdrop').hidden){const panel=$('#modal'),scroll=panel.scrollTop,focused=document.activeElement,keys=['streetChoice','streetGroup','streetLevel','streetTier'],key=keys.find(k=>focused?.dataset?.[k]!==undefined),value=key?focused.dataset[key]:null;$('#modal-content').innerHTML=html;panel.scrollTop=scroll;if(key){const attr='data-'+key.replace(/[A-Z]/g,c=>'-'+c.toLowerCase());[...panel.querySelectorAll('['+attr+']')].find(e=>e.getAttribute(attr)===value)?.focus({preventScroll:true});}}else openModal('street',html);
+function openStreet(group=streetView.group,id){if(group!==streetView.group||id&&id!==streetView.id)streetView.tier=1;streetView.group=group;if(id)streetView.id=id;const html=streetHTML(state,streetView);if(modalType==='street'&&!$('#modal-backdrop').hidden){const panel=$('#modal'),scroll=panel.scrollTop,choiceScroll=panel.querySelector('.street-choices')?.scrollTop||0,focused=document.activeElement,keys=['streetChoice','streetGroup','streetLevel','streetTier'],key=keys.find(k=>focused?.dataset?.[k]!==undefined),value=key?focused.dataset[key]:null;$('#modal-content').innerHTML=html;panel.scrollTop=scroll;const choices=panel.querySelector('.street-choices');if(choices)choices.scrollTop=choiceScroll;if(key){const attr='data-'+key.replace(/[A-Z]/g,c=>'-'+c.toLowerCase());[...panel.querySelectorAll('['+attr+']')].find(e=>e.getAttribute(attr)===value)?.focus({preventScroll:true});}}else openModal('street',html);
  $$('[data-street-group]').forEach(b=>b.onclick=()=>openStreet(b.dataset.streetGroup));$$('[data-street-choice]').forEach(b=>b.onclick=()=>{streetView.tier=1;openStreet(group,b.dataset.streetChoice);});
  $$('[data-street-level]').forEach(b=>b.onclick=()=>{streetView.tier=+b.dataset.streetLevel;openStreet();});
  $$('[data-street-tier]').forEach(b=>b.onclick=()=>{streetView.tier+=+b.dataset.streetTier;openStreet();});
  $('#street-fight').onclick=()=>{const q=streetSelection(state,streetView);if(!q.open)return;forceClose();changeTab('battle');startBattle({activity:q.request});};
- const recruitButton=$('#recruit-current');if(recruitButton)recruitButton.onclick=()=>{if(recruitCompanion(state,streetView.id)){persist();renderHeader();renderParty();openStreet();toast(cat(streetView.id).name+'加入了远征队');}};
+ const recruitButton=$('#recruit-current');if(recruitButton)recruitButton.onclick=()=>{if(recruitCompanion(state,streetView.id)){persist();renderHeader();renderParty();if(state.party.includes(streetView.id))restartWithCrew();openStreet();toast(cat(streetView.id).name+'加入了远征队');}};
 }
 function returnToStreet(route){activityReturn.cancel();Object.assign(streetView,route);changeTab('map');openStreet();}
 function showPatrolRoutes(){const finished=state.runCleared>=MAX_STAGE;openModal('routes',`<h2 id="modal-title">街区开拓</h2><button id="patrol-current" class="primary wide" ${finished?'disabled':''}>${finished?'街区已开拓':'继续第 '+state.stage+' 关'}</button>${Array.from({length:MAX_STAGE/20},(_,i)=>{const c=CHAPTERS[i%6],cleared=Math.min(20,Math.max(0,state.runCleared-i*20)),current=!finished&&Math.floor((state.stage-1)/20)===i;return `<div class="chapter-card route-progress ${current?'current':''}"><div class="chapter-thumb">${sceneSVG(i%6)}</div><div><h3>${c.name} · ${Math.floor(i/6)+1}</h3><small>${cleared}/20</small></div><strong>${cleared===20?'✓':current?'›':'·'}</strong></div>`;}).join('')}`);$('#patrol-current').onclick=()=>{if(finished)return;forceClose();changeTab('battle');startBattle({entrance:true});};}
@@ -302,6 +303,7 @@ function frame(now){requestAnimationFrame(frame);const dt=lastStamp?Math.min(.1,
  if(!document.hidden&&nextDelay>0&&!state.battleReport){nextDelay-=dt;if(nextDelay<=0)startBattle();}
  if(battle?.result&&!document.hidden&&tab==='battle'&&!modalType)endElapsed+=dt;
  if(!document.hidden&&tab==='battle'&&!modalType){const route=activityReturn.update(ambientTime);if(route)returnToStreet(route);}
+ if(!document.hidden&&tab==='battle'&&now-idlePaintStamp>=1000/30){const rain=$('#scene .scene-rain');if(rain)paintRain(rain,ambientTime,arenaMetrics.size,reducedMotion);}
  renderMotion();if(tab==='map'&&(now-renderStamp>100||$('.district-scene')?._districtTap))renderDistrictAmbient(ambientTime);
  if(!document.hidden&&now-idlePaintStamp>=1000/30){idlePaintStamp=now;for(const sprite of $$('.companion-body')){
   if(sprite.closest('#actors,.formation-ghost,[hidden]'))continue;

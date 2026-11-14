@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {rainFrame} from '../scene-weather.mjs';
+test('rain animates with bounded particles and ground-only impacts on wide and tall screens',()=>{for(const [w,h] of [[390,600],[480,310]])for(let t=0;t<4;t+=.13){const f=rainFrame(t,w,h);assert.equal(f.rain.length+f.ripples.length,38);for(const r of f.ripples){assert.ok(r.y>=f.ground&&r.y<=h);assert.ok(r.x>=0&&r.x<=w);}}assert.notDeepEqual(rainFrame(0,390,600),rainFrame(.1,390,600));});

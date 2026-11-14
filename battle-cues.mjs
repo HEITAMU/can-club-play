@@ -9,7 +9,7 @@ export function formationPositions(b){
  for(const [side,actors] of [['p',b.heroes],['e',b.enemies]]){
   const front=actors.slice(0,2),back=actors.slice(2),mirror=x=>side==='p'?x:100-x;
   for(const [i,a] of actors.entries()){
-   if(side==='p'&&actors.some((h,j)=>h.formationSlot!==undefined&&h.formationSlot!==j)){const k=a.formationSlot;result[a.id]=k<2?{x:36,y:[59,89][k]}:{x:k===3?22:16,y:[51,73,95][k-2]};continue;}
+   if(side==='p'&&Number.isInteger(a.formationSlot)){const k=a.formationSlot;result[a.id]=k<2?{x:36,y:[59,89][k]}:{x:k===3?22:16,y:[51,73,95][k-2]};continue;}
    const fi=front.indexOf(a),bi=back.indexOf(a);
    result[a.id]=fi>=0?{x:mirror(36),y:front.length===1?76:[59,89][fi]}:{x:mirror(bi===1?22:16),y:back.length===1?75:back.length===2?[57,94][bi]:[51,73,95][bi]};
   }

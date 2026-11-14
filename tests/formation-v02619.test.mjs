@@ -33,3 +33,10 @@ test('both equipment lists contain all available items exactly once, including b
   const ids=[...html.matchAll(/data-gear="([^"]+)"/g)].map(m=>m[1]);assert.equal(ids.length,38);assert.equal(new Set(ids).size,38);assert.ok(!html.includes('data-page='));
  }
 });
+
+ test('four-person rear slots stay fixed when a fifth companion joins',()=>{
+ const s=initialState();s.roster.owned=['orange','ink','milk','mint'];s.party=['orange','ink','milk','mint'];
+ const before=formationPositions(new Battle(s));assert.deepEqual(before.p2,{x:16,y:51});assert.deepEqual(before.p3,{x:22,y:73});
+ s.roster.shards.spark=20;assert.ok(recruitCompanion(s,'spark'));const b=new Battle(s),after=formationPositions(b);
+ assert.equal(b.heroes.find(h=>h.catId==='spark').formationSlot,4);assert.deepEqual(after.p2,before.p2);assert.deepEqual(after.p3,before.p3);assert.deepEqual(after.p4,{x:16,y:95});
+ });
