@@ -1,7 +1,7 @@
 import {enemyCombatStats} from './combat-stats.mjs?v=0.25.0';
 // Fixed encounters: changing the player's party, equipment or title never scales enemies.
 // Ordinary material/recruitment jobs do not use these endgame multipliers.
-const HARD_PRESSURE={barrier:{hp:9,atk:5},healer:{hp:9,atk:4.8},armor:{hp:12,atk:5.5},adaptive:{hp:15,atk:5.5},ambush:{hp:8,atk:7.5},burst:{hp:11,atk:5.5}};
+const HARD_PRESSURE={barrier:{hp:4.5,atk:5},healer:{hp:9,atk:4.8},armor:{hp:12,atk:5.5},adaptive:{hp:15,atk:5.5},ambush:{hp:8,atk:7.5},burst:{hp:11,atk:5.5}};
 export function streetEnemies(info){
  const {level,tier,theme,kind}=info,m=(1+.18*(level-1))*(1+.08*Math.floor(level/10));
  const power=kind==='hard'?[3.3,4.8,6.5][tier-1]:kind==='hunt'?(1.1+Math.min(tier,25)*.12)*(1+Math.max(0,tier-25)*.15)**1.35:kind==='recruit'?.8+Math.max(0,tier-2)*.35:1+Math.max(0,tier-2)*.3;

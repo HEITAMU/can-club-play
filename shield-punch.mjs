@@ -1,7 +1,7 @@
 import {integer,mulDiv,accrueUnits} from './integer-math.mjs?v=0.25.1';
 // 石墩: the punch is shield-triggered; only 护体劲 spends energy.
 // Charge restores energy so the second shield does not depend on being attacked.
-export const SHIELD_PUNCH_DEFAULTS=Object.freeze({startRatio:30,secondGainRatio:15,minCharge:1.35,shieldCapRatio:80,lockout:8,punchTravel:.42,recovery:.65,attackRatio:100,shieldRatio:160,energyCap:100,selfShieldRatio:35,normalEnergy:20,chargeEnergyPerSecond:35,absorbEnergy:12,absorbEnergyInterval:.8});
+export const SHIELD_PUNCH_DEFAULTS=Object.freeze({startRatio:30,secondGainRatio:15,minCharge:1.35,shieldCapRatio:80,lockout:8,punchTravel:.42,recovery:.65,attackRatio:100,shieldRatio:160,energyCap:100,selfShieldRatio:35,normalEnergy:20,chargeEnergyPerSecond:35,absorbEnergy:12,absorbEnergyInterval:1});
 export function createShieldPunch({maxHp=1000,hp=maxHp,attack=100,energy=0,config={}}={}){
  const cfg={...SHIELD_PUNCH_DEFAULTS,...config};
  return{maxHp,hp,attack,config:cfg,energy:Math.max(0,Math.min(cfg.energyCap,energy)),shield:0,state:'normal',firstAt:null,secondAt:null,addedDuringCharge:0,shieldAtSecond:null,releaseAt:Infinity,hitAt:Infinity,recoverAt:Infinity,controlledUntil:-Infinity,lockoutUntil:-Infinity,absorbEnergyAt:-Infinity,hitDelivered:false,cancelReason:null};
@@ -31,7 +31,7 @@ export function gainShield(s,amount,now,source='ally'){
 }
 export function loseShield(s,amount){if(!Number.isFinite(amount)||amount<=0)return 0;const removed=Math.min(s.shield,integer(amount));s.shield-=removed;return removed;}
 export function castSelfShield(s,now){
- if(s.hp<=0||now<s.controlledUntil||!['normal','charging','primed'].includes(s.state)||s.energy<s.config.energyCap)return[];
+ if(s.deferSelfShield||s.hp<=0||now<s.controlledUntil||!['normal','charging','primed'].includes(s.state)||s.energy<s.config.energyCap)return[];
  s.energy-=s.config.energyCap;
  return[{type:'selfShield',at:now,energyCost:s.config.energyCap},...gainShield(s,mulDiv(s.maxHp,s.config.selfShieldRatio),now,'self')];
 }
@@ -42,11 +42,11 @@ export function gainEnergy(s,amount,now,source='external'){
 }
 export function normalAttackEnergy(s,now){return canNormalAttack(s,now)?gainEnergy(s,s.config.normalEnergy,now,'normal'):[];}
 // Only real enemy damage absorbed by shield produces energy, with a shared interval.
-export function absorbShieldDamage(s,amount,now){
+export function absorbShieldDamage(s,amount,now,{energy=true}={}){
  const absorbed=loseShield(s,amount),events=absorbed?[{type:'shieldAbsorb',at:now,amount:absorbed}]:[];
  // A shield-breaking hit cancels before its energy can grant a replacement shield.
  if(charging(s)&&s.shield<=0)events.push(cancel(s,now,'shieldBroken'));
- if(absorbed&&now>=s.absorbEnergyAt+s.config.absorbEnergyInterval){s.absorbEnergyAt=now;events.push(...gainEnergy(s,s.config.absorbEnergy,now,'absorb'));}
+ if(energy&&absorbed&&now>=s.absorbEnergyAt+s.config.absorbEnergyInterval){s.absorbEnergyAt=now;events.push(...gainEnergy(s,s.config.absorbEnergy,now,'absorb'));}
  return events;
 }
 export function controlShieldPunch(s,now,duration=1){

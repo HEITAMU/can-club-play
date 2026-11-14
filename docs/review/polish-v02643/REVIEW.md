@@ -1,0 +1,11 @@
+# 0.26.43
+
+Eight active skills use individual semantic icons (shield, three flying fish, hot milk, fire lantern, freezing staff, armor-breaking wrench, shield-charged fist, energy stars). Equipment has 24 set/slot-specific objects plus six distinct tactic tokens. All images use the established matte brown-outline pencil style. Material cells have centered artwork and separate quantity strips; scrap uses a standalone sprite to avoid atlas bleed.
+
+Campaign remains linear. Normal victories pay gold, skip results and advance after 1.2 seconds. Every fifth stage has one visually marked carrier and one deterministic material payout; no random equipment or scrap on ordinary stages. Six commission scenes distinguish activity categories. Recruit tiers 1–5 are single-clear, tier 6 repeats. First-clear shards are 20/12/16/20/24/30; final repeats give 6. Existing first-clear differences are migrated exactly once.
+
+Living heroes gain 8 energy from direct enemy hits, at most once per simulation second. Shield absorption counts; DOT/reflection do not. Shidun absorption grants 12 instead of stacking 8+12, on the same cooldown. His self-shield and normal attacks are mutually exclusive in a round, including lockout. Charge dust uses the rendered moving foot anchor.
+
+Validation: 207 tests passed, including 600 stages, repeated reward prevention, save migration, hit energy, self-shield action exclusion and semantic atlas mappings. Web bundle built. 1,680 fixed-seed endgame simulations: coldstore 29/280 wins across 56 teams and 5 seeds (4 teams win all seeds), lifeline 125, ironwall 75, alarm 102, blackout 52, clockwork 42. These are controlled simulations, not player win rates. Coldstore HP pressure reduced 9 to 4.5 after the new action economy otherwise left no successful tested team. Ordinary campaign higher-training and synergy cases still pass across five seeds.
+
+Images generated with built-in image generation using project-approved/reference assets; prompts specified equal-cell atlases, brown pencil outlines, matte cream/russet/sage colors and exact item/ability meanings. Encoded as WebP for runtime. Browser verification recorded after publication; WeChat physical-device performance is not validated here.

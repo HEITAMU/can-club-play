@@ -20,19 +20,19 @@ export const HARD_JOBS=[
  {id:'clockwork',name:'钟楼围困',theme:'burst',rule:'两名首领错开蓄力。仅靠开罐啦难以全部打断，需要控制、续航或迅速击倒一人。'}
 ];
 const KEYS=[...MATERIAL_JOBS.map(x=>x.id),...HUNTS.map(x=>'hunt:'+x.id),...HARD_JOBS.map(x=>'hard:'+x.id),...COMPANION_IDS.map(x=>'recruit:'+x)];
-export function normalizeActivities(raw){return {cleared:Object.fromEntries(KEYS.map(k=>[k,safe(raw?.cleared?.[k],k.startsWith('hunt:')?10000:k.startsWith('hard:')?3:k.startsWith('recruit:')?6:8)])),wins:safe(raw?.wins,1e9)};}
+export function normalizeActivities(raw){return {rewardVersion:1,cleared:Object.fromEntries(KEYS.map(k=>[k,safe(raw?.cleared?.[k],k.startsWith('hunt:')?10000:k.startsWith('hard:')?3:k.startsWith('recruit:')?6:8)])),wins:safe(raw?.wins,1e9)};}
 export function activityInfo(s,request={}){
  const kind=request.kind||'sweep',tier=request.tier===undefined?1:request.tier,id=request.id||'',recruit=kind==='recruit',hunt=kind==='hunt',hard=kind==='hard',job=recruit?{name:'伙伴委托',rule:'完成指定伙伴的委托，获得该伙伴信物。凑齐 20 份即可结识，之后可用于徽章晋升。',theme:'crowd'}:hunt?HUNTS.find(x=>x.id===id):hard?HARD_JOBS.find(x=>x.id===id):MATERIAL_JOBS.find(x=>x.id===kind);
  const key=recruit?'recruit:'+id:hunt?'hunt:'+id:hard?'hard:'+id:kind,cleared=s.activities?.cleared?.[key]||0,max=hunt?Math.min(10000,cleared+1):hard?3:recruit?6:8;
  const required=hard?300:hunt?30:recruit?[3,10,30,60,120,220][tier-1]:[3,10,30,60,100,160,240,360][tier-1];
  const valid=Number.isInteger(tier)&&!!job&&(!recruit||COMPANION_IDS.includes(id))&&tier>=1&&tier<=max;
- const open=valid&&s.highest>=required&&tier<=cleared+1;
+ const exhausted=recruit&&tier<=cleared&&tier<6;const open=valid&&s.highest>=required&&tier<=cleared+1&&!exhausted;
  const level=hard?[130,150,160][tier-1]:hunt?Math.min(160,35+tier*5):recruit?[5,20,40,70,100,130][tier-1]:[8,25,40,60,85,110,135,160][tier-1];
  const theme=hunt?job.themes[(tier-1)%3]:job?.theme;
- return {valid,open,request:{kind,id,tier},kind,id,tier,key,cleared,max,required,level,theme,name:job?.name||'未知委托',rule:(hunt?([...HARD_JOBS].find(x=>x.theme===theme)?.rule):job?.rule)||'',first:tier>cleared,scene:hard?({coldstore:1,lifeline:3,ironwall:3,alarm:2,blackout:5,clockwork:4}[id]):hunt?({market:1,depot:3,station:5}[id]):kind==='salvage'?3:0};
+ return {valid,open,exhausted,request:{kind,id,tier},kind,id,tier,key,cleared,max,required,level,theme,name:job?.name||'未知委托',rule:(hunt?([...HARD_JOBS].find(x=>x.theme===theme)?.rule):job?.rule)||'',first:tier>cleared,scene:hard?({coldstore:1,lifeline:3,ironwall:3,alarm:2,blackout:5,clockwork:4}[id]):hunt?({market:1,depot:3,station:5}[id]):kind==='salvage'?3:0};
 }
 export function activityReward(info){const n=info.tier,first=info.first,mult=first?2:1,r={gold:0,supplies:0,badges:0,notes:0,seals:0,shards:0,essence:0,scrap:0};
- if(info.kind==='recruit'){r.shards=(2+Math.ceil(n/2))*mult;r.notes=n*2;}
+ if(info.kind==='recruit'){if(!first&&n<6)return r;r.shards=first?[20,12,16,20,24,30][n-1]:6;r.notes=n*2;}
  else if(info.kind==='sweep'){r.notes=(5+n*5)*mult;r.scrap=6+n*4;}
  else if(info.kind==='escort'){r.badges=(1+Math.ceil(n/2))*mult;r.seals=(n>=3?Math.ceil((n-2)/2):0)*mult;r.notes=n*3;}
  else if(info.kind==='salvage'){r.essence=(1+Math.floor(n/3))*mult;r.scrap=n*5;}

@@ -82,6 +82,6 @@ test('skill release carries its named caster, visual type, targets and actual pr
 });
 test('enemy healing effects identify the healer and actual recipient',()=>{
  const b=new Battle(ready(),{stage:20}),bag=b.enemies.find(e=>e.type==='bag'),c=new BattleCues();b.enemies[0].hp-=100;bag.attacks=2;b.normal(bag);c.consume(b.events,b,formationPositions(b));
- assert.ok(c.entries.some(e=>e.from==='乱跑纸袋'&&e.ability==='纸袋修补'&&e.target==='吸尘器大王'));
+ assert.ok(c.entries.some(e=>e.from==='乱跑纸袋'&&e.ability==='纸袋修补'&&e.target===b.enemies[0].name));
  assert.ok(c.active(0).some(e=>e.style==='heal'&&e.from===bag.id&&e.targets.includes('e0')));
 });

@@ -47,37 +47,42 @@
         {
           "seed": 527,
           "result": "lose",
-          "time": 75,
-          "power": 276396,
-          "survivors": 5
+          "time": 204.4,
+          "round": 18,
+          "power": 206257,
+          "survivors": 0
         },
         {
           "seed": 941,
           "result": "lose",
-          "time": 75,
-          "power": 276396,
-          "survivors": 5
+          "time": 204.4,
+          "round": 18,
+          "power": 206257,
+          "survivors": 0
         },
         {
           "seed": 2027,
           "result": "lose",
-          "time": 75,
-          "power": 276396,
-          "survivors": 5
+          "time": 204.4,
+          "round": 18,
+          "power": 206257,
+          "survivors": 0
         },
         {
           "seed": 4093,
           "result": "lose",
-          "time": 75,
-          "power": 276396,
-          "survivors": 5
+          "time": 204.4,
+          "round": 18,
+          "power": 206257,
+          "survivors": 0
         },
         {
           "seed": 8191,
           "result": "lose",
-          "time": 75,
-          "power": 276396,
-          "survivors": 5
+          "time": 204.4,
+          "round": 18,
+          "power": 206257,
+          "survivors": 0
         }
       ]
     },
@@ -95,36 +100,41 @@
         {
           "seed": 527,
           "result": "win",
-          "time": 74.6,
-          "power": 388755,
+          "time": 207.7,
+          "round": 16,
+          "power": 290439,
           "survivors": 5
         },
         {
           "seed": 941,
           "result": "win",
-          "time": 71.7,
-          "power": 388755,
+          "time": 208.3,
+          "round": 16,
+          "power": 290439,
           "survivors": 5
         },
         {
           "seed": 2027,
           "result": "win",
-          "time": 74.6,
-          "power": 388755,
+          "time": 207.7,
+          "round": 16,
+          "power": 290439,
           "survivors": 5
         },
         {
           "seed": 4093,
           "result": "win",
-          "time": 74.6,
-          "power": 388755,
+          "time": 208.3,
+          "round": 16,
+          "power": 290439,
           "survivors": 5
         },
         {
           "seed": 8191,
           "result": "win",
-          "time": 74.6,
-          "power": 388755,
+          "time": 211.6,
+          "round": 17,
+          "power": 290439,
           "survivors": 5
         }
       ]
@@ -143,37 +153,42 @@
         {
           "seed": 527,
           "result": "win",
-          "time": 66.7,
-          "power": 312679,
+          "time": 159.3,
+          "round": 13,
+          "power": 228668,
           "survivors": 5
         },
         {
           "seed": 941,
           "result": "win",
-          "time": 66.7,
-          "power": 312679,
+          "time": 162.5,
+          "round": 13,
+          "power": 228668,
           "survivors": 5
         },
         {
           "seed": 2027,
           "result": "win",
-          "time": 67.6,
-          "power": 312679,
+          "time": 159.3,
+          "round": 13,
+          "power": 228668,
           "survivors": 5
         },
         {
           "seed": 4093,
           "result": "win",
-          "time": 67.5,
-          "power": 312679,
+          "time": 159.3,
+          "round": 13,
+          "power": 228668,
           "survivors": 5
         },
         {
           "seed": 8191,
           "result": "win",
-          "time": 71.6,
-          "power": 312679,
-          "survivors": 3
+          "time": 159.4,
+          "round": 13,
+          "power": 228668,
+          "survivors": 5
         }
       ]
     }

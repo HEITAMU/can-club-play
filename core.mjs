@@ -1,3 +1,4 @@
+import {patrolDrop,grantPatrolDrop} from './patrol-drops.mjs';
 import {normalizeReport} from './battle-flow.mjs';
 import {skillTuning} from './skill-training.mjs';
 import {integer,mulDiv,accrueUnits,resizeAmount} from './integer-math.mjs?v=0.25.1';
@@ -21,9 +22,9 @@ export const CATS=[
  {id:'ink',name:'阿墨',job:'单体输出',tag:'突袭',color:'#42465c',accent:'#929db5',unlock:0,hp:116,atk:25,skill:'飞鱼三连',desc:'连续命中生命最低的敌人，合计造成 330% 攻击力的物理伤害，本次攻击额外获得 25 点护甲穿透。',passive:'5 级：暴击率额外提高 15 个百分点。',quote:'别眨眼，鱼已经到了。',gear:'scarf'},
  {id:'milk',name:'奶盖',job:'全队治疗',tag:'支援',color:'#f8ead8',accent:'#c6a2bf',unlock:3,hp:145,atk:13,skill:'热牛奶时间',desc:'治疗全体队友，数值相当于奶盖最大生命的 28%。',passive:'5 级：普攻回复的能量从 22 提高到 32。',quote:'打完这一架，记得吃饭。',gear:'nurse'},
  {id:'spark',name:'火花',job:'群体灼烧',tag:'爆发',color:'#d98f75',accent:'#8f494b',unlock:8,hp:112,atk:27,skill:'辣椒罐头',desc:'对全体敌人造成 160% 攻击力的法术伤害，并施加每秒 30% 攻击力的法术灼烧。',passive:'5 级：灼烧持续时间从 4 秒提高到 6 秒。',quote:'微辣。猫猫的微辣。',gear:'goggles'},
- {id:'mint',name:'薄荷',job:'眩晕控制',tag:'控制',color:'#a9d4c1',accent:'#4a8d83',unlock:15,hp:133,atk:22,skill:'冰镇气泡',desc:'对生命最多的敌人造成 230% 攻击力的法术伤害，眩晕 1800 毫秒并打断蓄力。',passive:'5 级：眩晕时间提高到 2600 毫秒。',quote:'别急，先冷静一下。',gear:'hood'},
+ {id:'mint',name:'薄荷',job:'眩晕控制',tag:'控制',color:'#a9d4c1',accent:'#4a8d83',unlock:15,hp:133,atk:22,skill:'冰镇气泡',desc:'对生命最多的敌人造成 230% 攻击力的法术伤害，眩晕 11000 毫秒并打断蓄力。',passive:'5 级：眩晕时间提高到 2600 毫秒。',quote:'别急，先冷静一下。',gear:'hood'},
  {id:'bolt',name:'扳手',job:'破甲专家',tag:'破甲',color:'#adbacb',accent:'#636e8b',unlock:25,hp:162,atk:24,skill:'扳手大修',desc:'先永久降低目标 50% 当前护甲，再造成 300% 攻击力的物理伤害。',passive:'5 级：护甲降低幅度提高到 75%。',quote:'修不好，就再拧一下。',gear:'helmet'},
- {id:'pudding',name:'石墩',job:'前排输出',tag:'输出',color:'#757780',accent:'#c69358',unlock:40,hp:235,atk:22,skill:'护体劲 · 震街拳',desc:'满能量获得自身生命 35% 的护盾。盾量达到生命 30% 后蓄力；期间再获得生命 15% 的护盾，向目标所在前排及其身后两名后排打出重拳，最多 3 个目标，伤害为 100% 攻击＋锁定盾量的 160%。蓄力无时限，被控制或护盾被打空时中断；出拳时清空护盾，伤害按清空前锁定盾量计算；重拳间隔 8 秒。',passive:'护盾吸收伤害回复 12 能量，间隔 800 毫秒；蓄力每秒回复 35 能量，满能量再次加盾并触发重拳。',quote:'站稳，再出拳。',gear:'cape'},
+ {id:'pudding',name:'石墩',job:'前排输出',tag:'输出',color:'#757780',accent:'#c69358',unlock:40,hp:235,atk:22,skill:'护体劲 · 震街拳',desc:'满能量获得自身生命 35% 的护盾。盾量达到生命 30% 后蓄力；期间再获得生命 15% 的护盾，向目标所在前排及其身后两名后排打出重拳，最多 3 个目标，伤害为 100% 攻击＋锁定盾量的 160%。蓄力无时限，被控制或护盾被打空时中断；出拳时清空护盾，伤害按清空前锁定盾量计算；重拳间隔 8 秒。',passive:'护盾吸收伤害回复 12 能量，间隔 1000 毫秒；蓄力每秒回复 35 能量，满能量再次加盾并触发重拳。',quote:'站稳，再出拳。',gear:'cape'},
  {id:'star',name:'星斑',job:'能量辅助',tag:'支援',color:'#c4b1df',accent:'#78669f',unlock:60,hp:150,atk:19,skill:'今晚有星星',desc:'为其他队友回复 48 能量，并治疗相当于星斑攻击 160% 的生命。',passive:'5 级：开场拥有 40 点能量。',quote:'许个愿，然后自己去实现。',gear:'wizard'}
 ];
 export const RELICS=[
@@ -78,9 +79,9 @@ export function normalizeState(raw,now=Date.now()){
  const s=initialState(now);s.adRewards=normalizeAdRewards(raw.adRewards);s.campaign=normalizeCampaign(raw.campaign);Object.assign(s,normalizeProgression(raw,CATS.map(c=>c.id)));
  for(const k of ['gold','bones','prestiges','wins','bosses','kills','upgrades','relicCount','seconds'])s[k]=Math.floor(num(raw[k]));
  s.highest=Math.floor(num(raw.highest,0,0,MAX_STAGE));s.runCleared=Math.floor(num(raw.runCleared,0,0,s.highest));s.stage=Math.min(MAX_STAGE,s.runCleared+1);
- s.roster=normalizeRoster(raw.roster,CATS,s.highest);s.growth=normalizeGrowth(raw.growth);s.activities=normalizeActivities(raw.activities);
+ s.roster=normalizeRoster(raw.roster,CATS,s.highest);s.growth=normalizeGrowth(raw.growth);s.activities=normalizeActivities(raw.activities);if(raw.activities&&raw.activities.rewardVersion!==1){for(const c of CATS){const cleared=s.activities.cleared["recruit:"+c.id]||0;for(let n=1;n<=cleared;n++)s.roster.shards[c.id]+=[20,12,16,20,24,30][n-1]-(2+Math.ceil(n/2))*2;}}
  for(const c of CATS)s.levels[c.id]=Math.floor(num(raw.levels?.[c.id],1,1,levelCap(s,c.id)));
- s.rescueSeen=raw.rescueSeen===true;s.battleReport=normalizeReport(raw.battleReport);s.idleSupplies=Math.floor(num(raw.idleSupplies,0,0,100000));s.supplyRemainder=Math.floor(num(raw.supplyRemainder,0,0,raw.supplyClock===2?599999:59999)*(raw.supplyClock===2?1:10));
+ s.rescueSeen=raw.rescueSeen===true;s.battleReport=normalizeReport(raw.battleReport);if(s.battleReport?.mode==='patrol'&&s.battleReport.win)s.battleReport=null;s.idleSupplies=Math.floor(num(raw.idleSupplies,0,0,100000));s.supplyRemainder=Math.floor(num(raw.supplyRemainder,0,0,raw.supplyClock===2?599999:59999)*(raw.supplyClock===2?1:10));
  const available=unlocked(s).map(c=>c.id),seen=new Set();s.party=Array.isArray(raw.party)?raw.party.filter(id=>id===null||available.includes(id)&&!seen.has(id)&&seen.add(id)).slice(0,MAX_PARTY):s.party;while(s.party.length&&!s.party.at(-1))s.party.pop();if(!s.party.some(Boolean))s.party=['orange'];
  s.inventory=[1,2].includes(raw.inventory?.version)?normalizeInventory(raw.inventory,CATS.map(c=>c.id)):createInventory(CATS.map(c=>c.id),raw.relics,s.highest,s.party.filter(Boolean));s.relics={};s.pending=null;
  s.claimed=[...new Set(Array.isArray(raw.claimed)?raw.claimed:[])].filter(id=>QUESTS.some(q=>q.id===id));
@@ -152,6 +153,7 @@ export class Battle {
   for(const h of this.heroes){h.gearSets=h.gear.sets;h.rune=h.gear.rune;h.runeAttacks=0;h.nextRuneSkill=0;h.runeUsed=false;h.shield=0;h.nextGearHeal=6;}
   for(const h of this.heroes)if(h.catId==='pudding'){h.shieldPunch=createShieldPunch({maxHp:h.maxHp,hp:h.hp,attack:h.atk,energy:h.energy,config:{selfShieldRatio:mulDiv(skillTuning(h.skillRank).puddingSelf,this.shieldFactor(h)),chargeEnergyPerSecond:SHIELD_PUNCH_DEFAULTS.chargeEnergyPerSecond}});h.shieldPunch.shield=h.shield;h.shieldState='normal';}
   this.enemies=(this.activity?streetEnemies(this.activity):arenaTier?arenaEnemies(arenaTier):enemiesFor(stage)).map((e,i)=>({...e,hp:e.maxHp,side:'e',energy:0,shield:e.type==='fridge'?mulDiv(e.maxHp,20):0,wait:0,skillWait:e.boss?(e.skillWait??6):99,charge:0,stun:0,burn:0,burnTime:0,attacks:0,initialArmor:e.armor}));
+  if(this.mode==='patrol'&&!weekly){const drop=patrolDrop(stage);if(drop){const carrier=this.enemies[0];carrier.materialDrop=drop;carrier.name=['背书小贼','零件搬运怪','偷粮小贼','勋章收集怪','砂袋搬运怪','藏印石怪'][drop.cell];}}
   if(weekly){for(const e of this.enemies){Object.assign(e,enemyCombatStats(e.type,15+arenaTier*4,false));const strength=[1,1.6,4][weeklyTier-1];e.maxHp=Math.round(e.maxHp*strength);e.hp=e.maxHp;e.atk=Math.round(e.atk*[1,1.25,2][weeklyTier-1]);e.arenaHealer=false;e.boss=false;if(weekly.type==='iron'&&this.enemies.indexOf(e)<2){e.armor=150+weeklyTier*25;e.magicResist=12;}if(weekly.type==='recovery'&&e.id==='e2')e.arenaHealer=true;if(weekly.type==='burst'&&e.id==='e0'){e.boss=true;e.skillWait=6;}if(weekly.type==='haste')e.atk=mulDiv(e.atk,120);e.initialArmor=e.armor;}}
   if(this.heroes.some(h=>h.catId==='star'&&h.level>=40))for(const h of this.heroes)if(h.catId!=='star')h.energy=Math.min(99,h.energy+12);
   for(const h of this.heroes)if(h.gearSets.includes('guard'))this.shield(h,mulDiv(h.maxHp,25),h);
@@ -193,7 +195,9 @@ export class Battle {
   this.emit(dot?'burn':'hit',source,target,hit+shield,{crit,shield:shield>0,damageType:type,cause:dot?'burn':!reflect?'reflect':source?.action?.kind||'normal'});
   if(!dot)target.hitUntil=(this.eventAt??this.time)+.22;
   if(target.hp<=0){target.downAt=this.eventAt??this.time;target.action=null;this.emit('down',source,target);if(target.side==='e')this.kills++;if(source?.catId==='ink'&&source.level>=80)source.energy=Math.min(100,source.energy+35);}
-  if(target.catId==='pudding'&&target.shieldPunch&&shield>0&&target.hp>0){const sp=target.shieldPunch;sp.hp=target.hp;sp.energy=target.energy;sp.shield=target.shield+shield;this.shieldEvents(target,absorbShieldDamage(sp,shield,this.eventAt??this.time));}
+  const at=this.eventAt??this.time,hitEnergy=target.side==='p'&&source?.side==='e'&&target.hp>0&&hit+shield>0&&!dot&&reflect&&at>=(target.hitEnergyAt??-Infinity)+1;
+  if(hitEnergy){target.hitEnergyAt=at;if(!(target.shieldPunch&&shield>0))target.energy=Math.min(100,target.energy+8);}
+  if(target.catId==='pudding'&&target.shieldPunch&&shield>0&&target.hp>0){const sp=target.shieldPunch;sp.deferSelfShield=target.normalRound===this.round;sp.hp=target.hp;sp.energy=target.energy;sp.shield=target.shield+shield;this.shieldEvents(target,absorbShieldDamage(sp,shield,at,{energy:hitEnergy}));}
   if(target.rune==='steadfast'&&!target.runeUsed&&target.hp>0&&target.hp<mulDiv(target.maxHp,30)){target.runeUsed=true;this.shield(target,mulDiv(target.maxHp,8),target);}
   if(reflect&&target.side==='p'&&source?.side==='e'&&source.hp>0&&(target.gearSets?.includes('thorn')||this.buff.reflect>0))this.harm(source,mulDiv(hit+shield,target.gearSets?.includes('thorn')?15:this.buff.reflect),target,{reflect:false,type});return hit;
  }
@@ -204,7 +208,7 @@ export class Battle {
   const sp=h.shieldPunch;h.energy=sp.energy;h.shield=sp.shield;h.shieldState=sp.state;
   for(const e of events){
    if(e.type==='shieldGain')this.emit('shield',h,h,e.amount,{at:e.at});
-   if(e.type==='selfShield'){this.emit('skill',h,h,0,{text:'护体劲',targets:[h.id],at:e.at});this.runeSkill(h);}
+   if(e.type==='selfShield'){h.selfShieldRound=this.round;if(h.action?.kind==='normal')h.action=null;if(this.turnActor===h.id)this.turnStarted=true;this.emit('skill',h,h,0,{text:'护体劲',targets:[h.id],at:e.at});this.runeSkill(h);}
    if(e.type==='chargeStart'){h.shieldTargetId=this.targetFor(h)?.id;h.action=null;this.emit('status',h,h,0,{text:'蓄盾',at:e.at});}
    if(e.type==='secondTrigger')this.emit('status',h,h,0,{text:'震街拳就绪',at:e.at});
    if(e.type==='cancel'){h.action=null;this.emit('cancel',h,h,0,{at:e.at});}
@@ -213,7 +217,7 @@ export class Battle {
    if(e.type==='normal'){h.action=null;h.wait=Math.max(h.wait,.25);}
   }
  }
- updateShieldWarrior(h){const sp=h.shieldPunch;sp.hp=h.hp;sp.maxHp=h.maxHp;sp.energy=h.energy;sp.shield=Math.min(h.shield,mulDiv(h.maxHp,80));sp.attack=h.atk;if(h.stun>0&&sp.state!=='controlled')this.shieldEvents(h,controlShieldPunch(sp,this.time,h.stun));this.shieldEvents(h,tickShieldPunch(sp,this.time,[],{allowRelease:this.turnActor===h.id&&!this.canSequence}));if(h.action?.shieldStrike)h.action.elapsed=this.time-sp.releaseAt;return ['charging','primed','punching','controlled'].includes(sp.state);}
+ updateShieldWarrior(h){const sp=h.shieldPunch;sp.deferSelfShield=h.normalRound===this.round;sp.hp=h.hp;sp.maxHp=h.maxHp;sp.energy=h.energy;sp.shield=Math.min(h.shield,mulDiv(h.maxHp,80));sp.attack=h.atk;if(h.stun>0&&sp.state!=='controlled')this.shieldEvents(h,controlShieldPunch(sp,this.time,h.stun));this.shieldEvents(h,tickShieldPunch(sp,this.time,[],{allowRelease:this.turnActor===h.id&&!this.canSequence}));if(h.action?.shieldStrike)h.action.elapsed=this.time-sp.releaseAt;return ['charging','primed','punching','controlled'].includes(sp.state);}
  applyBurn(target,damage,seconds,source){if(source?.catId==='spark'&&source.level>=40)damage=mulDiv(integer(damage),120);if(target.burnTime<=0||damage>=target.burn){target.burn=integer(damage);target.burnSource=source;}target.burnTime=Math.max(target.burnTime,seconds);}
  targetFor(actor,kind='normal'){
   if(kind==='skill'&&['orange','milk','star'].includes(actor.catId))return actor;
@@ -230,7 +234,7 @@ export class Battle {
   if(actor.catId==='spark')return this.alive('e');
   const target=this.targetFor(actor,'skill');return target?[target]:[];
  }
- beginAction(actor,kind){if(this.turnActor&&this.turnActor!==actor.id)return false;this.turnActor=actor.id;this.turnStarted=true;const target=this.targetFor(actor,kind);if(!target)return;
+ beginAction(actor,kind){if(kind==='normal'&&actor.catId==='pudding'&&actor.selfShieldRound===this.round){this.turnStarted=true;return false;}if(this.turnActor&&this.turnActor!==actor.id)return false;this.turnActor=actor.id;this.turnStarted=true;const target=this.targetFor(actor,kind);if(!target)return;
   actor.action={kind,...actionTiming(actor,kind),elapsed:Math.max(0,this.time-(this.turnStartAt??this.time)),released:false,impacted:false,targetId:target.id};
   actor.wait=0;this.emit('windup',actor,target,0,{kind,style:attackStyle(actor),at:this.time-actor.action.elapsed,windup:actor.action.windup});this.advanceAction(actor,0);
  }
@@ -239,7 +243,7 @@ export class Battle {
   if(!a.impacted&&a.elapsed>=a.impactAt){a.impacted=true;const target=this.targetFor(actor,a.kind);if(target)a.targetId=target.id;this.eventAt=this.time-Math.max(0,a.elapsed-a.impactAt);if(a.kind==='skill')this.skill(actor);else this.normal(actor);this.eventAt=null;}
   if(a.elapsed>=a.duration)actor.action=null;
  }
- normal(actor){const target=this.targetFor(actor);if(!target)return;const crit=actor.side==='p'&&Math.floor(this.rng()*100)<actor.crit;const dealt=this.harm(target,mulDiv(actor.atk,crit?180:100),actor,{crit,type:actor.normalDamageType});
+ normal(actor){if(actor.catId==='pudding'){if(actor.selfShieldRound===this.round)return;actor.normalRound=this.round;actor.shieldPunch.deferSelfShield=true;}const target=this.targetFor(actor);if(!target)return;const crit=actor.side==='p'&&Math.floor(this.rng()*100)<actor.crit;const dealt=this.harm(target,mulDiv(actor.atk,crit?180:100),actor,{crit,type:actor.normalDamageType});
   if(actor.ambusher&&(actor.attacks||0)%3===2&&target.hp>0&&dealt>0){target.energy=Math.max(0,target.energy-12);if(target.shieldPunch)target.shieldPunch.energy=target.energy;this.emit('status',actor,target,0,{text:'能量 -12'});}
   if(actor.side==='p'){actor.runeAttacks++;if(actor.rune==='followup'&&actor.runeAttacks%4===0&&target.hp>0)this.harm(target,mulDiv(actor.atk,40),actor,{type:actor.normalDamageType});}
   if(actor.catId==='bolt'&&actor.level>=40&&target.armor>target.initialArmor*.4)target.armor=Math.max(mulDiv(target.initialArmor,40),target.armor-2);
@@ -302,11 +306,11 @@ export function settleBattle(s,b,now=Date.now()){if(!b.result||b.resolved)return
  if(b.farm||b.stage!==s.stage||b.stage<=s.runCleared)return null;
  s.kills+=b.kills;if(b.result==='lose')return {win:false,gold:0,supplies:0,unlocked:[]};
  if(b.farm||b.stage!==s.stage||b.stage<=s.runCleared)return null;
- const before=s.highest,reward=rewardFor(s,b.stage,b.farm);s.gold+=reward;s.wins++;recordActivity(s,'patrol',1,now);const supplies=suppliesFor(s,b.stage,b.farm);s.supplies+=supplies;
+ const before=s.highest,reward=rewardFor(s,b.stage,b.farm);s.gold+=reward;s.wins++;recordActivity(s,'patrol',1,now);const drop=patrolDrop(b.stage);grantPatrolDrop(s,drop);const supplies=drop?.id==='supplies'?drop.count:0;
  if(!b.farm){s.runCleared=b.stage;s.highest=Math.max(s.highest,b.stage);s.stage=Math.min(MAX_STAGE,b.stage+1);if(b.stage%5===0)s.bosses++;}
  const joins=[];
- const gearLoot=gearDrop(s,b.stage);if(gearLoot?.item)s.relicCount++;
- return {win:true,gold:reward,supplies,gearLoot,unlocked:joins,complete:s.runCleared===MAX_STAGE&&!b.farm};
+ const gearLoot=null;
+ return {win:true,gold:reward,...(drop?{[drop.id]:drop.count}:{}),supplies,gearLoot,unlocked:joins,complete:s.runCleared===MAX_STAGE&&!b.farm};
 }
 function checksum(str){let h=2166136261;for(let i=0;i<str.length;i++)h=Math.imul(h^str.charCodeAt(i),16777619);return (h>>>0).toString(16);}
 export function encodeSave(s){const payload=JSON.stringify(s);return JSON.stringify({format:'CAN-CLUB-1',checksum:checksum(payload),payload});}
