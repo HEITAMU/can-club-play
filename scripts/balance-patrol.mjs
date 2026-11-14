@@ -4,7 +4,7 @@ import {developed} from './balance-street.mjs';
 export const PATROL_CASES=[
  {name:'普通搭配，130 级',level:130,party:['orange','bolt','ink','milk','mint']},
  {name:'相同搭配，160 级',level:160,party:['orange','bolt','ink','milk','mint']},
- {name:'护盾反击、破甲与灼烧，135 级',level:135,party:['orange','pudding','bolt','ink','spark']}
+ {name:'护盾反击、破甲与灼烧，140 级',level:140,party:['orange','pudding','bolt','ink','spark']}
 ];
 export function patrolCase(example,seed=527){const s=developed();s.party=example.party;for(const id of s.roster.owned)s.levels[id]=example.level;const b=new G.Battle(s,{stage:600,seed});while(!b.result){b.tick(.1);if(b.canCd===0)b.openCan();}return {seed,result:b.result,time:+b.time.toFixed(1),round:b.round,power:G.power(s),survivors:b.alive('p').length};}
 if(process.argv[1]?.endsWith('balance-patrol.mjs')){

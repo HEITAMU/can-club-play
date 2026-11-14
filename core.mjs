@@ -24,7 +24,7 @@ export const CATS=[
  {id:'spark',name:'火花',job:'群体灼烧',tag:'爆发',color:'#d98f75',accent:'#8f494b',unlock:8,hp:112,atk:27,skill:'提灯燎原',desc:'对全体敌人造成 160% 攻击力的法术伤害，并施加每秒 30% 攻击力的法术灼烧。',passive:'灼烧持续时间延长 2 秒。',quote:'灯还亮着，跟紧我。',gear:'goggles'},
  {id:'mint',name:'薄荷',job:'眩晕控制',tag:'控制',color:'#a9d4c1',accent:'#4a8d83',unlock:15,hp:133,atk:22,skill:'冰镇气泡',desc:'优先打断蓄力中的敌人，其次压制治疗者，造成 230% 攻击力的法术伤害，眩晕 1.8 秒并打断蓄力。',passive:'眩晕持续时间延长 0.8 秒。',quote:'别急，先冷静一下。',gear:'hood'},
  {id:'bolt',name:'扳手',job:'破甲专家',tag:'破甲',color:'#adbacb',accent:'#636e8b',unlock:25,hp:162,atk:24,skill:'扳手大修',desc:'先降低目标 40% 当前护甲（最多降低开场护甲的 80%），再造成 300% 攻击力的物理伤害。',passive:'技能护甲削减提高 20 个百分点。',quote:'修不好，就再拧一下。',gear:'helmet'},
- {id:'pudding',name:'石墩',job:'前排输出',tag:'输出',color:'#757780',accent:'#c69358',unlock:40,hp:235,atk:22,skill:'护体劲 · 震街拳',desc:'获得 35% 最大生命值的护盾。护盾达到 30% 最大生命值时蓄力，每秒回复 35 能量；再获得 15% 最大生命值的护盾后，消耗当前护盾，对目标前排及其身后两名敌人造成 180% 当前护盾值的物理伤害。护盾破裂或受到控制时中断蓄力。冷却 8 秒。',passive:'有护盾时，承伤回能翻倍。',quote:'站稳，再出拳。',gear:'cape'},
+ {id:'pudding',name:'石墩',job:'前排输出',tag:'输出',color:'#757780',accent:'#c69358',unlock:40,hp:235,atk:22,skill:'护体劲 · 震街拳',desc:'获得 35% 最大生命值的护盾。护盾达到 30% 最大生命值时蓄力，每秒回复 35 能量；再获得 15% 最大生命值的护盾后，消耗当前护盾，对目标前排及其身后两名敌人造成 180% 当前护盾值的物理伤害。护盾破裂或受到控制时中断蓄力。冷却 8 秒。',passive:'护盾吸收伤害时也回复能量。',quote:'站稳，再出拳。',gear:'cape'},
  {id:'star',name:'星斑',job:'能量辅助',tag:'支援',color:'#c4b1df',accent:'#78669f',unlock:60,hp:150,atk:19,skill:'今晚有星星',desc:'为其他队友回复 36 能量，并治疗相当于星斑攻击 160% 的生命。',passive:'开场拥有 40 点能量。',quote:'许个愿，然后自己去实现。',gear:'wizard'}
 ];
 export const RELICS=[
@@ -195,9 +195,9 @@ export class Battle {
   this.emit(dot?'burn':'hit',source,target,hit+shield,{crit,shield:shield>0,damageType:type,damageElement:element||(dot?'fire':type==='magic'?(source?.catId==='spark'?'fire':source?.catId==='mint'?'ice':'magic'):'physical'),dot,cause:dot?'burn':!reflect?'reflect':source?.action?.kind||'normal'});
   if(!dot)target.hitUntil=(this.eventAt??this.time)+.22;
   if(target.hp<=0){target.downAt=this.eventAt??this.time;target.action=null;this.emit('down',source,target);if(target.side==='e')this.kills++;if(source?.catId==='ink'&&source.level>=80)source.energy=Math.min(100,source.energy+35);}
-  const at=this.eventAt??this.time,hitEnergy=target.side==='p'&&source?.side==='e'&&target.hp>0&&hit+shield>0&&!dot&&reflect&&at>=(target.hitEnergyAt??-Infinity)+1;
+  const at=this.eventAt??this.time,hitEnergy=target.side==='p'&&source?.side==='e'&&target.hp>0&&(hit>0||(target.catId==='pudding'&&target.level>=5&&shield>0))&&!dot&&reflect&&at>=(target.hitEnergyAt??-Infinity)+1;
   if(hitEnergy){target.hitEnergyAt=at;if(!(target.shieldPunch&&shield>0))target.energy=Math.min(100,target.energy+8);}
-  if(target.catId==='pudding'&&target.shieldPunch&&shield>0&&target.hp>0){const sp=target.shieldPunch;sp.deferSelfShield=target.normalRound===this.round;sp.hp=target.hp;sp.energy=target.energy;sp.config.absorbEnergy=target.level>=5?16:8;sp.shield=target.shield+shield;this.shieldEvents(target,absorbShieldDamage(sp,shield,at,{energy:hitEnergy}));}
+  if(target.catId==='pudding'&&target.shieldPunch&&shield>0&&target.hp>0){const sp=target.shieldPunch;sp.deferSelfShield=target.normalRound===this.round;sp.hp=target.hp;sp.energy=target.energy;sp.config.absorbEnergy=8;sp.shield=target.shield+shield;this.shieldEvents(target,absorbShieldDamage(sp,shield,at,{energy:hitEnergy}));}
   if(target.rune==='steadfast'&&!target.runeUsed&&target.hp>0&&target.hp<mulDiv(target.maxHp,30)){target.runeUsed=true;this.shield(target,mulDiv(target.maxHp,8),target);}
   if(reflect&&target.side==='p'&&source?.side==='e'&&source.hp>0&&(target.gearSets?.includes('thorn')||this.buff.reflect>0))this.harm(source,mulDiv(hit+shield,target.gearSets?.includes('thorn')?15:this.buff.reflect),target,{reflect:false,type});return hit;
  }
