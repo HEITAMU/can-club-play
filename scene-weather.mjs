@@ -1,8 +1,9 @@
+import {BACKDROP_FRACTION} from './battlefield-space.mjs';
 // Deterministic rain: fixed particle budget, with impacts confined to the floor.
 const fract=n=>n-Math.floor(n);
 const seed=n=>fract(Math.sin(n*127.1+31.7)*43758.5453);
 export function rainFrame(time,width,height,unit=58){
- const scale=Math.max(width,height),ground=Math.max(0,(height-scale)/2+scale*.57),rain=[],ripples=[];
+ const ground=height*BACKDROP_FRACTION,rain=[],ripples=[];
  for(let i=0;i<38;i++){
   const duration=.65+seed(i+80)*.55,phase=fract(time/duration+seed(i+2)),endY=ground+seed(i+100)*(height-ground),x=seed(i+200)*width;
   const fall=.79;

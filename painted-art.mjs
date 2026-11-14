@@ -1,3 +1,4 @@
+import {layeredScene} from './battlefield-space.mjs';
 import {webAsset} from './web-assets.mjs?v=0.25.1';
 import {companionScale,HEAD_CROPS} from './companion-display.mjs';
 import {FINISHED_ROSTER} from './finished-roster-data.mjs?v=0.25.0';
@@ -40,5 +41,5 @@ export function paintedItem(index,size){return `<span class="painted-item" data-
 // Portrait cells are 418 x 627. The SVG viewport crops uniformly on every screen.
 export function paintedScene(index){
  const cell=Math.max(0,Math.min(5,Math.floor(Number(index)||0))),x=cell%3*418,y=Math.floor(cell/3)*627;
- return `<svg class="scene-art stage-scene" data-street="${cell}" viewBox="${x} ${y} 418 627" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><image data-asset="./assets/scenes/streets-v019.webp" width="1254" height="1254"/></svg>`;
+ return layeredScene({file:'./assets/scenes/streets-v019.webp',x,y,width:418,height:627,cut:[290,270,265,275,245,270][cell]});
 }
