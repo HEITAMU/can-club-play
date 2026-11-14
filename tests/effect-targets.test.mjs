@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Battle,initialState} from '../core.mjs';
 import {BattleCues,formationPositions} from '../battle-cues.mjs';
-import {CombatEffects} from '../painted-fx.mjs';
+import {CombatEffects,GuardEffects} from '../painted-fx.mjs';
 import {sampleProjectile} from '../vfx-motion.mjs';
 import {canHitAt} from '../can-timing.mjs';
 
@@ -59,3 +59,16 @@ test('projectiles freeze with the battle clock and fall back to recorded target 
  const end=xy(draw(1.29,{}));
  assert.ok(Math.abs(end[0]-312)<1e-9&&Math.abs(end[1]-180)<1e-9);
 });
+
+ test('orange support and block impacts cannot duplicate actor-bound shields or populate empty slots',()=>{
+ const b=new Battle(initialState()),cues=new BattleCues(),fx=new CombatEffects(null),guards=new GuardEffects(),orange=b.heroes[0];
+ b.skill(orange);const centers={p0:{x:20,y:70},p1:{x:40,y:70},empty:{x:60,y:70}};
+ cues.consume(b.events.splice(0),b,centers);guards.render([...b.heroes,...b.enemies],0,centers,{},fx);
+ guards.render([...b.heroes,...b.enemies],.2,centers,{},fx);
+ const particles=fx.render(cues.active(.2),.2,400,400,centers,{}),shells=particles.filter(p=>p.art==='shield');
+ assert.equal(shells.length,2);assert.deepEqual(shells.map(p=>p.x).sort((a,b)=>a-b),[80,160]);
+ const hit={id:99,from:'e0',targets:['p0'],phase:'impact',style:'shield',tone:'enemy',born:0,until:.44,positions:{e0:{x:80,y:40},p0:centers.p0}};
+ assert.equal(fx.render([hit],.2,400,400,centers,{}).filter(p=>p.art==='shield').length,2);
+ b.heroes[1].hp=0;guards.render([...b.heroes,...b.enemies],.3,centers,{},fx);
+ assert.equal(fx.render([], .3,400,400,centers,{}).filter(p=>p.art==='shield').length,1);
+ });

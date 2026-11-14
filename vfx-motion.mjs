@@ -34,11 +34,12 @@ export function sampleProjectile(route,targetId,time,w,h,centers,sizes,shot=0,co
 export function sampleImpact(style,p,size,age,duration,seed=1,direction=1,skill=false){
  const out=[],k=unit(age/duration),fade=effectEnvelope(age,duration),x=p.x,y=p.y;
  if(age<0||age>=duration)return out;
+ // The actor-bound guard owns the only shield shell, including its raise animation.
  if(style==='heal')return healingImpact(p,size,age,duration,seed);
  if(['energy','guard'].includes(style)){
   const col=style==='energy'?'star':style==='guard'?'shield':'heal',grow=1-(1-k)**3;
   // Open-center ribbons stay below the face; motes travel independently.
-  const ring=sprite(out,col,x,y+size*.24,size*(.65+grow*.55),fade*(style==='guard'?.48:.7),style==='heal'?-k*.7:0,1,style==='guard'?.80:.48,0);
+  const ring=style==='guard'?null:sprite(out,col,x,y+size*.24,size*(.65+grow*.55),fade*(style==='guard'?.48:.7),style==='heal'?-k*.7:0,1,style==='guard'?.80:.48,0);
   if(ring&&style==='heal')ring.deform={axis:'x',phase:age*9,amplitude:.06};
   if(style==='heal'||style==='energy')for(let i=0;i<6;i++){
    const t=unit((age-i*.035)/(duration-i*.035)),a=i*1.9+t*4.8;
@@ -101,7 +102,6 @@ export function sampleImpact(style,p,size,age,duration,seed=1,direction=1,skill=
  }else if(style==='break'){
   scatter(out,'glass',x,y,size,age,duration,seed,8,{gravity:.55,spread:1.05,scale:.38,alpha:.9});
  }else if(style==='block'){
-  sprite(out,'shield',x,y,size*(.9+k*.16),fade*.7,0,1,.95,1);
   sprite(out,'flash',x+direction*size*.28,y,size*.42,effectEnvelope(age,.20,.012,.15),0,1,.8,2);
   scatter(out,'ember',x+direction*size*.25,y,size,age,duration,seed,5,{scale:.10,spread:.55});
  }else if(style==='electric'){
