@@ -4,7 +4,16 @@ export function sampleShidun(actor,time,p,size,w,h,feet,centers={},sizes={}){
  const sp=actor.shieldPunch,out=[],base={art:'shidun',x:p.x,y:p.y,width:size,height:size,angle:0,alpha:1,layer:2};
  if(actor.hp>0&&sp&&['charging','primed'].includes(sp.state))out.push({...base,stage:'charge',x:feet?.x??p.x,y:feet?.y??p.y+size*.43,q:clamp((time-sp.firstAt)/sp.config.minCharge),time,layer:0});
  const since=time-(actor.shidunImpactAt??-99);
- if(since>=0&&since<.6)for(const id of actor.shidunHitTargets||[]){const target=centers[id];if(!target)continue;const targetSize=Math.max(sizes[id]||0,size*.9);out.push({...base,stage:'impact',targetId:id,x:target.x*w/100,y:target.y*h/100,width:targetSize,height:targetSize,q:since/.6,time});}
+ if(since>=0&&since<.6){
+  const targets=(actor.shidunHitTargets||[]).map(id=>({id,p:centers[id]})).filter(t=>t.p);
+  if(targets.length){
+   // One continuous punch wave from the fist to the actual hit formation.
+   const points=targets.map(t=>({x:t.p.x*w/100,y:t.p.y*h/100})),endX=Math.max(...points.map(t=>t.x));
+   const low=Math.min(...points.map(t=>t.y)),high=Math.max(...points.map(t=>t.y));
+   out.push({...base,stage:'wave',x:p.x+size*.22,y:p.y,span:Math.max(size*1.5,endX-p.x+size*.7),rise:(low+high)/2-p.y,spread:Math.max(size*1.3,high-low+size*1.2),q:since/.6,time});
+   for(const t of targets){const targetSize=Math.max(sizes[t.id]||0,size*.9);out.push({...base,stage:'impact',targetId:t.id,x:t.p.x*w/100,y:t.p.y*h/100,width:targetSize,height:targetSize,q:since/.6,time});}
+  }
+ }
  return out;
 }
 export function paintShidun(ctx,p,img){
@@ -25,6 +34,12 @@ export function paintShidun(ctx,p,img){
    ctx.drawImage(img,512,768,512,256,-s*.48+Math.sin(p.time*27)*s*.006,-s*.11,s*.94,s*.18);
   }
 
+ }else if(p.stage==='wave'){
+  const reach=Math.min(1,.35+p.q*4),length=p.span*reach,spread=p.spread*reach;
+  ctx.rotate(Math.atan2(p.rise,p.span));
+  ctx.globalAlpha=Math.min(1,(1-p.q)*2);
+  if(img){const frame=3+Math.min(5,Math.floor(p.q*6));ctx.drawImage(img,(frame%3)*512,Math.floor(frame/3)*256,512,256,0,-spread*.5,length,spread);}
+  else{ctx.strokeStyle='#f5cb7e';ctx.lineWidth=6;for(let i=-1;i<=1;i++){ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(length,spread*i*.35);ctx.stroke();}}
  }else{
   if(img){const frame=Math.min(11,Math.floor(p.q*12));
    const width=s*1.65,height=width*.5;

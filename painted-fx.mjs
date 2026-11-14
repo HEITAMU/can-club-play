@@ -58,7 +58,7 @@ export class CombatEffects{
   }
   for(const {entry,actor} of this.guards){const p=centers[actor.id];if(p)particles.push(...sampleGuard(entry,actor,time,{x:p.x*w/100,y:p.y*h/100},sizes[actor.id]||50));}
   for(const actor of this.statuses){const p=centers[actor.id];if(p)particles.push(...sampleStatus(actor,time,{x:p.x*w/100,y:p.y*h/100},sizes[actor.id]||50));}
-  for(const actor of this.statuses){const p=centers[actor.id];if(!p)continue;let contact=this.shidunContacts.get(actor.id);if(actor.shidunImpactAt!==undefined&&contact?.at!==actor.shidunImpactAt){contact={at:actor.shidunImpactAt,centers:structuredClone(centers),sizes:{...sizes}};this.shidunContacts.set(actor.id,contact);}particles.push(...sampleShidun(actor,time,{x:p.x*w/100,y:p.y*h/100},Math.max(sizes[actor.id]||0,50),w,h,feet[actor.id],contact?.centers||centers,contact?.sizes||sizes));}
+  for(const actor of this.statuses){const p=centers[actor.id];if(!p)continue;let contact=this.shidunContacts.get(actor.id);if(actor.shidunImpactAt!==undefined&&contact?.at!==actor.shidunImpactAt){contact={at:actor.shidunImpactAt,centers:structuredClone(centers),sizes:{...sizes},origin:{...p}};this.shidunContacts.set(actor.id,contact);}particles.push(...sampleShidun(actor,time,{x:((time-(actor.shidunImpactAt??-99)<.6?contact?.origin:p)||p).x*w/100,y:((time-(actor.shidunImpactAt??-99)<.6?contact?.origin:p)||p).y*h/100},Math.max(sizes[actor.id]||0,50),w,h,feet[actor.id],contact?.centers||centers,contact?.sizes||sizes));}
   this.bursts=this.bursts.filter(b=>time-b.born<b.duration);
   for(const b of this.bursts)particles.push(...sampleImpact(b.style,{x:b.point.x*w/100,y:b.point.y*h/100},b.size,time-b.born,b.duration,b.seed));
   this.particles=particles.sort((a,b)=>a.layer-b.layer);
