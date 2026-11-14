@@ -25,3 +25,41 @@ body{background:radial-gradient(ellipse at 22% 30%,#56404d,#292535 75%);color:#f
 #desktop-cat{max-width:205px;margin:25px auto 0}.bag-pages,.view-heading>span{color:#826550}
 @media(max-width:350px){.equipment-character{width:calc(100% - 105px)}.gear-slot-node{width:49px}.gear-orbit-slot{height:72px}.crew-portrait{--portrait-size:122px;width:137px;height:145px;right:8px}.crew-identity h3{font-size:25px}.utility-bar{padding-inline:9px;gap:5px}}
 #other-view{background:#efe2ca}
+
+/* Companion equipment shares one surface; selection stays below the workspace. */
+.crew-view{display:flex;flex-direction:column;min-height:100%;padding-bottom:0}
+.crew-view>.view-heading{margin-bottom:4px}.crew-view>.crew-modes{background:none;border:0;padding:0;gap:20px;box-shadow:none;border-bottom:1px solid #a4825540;border-radius:0}
+.crew-view .crew-modes button{background:none;border:0;border-radius:0;color:#765437;min-height:37px;box-shadow:none;padding:4px 12px;font-size:13px}
+.crew-view .crew-modes button[aria-pressed=true]{background:none;color:#613916;border-bottom:3px solid #b37a3c;font-weight:800}
+#crew-detail{flex:1}.crew-view .equipment-heading{margin:8px 0}.crew-view .equipment-heading h3{font-size:18px}.crew-view .equipment-heading>span{color:#886943}
+.crew-view .equipment-heading>button,.crew-view #companion-quests{background:none;border:0;box-shadow:none;color:#79512e;padding:6px 10px;font-size:12px}
+.crew-view .equipment-layout{gap:12px;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr)}
+.crew-view .equipment-stage{background:none;border:0;box-shadow:none;border-radius:0;min-height:308px}
+.crew-view .equipment-stage:after{content:'';position:absolute;left:50%;top:207px;width:72px;height:10px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse,#86633d40,transparent 72%);pointer-events:none}
+.crew-view .equipment-character{top:107px;z-index:1}
+.crew-view .gear-orbit-slot{background:none;border:0;box-shadow:none;color:#715132;border-radius:42% 49% 44% 47%;height:72px;gap:4px}
+.crew-view .gear-orbit-slot .painted-item{width:33px;height:33px;filter:drop-shadow(0 2px 1px #68462024)}
+.crew-view .gear-orbit-slot small{font-size:10px}.crew-view .gear-orbit-slot b{font-size:9px;color:#84613f}
+.crew-view .gear-orbit-slot.selected{outline:1px dashed #aa7848;outline-offset:2px;background:#d2ac6b24}
+.crew-view .slot-detail{background:#ead7ad;border:1px solid #ac8759;color:#79552f;width:24px;height:24px;font-size:16px;right:0;bottom:-6px;box-shadow:none}
+.crew-view .equipped-set-tags{top:308px}.crew-view .equipped-set-tags span,.crew-view .equipped-set-tags span.active{background:none;border:0;color:#805626;padding:2px;font-size:10px}
+.crew-view .equipment-bag{border:0;padding-left:0}.crew-view .equipment-bag-heading{border-bottom:1px solid #aa82533b;padding-bottom:6px;font-size:10px}
+.crew-view .equipment-bag .gear-list{gap:5px}.crew-view .equipment-bag .gear-empty{background:#b18c4c09;border:1px solid #a8865330;box-shadow:none;border-radius:9px 6px 8px 5px}
+.crew-view .equipment-bag .gear-empty:after{content:''}.crew-view .equipment-bag .gear-tile{background:none;border:1px solid #b3946455;box-shadow:none;border-radius:8px 5px 7px 5px;min-height:89px}
+.crew-view .gear-quick-equip{background:none;color:#855629;border-top:1px solid #a47e4930;min-height:23px}.crew-view .gear-card-main b{color:#6a492c;font-size:9px}
+.crew-view .crew-equipment{padding-bottom:25px}
+.crew-view>.crew-roster{position:sticky;bottom:-12px;z-index:5;flex:none;margin:15px -14px 0;padding:10px 12px 12px;gap:9px;background:#efe2ca;border-top:1px solid #a57c4740;box-shadow:0 -5px 12px #efe2ca;min-height:92px;scrollbar-color:#b18b5b #efe2ca}
+.crew-view .crew-pick{flex-basis:59px;background:none;border:0;border-radius:0;padding:0 2px 5px;min-height:75px;box-shadow:none;color:#68452c}
+.crew-view .crew-pick[aria-pressed=true]{background:radial-gradient(ellipse at 50% 39%,#d6af6255,transparent 68%);border:0;border-bottom:2px solid #b47a39;padding:0 2px 3px}
+.crew-view .crew-pick small{color:#9b805b}.crew-view .crew-pick b{font-size:10px}.crew-view .crew-pick-art{width:49px;height:49px}.crew-view .crew-in-party{display:none}
+.crew-view .crew-pick.is-locked{border:0;opacity:.5}.crew-view .crew-pick.is-locked .crew-pick-art{filter:saturate(.6);opacity:1}
+@media(max-width:350px){.crew-view .equipment-layout{gap:8px}.crew-view>.crew-roster{margin-inline:-9px;padding-inline:9px}.crew-view .crew-modes{gap:10px}}
+
+.crew-view[data-mode="equipment"] #crew-detail{display:flex;align-items:center;min-height:370px}.crew-view .crew-equipment{width:100%}
+.crew-view .slot-detail{font-size:0;letter-spacing:0}.crew-view .slot-detail:after{content:'＋';font-size:14px;line-height:22px;display:block}
+.crew-view .crew-pick,.crew-view .crew-roster-card{background-color:transparent!important}
+.crew-view .crew-roster-card{border:0;box-shadow:none}
+.utility-bar,.bottom-nav{background:#79583b;border-color:#aa865b}.bottom-nav button{background:#96724d;border-color:#bc9b6c;color:#faebcb}
+.bottom-nav button[data-tab].active{background:#b38a4e;border-color:#e2bd77;color:#fff3d3}.utility-bar .round-btn,.utility-bar .quest-btn{background:#987044}.utility-bar .currency.bones{background:#8b714e;border-color:#b99c70}
+
+.crew-view .slot-detail:after{position:absolute;inset:0;display:grid;place-items:center;line-height:1}
