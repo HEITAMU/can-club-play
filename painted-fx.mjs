@@ -34,13 +34,13 @@ export function paintVFX(ctx,img,particles,canImg,shidunImg){
 }
 export class CombatEffects{
  constructor(layer){
-  this.layer=layer;this.routes=new Map();this.bursts=[];this.guards=[];this.statuses=[];this.particles=[];
+  this.shidunContacts=new Map();this.layer=layer;this.routes=new Map();this.bursts=[];this.guards=[];this.statuses=[];this.particles=[];
   if(layer){this.canvas=document.createElement('canvas');this.canvas.className='vfx-canvas';this.canvas.setAttribute('aria-hidden','true');this.ctx=this.canvas.getContext('2d',{alpha:true});layer.replaceChildren(this.canvas);
    this.groundCanvas=document.createElement('canvas');this.groundCanvas.className='vfx-canvas vfx-ground';this.groundCanvas.setAttribute('aria-hidden','true');this.groundCtx=this.groundCanvas.getContext('2d',{alpha:true});layer.before(this.groundCanvas);}
  }
  warm(battle){atlas();canAtlas();if(battle?.heroes.some(a=>a.catId==='pudding'))shidunAtlas();}
  clear(){
-  this.routes.clear();this.bursts=[];this.guards=[];this.statuses=[];this.particles=[];
+  this.shidunContacts.clear();this.routes.clear();this.bursts=[];this.guards=[];this.statuses=[];this.particles=[];
   if(this.canvas){this.layer.replaceChildren(this.canvas);this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);this.groundCtx.clearRect(0,0,this.groundCanvas.width,this.groundCanvas.height);}
  }
  emit(style,point,time,size=52,duration=.65){
@@ -58,7 +58,7 @@ export class CombatEffects{
   }
   for(const {entry,actor} of this.guards){const p=centers[actor.id];if(p)particles.push(...sampleGuard(entry,actor,time,{x:p.x*w/100,y:p.y*h/100},sizes[actor.id]||50));}
   for(const actor of this.statuses){const p=centers[actor.id];if(p)particles.push(...sampleStatus(actor,time,{x:p.x*w/100,y:p.y*h/100},sizes[actor.id]||50));}
-  for(const actor of this.statuses){const p=centers[actor.id];if(p)particles.push(...sampleShidun(actor,time,{x:p.x*w/100,y:p.y*h/100},sizes[actor.id]||50,w,h,feet[actor.id],centers,sizes));}
+  for(const actor of this.statuses){const p=centers[actor.id];if(!p)continue;let contact=this.shidunContacts.get(actor.id);if(actor.shidunImpactAt!==undefined&&contact?.at!==actor.shidunImpactAt){contact={at:actor.shidunImpactAt,centers:structuredClone(centers),sizes:{...sizes}};this.shidunContacts.set(actor.id,contact);}particles.push(...sampleShidun(actor,time,{x:p.x*w/100,y:p.y*h/100},Math.max(sizes[actor.id]||0,50),w,h,feet[actor.id],contact?.centers||centers,contact?.sizes||sizes));}
   this.bursts=this.bursts.filter(b=>time-b.born<b.duration);
   for(const b of this.bursts)particles.push(...sampleImpact(b.style,{x:b.point.x*w/100,y:b.point.y*h/100},b.size,time-b.born,b.duration,b.seed));
   this.particles=particles.sort((a,b)=>a.layer-b.layer);
@@ -93,5 +93,5 @@ export class GuardEffects{
 }
 export class StatusEffects{
  clear(){}
- render(actors,time,centers,sizes,combat){if(combat)combat.statuses=actors.filter(a=>a.hp>0&&(a.catId==='pudding'||a.burnTime>0||a.stun>0));}
+ render(actors,time,centers,sizes,combat){if(combat)combat.statuses=actors.filter(a=>(a.hp>0&&(a.catId==='pudding'||a.burnTime>0||a.stun>0))||(a.catId==='pudding'&&time-(a.shidunImpactAt??-99)<.6));}
 }
