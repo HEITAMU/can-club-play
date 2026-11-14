@@ -1,3 +1,4 @@
+import {groundFootY} from '../../battlefield-space.mjs';
 import {STREET_GROUPS,streetChoices,streetSelection,activityDrops} from '../../street-ui.mjs';
 import {activityInfo,activityReward,rewardText} from '../../activities.mjs';
 import {ActivityReturn} from '../../activity-navigation.mjs';
@@ -616,7 +617,7 @@ export class NativeGame {
     c.rect(0, ay, w, ah);
     c.clip();
     c.translate(0, ay);
-    this.art.scene(c, b.activity?.scene??Math.floor((stage - 1) / 20)%6, 0, 0, w, ah);
+    this.art.scene(c, b.activity?.scene??Math.floor((stage - 1) / 20)%6, 0, 0, w, ah, b.activity);
     c.fillStyle = "#203a4530";
     c.fillRect(0, 0, w, ah);
     box(c, 12, 10, 100, 23, "#29464bbd", null, 6);
@@ -637,7 +638,8 @@ export class NativeGame {
       sizes = {},
       centers = {},
       points = {},
-      base = Math.min(70, ah * 0.235, w * 0.17);
+      base = Math.min(58, ah * 0.18, w * 0.145);
+    for(const p of Object.values(ground))p.y=groundFootY(p.y,ah-76,base)*(ah-76)/ah;
     for (const a of actors) {
       const size = base * (a.boss ? 1.27 : a.catId === "pudding" ? 1.22 : 1);
       sizes[a.id] = size;
@@ -668,6 +670,7 @@ export class NativeGame {
         ah,
         centers,
         sizes,
+        points,
       ),
       atlas = this.art.image("assets/vfx/effects-v0216.webp"),
       can = this.art.image("assets/vfx/can-rescue-v0192.webp");
@@ -1206,12 +1209,12 @@ export class NativeGame {
   drawDrops(reward,x,y,counts=true){const c=this.ctx,icons={gold:12,supplies:14,badges:9,notes:15,seals:11,essence:11,scrap:0,gear:4,shards:6};let dx=x;for(const [k,v]of Object.entries(reward)){if(!(v>0)||icons[k]===undefined)continue;this.art.item(c,icons[k],dx+12,y+12,24);if(counts){text(c,fmt(v),dx+28,y+12,11,C.ink,650);dx+=65;}else dx+=29;}return dx-x;}
   drawStreet(y){const c=this.ctx,s=this.state,v=this.streetView??={group:'recruit',id:'milk',tier:1},q=streetSelection(s,v),choices=streetChoices(v.group);text(c,STREET_GROUPS.find(g=>g.id===v.group).name,16,y+22,24,C.gold,850);y+=46;
     for(const [i,g]of STREET_GROUPS.entries())this.button('street-group-'+g.id,g.name,14+i%2*187,y+Math.floor(i/2)*40,175,32,()=>this.openStreet(g.id),{fill:g.id===v.group?C.gold:C.panel,color:g.id===v.group?C.dark:C.ink,size:12});y+=91;
-    for(const [i,item]of choices.entries()){const x=14+i%3*124,gy=y+Math.floor(i/3)*68,info=activityInfo(s,{kind:v.group==='materials'?item.id:v.group,id:v.group==='materials'?'':item.id,tier:1});this.button('street-choice-'+item.id,'',x,gy,114,57,()=>{v.id=item.id;v.tier=1;this.scroll=0;},{fill:item.id===v.id?'#7d8f78':C.panel});text(c,item.name,x+57,gy+17,12,C.ink,750,'center');this.drawDrops(activityDrops(info),x+12,gy+29,false);}y+=Math.ceil(choices.length/3)*68+18;
+    for(const [i,item]of choices.entries()){const x=14+i%3*124,gy=y+Math.floor(i/3)*68,info=activityInfo(s,{kind:v.group==='materials'?item.id:v.group,id:v.group==='materials'?'':item.id,tier:1});this.button('street-choice-'+item.id,'',x,gy,114,57,()=>{v.id=item.id;v.tier=1;},{fill:item.id===v.id?'#7d8f78':C.panel});text(c,item.name,x+57,gy+17,12,C.ink,750,'center');this.drawDrops(activityDrops(info),x+12,gy+29,false);}y+=Math.ceil(choices.length/3)*68+18;
     text(c,v.group==='recruit'?cat(v.id).name:q.name,16,y+20,19,C.ink,750);y+=41;
     this.button('street-prev','‹',14,y,98,32,()=>v.tier--,{disabled:q.tier<=1});text(c,q.tier,195,y+17,17,C.gold,800,'center');this.button('street-next','›',278,y,98,32,()=>v.tier++,{disabled:q.tier>=q.max||q.tier>q.cleared});y+=48;
     this.drawDrops(activityDrops(q),20,y);y+=43;
-    this.button('street-fight',q.open?'挑战':'未开启',14,y,362,38,()=>{if(q.open){this.change('battle');this.start(true,{activity:q.request});}},{disabled:!q.open,fill:C.gold,color:C.dark});y+=58;
-    if(q.kind==='recruit'){const owned=G.ownsCompanion(s,v.id),have=s.roster.shards[v.id]||0;this.button('street-recruit',owned?'已结识':'结识 · '+have+' / 20',14,y,362,36,()=>{if(G.recruitCompanion(s,v.id)){this.save();this.toast(cat(v.id).name+'加入了远征队');}},{disabled:owned||have<20});y+=55;}return y;
+    this.button('street-fight',q.open?(q.rewardable?'挑战':'练习 · 无奖励'):'未开启',14,y,362,38,()=>{if(q.open){this.change('battle');this.start(true,{activity:q.request});}},{disabled:!q.open,fill:C.gold,color:C.dark});y+=58;
+    if(q.kind==='recruit'){const owned=G.ownsCompanion(s,v.id),have=s.roster.shards[v.id]||0;this.button('street-recruit',owned?'已结识':'结识 · '+have+' / 20',14,y,362,36,()=>{if(G.recruitCompanion(s,v.id)){this.save();if(s.party.includes(v.id))this.start(true,{activity:this.battle?.activity?.request});this.toast(cat(v.id).name+'加入了远征队');}},{disabled:owned||have<20});y+=55;}return y;
   }
   drawGrowth(y,id){const c=this.ctx,s=this.state,b=G.breakthroughQuote(s,id),a=G.starQuote(s,id);text(c,'突破 '+b.rank+' / 3',20,y+22,18,C.gold,800);y+=42;
     y+=rich(c,'徽章 '+s.badges+'/'+b.cost+' · 训练笔记 '+s.growth.notes+'/'+b.notes+' · 历练印记 '+s.growth.seals+'/'+b.seals,20,y,350,{size:12,line:19})+20;
@@ -1262,7 +1265,7 @@ export class NativeGame {
     if(this.mapPlace==='journal'){
       const a=refreshCampaign(s);text(c,'猫巷手账',16,y+24,24,C.ink,850);y+=53;
       for(const t of DAILY_TASKS){const r=dailyReward(s),claimed=a.claimed.includes(t.id);box(c,14,y,362,118,C.panel,C.rim,12);text(c,t.name+' · '+a.progress[t.id]+'/'+t.goal,30,y+25,16,C.gold,800);text(c,t.desc,30,y+48,11,C.ink);this.button('daily-'+t.id,claimed?'已领取':r.gold+' 鱼币 · '+r.supplies+' 物资',30,y+73,330,30,()=>{if(claimDaily(s,t.id)){this.save();this.toast('委托奖励已领取');}},{disabled:claimed||a.progress[t.id]<t.goal,size:12});y+=130;}
-      this.button('daily-chest',a.chest?'交班礼已领取':'交班礼 · '+a.claimed.length+'/3 · 40 物资 / 2 徽章',14,y,362,36,()=>{if(claimDailyChest(s)){this.save();this.toast('交班礼已领取');}},{disabled:a.chest||a.claimed.length<3,size:12});y+=58;
+      this.button('daily-chest',a.chest?'交班礼已领取':'交班礼 · '+a.claimed.length+'/3 · 40 物资',14,y,362,36,()=>{if(claimDailyChest(s)){this.save();this.toast('交班礼已领取');}},{disabled:a.chest||a.claimed.length<3,size:12});y+=58;
       text(c,'成长之路 · '+a.journey.length+' / 30',16,y+22,21,C.ink,800);y+=42;
       for(const j of JOURNEY){const done=a.journey.includes(j.id);box(c,14,y,362,112,C.panel,C.rim,12);text(c,j.index+'. '+j.name+' · 第 '+j.stage+' 关',30,y+25,15,C.gold,700);text(c,j.gold+' 鱼币 / '+j.supplies+' 物资 / '+j.badges+' 徽章',30,y+48,11,C.ink);this.button('journey-'+j.id,done?'已领取':s.highest>=j.stage?'领取':'进行中',30,y+69,330,29,()=>{if(claimJourney(s,j.id)){this.save();this.toast('成长奖励已领取');}},{disabled:done||s.highest<j.stage,size:12});y+=124;}return y;
     }
@@ -1274,7 +1277,7 @@ export class NativeGame {
       for(const n of [1,2,3]){const q=weeklyInfo(s,n);box(c,14,y,362,100,C.panel,C.rim,12);text(c,['入门','进阶','极限'][n-1]+' · '+q.reward.badges+' 徽章 / '+q.reward.supplies+' 物资',30,y+27,14,C.ink,700);this.button('weekly-'+n,q.claimed?'已领 · 再次切磋':q.open?'挑战':'第 15 关开启',30,y+54,330,30,()=>{this.change('battle');this.start(true,{weeklyTier:n});},{disabled:!q.open,size:12});y+=112;}
 
       text(c,'街头擂台',16,y+22,24,C.ink,850);y+=50;
-      for(let tier=1;tier<=G.ARENA_MAX;tier++){const a=G.arenaInfo(tier),first=tier>s.arenaCleared;box(c,14,y,362,148,C.panel,C.rim,12);text(c,'第 '+tier+' 擂 · '+a.name,30,y+24,17,C.gold,800);this.drawDrops({badges:1,gear:1},30,y+39,false);text(c,'每次 '+a.baseReward+' 徽章'+(first?' · 首通额外 '+a.firstBonus:''),30,y+98,11,C.muted);this.button('arena-'+tier,first?'挑战':'再次挑战',30,y+111,330,28,()=>{this.change('battle');this.start(true,{arenaTier:tier});},{disabled:!G.arenaOpen(s,tier),size:11});y+=160;}return y;
+      for(let tier=1;tier<=G.ARENA_MAX;tier++){const a=G.arenaInfo(tier),first=tier>s.arenaCleared;box(c,14,y,362,148,C.panel,C.rim,12);text(c,'第 '+tier+' 擂 · '+a.name,30,y+24,17,C.gold,800);this.drawDrops(first?{gold:500*tier,gear:1}:{},30,y+39,false);text(c,first?'首通奖励':'已领取 · 可练习',30,y+98,11,C.muted);this.button('arena-'+tier,first?'挑战':'再次挑战',30,y+111,330,28,()=>{this.change('battle');this.start(true,{arenaTier:tier});},{disabled:!G.arenaOpen(s,tier),size:11});y+=160;}return y;
     }
     text(c,'街区巡逻 · '+G.MAX_STAGE+' 关',16,y+22,22,C.ink,850);y+=42;
     for(let i=0;i<G.MAX_STAGE/20;i++){const ch=G.CHAPTERS[i%6],open=s.runCleared>=i*20;this.button('chapter-'+i,'',14,y,362,90,()=>this.modal={type:'chapter',index:i},{fill:C.panel,disabled:!open});text(c,ch.name+' · '+(Math.floor(i/6)+1),30,y+29,18,C.ink,800);text(c,'第 '+(i*20+1)+'—'+(i*20+20)+' 关 · 鱼币与物资',30,y+59,12,C.muted);y+=102;}return y;

@@ -21,11 +21,11 @@ export const CATS=[
  {id:'orange',name:'橘座',job:'前排守护',tag:'守护',color:'#edab62',accent:'#c8793b',unlock:0,hp:205,atk:17,skill:'锅盖护体',desc:'举起锅盖：获得自身生命 45% 的护盾，并为队友提供 12% 护盾。',passive:'5 级：受到伤害降低 15%。',quote:'这条街的罐头，我罩了。',gear:'pan'},
  {id:'ink',name:'阿墨',job:'单体输出',tag:'突袭',color:'#42465c',accent:'#929db5',unlock:0,hp:116,atk:25,skill:'飞鱼三连',desc:'连续命中生命最低的敌人，合计造成 330% 攻击力的物理伤害，本次攻击额外获得 25 点护甲穿透。',passive:'5 级：暴击率额外提高 15 个百分点。',quote:'别眨眼，鱼已经到了。',gear:'scarf'},
  {id:'milk',name:'奶盖',job:'全队治疗',tag:'支援',color:'#f8ead8',accent:'#c6a2bf',unlock:3,hp:145,atk:13,skill:'热牛奶时间',desc:'治疗全体队友，数值相当于奶盖最大生命的 28%。',passive:'5 级：普攻回复的能量从 22 提高到 32。',quote:'打完这一架，记得吃饭。',gear:'nurse'},
- {id:'spark',name:'火花',job:'群体灼烧',tag:'爆发',color:'#d98f75',accent:'#8f494b',unlock:8,hp:112,atk:27,skill:'辣椒罐头',desc:'对全体敌人造成 160% 攻击力的法术伤害，并施加每秒 30% 攻击力的法术灼烧。',passive:'5 级：灼烧持续时间从 4 秒提高到 6 秒。',quote:'微辣。猫猫的微辣。',gear:'goggles'},
- {id:'mint',name:'薄荷',job:'眩晕控制',tag:'控制',color:'#a9d4c1',accent:'#4a8d83',unlock:15,hp:133,atk:22,skill:'冰镇气泡',desc:'对生命最多的敌人造成 230% 攻击力的法术伤害，眩晕 11000 毫秒并打断蓄力。',passive:'5 级：眩晕时间提高到 2600 毫秒。',quote:'别急，先冷静一下。',gear:'hood'},
- {id:'bolt',name:'扳手',job:'破甲专家',tag:'破甲',color:'#adbacb',accent:'#636e8b',unlock:25,hp:162,atk:24,skill:'扳手大修',desc:'先永久降低目标 50% 当前护甲，再造成 300% 攻击力的物理伤害。',passive:'5 级：护甲降低幅度提高到 75%。',quote:'修不好，就再拧一下。',gear:'helmet'},
+ {id:'spark',name:'火花',job:'群体灼烧',tag:'爆发',color:'#d98f75',accent:'#8f494b',unlock:8,hp:112,atk:27,skill:'提灯燎原',desc:'对全体敌人造成 160% 攻击力的法术伤害，并施加每秒 30% 攻击力的法术灼烧。',passive:'5 级：灼烧持续时间从 4 秒提高到 6 秒。',quote:'灯还亮着，跟紧我。',gear:'goggles'},
+ {id:'mint',name:'薄荷',job:'眩晕控制',tag:'控制',color:'#a9d4c1',accent:'#4a8d83',unlock:15,hp:133,atk:22,skill:'冰镇气泡',desc:'优先打断蓄力中的敌人，其次压制治疗者，造成 230% 攻击力的法术伤害，眩晕 1800 毫秒并打断蓄力。',passive:'5 级：眩晕时间提高到 2600 毫秒。',quote:'别急，先冷静一下。',gear:'hood'},
+ {id:'bolt',name:'扳手',job:'破甲专家',tag:'破甲',color:'#adbacb',accent:'#636e8b',unlock:25,hp:162,atk:24,skill:'扳手大修',desc:'先降低目标 40% 当前护甲（最多降低开场护甲的 80%），再造成 300% 攻击力的物理伤害。',passive:'5 级：护甲降低幅度提高到 60%。',quote:'修不好，就再拧一下。',gear:'helmet'},
  {id:'pudding',name:'石墩',job:'前排输出',tag:'输出',color:'#757780',accent:'#c69358',unlock:40,hp:235,atk:22,skill:'护体劲 · 震街拳',desc:'满能量获得自身生命 35% 的护盾。盾量达到生命 30% 后蓄力；期间再获得生命 15% 的护盾，向目标所在前排及其身后两名后排打出重拳，最多 3 个目标，伤害为 100% 攻击＋锁定盾量的 160%。蓄力无时限，被控制或护盾被打空时中断；出拳时清空护盾，伤害按清空前锁定盾量计算；重拳间隔 8 秒。',passive:'护盾吸收伤害回复 12 能量，间隔 1000 毫秒；蓄力每秒回复 35 能量，满能量再次加盾并触发重拳。',quote:'站稳，再出拳。',gear:'cape'},
- {id:'star',name:'星斑',job:'能量辅助',tag:'支援',color:'#c4b1df',accent:'#78669f',unlock:60,hp:150,atk:19,skill:'今晚有星星',desc:'为其他队友回复 48 能量，并治疗相当于星斑攻击 160% 的生命。',passive:'5 级：开场拥有 40 点能量。',quote:'许个愿，然后自己去实现。',gear:'wizard'}
+ {id:'star',name:'星斑',job:'能量辅助',tag:'支援',color:'#c4b1df',accent:'#78669f',unlock:60,hp:150,atk:19,skill:'今晚有星星',desc:'为其他队友回复 36 能量，并治疗相当于星斑攻击 160% 的生命。',passive:'5 级：开场拥有 40 点能量。',quote:'许个愿，然后自己去实现。',gear:'wizard'}
 ];
 export const RELICS=[
  {id:'claw',name:'金属猫爪',desc:'全队攻击 +12%',icon:'claw',color:'#f2a278'},
@@ -175,7 +175,7 @@ export class Battle {
   this.turnActor=a.id;this.turnStarted=false;this.turnStartAt=Math.max(this.stepStart??this.time,this.turnGapUntil,a.readyAt??0);this.emit('turn',a,a,0,{round:this.round});
  }
  alive(side){return (side==='p'?this.heroes:this.enemies).filter(x=>x.hp>0);}
- frontlines(){return this.alive('p').slice(0,2);}
+ frontlines(){const alive=this.alive('p'),front=alive.filter(h=>h.formationSlot<2);return front.length?front:alive.slice(0,2);}
  frontline(){return this.frontlines()[0]||null;}
  emit(type,from,to,value=0,extra={}){this.events.push({type,at:this.eventAt??this.time,from:from?.id,to:to?.id,value:Math.round(value),serial:++this.fxSerial,...extra,...(this.canEvent?{rescue:true}: {})});}
  harm(target,raw,source,{crit=false,type=source?.normalDamageType||'physical',bonusPen=0,reflect=true,dot=false}={}){
@@ -222,9 +222,9 @@ export class Battle {
  targetFor(actor,kind='normal'){
   if(kind==='skill'&&['orange','milk','star'].includes(actor.catId))return actor;
   const foes=this.alive(actor.side==='p'?'e':'p');if(!foes.length)return null;
-  if(actor.side==='e'){if(actor.ambusher){const rear=this.alive('p').filter(h=>this.heroes.indexOf(h)>=2);if(rear.length)return rear.reduce((a,b)=>a.hp/a.maxHp<b.hp/b.maxHp?a:b);}const front=this.frontlines(),locked=front.find(h=>h.id===actor.action?.targetId);return locked||front[((actor.attacks||0)+this.enemies.indexOf(actor))%front.length];}
+  if(actor.side==='e'){if(actor.ambusher){const rear=this.alive('p').filter(h=>h.formationSlot>=2);if(rear.length)return rear.reduce((a,b)=>a.hp/a.maxHp<b.hp/b.maxHp?a:b);}const front=this.frontlines(),locked=front.find(h=>h.id===actor.action?.targetId);return locked||front[((actor.attacks||0)+this.enemies.indexOf(actor))%front.length];}
   if(actor.catId==='ink')return foes.reduce((a,b)=>a.hp<b.hp?a:b);
-  if(kind==='skill'&&actor.catId==='mint')return foes.reduce((a,b)=>a.hp>b.hp?a:b);
+  if(kind==='skill'&&actor.catId==='mint'){const locked=foes.find(e=>e.id===actor.action?.targetId);if(actor.action?.released&&locked)return locked;return foes.find(e=>e.charge>0)||foes.find(e=>e.arenaHealer)||foes.reduce((a,b)=>a.hp>b.hp?a:b);}
   return foes[0];
  }
  skillTargets(actor){
@@ -241,6 +241,7 @@ export class Battle {
  advanceAction(actor,dt){const a=actor.action;if(!a)return;a.elapsed+=dt;
   if(!a.released&&a.elapsed>=a.windup){a.released=true;const target=this.targetFor(actor,a.kind);if(target)a.targetId=target.id;this.emit('release',actor,target,0,{kind:a.kind,style:attackStyle(actor),travel:a.travel,at:this.time-Math.max(0,a.elapsed-a.windup)});}
   if(!a.impacted&&a.elapsed>=a.impactAt){a.impacted=true;const target=this.targetFor(actor,a.kind);if(target)a.targetId=target.id;this.eventAt=this.time-Math.max(0,a.elapsed-a.impactAt);if(a.kind==='skill')this.skill(actor);else this.normal(actor);this.eventAt=null;}
+  if(a.kind==='skill'&&actor.catId==='ink'&&a.comboLeft){while(a.comboLeft&&a.elapsed+1e-9>=a.impactAt+(3-a.comboLeft)*.12){this.eventAt=this.time-Math.max(0,a.elapsed-(a.impactAt+(3-a.comboLeft)*.12));const target=this.enemies.find(e=>e.id===a.targetId);this.harm(target,Math.floor((mulDiv(actor.atk,skillTuning(actor.skillRank).inkHit)+(3-a.comboLeft))/3),actor,{type:'physical',bonusPen:skillTuning(actor.skillRank).inkPen});a.comboLeft--;this.eventAt=null;}}
   if(a.elapsed>=a.duration)actor.action=null;
  }
  normal(actor){if(actor.catId==='pudding'){if(actor.selfShieldRound===this.round)return;actor.normalRound=this.round;actor.shieldPunch.deferSelfShield=true;}const target=this.targetFor(actor);if(!target)return;const crit=actor.side==='p'&&Math.floor(this.rng()*100)<actor.crit;const dealt=this.harm(target,mulDiv(actor.atk,crit?180:100),actor,{crit,type:actor.normalDamageType});
@@ -257,13 +258,13 @@ export class Battle {
   if(h.catId==='milk'&&h.level>=80)for(const p of ps){p.burn=0;p.burnTime=0;p.burnSource=null;}
   if(h.catId==='spark'&&h.level>=80)for(const e of es)e.scorchedUntil=this.time+4;
   if(h.catId==='orange'){this.shield(h,mulDiv(h.maxHp,sk.orangeSelf),h);for(const p of ps.filter(x=>x!==h))this.shield(p,mulDiv(p.maxHp,sk.orangeTeam),h);}
-  if(h.catId==='ink'){t=es.reduce((a,b)=>a.hp<b.hp?a:b);this.harm(t,mulDiv(h.atk,sk.inkHit),h,{type:'physical',bonusPen:sk.inkPen});}
+  if(h.catId==='ink'){t=es.reduce((a,b)=>a.hp<b.hp?a:b);const hits=h.action?1:3;for(let i=0;i<hits;i++)this.harm(t,Math.floor((mulDiv(h.atk,sk.inkHit)+i)/3),h,{type:'physical',bonusPen:sk.inkPen});if(h.action){h.action.targetId=t.id;h.action.comboLeft=2;}}
   if(h.catId==='milk')for(const p of ps)this.heal(p,mulDiv(h.maxHp,sk.milkHeal),h);
   if(h.catId==='spark')for(const e of es){this.harm(e,mulDiv(h.atk,sk.sparkHit),h,{type:'magic'});this.applyBurn(e,mulDiv(h.atk,sk.sparkBurn),h.level>=5?6:4,h);}
-  if(h.catId==='mint'){t=es.reduce((a,b)=>a.hp>b.hp?a:b);this.harm(t,mulDiv(h.atk,sk.mintHit),h,{type:'magic'});if(h.level>=80)t.magicResist=mulDiv(t.magicResist,80);t.stun=(h.level>=5?2.6:1.8)+sk.mintStun;if(t.charge>0){t.charge=0;t.skillWait=5;this.emit('interrupt',h,t,0,{text:'已打断'});}}
-  if(h.catId==='bolt'){t.armor=mulDiv(t.armor,(h.level>=5?25:50)-sk.boltShred);this.harm(t,mulDiv(h.atk,sk.boltHit),h,{type:'physical'});this.emit('status',h,t,0,{text:'破甲'});}
+  if(h.catId==='mint'){t=this.targetFor(h,'skill');this.harm(t,mulDiv(h.atk,sk.mintHit),h,{type:'magic'});if(h.level>=80)t.magicResist=mulDiv(t.magicResist,80);t.stun=(h.level>=5?2.6:1.8)+sk.mintStun;if(t.charge>0){t.charge=0;t.skillWait=5;this.emit('interrupt',h,t,0,{text:'已打断'});}}
+  if(h.catId==='bolt'){t.armor=Math.min(t.armor,Math.max(mulDiv(t.initialArmor,20),mulDiv(t.armor,100-(h.level>=5?60:40)-sk.boltShred)));this.harm(t,mulDiv(h.atk,sk.boltHit),h,{type:'physical'});this.emit('status',h,t,0,{text:'破甲'});}
   if(h.catId==='pudding')this.shield(h,mulDiv(h.maxHp,sk.puddingSelf),h);
-  if(h.catId==='star')for(const p of ps){if(p!==h)p.energy=Math.min(100,p.energy+(h.level>=80?56:48)+sk.starEnergy);this.heal(p,mulDiv(h.atk,sk.starHeal),h);}
+  if(h.catId==='star')for(const p of ps){if(p!==h)p.energy=Math.min(100,p.energy+(h.level>=80?44:36)+sk.starEnergy);this.heal(p,mulDiv(h.atk,sk.starHeal),h);}
   this.runeSkill(h);
  }
  openCan(){
@@ -300,9 +301,9 @@ export class Battle {
  }
 }
 export function settleBattle(s,b,now=Date.now()){if(!b.result||b.resolved)return null;b.resolved=true;s.seconds+=Math.floor(b.time);
- if(b.activity){if(b.result==='lose')return {win:false,activity:true,unlocked:[]};const reward=settleActivity(s,b.activity);if(!reward)return null;recordActivity(s,'arena',1,now);recordActivity(s,'patrol',1,now);return {win:true,activity:true,...reward,unlocked:[],complete:false};}
- if(b.weekly){if(b.result==='lose')return {win:false,arena:true,gold:0,badges:0,unlocked:[]};recordActivity(s,'arena',1,now);recordActivity(s,'patrol',1,now);const reward=settleWeekly(s,b.weekly.tier,b.weekly.week,now);const gearLoot=reward.badges?gearDrop(s,Math.min(600,b.weekly.tier*150),{guaranteed:true}):null;return {win:true,arena:true,weekly:true,gearLoot,...reward,unlocked:[],complete:false};}
- if(b.mode==='arena'){if(b.result==='lose')return {win:false,arena:true,gold:0,badges:0,unlocked:[]};if(!arenaOpen(s,b.arenaTier))return null;const info=arenaInfo(b.arenaTier),first=b.arenaTier>(s.arenaCleared||0),badges=info.baseReward+(first?info.firstBonus:0);s.badges+=badges;s.arenaCleared=Math.max(s.arenaCleared,b.arenaTier);recordActivity(s,'arena',1,now);recordActivity(s,'patrol',1,now);const gearLoot=gearDrop(s,Math.min(600,b.arenaTier*45),{guaranteed:true});return {win:true,arena:true,gold:0,badges,gearLoot,first,unlocked:[],complete:false};}
+ if(b.activity){if(b.result==='lose')return {win:false,activity:true,unlocked:[]};const reward=settleActivity(s,b.activity,now);if(!reward)return null;recordActivity(s,'arena',1,now);recordActivity(s,'patrol',1,now);return {win:true,activity:true,...reward,unlocked:[],complete:false};}
+ if(b.weekly){if(b.result==='lose')return {win:false,arena:true,gold:0,badges:0,unlocked:[]};recordActivity(s,'arena',1,now);recordActivity(s,'patrol',1,now);const reward=settleWeekly(s,b.weekly.tier,b.weekly.week,now);const gearLoot=reward.gold?gearDrop(s,Math.min(600,b.weekly.tier*150),{guaranteed:true}):null;return {win:true,arena:true,weekly:true,gearLoot,...reward,unlocked:[],complete:false};}
+ if(b.mode==='arena'){if(b.result==='lose')return {win:false,arena:true,gold:0,badges:0,unlocked:[]};if(!arenaOpen(s,b.arenaTier))return null;const info=arenaInfo(b.arenaTier),first=b.arenaTier>(s.arenaCleared||0),badges=0,gold=first?500*b.arenaTier:0;s.gold+=gold;s.arenaCleared=Math.max(s.arenaCleared,b.arenaTier);recordActivity(s,'arena',1,now);recordActivity(s,'patrol',1,now);const gearLoot=first?gearDrop(s,Math.min(600,b.arenaTier*45),{guaranteed:true}):null;return {win:true,arena:true,gold,badges,gearLoot,first,unlocked:[],complete:false};}
  if(b.farm||b.stage!==s.stage||b.stage<=s.runCleared)return null;
  s.kills+=b.kills;if(b.result==='lose')return {win:false,gold:0,supplies:0,unlocked:[]};
  if(b.farm||b.stage!==s.stage||b.stage<=s.runCleared)return null;

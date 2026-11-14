@@ -58,7 +58,7 @@ test('ordinary attacks alternate across two front cats and never choose a rear c
  const b=new Battle(ready(),{stage:16}),e=b.enemies[0];e.atk=2;const ids=[];
  for(let i=0;i<6;i++){b.normal(e);ids.push(b.events.filter(x=>x.type==='hit').at(-1).to);}
  assert.deepEqual(ids,['p0','p1','p0','p1','p0','p1']);assert.ok(b.heroes.slice(2).every(h=>h.hp===h.maxHp));
- b.heroes[1].hp=0;assert.deepEqual(b.frontlines().map(h=>h.id),['p0','p2']);
+ b.heroes[1].hp=0;assert.deepEqual(b.frontlines().map(h=>h.id),['p0']);b.heroes[0].hp=0;assert.deepEqual(b.frontlines().map(h=>h.id),['p2','p3']);
 });
 test('locked front target stays fixed through windup and release, then switches next attack',()=>{
  const b=new Battle(ready(),{stage:16}),e=b.enemies[0];b.beginAction(e,'normal');const target=e.action.targetId;

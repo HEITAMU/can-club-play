@@ -22,10 +22,10 @@ export function crewSkill(id,level,stats){
   ink:{description:'向当前生命值最低的敌人发起三连击，合计造成 '+effect(amount(sk.inkHit/100),'damage')+scaling(''+sk.inkHit+'% 攻击力')+' 物理伤害。本次攻击额外获得 '+effect(''+sk.inkPen+' 点护甲穿透','armor')+'。',passive:'暴击率提高 '+effect('15 个百分点','damage')+'。'},
   milk:{description:'为全体队友恢复 '+effect(amount(sk.milkHeal/100,'hp'),'heal')+scaling('奶盖最大生命值的 '+sk.milkHeal+'%')+' 生命值。',passive:'普攻回复的能量由 '+effect('22','energy')+' 点提高至 '+effect('32','energy')+' 点。'},
   spark:{description:'对全体敌人造成 '+effect(amount(sk.sparkHit/100),'damage')+scaling(sk.sparkHit+'% 攻击力')+' 法术伤害，并灼烧目标 '+effect(awake?'6 秒':'4 秒','control')+'，每秒造成 '+effect(amount(sk.sparkBurn/100*(level>=40?1.2:1)),'damage')+scaling((sk.sparkBurn*(level>=40?1.2:1))+'% 攻击力')+' 法术伤害。',passive:'灼烧持续时间由 '+effect('4 秒','control')+' 延长至 '+effect('6 秒','control')+'。'},
-  mint:{description:'对当前生命值最高的敌人造成 '+effect(amount(sk.mintHit/100),'damage')+scaling(''+sk.mintHit+'% 攻击力')+' 法术伤害，使其 '+effect('眩晕 '+Math.round((awake?2600:1800)+sk.mintStun*1000)+' 毫秒','control')+' 并打断蓄力。',passive:'眩晕持续时间由 '+effect('11000 毫秒','control')+' 延长至 '+effect('2600 毫秒','control')+'。'},
-  bolt:{description:'使敌方前排目标的当前护甲永久降低 '+effect(((awake?75:50)+sk.boltShred)+'%','armor')+'，随后造成 '+effect(amount(sk.boltHit/100),'damage')+scaling(''+sk.boltHit+'% 攻击力')+' 物理伤害。',passive:'技能对当前护甲的削减比例由 '+effect('50%','armor')+' 提高至 '+effect('75%','armor')+'。'},
+  mint:{description:'优先攻击蓄力中的敌人，其次选择治疗者，再选择生命最高者，造成 '+effect(amount(sk.mintHit/100),'damage')+scaling(''+sk.mintHit+'% 攻击力')+' 法术伤害，使其 '+effect('眩晕 '+Math.round((awake?2600:1800)+sk.mintStun*1000)+' 毫秒','control')+' 并打断蓄力。',passive:'眩晕持续时间由 '+effect('1800 毫秒','control')+' 延长至 '+effect('2600 毫秒','control')+'。'},
+  bolt:{description:'使敌方前排目标的当前护甲降低 '+effect(((awake?60:40)+sk.boltShred)+'%','armor')+'（最多降低开场护甲的 80%），随后造成 '+effect(amount(sk.boltHit/100),'damage')+scaling(''+sk.boltHit+'% 攻击力')+' 物理伤害。',passive:'技能对当前护甲的削减比例由 '+effect('40%','armor')+' 提高至 '+effect('60%','armor')+'。'},
   pudding:{description:'满能量为自身增加 '+effect(amount(sk.puddingSelf/100,'hp'),'shield')+scaling(sk.puddingSelf+'% 最大生命值')+' 护盾。盾量达到生命 30% 时下蹲蓄力；期间再获生命 15% 的护盾，打出震街拳：'+sk.puddingHit+'% 攻击力＋锁定盾量的 '+sk.puddingShieldHit+'% 物理伤害。命中目标所在前排及其身后两名后排，最多三人。',passive:'吸收伤害回复 12 能量（间隔 1000 毫秒）；蓄力每秒回复 35 能量。重拳冷却 8 秒。'},
-  star:{description:'为其他队友回复 '+effect(((level>=80?56:48)+sk.starEnergy)+' 点能量','energy')+'，并为全体队友恢复 '+effect(amount(sk.starHeal/100),'heal')+scaling(sk.starHeal+'% 攻击力')+' 生命值。',passive:'战斗开始时，额外获得 '+effect('40 点能量','energy')+'。'}
+  star:{description:'为其他队友回复 '+effect(((level>=80?44:36)+sk.starEnergy)+' 点能量','energy')+'，并为全体队友恢复 '+effect(amount(sk.starHeal/100),'heal')+scaling(sk.starHeal+'% 攻击力')+' 生命值。',passive:'战斗开始时，额外获得 '+effect('40 点能量','energy')+'。'}
  };
  return skills[id];
 }

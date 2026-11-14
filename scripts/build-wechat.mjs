@@ -36,6 +36,7 @@ const list = [
   "painted/enemies-c.webp",
   "painted/items.webp",
   "scenes/streets-v019.webp",
+  "scenes/commissions-v02646.webp",
   "vfx/effects-v0216.webp",
   "vfx/shidun-impact-v0211.webp",
   "vfx/can-rescue-v0192.webp",

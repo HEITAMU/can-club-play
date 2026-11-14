@@ -8,3 +8,6 @@
 #arena #actors{position:absolute;inset:0;z-index:3;pointer-events:none}
 #arena #fx{position:absolute;inset:0;z-index:7;pointer-events:none;overflow:hidden}
 #arena #fx .float-text{animation:none;opacity:1;will-change:transform,opacity;line-height:1.25;max-width:90%;text-align:center}
+
+/* Ground canvas is a sibling of the combat layer: both must exclude the 76px supply band. */
+#arena>.vfx-ground{inset:0 0 76px;height:calc(100% - 76px)}

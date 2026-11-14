@@ -44,10 +44,10 @@ test("ten-level cost is atomic and capped, single upgrade stays available", asyn
   a.state.gold = 1;
   a.train("orange");
   assert.equal(a.state.levels.orange, 11);
-  a.state.gold = 999999;
-  a.state.levels.orange = 97;
+  a.state.gold = 1e9;
+  a.state.levels.orange = 157;
   a.train("orange");
-  assert.equal(a.state.levels.orange, 100);
+  assert.equal(a.state.levels.orange, 160);
 });
 test("touch drag swaps occupied slots; bench replacement inherits training", async () => {
   const state = developed();
@@ -215,7 +215,7 @@ test('native material replay preserves selected job and main campaign progress',
  assert.equal(a.battle.result,'win');assert.equal(a.state.activities.cleared.escort,1);const badges=a.state.badges;
  a.pause();assert.equal(a.battle.activity.kind,'escort');assert.equal(a.battle.activity.tier,1);
  for(let i=0;i<400&&!a.battle.result;i++){a.update(.25);if(a.battle.canCd===0)a.can();}
- assert.equal(a.battle.result,'win');assert.equal(a.state.badges-badges,2);assert.deepEqual([a.state.stage,a.state.highest],before);a.update(1.5);assert.equal(a.tab,'map');assert.equal(a.mapPlace,'street');assert.deepEqual(a.streetView,{group:'materials',id:'escort',tier:1});a.render();h.stop();
+ assert.equal(a.battle.result,'win');assert.equal(a.state.badges-badges,3);assert.deepEqual([a.state.stage,a.state.highest],before);a.update(1.5);assert.equal(a.tab,'map');assert.equal(a.mapPlace,'street');assert.deepEqual(a.streetView,{group:'materials',id:'escort',tier:1});a.render();h.stop();
 });
 
 test('contract auto-return cannot override a user navigation or rematch',async()=>{

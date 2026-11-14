@@ -1,3 +1,4 @@
+import {BACKDROP_FRACTION} from '../../battlefield-space.mjs';
 import {FINISHED_ROSTER} from '../../finished-roster-data.mjs';
 import {setRosterCanvasFactory} from '../../finished-roster-renderer.mjs';
 import {FINISHED_SPARK} from '../../finished-spark-data.mjs';
@@ -122,26 +123,11 @@ export class NativeArt {
         size,
       );
   }
-  scene(ctx, index, x, y, w, h) {
-    const img = this.image("assets/scenes/streets-v019.webp");
-    if (!img) return;
-    const cellW = img.width / 3,
-      cellH = img.height / 2;
-    let sw = cellW,
-      sh = cellH;
-    if (w / h > cellW / cellH) sh = (cellW * h) / w;
-    else sw = (cellH * w) / h;
-    ctx.drawImage(
-      img,
-      (index % 3) * cellW + (cellW - sw) / 2,
-      Math.floor(index / 3) * cellH + (cellH - sh) / 2,
-      sw,
-      sh,
-      x,
-      y,
-      w,
-      h,
-    );
+  scene(ctx, index, x, y, w, h, activity=null) {
+    const i=activity?({sweep:0,escort:1,salvage:2,recruit:3,hunt:4,hard:5})[activity.kind]??0:index;
+    const img=this.image(activity?'assets/scenes/commissions-v02646.webp':'assets/scenes/streets-v019.webp');if(!img)return;
+    const cw=img.width/3,ch=img.height/2,sx=i%3*cw,sy=Math.floor(i/3)*ch,cut=(activity?[300,286,286,276,278,286][i]/512:[290,270,265,275,245,270][i]/627)*ch,top=h*BACKDROP_FRACTION;
+    ctx.drawImage(img,sx,sy,cw,cut,x,y,w,top);ctx.drawImage(img,sx,sy+cut,cw,ch-cut,x,y+top,w,h-top);
   }
   resetBattle() {
     for (const key of this.sprites.keys())

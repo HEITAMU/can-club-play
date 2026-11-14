@@ -27,13 +27,13 @@ test('normal attacks emit their damage type and mitigation happens before shield
 test('armor shred is permanent and is applied before flat penetration; MR is unchanged',()=>{
  for(const level of [1,5]){
   const {b}=ready(['bolt']),h=b.heroes[0],e=b.enemies[0];
-  Object.assign(h,{level,atk:100,armorPen:10});Object.assign(e,{armor:100,magicResist:80});
-  b.skill(h);const armor=level===5?25:50;
+  Object.assign(h,{level,atk:100,armorPen:10});Object.assign(e,{armor:100,initialArmor:100,magicResist:80});
+  b.skill(h);const armor=level===5?40:60;
   assert.equal(e.armor,armor);assert.equal(e.magicResist,80);near(e.maxHp-e.hp,300*100/(100+armor-10));
-  b.skill(h);assert.equal(e.armor,Math.round(armor*(level===5?.25:.5)));
+  b.skill(h);assert.equal(e.armor,Math.max(20,Math.round(armor*(level===5?.4:.6))));
  }
  const {b}=ready(['ink']),h=b.heroes[0],e=b.enemies[0];Object.assign(h,{atk:100,armorPen:12});e.armor=100;
- b.skill(h);near(e.maxHp-e.hp,330*100/163);assert.equal(e.armor,100);
+ b.skill(h);assert.equal(e.maxHp-e.hp,3*Math.round(110*100/163));assert.equal(e.armor,100);
 });
 test('burn uses its real caster and magic penetration even when another cat is in front',()=>{
  const {b}=ready(),caster=b.heroes[1],weaker=b.heroes[2],e=b.enemies[0];
@@ -58,7 +58,7 @@ test('skill tooltips show current values and the seven visible attributes use co
   const type=['orange','pudding'].includes(c.id)?'shield':['milk','star'].includes(c.id)?'heal':'hit';
   const event=b.events.find(x=>x.type===type&&x.from===h.id);
   if(type==='hit')assert.equal(event.damageType,['spark','mint'].includes(c.id)?'magic':'physical');
-  assert.ok(description.description.includes('>'+event.value.toLocaleString('zh-CN')+'</strong>'),c.id);
+  const displayed=c.id==='ink'?b.events.filter(x=>x.type==='hit'&&x.from===h.id).reduce((n,x)=>n+x.value,0):event.value;assert.ok(description.description.includes('>'+displayed.toLocaleString('zh-CN')+'</strong>'),c.id);
   const html=crewProfileHTML(s,c.id);assert.equal((html.match(/<dt>/g)||[]).length,7);
   for(const name of ['护甲','魔抗','护甲穿透','法术穿透'])assert.ok(html.includes('<dt>'+name+'</dt>'));
   assert.ok(!/NaN|undefined/.test(html));

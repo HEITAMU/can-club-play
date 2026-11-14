@@ -57,7 +57,7 @@ test('projectiles arrive at their actual targets and never continue past the hit
   assert.equal(projectilePose(from,to,390,300,-.001,travel,style).visible,false);
  }
  for(let shot=0;shot<3;shot++){
-  const end=projectilePose(from,to,390,300,travel-(2-shot)*.035,travel,'arrow',shot,3);
+  const end=projectilePose(from,to,390,300,travel+shot*.12,travel,'arrow',shot,3);
   assert.ok(Math.abs(end.progress-1)<1e-9);
  }
  assert.ok(Object.values(projectilePose(from,from,390,300,.15,travel,'heal')).every(v=>typeof v==='boolean'||Number.isFinite(v)));

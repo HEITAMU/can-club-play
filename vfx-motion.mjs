@@ -66,7 +66,7 @@ export function sampleImpact(style,p,size,age,duration,seed=1,direction=1,skill=
   }else sprite(out,'dust',x,y+size*.34,size*(.25+unit(age/.42)*.4),effectEnvelope(age,.42,.035,.25)*.36,0,1,.35,0);
  }else if(style==='pierce'||style==='pierce-volley'){
   const count=style==='pierce-volley'?3:1;
-  for(let i=0;i<count;i++){const delay=i*.027,offset=(i-(count-1)/2)*size*.15;
+  for(let i=0;i<count;i++){const delay=i*.12,offset=(i-(count-1)/2)*size*.15;
    sprite(out,'flash',x+direction*offset,y-offset*.75,size*(count>1?.38:.32),effectEnvelope(age-delay,.24,.012,.16),direction*-.25,1.5,.40,2);
   }
   scatter(out,'ember',x,y,size,age,.38,seed,count*2+1,{spread:.48,scale:.09});

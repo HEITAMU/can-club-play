@@ -30,8 +30,8 @@ function progressionJob(){
  const missing=formation.find(id=>!G.ownsCompanion(s,id));if(missing){if(G.recruitCompanion(s,missing))return progressionJob();return {kind:'recruit',id:missing,tier:1};}
  const need=s.party.map(id=>({id,...G.breakthroughQuote(s,id)})).find(q=>!q.maxed&&s.levels[q.id]>=q.requiredLevel);
  if(!need)return null;
- const kind=s.growth.notes<need.notes?'sweep':s.badges<need.cost||s.growth.seals<need.seals?'escort':null;if(!kind)return null;
- let tier=Math.min(8,(s.activities.cleared[kind]||0)+1);while(tier>1&&!activityInfo(s,{kind,tier}).open)tier--;return {kind,tier};
+ const kind=s.growth.notes<need.notes?'sweep':s.badges<need.cost?'escort':s.growth.seals<need.seals?'hard':null;if(!kind)return null;
+ const id=kind==='hard'?'coldstore':'';let tier=Math.min(kind==='hard'?3:8,(s.activities.cleared[kind==='hard'?'hard:'+id:kind]||0)+1);while(tier>1&&!activityInfo(s,{kind,id,tier},clock).open)tier--;const q=activityInfo(s,{kind,id,tier},clock);return q.open&&q.rewardable?{kind,id,tier}:null;
 }
 for(let day=1;day<=30;day++){
  const before=s.highest,beforeBattles=battles,beforeLoss=losses;
@@ -39,14 +39,14 @@ for(let day=1;day<=30;day++){
   clock=start+(day-1)*86400000+session*12*3600000;G.claimIdle(s,clock);rewards();train();let budget=600;
   if(s.highest>=15){
    for(let n=0;n<3&&s.arenaCleared<12&&budget>0;n++){const r=fight({arenaTier:s.arenaCleared+1});budget-=r.time;if(!r.win)break;train();}
-   if(s.arenaCleared>0&&budget>0){const r=fight({arenaTier:s.arenaCleared});budget-=r.time;train();}
+   
    for(const tier of [1,2,3])if(!weeklyInfo(s,tier,clock).claimed&&budget>0){const r=fight({weeklyTier:tier});budget-=r.time;if(!r.win)break;train();}
   }
   let failures=0;
-  while(budget>0&&s.highest<600){train();const request=progressionJob();if(request){let task=fight({activity:request});budget-=task.time;if(!task.win&&request.tier>1&&budget>0){task=fight({activity:{...request,tier:request.tier-1}});budget-=task.time;}if(task.win){train();continue;}}const r=fight();budget-=r.time;if(r.win){failures=0;continue;}if(++failures>=3)break;for(let j=0;j<3&&budget>0;j++){const farm=fight({farm:true,stage:Math.max(1,s.highest-(s.highest%5===0?1:0))});budget-=farm.time;if(!farm.win)break;}}
+  while(budget>0&&s.highest<600){train();const request=progressionJob();if(request){let task=fight({activity:request});budget-=task.time;if(!task.win&&request.tier>1&&budget>0&&activityInfo(s,{...request,tier:request.tier-1},clock).rewardable){task=fight({activity:{...request,tier:request.tier-1}});budget-=task.time;}if(task.win){train();continue;}}const r=fight();budget-=r.time;if(r.win){failures=0;continue;}if(++failures>=3)break;}
   rewards();train();
  }
  rows.push({day,stage:s.highest,newStages:s.highest-before,levels:s.party.map(id=>s.levels[id]).join('/'),owned:s.roster.owned.length,stars:s.party.map(id=>s.roster.stars[id]).join('/'),arena:s.arenaCleared,journey:s.campaign.journey.length,stall:s.stall.stall,storageHours:G.idleMinutes(s)/60,gold:s.gold,battles:battles-beforeBattles,losses:losses-beforeLoss});
 }
 const result={formation,assumptions:['每日两次，每次最多10分钟实际战斗时间','相隔12小时收鱼摊，不看广告','实际刷指定信物招募目标阵容；按突破缺口刷笔记、徽章与印记；自动升级、换装、强化与拼装，及时开罐','模拟无手动操作耗时；不代表真实留存或真机表现'],rows,final:{stage:s.highest,roster:s.roster,growth:s.growth,levels:s.levels,breakthroughs:s.breakthroughs,equipment:s.inventory.items.length,equipped:s.inventory.equipped,materials:s.inventory.materials,stall:s.stall},battles,losses};
-fs.mkdirSync('docs/review/street-growth',{recursive:true});fs.writeFileSync('docs/review/street-growth/'+(process.env.MONTH_FORMATION==='control'?'simulation-control':'simulation')+'.json',JSON.stringify(result,null,2));console.table(rows);console.log(JSON.stringify(result.final));
+fs.mkdirSync('docs/review/release-v02649',{recursive:true});fs.writeFileSync('docs/review/release-v02649/'+(process.env.MONTH_FORMATION==='control'?'simulation-control':'simulation')+'.json',JSON.stringify(result,null,2));console.table(rows);console.log(JSON.stringify(result.final));

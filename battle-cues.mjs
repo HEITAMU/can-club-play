@@ -44,11 +44,11 @@ export class BattleCues{
    if(e.rescue){const r=this.routes.get('can-rescue');if(r&&e.type==='hit'&&positions[e.to])r.contacts[e.to]={...positions[e.to]};continue;}
    const a=byId(e.from);if(!a)continue;const at=e.at??b.time,tone=a.side==='e'?'enemy':'attack';
    if(e.type==='windup'||e.type==='release'){
-    const duration=e.type==='windup'?(e.windup||.4)+.06:(e.travel||.29)+.05,extra={style:attackStyle(a,e.kind),travel:e.travel||.29,kind:e.kind,profile:catAction(a.catId,e.kind)?.id};
+    const duration=e.type==='windup'?(e.windup||.4)+.06:(e.travel||.29)+.05+(a.catId==='ink'&&e.kind==='skill'?.24:0),extra={style:attackStyle(a,e.kind),travel:e.travel||.29,kind:e.kind,profile:catAction(a.catId,e.kind)?.id};
     if(e.kind==='normal')this.addRoute(a.id,a.id,[e.to],'普攻',tone,at,positions,e.type,duration,extra);
     else {
      const targets=b.skillTargets(a).map(t=>t.id),friends=targets.filter(id=>id.startsWith('p')),foes=targets.filter(id=>id.startsWith('e')),label=CATS.find(c=>c.id===a.catId)?.skill||'技能';
-     if(foes.length)this.addRoute(a.id,a.id,foes,label,tone,at,positions,e.type,duration,extra);
+     if(foes.length)this.addRoute(a.catId==='ink'&&e.type==='release'?a.id+'-volley':a.id,a.id,foes,label,tone,at,positions,e.type,duration,extra);
      if(friends.length)this.addRoute(a.id+'-support',a.id,friends,label,a.catId==='star'?'energy':'support',at,positions,e.type,duration,{...extra,style:['orange','pudding'].includes(a.catId)?'shield':a.catId==='star'?'star':'heal'});
     }
    }
@@ -73,7 +73,7 @@ export class BattleCues{
     this.log(name(a.id),'蓄力群攻','我方全队','开罐啦可打断','enemy',at,true);
    }
    if(e.type==='interrupt'){
-    this.routes.delete(e.to);this.log(name(e.from),'打断',name(e.to),'群攻已取消','support',at,true);
+    this.cancelPending(e.to);this.routes.delete(e.to);this.log(name(e.from),'打断',name(e.to),'群攻已取消','support',at,true);
    }
    if(e.type==='burst'){
     const targets=events.filter(h=>h.type==='hit'&&h.from===a.id&&h.to?.startsWith('p')).map(h=>h.to);
