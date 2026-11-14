@@ -6,7 +6,7 @@ export class CombatText {
  consume(events,positions,time){
   for(const e of events){const p=positions[e.to];if(!p)continue;
    if((e.type==='hit'||e.type==='burn')&&e.value>0){
-    const style=damageTextStyle(e),el=this.spawn(e.value+style.suffix,p.x+(e.serial%3-1)*2,p.y-6,'float-text'+(style.crit?' crit':'')+(style.dot?' dot':''),time);el.style.color=style.color;el.style.fontWeight=String(style.weight);if(style.icon){const icon=this.layer.ownerDocument.createElement('img');icon.src=style.icon;icon.alt='暴击';icon.style.cssText='width:1em;height:1em;margin-left:2px;vertical-align:-.12em;object-fit:contain';el.appendChild(icon);}
+    const style=damageTextStyle(e),el=this.spawn(e.value+style.suffix,p.x+(e.serial%3-1)*2,p.y-6,'float-text'+(style.crit?' crit':'')+(style.dot?' dot':''),time);el.style.color=style.color;el.style.fontWeight=String(style.weight);if(style.icon){el.className+=' critical-frame';el.style.color='#171211';el.style.fontWeight='700';el.style.backgroundImage=`url('${style.icon}')`;el.style.backgroundSize='100% 100%';el.style.backgroundRepeat='no-repeat';el.style.padding='8px 14px';el.style.minWidth='48px';el.style.boxSizing='border-box';el.style.textShadow='none';el.style.border='0';el.style.transform='translate(-50%, -50%) rotate(-8deg)';this.items[this.items.length-1].critical=true;}
    }
    if(e.type==='heal'&&e.value>2)this.spawn('+'+e.value,p.x,p.y-5,'float-text heal',time);
    if(e.type==='shield'&&e.value>0)this.spawn('护盾 +'+e.value,p.x,p.y-5,'float-text status',time);
@@ -24,7 +24,7 @@ export class CombatText {
   for(let i=this.items.length-1;i>=0;i--){const f=this.items[i],elapsed=Math.max(0,time-f.born),p=elapsed/f.duration;
    if(p>=1){f.el.remove();this.items.splice(i,1);continue;}
    f.el.style.opacity=String(p<.65?1:(1-p)/.35);
-   f.el.style.transform=`translate(-50%, calc(-50% - ${Math.round((1-(1-p)**2)*38)}px))`;
+   f.el.style.transform=`translate(-50%, calc(-50% - ${Math.round((1-(1-p)**2)*38)}px))${f.critical?' rotate(-8deg)':''}`;
   }
  }
 }

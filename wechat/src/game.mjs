@@ -741,6 +741,7 @@ export class NativeGame {
       if (!p) continue;
       const u = (t - e.born) / 0.9, damageStyle=damageTextStyle(e);
       c.globalAlpha = 1 - Math.max(0, (u - 0.6) / 0.4);
+      if(e.type!=="heal"&&damageStyle.icon){const img=this.art.image(damageStyle.icon.slice(2));c.save();c.translate(p.x*w/100,p.y*ah/100-25-u*24);c.rotate(-8*Math.PI/180);c.font='bold 12px sans-serif';const fw=Math.max(48,c.measureText(fmt(e.value)).width+26);if(img)c.drawImage(img,-fw/2,-16,fw,32);text(c,fmt(e.value),0,0,12,'#171211',700,'center');c.restore();continue;}
       text(
         c,
         (e.type === "heal" ? "+" : "") + fmt(e.value)+(e.type === "heal"?"":damageStyle.suffix),
@@ -751,7 +752,7 @@ export class NativeGame {
         e.type === "heal" ? 800 : damageStyle.weight,
         "center",
       );
-      if(e.type!=="heal"&&damageStyle.icon){const img=this.art.image(damageStyle.icon.slice(2));if(img){const tw=c.measureText(fmt(e.value)).width,sz=damageStyle.size;c.drawImage(img,(p.x*w)/100+tw/2+2,(p.y*ah)/100-25-u*24-sz/2,sz,sz);}}
+
     }
     c.globalAlpha = 1;
     if (b.result) {
