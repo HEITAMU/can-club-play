@@ -68,3 +68,16 @@
 html body,body button,body input,body select,body textarea,body h1,body h2,body h3,body h4,body b,body strong,body small,body span,body p,body div,body dt,body dd{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif!important;text-shadow:none!important;-webkit-text-stroke:0!important;letter-spacing:normal}
 
 .crew-view[data-mode="profile"] .crew-identity{align-self:stretch;width:100%;text-align:center}
+
+/* A single aligned top row: companion/growth left, attributes right. */
+.crew-view[data-mode="profile"] .crew-profile{align-items:stretch}
+.crew-view[data-mode="profile"] .crew-hero,.crew-view[data-mode="profile"] .crew-attributes{align-self:stretch;margin:0;padding:9px;border:1px solid #c2a16b;border-radius:10px;background:#ecd5a7;box-shadow:inset 0 1px #fff0cb;min-width:0}
+.crew-view[data-mode="profile"] .crew-identity h3{color:#63452d}
+.crew-view[data-mode="profile"] .crew-level{color:#795a3b}
+.crew-view[data-mode="profile"] .crew-attributes{display:flex;flex-direction:column}
+.crew-view[data-mode="profile"] .crew-attributes .crew-section-label{flex:none;padding-bottom:7px;margin-bottom:0;border-bottom:1px solid #b89b7040}
+.crew-view[data-mode="profile"] .crew-attributes dl{display:flex;flex-direction:column;justify-content:space-between;flex:1;gap:0;margin:0}
+.crew-view[data-mode="profile"] .crew-attributes dl>div{flex:1;min-height:32px;padding:6px 0;align-items:center;border-bottom:1px solid #b89b7040}
+.crew-view[data-mode="profile"] .crew-attributes dl>div:last-child{border-bottom:0}
+.crew-view[data-mode="profile"] .crew-attributes dt{line-height:1.4}
+.crew-view[data-mode="profile"] .crew-attributes dd{flex-shrink:0;padding-left:4px}
