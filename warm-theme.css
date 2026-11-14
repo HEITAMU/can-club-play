@@ -189,3 +189,13 @@ body{background:radial-gradient(ellipse at 22% 30%,#56404d,#292535 75%);color:#f
 @media(max-width:350px){.crew-view[data-mode="equipment"] .gear-slot-node,.crew-view[data-mode="equipment"] .gear-orbit-slot{width:40px;height:40px}.crew-view[data-mode="equipment"] .slot-claw,.crew-view[data-mode="equipment"] .slot-coat{left:7px}.crew-view[data-mode="equipment"] .slot-collar,.crew-view[data-mode="equipment"] .slot-brace{right:7px}.crew-view[data-mode="equipment"] .gear-orbit-slot .painted-item{width:30px;height:30px}}
 
 .modal[data-kind="equipment"] #modal-close{background:#9a7048;color:#fff0d2;border-color:#c5a273}
+
+/* Compact the equipment orbit without enlarging the character. */
+.crew-view[data-mode="equipment"] .equipment-stage{min-height:252px}
+.crew-view[data-mode="equipment"] .slot-claw,.crew-view[data-mode="equipment"] .slot-collar{top:14px}
+.crew-view[data-mode="equipment"] .slot-coat,.crew-view[data-mode="equipment"] .slot-brace{top:101px}
+.crew-view[data-mode="equipment"] .slot-rune{top:174px}
+.crew-view[data-mode="equipment"] .equipment-character{top:64px}
+.crew-view[data-mode="equipment"] .equipped-set-tags{top:228px}
+.crew-view[data-mode="equipment"] .equipment-bag{min-height:252px}
+@media(max-width:350px){.crew-view[data-mode="equipment"] .equipment-character{top:72px}}
