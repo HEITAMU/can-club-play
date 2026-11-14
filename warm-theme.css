@@ -366,7 +366,7 @@ body{background:radial-gradient(ellipse at 22% 30%,#56404d,#292535 75%);color:#f
 .formation-bench-pick>i{top:auto;bottom:1px;right:2px;border:0;background:#795330cf;color:#fbe4b6;font-size:7px;padding:1px 3px}
 .formation-bench-zone.is-drop-target{background:#d3a05d44}.formation-bench-zone.is-drop-target .formation-dismiss{background:#ecc47e;color:#6b4122}
 .formation-hint{min-height:16px;margin:8px 0 0;font-size:10px;color:#e8c99c;line-height:16px}
-.is-drag-source>.formation-slot-art,.is-drag-source>.formation-card-art{opacity:.15}
+.is-drag-source>.formation-slot-art,.is-drag-source>.formation-card-art{opacity:0}
 .formation-ghost{position:fixed;left:0;top:0;z-index:250;width:76px;height:76px;padding:0;border:0;border-radius:0;background:none;box-shadow:none;pointer-events:none;will-change:transform;filter:drop-shadow(0 3px 2px #63402455)}
 .formation-ghost .formation-slot-art,.formation-ghost .formation-card-art{width:76px;height:76px;overflow:visible}
 .formation-ghost .painted-sprite{width:76px!important;height:76px!important;position:relative;left:auto;top:auto;transform:none}
@@ -376,3 +376,6 @@ body{background:radial-gradient(ellipse at 22% 30%,#56404d,#292535 75%);color:#f
 .crew-view[data-mode="formation"] .crew-modes button[aria-pressed="true"]{color:#fff0cb;border-bottom-color:#f1c270}
 .formation-board .formation-column{z-index:1;background:#f3d198db;border-radius:5px;padding:2px 5px;font-weight:600}
 #other-view{padding-bottom:0}
+
+/* Keep only the finger-controlled figure visible during a formation drag. */
+.formation-slot.is-drag-source{opacity:0}

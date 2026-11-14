@@ -41,7 +41,7 @@ export function bindFormationDrag(root,{scrollElement,onDrop,onRemove,describe})
   if(sprite&&!sprite.classList.contains('rig-ready'))setPose(sprite,0,{time:0,renderSize:sprite.getBoundingClientRect().width});
   // Moving the ghost is one compositor transform per frame; never re-render the
   // dragged character or let the portrait's idle canvas erase the drag image.
-  ghost.style.transform=`translate3d(${drag.x-ghost.offsetWidth/2}px,${drag.y-ghost.offsetHeight*.92}px,0)`;
+  ghost.style.transform=`translate3d(${drag.x-drag.grabX}px,${drag.y-drag.grabY}px,0)`;
   const bounds=scrollElement.getBoundingClientRect();
   if(drag.y<bounds.top+24)scrollElement.scrollTop-=6;
   else if(drag.y>bounds.bottom-20)scrollElement.scrollTop+=6;
@@ -58,6 +58,8 @@ export function bindFormationDrag(root,{scrollElement,onDrop,onRemove,describe})
   if(e.button!==0||drag||e.isPrimary===false)return;
   const source=e.target.closest('[data-drag-cat]');if(!source||!root.contains(source)||source.disabled)return;
   drag={id:source.dataset.dragCat,source,fromBoard:source.hasAttribute('data-formation-slot'),pointer:e.pointerId,startX:e.clientX,startY:e.clientY,x:e.clientX,y:e.clientY,active:false};
+  const art=source.querySelector('.formation-slot-art,.formation-card-art'),rect=art.getBoundingClientRect();
+  drag.grabX=drag.fromBoard?e.clientX-rect.left:41;drag.grabY=drag.fromBoard?e.clientY-rect.top+5:41;
   source.setPointerCapture(e.pointerId);
  }
  function move(e){
