@@ -129,3 +129,16 @@ body{background:radial-gradient(ellipse at 22% 30%,#56404d,#292535 75%);color:#f
 .crew-view[data-mode="profile"] .crew-hero{min-height:159px}
 .crew-view[data-mode="profile"] .crew-portrait{left:50%;transform:translateX(-50%);bottom:5px}
 @media(max-width:350px){.crew-view[data-mode="profile"] .crew-profile{grid-template-columns:minmax(0,1fr) 46%}.crew-view[data-mode="profile"] .crew-attributes{padding:7px}.crew-view[data-mode="profile"] .crew-hero{min-height:150px}}
+
+/* Dark warm ground makes the three light panels stand apart. */
+.crew-view[data-mode="profile"]{background:#846044;color:#f7e6c5}
+#main:has(.crew-view[data-mode="profile"]),#other-view:has(.crew-view[data-mode="profile"]){background:#846044}
+.crew-view[data-mode="profile"]>.view-heading h2,.crew-view[data-mode="profile"] .crew-identity h3{color:#ffedcb}
+.crew-view[data-mode="profile"] .crew-level{color:#edcf9f}
+.crew-view[data-mode="profile"]>.crew-modes{border-bottom-color:#e2bb7955}
+.crew-view[data-mode="profile"] .crew-modes button{color:#e4c7a0}
+.crew-view[data-mode="profile"] .crew-modes button[aria-pressed=true]{color:#fff0cb;border-bottom-color:#f1c675}
+.crew-view[data-mode="profile"]>.crew-roster{background:#765338;border-top-color:#b58b59}
+.crew-view[data-mode="profile"] .crew-pick b{color:#fff0d0}
+.crew-view[data-mode="profile"] .crew-pick small{color:#e7c69b}
+.crew-view[data-mode="profile"] .crew-pick[aria-pressed=true]{border-bottom-color:#f1c675}
