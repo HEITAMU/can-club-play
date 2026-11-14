@@ -216,4 +216,4 @@ body{background:radial-gradient(ellipse at 22% 30%,#56404d,#292535 75%);color:#f
 .crew-view[data-mode="equipment"] .equipment-layout{align-items:stretch}
 
 /* Hand-painted scenery belongs inside the character equipment panel only. */
-.crew-view[data-mode="equipment"] .equipment-stage{background:#dfb878 url('./assets/scenes/equipment-nook-v02613.webp') center / 100% 100% no-repeat;box-shadow:inset 0 0 0 1px #ffe6b366}
+.crew-view[data-mode="equipment"] .equipment-stage{background:#dfb878 url('./assets/scenes/equipment-canvas-v02614.webp') center / 100% 100% no-repeat;box-shadow:inset 0 0 0 1px #ffe6b366}
