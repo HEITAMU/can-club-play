@@ -107,3 +107,5 @@ html body,body button,body input,body select,body textarea,body h1,body h2,body 
 .modal[data-kind="material"] h2{font-size:15px;line-height:1.4;margin:0 22px 9px 0}
 
 .modal[data-kind="material"] #modal-close{background:#9a7048;color:#fff0d2;border-color:#c5a273}
+
+.crew-view[data-mode="profile"] .crew-growth .growth-material{color:#63452d}.crew-view[data-mode="profile"] .crew-growth .growth-material>span:not(.material-icon){color:#63452d;font-size:10px}.crew-view[data-mode="profile"] .crew-growth .growth-material .material-icon{width:20px!important;height:20px!important}.crew-view[data-mode="profile"] .crew-growth .crew-breakthrough>button{display:block;width:100%;margin:6px 0 0;min-height:32px}.crew-view[data-mode="profile"] .crew-growth .crew-breakthrough h4{font-size:12px}.material-info-card h2{margin-right:0!important}
