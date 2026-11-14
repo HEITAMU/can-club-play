@@ -1,7 +1,7 @@
 import {CATS,ownsCompanion,MAX_PARTY,inheritanceFor} from './core.mjs?v=0.25.0';
 import {catSVG,icon,setPose} from './art.mjs?v=0.25.0';
 const name=id=>CATS.find(c=>c.id===id)?.name||'伙伴';
-export const FORMATION_SLOTS=[[70,57],[70,82],[28,50],[28,70],[28,90]];
+export const FORMATION_SLOTS=[[66,66],[66,85],[34,58],[34,75],[34,92]];
 export function crewFormationHTML(state){
  return '<section class="crew-formation" aria-label="拖动调整阵容"><div class="formation-heading"><h3>'+icon('can',22)+'出战阵容 <small>'+state.party.filter(Boolean).length+' / '+MAX_PARTY+'</small></h3><span>面向敌人 →</span></div><div class="formation-board"><span class="formation-column back">后排</span><span class="formation-column front">前排</span>'+FORMATION_SLOTS.map(([x,y],i)=>{
   const id=state.party[i];
