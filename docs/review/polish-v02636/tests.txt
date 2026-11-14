@@ -1,0 +1,403 @@
+✔ all sixteen companion actions carry their own motion and effect profile through real combat (234.934619ms)
+✔ every monster uses only the shared melee or ranged normal attack and keeps its existing timing (1.683974ms)
+✔ arm roots remain attached to their own shoulder while rotating, including shields and bow (3.824736ms)
+✔ expression priority follows defeat, victory, damage and the actual attack type (1.396259ms)
+✔ all cats blink and return to neutral; the rejected controlled face is absent (5.023032ms)
+✔ paused face transitions and idle eyes stay frozen on the battle clock (0.551787ms)
+✔ bow releases its visible arrow with the projectile and reloads during recovery (0.502535ms)
+✔ melee travel remains continuous through windup, strike, and return (3.290796ms)
+✔ melee closes the gap without passing the target; same-position skills stay finite (0.913564ms)
+✔ recoil and travel freeze when simulation time is unchanged (0.379893ms)
+✔ damage trail holds briefly, catches up, and handles consecutive hits (0.275218ms)
+✔ healing never trails below health and regeneration cannot freeze a damage trail (0.215199ms)
+✔ boss cue and cooldown follow actual interrupt state without changing battle data (3.059013ms)
+✔ ordinary fights have no boss panel and adjusted cooldown uses its real duration (0.734659ms)
+✔ daily progress comes from gameplay, claims persist and cannot duplicate (9.45572ms)
+✔ daily rolls over in Beijing and cannot reset by setting clock backwards; journey persists (2.005131ms)
+✔ thirty growth objectives are distinct, locked by progress, and permanently claimable (0.784783ms)
+✔ weekly rotating challenges grant once, do not advance normal/arena progress, and expire across reset (2.136886ms)
+✔ malformed campaign save is bounded and old saves remain valid (1.469077ms)
+✔ paper bag killed by reflect does not try to heal an empty team (2.304555ms)
+✔ fully developed shield-burn team with armor shred can finish the final boss (64.467646ms)
+✔ can opens overhead, drops all four food shapes and hits every enemy with one continuous lid (139.908773ms)
+✔ heal and each damage event resolve exactly on the matching animation beat, once each (3.761944ms)
+✔ a lethal lid completes its right-side exit before victory replaces the scene (1.051378ms)
+✔ can animation is deterministic when paused, scales with the viewport and cleans up (3.074085ms)
+✔ every painted can part preserves the canvas drawing state (0.344701ms)
+✔ physical and magic damage use independent defense and penetration ratings (1.985582ms)
+✔ normal attacks emit their damage type and mitigation happens before shield absorption (3.977113ms)
+✔ armor shred is permanent and is applied before flat penetration; MR is unchanged (1.804574ms)
+✔ burn uses its real caster and magic penetration even when another cat is in front (4.489572ms)
+✔ old saves and inheritance derive all four stats without changing stored investment (3.514037ms)
+✔ skill tooltips show current values and the seven visible attributes use combat stats (24.854745ms)
+{
+  "passed": 12,
+  "checks": [
+    "first encounter is winnable with untouched starter party",
+    "all 600 encounters have finite stats and unique actor IDs",
+    "upgrade spending is exact and cannot go negative or unlock a locked cat",
+    "offline yield caps at four hours and cannot be claimed twice",
+    "legacy relic choices are retired and old pending loot is removed on migration",
+    "invalid and corrupted saves are rejected; valid saves strip untrusted fields",
+    "boss charge is interruptible and active skill has a real cooldown",
+    "all eight cat skills execute with valid HP and shields",
+    "party has unique cats and locked cats cannot be equipped",
+    "retired prestige cannot reset progress or grant currency",
+    "milestone rewards are one-time and persist through import",
+    "dead heroes cannot be healed or revived by active skill"
+  ],
+  "simulation": {
+    "highest": 74,
+    "farmBattles": 286,
+    "curve": [
+      {
+        "stage": 1,
+        "seconds": 5.1,
+        "levels": [
+          3,
+          3
+        ],
+        "gold": 60
+      },
+      {
+        "stage": 2,
+        "seconds": 16.7,
+        "levels": [
+          4,
+          4
+        ],
+        "gold": 52
+      },
+      {
+        "stage": 3,
+        "seconds": 9.7,
+        "levels": [
+          4,
+          4
+        ],
+        "gold": 100
+      },
+      {
+        "stage": 4,
+        "seconds": 9.6,
+        "levels": [
+          5,
+          5
+        ],
+        "gold": 124
+      },
+      {
+        "stage": 5,
+        "seconds": 19.7,
+        "levels": [
+          6,
+          5
+        ],
+        "gold": 74
+      },
+      {
+        "stage": 6,
+        "seconds": 16.8,
+        "levels": [
+          6,
+          5
+        ],
+        "gold": 140
+      },
+      {
+        "stage": 10,
+        "seconds": 26.4,
+        "levels": [
+          7,
+          7,
+          5
+        ],
+        "gold": 102
+      },
+      {
+        "stage": 20,
+        "seconds": 62.7,
+        "levels": [
+          9,
+          8,
+          8,
+          8
+        ],
+        "gold": 296
+      },
+      {
+        "stage": 30,
+        "seconds": 62.7,
+        "levels": [
+          12,
+          12,
+          12,
+          12,
+          12
+        ],
+        "gold": 335
+      },
+      {
+        "stage": 40,
+        "seconds": 78.5,
+        "levels": [
+          17,
+          17,
+          16,
+          16,
+          16
+        ],
+        "gold": 284
+      },
+      {
+        "stage": 50,
+        "seconds": 79.9,
+        "levels": [
+          20,
+          20,
+          19,
+          19,
+          19
+        ],
+        "gold": 515
+      },
+      {
+        "stage": 60,
+        "seconds": 80,
+        "levels": [
+          27,
+          26,
+          26,
+          26,
+          26
+        ],
+        "gold": 506
+      },
+      {
+        "stage": 70,
+        "seconds": 77.4,
+        "levels": [
+          35,
+          35,
+          35,
+          35,
+          35
+        ],
+        "gold": 631
+      }
+    ]
+  }
+}
+✔ tests/core.test.mjs (1345.827859ms)
+✔ prepared battle idles advance on the ambient clock, active battle pauses freeze them (1.501755ms)
+✔ spline position and velocity meet at interior animation keys (0.755169ms)
+✔ interrupting a melee approach settles from its last visible position and freezes on pause (1.49842ms)
+✔ shield art follows actual raises, absorption, and break without changing combat damage (7.017077ms)
+✔ support and damaging effects remain distinguishable and end with zero opacity (0.901005ms)
+✔ press, leave and cancellation never open a destination (2.758758ms)
+✔ release opens once and switching scenes cancels a queued activation (31.724674ms)
+✔ keyboard activation has the same pressed and released states (15.734808ms)
+✔ pressed art compresses, rebounds and returns to rest; lamp and floor stay pinned (0.817421ms)
+✔ old saves retain investments and resume after stage 120 (3.532954ms)
+✔ fish upgrades settle elapsed income at old rate and cannot overspend (0.518609ms)
+✔ normal wins yield supplies once; losses give none (1.513953ms)
+✔ arena rewards are isolated from patrol and first-clear bonuses cannot repeat (0.85746ms)
+✔ skill study keeps stats and transfers with paid training (2.134022ms)
+✔ fixed scene exposes only useful fish and challenge destinations (0.83028ms)
+✔ rescue removes unfinished attacks from defeated enemies while retaining completed impacts (10.21894ms)
+✔ rescue interruption still removes the boss warning and records success (1.391132ms)
+✔ ranged effects keep their launch point and arrive at a moving target, then stop on the hit clock (2.055445ms)
+✔ projectiles freeze with the battle clock and fall back to recorded target positions when absent (0.536064ms)
+✔ orange support and block impacts cannot duplicate actor-bound shields or populate empty slots (4.775555ms)
+✔ five positions include four ordinary slots and exactly one independent card (16.410904ms)
+✔ equipment affects only wearer, and moving a piece removes prior ownership (1.708912ms)
+✔ two plus two sets activate two bonuses without a four-piece effect (0.843951ms)
+✔ enhancement and reforge debit resources once, preserve main/other substats and respect cap (12.043895ms)
+✔ locked and worn gear cannot be dismantled; normal dismantle never duplicates (1.243683ms)
+✔ old relic stacks migrate once into gear/materials and no longer grant global buffs (8.859917ms)
+✔ full bag converts new drops without replacing existing items; craft fails without spending (2.016197ms)
+✔ saved inventory strips invalid items/owners and keeps card power fixed (1.078037ms)
+✔ equipment and materials have separate page content and original world names (37.150982ms)
+✔ changing equipment waits for the next battle even if training refreshes combat stats (2.197356ms)
+✔ a full enhanced inventory survives save export and import within the size limit (6.351131ms)
+✔ retired speed affixes migrate once without losing their rolls or enhancement (1.414436ms)
+✔ equipment sockets show one icon when worn and one plus when empty (2.404522ms)
+✔ all seven rebuilt companions use full-body artwork (2.506995ms)
+✔ all six rendered actions stay within padded canvas and retain visible painted pixels (792.383043ms)
+✔ blink, hurt and smile alter faces without changing costume or planted feet (72.639981ms)
+✔ idle has rigid skull translation, stable feet, and no whole-body rocking (1.721725ms)
+✔ normal attacks reach the release drawing at actual launch/contact and return to rest (0.341124ms)
+✔ full-body rendering fits the mobile draw-call budget across idle and attacks (7.572455ms)
+✔ full-body art keeps one skull scale and all frame rectangles inside the atlas (0.807647ms)
+✔ cast reaches the release drawing at projectile launch and returns without a second cast (23.506439ms)
+✔ idle deforms continuously, keeps both foot soles planted, and does not fold its mesh (13.951751ms)
+✔ continuous body deformation does not introduce a translucent grid across opaque artwork (408.771504ms)
+✔ blink, focus, hurt and smile change actual facial pixels while the body remains identical (684.901474ms)
+✔ five unique unlocked cats survive save roundtrip; old three-cat saves keep resources and levels (10.688155ms)
+✔ fourth and fifth slots support inherited replacement and swapping without creating training (0.897289ms)
+✔ recruited companions fill free places at level one without copying training (0.523246ms)
+✔ five-cat ordinary hits follow the living front, with no position buff; boss burst hits all five (3.983461ms)
+✔ healing and shield skill events name all five actual recipients (2.885295ms)
+✔ all eight skills publish correct single or group destinations (4.351458ms)
+✔ actual impact replaces an obsolete windup target; cues are read-only and freeze on game time (1.423169ms)
+✔ can rescue clears interrupted boss routes and is attributed to the button rather than the front cat (1.089735ms)
+✔ skill captions remain attributable when several allies cast in one tick (1.043937ms)
+✔ five-person formation has distinct bounded foot positions (0.556484ms)
+✔ ordinary attacks alternate across two front cats and never choose a rear cat (0.535723ms)
+✔ locked front target stays fixed through windup and release, then switches next attack (0.611997ms)
+✔ mixed encounter sizes include five-mob waves and boss with four escorts, with bounded pack pressure (0.223732ms)
+✔ both teams have two forward foot anchors and three grounded rear anchors (0.258983ms)
+✔ skill release carries its named caster, visual type, targets and actual projectile time (0.3175ms)
+✔ enemy healing effects identify the healer and actual recipient (0.501222ms)
+✔ all five slots accept a teammate without compressing empty positions, across reload (7.433804ms)
+✔ downward removal leaves the other cat in place, conserves gear and training, keeps one fighter (3.957093ms)
+✔ finger drops resolve in the gaps around sprites and downward into the bench, never outside (0.333424ms)
+✔ formation exposes only owned companions and five enabled destinations (0.627279ms)
+✔ both equipment lists contain all available items exactly once, including beyond six (15.283756ms)
+{
+  "passed": 7,
+  "checks": [
+    "all six enemy types, including drones, attack only the two living front cats, with backline protected",
+    "the next living teammate takes over after the front falls",
+    "orange intrinsic passive remains, with no position bonus",
+    "boss charged area attack deals equal raw damage in every position",
+    "interrupting boss charge prevents the area hit",
+    "inheritance cannot heal through repeated level transfers",
+    "inheritance does not revive a fallen party member"
+  ]
+}
+✔ tests/frontline.test.mjs (120.984422ms)
+✔ healing stays attached to each recipient, leaves their face clear and ends completely (9.490471ms)
+✔ milk heals all five actual teammates with local light rather than flying milk or heart icons (14.12615ms)
+✔ healing painter works without an atlas and restores the canvas state (0.980423ms)
+{
+  "passed": 16,
+  "checks": [
+    "old saves retain every level and resource; no catch-up is awarded",
+    "recruited partners stay at level one until training is explicitly inherited",
+    "replacement preview describes both sides before any mutation",
+    "replacement inherits training without spending or creating levels",
+    "an already trained recruit preserves its investment on the outgoing cat",
+    "swapping back restores original training and lineup",
+    "moving existing party members does not transfer their levels",
+    "a stronger newcomer is not downgraded by replacing a weaker cat",
+    "empty slots add a cat without an inheritance donor",
+    "explicit inheritance supports already deployed recruits and keeps positions",
+    "locked, unknown, same-cat, equal-level and downgrade transfers are rejected",
+    "repeated transfers conserve all paid investment and cannot farm rewards",
+    "a paid upgrade after inheritance charges the inherited level cost once",
+    "save export/import retains inheritance and the first-use hint flag",
+    "level cap and active combat stats remain valid after explicit inheritance",
+    "rescue matches its label: twenty percent healing, enemy damage, interrupt, no coins"
+  ]
+}
+✔ tests/inheritance.test.mjs (150.219317ms)
+✔ all displayed equipment values and character stat amounts are integers, including percent rates (3.827971ms)
+✔ combat retains integer hp, damage, healing, shields, energy and defense throughout mixed battles (166.454262ms)
+✔ offline income uses whole coins with a saved integer remainder and no frequent-claim inflation (5.671503ms)
+✔ burn damage is stable across 30 and 60 frames with integer remainder accumulation (4.81237ms)
+✔ legacy gear roll decimals migrate once; equipped ownership and all item IDs survive (5.388569ms)
+✔ backpack and per-slot lists exclude every worn item; replacing equipment returns the old item (18.418459ms)
+✔ each set has a shared name and four distinct connected story fragments, placed last (4.334031ms)
+✔ finished contracts return once to the correct selection and manual actions cancel the return (0.49943ms)
+✔ failed and timed out images retry, reuse a loaded image, and cap concurrent downloads (1.162082ms)
+✔ actual battle hits produce visible numbers without a Web Animations API, pause and expire once (5.020288ms)
+✔ combat text stays in bounds and remains bounded under many simultaneous hits (0.358892ms)
+✔ collection thumbnails do not instantiate combat canvases or animation loops (0.218594ms)
+✔ cached artwork is served without waiting for a failed network (6.058606ms)
+✔ service worker install only requests the shell and survives one failed shell file (1.651767ms)
+✔ blocked cache storage still permits live resource loading (1.814718ms)
+✔ slow navigation falls back to the cached shell rather than hanging (1.509055ms)
+{
+  "passed": 7,
+  "checks": [
+    "windup and release cause no damage; impact damages exactly once",
+    "stun cancels a pending strike before impact",
+    "death during anticipation prevents a ghost attack",
+    "if front falls in windup, enemy impact targets the next living front",
+    "pause leaves pose, projectile phase and health unchanged",
+    "all eight skills use anticipation and release poses, execute once",
+    "frame-rate slicing produces equal normal attack count and damage"
+  ]
+}
+✔ tests/motion.test.mjs (108.630239ms)
+✔ ranged normal attacks remain at formation while melee approaches, holds and returns continuously (6.041982ms)
+✔ scrollable inventory includes every unequipped item once without pages (21.134213ms)
+✔ main campaign can be cleared by higher training or a lower-level complementary team (229.2294ms)
+✔ all eight idle performances move distinctly while keeping the foot anchor fixed (16.854512ms)
+✔ one-speed is calmer and two-speed keeps an exact two-to-one clock ratio (0.372452ms)
+✔ release and impact timestamps remain aligned across coarse and fine ticks (7.761179ms)
+✔ projectiles arrive at their actual targets and never continue past the hit (0.608011ms)
+✔ render sampling at a frozen clock cannot advance idles or projectiles (2.663377ms)
+✔ rear battle canvases survive stale offscreen/zero-size reports and a lost graphics surface (37.980954ms)
+✔ only explicit full-view SDK callback completes; concurrent request cannot share a reward (3.074925ms)
+✔ early close and legacy undefined close never grant (9.941019ms)
+✔ load/show failure, platform error and missing placement fail closed (1.976058ms)
+✔ timeout retires session; late callbacks cannot reward a future video (0.864ms)
+✔ dispose during load cancels and never opens video (1.563287ms)
+✔ completed video boosts business; duplicate completion and cancelled video give nothing (10.928682ms)
+✔ five optional boosts per Beijing day, cooldown, backward clock and next-day recovery (0.392872ms)
+✔ two early boosts fund stall upgrade that increases future idle rate (0.521363ms)
+✔ old saves start with an unused boost allowance (0.800015ms)
+✔ a video crossing midnight settles once into the new day (0.233916ms)
+✔ all actors keep planted feet and have moving head, hand, or body points (27.1264ms)
+✔ normal and skill motion is continuous at anticipation, release, hold and recovery boundaries (6.849739ms)
+✔ all action channels remain finite and follow through after impact (17.147286ms)
+✔ hit reaction rises and recovers continuously instead of selecting a still frame (0.691013ms)
+✔ render blending freezes on pause and eases interruptions without overshoot (0.43175ms)
+✔ incapacitated partners keep their original position and full scale (3.838077ms)
+✔ followup adds exactly 40 percent attack once per four normals, without recursive attacks (8.769714ms)
+✔ focus restores six energy and has an eight second cooldown (1.095423ms)
+✔ steadfast grants eight percent shield once only; fatal damage does not resurrect (1.421456ms)
+✔ card damage bonus applies only to direct hits; shield gain is one bounded event (0.692456ms)
+✔ Shidun self-shield receives the card bonus once without faking a second shield trigger (2.269101ms)
+✔ Shidun hits one front and its two rear slots, without filling empty slots (2.671227ms)
+✔ charge is visible before second shield, punch damage happens once at impact on at most three targets (11.651152ms)
+✔ full energy adds shield during charge; control cancels pending punch (2.033693ms)
+✔ pressure effects share frozen simulation time and impact ends within a bounded envelope (0.589643ms)
+✔ self shield completes a second punch without ally shields or incoming attacks (3.249494ms)
+✔ charge energy uses simulation time and stops after interruption (0.853154ms)
+✔ charge survives past four seconds and later shield still releases the punch (6.974914ms)
+✔ partial shield damage preserves charge; breaking shield cancels even a primed punch (1.478331ms)
+✔ punch release clears shields but preserves locked damage (2.419936ms)
+✔ level-one companions can study and promote; insufficient materials spend nothing (5.426331ms)
+✔ all eight active skills gain real battle effects with skill level (53.131721ms)
+✔ badge promotion does not change active coefficients or grant the retired star skill perks (3.704499ms)
+✔ normal progression never grants a new companion; targeted recruitment consumes exactly twenty tokens once (10.935773ms)
+✔ legacy save preserves formerly available companions, training and breakthroughs without regranting on reload (1.16076ms)
+✔ beginner can actually earn the first new companion with the starter pair and no stamina payment (27.9629ms)
+✔ star growth and breakthrough spend each material atomically and have bounded caps (0.496375ms)
+✔ training inheritance transfers breakthrough but keeps personal stars and tokens (0.268428ms)
+✔ activity gates reject invalid, skipped or locked requests; cleared material stages remain replayable (0.603424ms)
+✔ activity rewards do not advance the main campaign and cannot duplicate first clear or failed fights (0.406272ms)
+✔ pursuit routes progress independently and continue after high danger milestones (0.34371ms)
+✔ mixed damage resets adaptive defense while repeating one type loses damage (4.942072ms)
+✔ burn blocks cold-store barrier and control stops the backline healer (1.278254ms)
+✔ ambush chooses a rear ally and a fully absorbed hit does not drain energy (0.738224ms)
+✔ eight partners have four skills including two level-gated passives (1.157385ms)
+✔ orange adds shield and energy while milk converts overheal and removes burn (4.65719ms)
+✔ spark applies stronger burning and healing reduction (0.91771ms)
+✔ mint lowers magic resistance; bolt normals lower but never restore armor (0.838792ms)
+✔ ink gains energy on kill; star gives opening and skill energy to others (0.50615ms)
+✔ rounds grant one exclusive action lane, including bosses and shield punches (82.592485ms)
+✔ a dead queued unit is skipped and a stun consumes its place without striking (3.942111ms)
+✔ companion chooser contains owned partners only (0.562844ms)
+✔ turn order alternates formation slots and ignores obsolete speed fields (8.266567ms)
+✔ the retired crescent is absent from melee, ranged and warning effects (2.565511ms)
+✔ physical contact marks expand locally and finish quickly without a traveling blade (1.53164ms)
+✔ cancelled projectiles vanish immediately while completed impacts finish and clean up (1.509015ms)
+✔ all particle trajectories freeze on pause and yield identical frames at any sampling rate (6.930368ms)
+✔ all effects have finite transforms, distinct artwork and complete disappearance (15.735926ms)
+✔ persistent shields and statuses follow moving actors and stop after death or break (0.598707ms)
+✔ real five versus five combat renders every skill and cleans bounded effect state (73.270824ms)
+✔ Wrench keeps saves under bolt but uses ranged normals and melee armor-break skills (1.132307ms)
+✔ throw follows a true parabola and rotates continuously, including reversed direction (1.158536ms)
+✔ throw opens the hand at release, draws one spinning wrench, and damages only on landing (4.420289ms)
+ℹ tests 192
+ℹ suites 0
+ℹ pass 192
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6079.513628
