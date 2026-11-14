@@ -199,3 +199,18 @@ body{background:radial-gradient(ellipse at 22% 30%,#56404d,#292535 75%);color:#f
 .crew-view[data-mode="equipment"] .equipped-set-tags{top:228px}
 .crew-view[data-mode="equipment"] .equipment-bag{min-height:252px}
 @media(max-width:350px){.crew-view[data-mode="equipment"] .equipment-character{top:72px}}
+
+/* Ground the portrait and keep related equipment content together. */
+.crew-view[data-mode="equipment"] #crew-detail{flex:0;padding-top:0}
+.crew-view[data-mode="equipment"] .equipment-heading{margin:5px 0;padding:0 0 7px}
+.crew-view[data-mode="equipment"] .equipment-layout{margin-top:9px}
+.crew-view[data-mode="equipment"] .crew-equipment{padding-bottom:0}
+.crew-view[data-mode="equipment"]>.crew-roster{margin-top:12px}
+.crew-view[data-mode="equipment"] .equipment-character:before{content:'';position:absolute;left:50%;bottom:2%;transform:translateX(-50%);width:105%;height:14%;border:1px solid #b38a50;border-bottom:3px solid #a77d47;border-radius:50%;background:#d3b176;box-shadow:0 4px 4px #75522f26;z-index:-1}
+.crew-view[data-mode="equipment"] .equipment-stage{background:radial-gradient(ellipse at 50% 43%,#fff0cf 0%,#efdaa9 42%,#dfbd81 100%)}
+.crew-view[data-mode="equipment"] .equipped-set-tags{display:none}
+.crew-view[data-mode="equipment"] .equipment-stage{min-height:235px}
+.crew-view[data-mode="equipment"] .equipment-bag{min-height:235px}
+.equipment-set-strip{margin-top:9px;padding:8px 10px;border:1px solid #b78d52;border-radius:8px;background:#e5c68d;color:#72502b}
+.equipment-set-strip:empty{display:none}.equipment-set-strip>div{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-size:10px;line-height:1.5}.equipment-set-strip b{font-size:12px}.equipment-set-strip small{font-size:10px;font-weight:400}.equipment-set-strip span{color:#896e49}.equipment-set-strip .active{color:#62401d}
+.crew-view[data-mode="equipment"] .equipment-layout{align-items:stretch}
