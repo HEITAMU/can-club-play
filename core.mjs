@@ -11,7 +11,7 @@ import {normalizeCampaign,recordActivity,weeklyInfo,settleWeekly} from './campai
 import {normalizeAdRewards} from './rewarded-economy.mjs?v=0.25.0';
 import {normalizeProgression,stallLevel,stallQuote,idleMinutes,suppliesFor,levelCap,breakthroughQuote,arenaInfo,arenaOpen} from './progression.mjs?v=0.25.0';
 export {STALL_UPGRADES,STALL_MAX,ARENA_MAX,ARENA_UNLOCK,stallQuote,idleMinutes,suppliesFor,levelCap,breakthroughQuote,arenaInfo,arenaOpen} from './progression.mjs?v=0.25.0';
-import {shidunTargets} from './shidun-motion.mjs?v=0.25.0';
+import {shidunTargets,shidunTarget} from './shidun-motion.mjs?v=0.25.0';
 import {SHIELD_PUNCH_DEFAULTS,createShieldPunch,gainShield,tickShieldPunch,controlShieldPunch,absorbShieldDamage} from './shield-punch.mjs?v=0.25.0';
 import {actionTiming,attackStyle} from './motion.mjs?v=0.25.0';
 import {CAN_TIMING,canHitAt,canDuration,canTargetOrder} from './can-timing.mjs?v=0.25.0';
@@ -24,7 +24,7 @@ export const CATS=[
  {id:'spark',name:'火花',job:'群体灼烧',tag:'爆发',color:'#d98f75',accent:'#8f494b',unlock:8,hp:112,atk:27,skill:'提灯燎原',desc:'对全体敌人造成 160% 攻击力的法术伤害，并施加每秒 30% 攻击力的法术灼烧。',passive:'5 级：灼烧持续时间从 4 秒提高到 6 秒。',quote:'灯还亮着，跟紧我。',gear:'goggles'},
  {id:'mint',name:'薄荷',job:'眩晕控制',tag:'控制',color:'#a9d4c1',accent:'#4a8d83',unlock:15,hp:133,atk:22,skill:'冰镇气泡',desc:'优先打断蓄力中的敌人，其次压制治疗者，造成 230% 攻击力的法术伤害，眩晕 1800 毫秒并打断蓄力。',passive:'5 级：眩晕时间提高到 2600 毫秒。',quote:'别急，先冷静一下。',gear:'hood'},
  {id:'bolt',name:'扳手',job:'破甲专家',tag:'破甲',color:'#adbacb',accent:'#636e8b',unlock:25,hp:162,atk:24,skill:'扳手大修',desc:'先降低目标 40% 当前护甲（最多降低开场护甲的 80%），再造成 300% 攻击力的物理伤害。',passive:'5 级：护甲降低幅度提高到 60%。',quote:'修不好，就再拧一下。',gear:'helmet'},
- {id:'pudding',name:'石墩',job:'前排输出',tag:'输出',color:'#757780',accent:'#c69358',unlock:40,hp:235,atk:22,skill:'护体劲 · 震街拳',desc:'满能量获得自身生命 35% 的护盾。盾量达到生命 30% 后蓄力；期间再获得生命 15% 的护盾，向目标所在前排及其身后两名后排打出重拳，最多 3 个目标，伤害为 100% 攻击＋锁定盾量的 160%。蓄力无时限，被控制或护盾被打空时中断；出拳时清空护盾，伤害按清空前锁定盾量计算；重拳间隔 8 秒。',passive:'护盾吸收伤害回复 12 能量，间隔 1000 毫秒；蓄力每秒回复 35 能量，满能量再次加盾并触发重拳。',quote:'站稳，再出拳。',gear:'cape'},
+ {id:'pudding',name:'石墩',job:'前排输出',tag:'输出',color:'#757780',accent:'#c69358',unlock:40,hp:235,atk:22,skill:'护体劲 · 震街拳',desc:'满能量获得自身生命 35% 的护盾。盾量达到生命 30% 后蓄力；期间再获得生命 15% 的护盾，对位有人时原地出拳，对位空缺时移至另一目标前方，攻击对应前排及其身后上下两名后排，最多 3 个目标。对应前排空缺时改打另一前排；前排全部倒下后随机攻击一名后排，伤害为 100% 攻击＋锁定盾量的 160%。蓄力无时限，被控制或护盾被打空时中断；出拳时清空护盾，伤害按清空前锁定盾量计算；重拳间隔 8 秒。',passive:'护盾吸收伤害回复 12 能量，间隔 1000 毫秒；蓄力每秒回复 35 能量，满能量再次加盾并触发重拳。',quote:'站稳，再出拳。',gear:'cape'},
  {id:'star',name:'星斑',job:'能量辅助',tag:'支援',color:'#c4b1df',accent:'#78669f',unlock:60,hp:150,atk:19,skill:'今晚有星星',desc:'为其他队友回复 36 能量，并治疗相当于星斑攻击 160% 的生命。',passive:'5 级：开场拥有 40 点能量。',quote:'许个愿，然后自己去实现。',gear:'wizard'}
 ];
 export const RELICS=[
@@ -178,7 +178,7 @@ export class Battle {
  frontlines(){const alive=this.alive('p'),front=alive.filter(h=>h.formationSlot<2);return front.length?front:alive.slice(0,2);}
  frontline(){return this.frontlines()[0]||null;}
  emit(type,from,to,value=0,extra={}){this.events.push({type,at:this.eventAt??this.time,from:from?.id,to:to?.id,value:Math.round(value),serial:++this.fxSerial,...extra,...(this.canEvent?{rescue:true}: {})});}
- harm(target,raw,source,{crit=false,type=source?.normalDamageType||'physical',bonusPen=0,reflect=true,dot=false}={}){
+ harm(target,raw,source,{crit=false,type=source?.normalDamageType||'physical',bonusPen=0,reflect=true,dot=false,element}={}){
   if(!target||target.hp<=0)return 0;const ramp=1000000+Math.max(0,integer(this.time*1000)-40000)*25;target.hp=integer(target.hp);target.shield=integer(target.shield);
   let amount=mulDiv(mitigatedDamage(integer(raw),target,source,type,bonusPen),ramp,1000000);
   if(target.catId==='orange'&&target.level>=5)amount=mulDiv(amount,85);
@@ -192,7 +192,7 @@ export class Battle {
   if(source?.gearSets?.includes('ember')&&target.burnTime>0)amount=mulDiv(amount,125);
   if(!dot&&source?.rune==='ember'&&target.burnTime>0)amount=mulDiv(amount,108);
   const shield=Math.min(target.shield,amount);target.shield-=shield;amount-=shield;const hit=Math.min(target.hp,amount);target.hp=Math.max(0,target.hp-amount);
-  this.emit(dot?'burn':'hit',source,target,hit+shield,{crit,shield:shield>0,damageType:type,cause:dot?'burn':!reflect?'reflect':source?.action?.kind||'normal'});
+  this.emit(dot?'burn':'hit',source,target,hit+shield,{crit,shield:shield>0,damageType:type,damageElement:element||(dot?'fire':type==='magic'?(source?.catId==='spark'?'fire':source?.catId==='mint'?'ice':'magic'):'physical'),dot,cause:dot?'burn':!reflect?'reflect':source?.action?.kind||'normal'});
   if(!dot)target.hitUntil=(this.eventAt??this.time)+.22;
   if(target.hp<=0){target.downAt=this.eventAt??this.time;target.action=null;this.emit('down',source,target);if(target.side==='e')this.kills++;if(source?.catId==='ink'&&source.level>=80)source.energy=Math.min(100,source.energy+35);}
   const at=this.eventAt??this.time,hitEnergy=target.side==='p'&&source?.side==='e'&&target.hp>0&&hit+shield>0&&!dot&&reflect&&at>=(target.hitEnergyAt??-Infinity)+1;
@@ -209,11 +209,11 @@ export class Battle {
   for(const e of events){
    if(e.type==='shieldGain')this.emit('shield',h,h,e.amount,{at:e.at});
    if(e.type==='selfShield'){h.selfShieldRound=this.round;if(h.action?.kind==='normal')h.action=null;if(this.turnActor===h.id)this.turnStarted=true;this.emit('skill',h,h,0,{text:'护体劲',targets:[h.id],at:e.at});this.runeSkill(h);}
-   if(e.type==='chargeStart'){h.shieldTargetId=this.targetFor(h)?.id;h.action=null;this.emit('status',h,h,0,{text:'蓄盾',at:e.at});}
+   if(e.type==='chargeStart'){h.shieldTargetId=this.enemies[h.formationSlot===1||h.formationSlot===4?1:0]?.id;h.action=null;this.emit('status',h,h,0,{text:'蓄盾',at:e.at});}
    if(e.type==='secondTrigger')this.emit('status',h,h,0,{text:'震街拳就绪',at:e.at});
    if(e.type==='cancel'){h.action=null;this.emit('cancel',h,h,0,{at:e.at});}
-   if(e.type==='punchStart'){this.turnActor=h.id;this.turnStarted=true;const target=this.enemies.find(x=>x.id===h.shieldTargetId&&x.hp>0)||this.alive('e')[0];h.shieldTargetId=target?.id;h.action={kind:'skill',windup:0,travel:sp.config.punchTravel,impactAt:sp.config.punchTravel,hold:.08,duration:sp.config.punchTravel+sp.config.recovery,elapsed:Math.max(0,this.time-e.at),released:true,impacted:false,targetId:target?.id,shieldStrike:true};this.emit('windup',h,target,0,{kind:'skill',style:'melee',windup:0,at:e.at});this.emit('release',h,target,0,{kind:'skill',style:'melee',travel:sp.config.punchTravel,at:e.at});}
-   if(e.type==='punchHit'){if(h.level>=80){h.energy=Math.min(100,h.energy+20);sp.energy=h.energy;}h.shidunImpactAt=e.at;this.eventAt=e.at;this.emit('skill',h,h,0,{text:'震街拳',targets:shidunTargets(this.enemies,h.shieldTargetId).map(x=>x.id),shieldPunch:true});for(const enemy of shidunTargets(this.enemies,h.shieldTargetId))this.harm(enemy,mulDiv(h.atk,skillTuning(h.skillRank).puddingHit)+mulDiv(e.shieldAtSecond,skillTuning(h.skillRank).puddingShieldHit),h,{type:'physical'});this.eventAt=null;if(h.action)h.action.impacted=true;}
+   if(e.type==='punchStart'){this.turnActor=h.id;this.turnStarted=true;const target=shidunTarget(this.enemies,h.shieldTargetId,this.rng);h.shieldTargetId=target?.id;h.action={kind:'skill',windup:0,travel:sp.config.punchTravel,impactAt:sp.config.punchTravel,hold:.08,duration:sp.config.punchTravel+sp.config.recovery,elapsed:Math.max(0,this.time-e.at),released:true,impacted:false,targetId:target?.id,shieldStrike:true,shieldReposition:target?.id!==this.enemies[h.formationSlot===1||h.formationSlot===4?1:0]?.id};this.emit('windup',h,target,0,{kind:'skill',style:'melee',windup:0,at:e.at});this.emit('release',h,target,0,{kind:'skill',style:'melee',travel:sp.config.punchTravel,at:e.at});}
+   if(e.type==='punchHit'){const target=shidunTarget(this.enemies,h.shieldTargetId,this.rng);h.shieldTargetId=target?.id;if(h.action)h.action.targetId=target?.id;const targets=shidunTargets(this.enemies,h.shieldTargetId);if(h.level>=80){h.energy=Math.min(100,h.energy+20);sp.energy=h.energy;}h.shidunImpactAt=e.at;h.shidunHitTargets=targets.map(x=>x.id);this.eventAt=e.at;this.emit('skill',h,h,0,{text:'震街拳',targets:targets.map(x=>x.id),shieldPunch:true});for(const enemy of targets)this.harm(enemy,mulDiv(h.atk,skillTuning(h.skillRank).puddingHit)+mulDiv(e.shieldAtSecond,skillTuning(h.skillRank).puddingShieldHit),h,{type:'physical'});this.eventAt=null;if(h.action)h.action.impacted=true;}
    if(e.type==='normal'){h.action=null;h.wait=Math.max(h.wait,.25);}
   }
  }

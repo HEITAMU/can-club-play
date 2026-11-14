@@ -1,3 +1,4 @@
+import {damageTextStyle} from '../../damage-text-style.mjs';
 import {groundFootY} from '../../battlefield-space.mjs';
 import {STREET_GROUPS,streetChoices,streetSelection,activityDrops} from '../../street-ui.mjs';
 import {activityInfo,activityReward,rewardText} from '../../activities.mjs';
@@ -738,18 +739,19 @@ export class NativeGame {
     for (const e of this.hitTexts) {
       const p = centers[e.to];
       if (!p) continue;
-      const u = (t - e.born) / 0.9;
+      const u = (t - e.born) / 0.9, damageStyle=damageTextStyle(e);
       c.globalAlpha = 1 - Math.max(0, (u - 0.6) / 0.4);
       text(
         c,
-        (e.type === "heal" ? "+" : "") + fmt(e.value),
+        (e.type === "heal" ? "+" : "") + fmt(e.value)+(e.type === "heal"?"":damageStyle.suffix),
         (p.x * w) / 100,
         (p.y * ah) / 100 - 25 - u * 24,
-        e.crit ? 13 : 10,
-        e.type === "heal" ? "#dcf2a9" : e.crit ? "#ffe1a3" : "#fff1d6",
-        850,
+        damageStyle.size,
+        e.type === "heal" ? "#dcf2a9" : damageStyle.color,
+        e.type === "heal" ? 800 : damageStyle.weight,
         "center",
       );
+      if(e.type!=="heal"&&damageStyle.icon){const img=this.art.image(damageStyle.icon.slice(2));if(img){const tw=c.measureText(fmt(e.value)).width,sz=damageStyle.size;c.drawImage(img,(p.x*w)/100+tw/2+2,(p.y*ah)/100-25-u*24-sz/2,sz,sz);}}
     }
     c.globalAlpha = 1;
     if (b.result) {

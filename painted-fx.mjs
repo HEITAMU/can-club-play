@@ -58,7 +58,7 @@ export class CombatEffects{
   }
   for(const {entry,actor} of this.guards){const p=centers[actor.id];if(p)particles.push(...sampleGuard(entry,actor,time,{x:p.x*w/100,y:p.y*h/100},sizes[actor.id]||50));}
   for(const actor of this.statuses){const p=centers[actor.id];if(p)particles.push(...sampleStatus(actor,time,{x:p.x*w/100,y:p.y*h/100},sizes[actor.id]||50));}
-  for(const actor of this.statuses){const p=centers[actor.id];if(p)particles.push(...sampleShidun(actor,time,{x:p.x*w/100,y:p.y*h/100},sizes[actor.id]||50,w,h,feet[actor.id]));}
+  for(const actor of this.statuses){const p=centers[actor.id];if(p)particles.push(...sampleShidun(actor,time,{x:p.x*w/100,y:p.y*h/100},sizes[actor.id]||50,w,h,feet[actor.id],centers,sizes));}
   this.bursts=this.bursts.filter(b=>time-b.born<b.duration);
   for(const b of this.bursts)particles.push(...sampleImpact(b.style,{x:b.point.x*w/100,y:b.point.y*h/100},b.size,time-b.born,b.duration,b.seed));
   this.particles=particles.sort((a,b)=>a.layer-b.layer);

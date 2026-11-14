@@ -43,7 +43,7 @@ export class BattleCues{
    }
    if(e.rescue){const r=this.routes.get('can-rescue');if(r&&e.type==='hit'&&positions[e.to])r.contacts[e.to]={...positions[e.to]};continue;}
    const a=byId(e.from);if(!a)continue;const at=e.at??b.time,tone=a.side==='e'?'enemy':'attack';
-   if(e.type==='windup'||e.type==='release'){
+   if((e.type==='windup'||e.type==='release')&&!(a.catId==='pudding'&&a.action?.shieldStrike)){
     const duration=e.type==='windup'?(e.windup||.4)+.06:(e.travel||.29)+.05+(a.catId==='ink'&&e.kind==='skill'?.24:0),extra={style:attackStyle(a,e.kind),travel:e.travel||.29,kind:e.kind,profile:catAction(a.catId,e.kind)?.id};
     if(e.kind==='normal')this.addRoute(a.id,a.id,[e.to],'普攻',tone,at,positions,e.type,duration,extra);
     else {
@@ -59,9 +59,9 @@ export class BattleCues{
    if(e.type==='skill'){
     const info=CATS.find(c=>c.id===a.catId),targets=e.targets||[],friends=targets.filter(id=>id.startsWith('p')),foes=targets.filter(id=>id.startsWith('e'));
     this.routes.delete(a.id);
-    if(foes.length)this.addRoute(a.id,a.id,foes,e.text,tone,at,positions,'impact',.82,{style:attackStyle(a,'skill'),kind:'skill',profile:catAction(a.catId,'skill')?.id});
+    if(foes.length&&!e.shieldPunch)this.addRoute(a.id,a.id,foes,e.text,tone,at,positions,'impact',.82,{style:attackStyle(a,'skill'),kind:'skill',profile:catAction(a.catId,'skill')?.id});
     if(friends.length)this.addRoute(a.id+'-support',a.id,friends,e.text,a.catId==='star'?'energy':'support',at,positions,'impact',a.catId==='milk'?1.32:1.05,{kind:'skill',profile:catAction(a.catId,'skill')?.id,style:['orange','pudding'].includes(a.catId)?'shield':a.catId==='star'?'star':'heal'});
-    this.log(a.name,info.skill,targets.length===1?name(targets[0]):friends.length&&foes.length?'敌方＋全队':friends.length?'我方全队':a.catId==='pudding'?'穿线＋双前排':'敌方全体',skillEffect[a.catId],friends.length?'support':'attack',at,true);
+    this.log(a.name,info.skill,targets.length===1?name(targets[0]):friends.length&&foes.length?'敌方＋全队':friends.length?'我方全队':a.catId==='pudding'?'前排及身后两格':'敌方全体',skillEffect[a.catId],friends.length?'support':'attack',at,true);
    }
    if(e.type==='heal'&&!casters.has(e.from)){
     const label=a.side==='e'?'纸袋修补':'吸血回复';

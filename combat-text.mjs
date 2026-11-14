@@ -1,3 +1,4 @@
+import {damageTextStyle} from './damage-text-style.mjs';
 // Explicit battle-clock animation works without Web Animations / CSS translate.
 export class CombatText {
  constructor(layer){this.layer=layer;this.items=[];}
@@ -5,7 +6,7 @@ export class CombatText {
  consume(events,positions,time){
   for(const e of events){const p=positions[e.to];if(!p)continue;
    if((e.type==='hit'||e.type==='burn')&&e.value>0){
-    this.spawn((e.crit?'暴击 ':'')+e.value,p.x+(e.serial%3-1)*2,p.y-6,'float-text'+(e.damageType==='magic'?' magic':'')+(e.crit?' crit':''),time);
+    const style=damageTextStyle(e),el=this.spawn(e.value+style.suffix,p.x+(e.serial%3-1)*2,p.y-6,'float-text'+(style.crit?' crit':'')+(style.dot?' dot':''),time);el.style.color=style.color;el.style.fontWeight=String(style.weight);if(style.icon){const icon=this.layer.ownerDocument.createElement('img');icon.src=style.icon;icon.alt='暴击';icon.style.cssText='width:1em;height:1em;margin-left:2px;vertical-align:-.12em;object-fit:contain';el.appendChild(icon);}
    }
    if(e.type==='heal'&&e.value>2)this.spawn('+'+e.value,p.x,p.y-5,'float-text heal',time);
    if(e.type==='shield'&&e.value>0)this.spawn('护盾 +'+e.value,p.x,p.y-5,'float-text status',time);

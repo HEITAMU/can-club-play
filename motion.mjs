@@ -42,7 +42,13 @@ export function poseFor(a,time){
 }
 export function travelOffset(actor,pose,source,target,width,height,bodySize=130,targetSize=110,time=0){
  let x=0,y=0;
- if(actor.action?.shieldStrike)return {x:0,y:0};
+ if(actor.action?.shieldStrike&&source&&target){
+  const a=actor.action;if(!a.shieldReposition)return {x:0,y:0};const approachEnd=a.impactAt*.65,returnAt=a.impactAt+(a.hold||0);
+  const move=a.elapsed<approachEnd?smooth(a.elapsed/approachEnd):a.elapsed<returnAt?1:1-smooth((a.elapsed-returnAt)/(a.duration-returnAt));
+  // Meet the target's row at the centre line; stay in front of its body.
+  const destination=Math.min(width*.36,target.x*width/100-(bodySize+targetSize)*.22);
+  return {x:(destination-source.x*width/100)*move,y:(target.y-source.y)*height/100*move};
+ }
  if(actor.action&&source&&target){
   const dx=(target.x-source.x)*width/100,dy=(target.y-source.y)*height/100,distance=Math.hypot(dx,dy),melee=attackStyle(actor)==='melee';
   const reach=melee?Math.max(0,(distance-(bodySize+targetSize)*.22)):0;

@@ -33,6 +33,8 @@ const list = [
   "finished/pudding-v0216.webp",
   "painted/enemies-a.webp",
   "painted/carriers-v02652.webp",
+  "ui/critical-physical-v02656.webp",
+  "ui/critical-magic-v02656.webp",
   "painted/enemies-b.webp",
   "painted/enemies-c.webp",
   "painted/items.webp",

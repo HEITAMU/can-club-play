@@ -27,7 +27,8 @@ export function renderPuppetFrame(ctx,id,pose,atlas,width,height,enemySource=nul
  ctx.translate(.5,foot+pose.sink);ctx.rotate(pose.lean*.45);ctx.scale(1-pose.breath*.28,1+pose.breath*.55);ctx.translate(-.5,-foot);
  if(CARRIER_ART[id])paintCarrier(ctx,atlas,id,pose);
  else if(ANATOMY[id])drawAnatomy(ctx,id,pose,atlas,face);
- else if(enemySource){ctx.translate(.5,foot);ctx.rotate(pose.head*.35);ctx.scale(1+pose.reach*.4,1-pose.breath*.25);ctx.translate(-.5,-foot);ctx.drawImage(atlas,...enemySource,0,0,1,1);}
+ else if(enemySource){ctx.translate(.5,foot);ctx.rotate(pose.head*.35);ctx.scale(1+pose.reach*.4,1-pose.breath*.25);ctx.translate(-.5,-foot);// The box source faces left; normalize it before the battlefield target flip.
+ if(id==='box'){ctx.translate(1,0);ctx.scale(-1,1);}ctx.drawImage(atlas,...enemySource,0,0,1,1);}
  ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;
 }
 export function drawRig(el,id,pose,face,renderSize,frameTime){
