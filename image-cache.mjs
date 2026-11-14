@@ -1,6 +1,6 @@
 // A shared, bounded queue. A failed request never becomes a permanent blank sprite.
 export class ImageCache {
- constructor({createImage=()=>new Image(),now=()=>Date.now(),schedule=setTimeout,cancel=clearTimeout,concurrency=3,timeout=12000}={}){
+ constructor({createImage=()=>new Image(),now=()=>Date.now(),schedule=(fn,ms)=>setTimeout(fn,ms),cancel=id=>clearTimeout(id),concurrency=3,timeout=12000}={}){
   Object.assign(this,{createImage,now,schedule,cancel,concurrency,timeout});this.entries=new Map();this.active=0;this.queue=[];
  }
  get(url,priority=0){
