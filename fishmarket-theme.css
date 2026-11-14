@@ -1,0 +1,64 @@
+/* Fish-market palette: harbor blue, dusk plum, lantern gold and canvas cream. */
+.game-shell{background:#263e50;border-color:#8b7880}
+.game-shell #main,.game-shell #other-view,.game-shell .view-padding,.game-shell .crew-view,.game-shell .bag-page{background:#293f51;color:#eee0c5}
+.game-shell .bottom-nav{background:#514452;border-top:1px solid #aa896b}
+.game-shell .bottom-nav button{background:#635563;border-color:#8c7882;color:#e5d7c4}
+.game-shell .bottom-nav button.active{background:#b48a48;border-color:#eed091;color:#fff4d4;box-shadow:inset 0 1px #f9dc9d}
+.game-shell .crew-modes,.game-shell .bag-tabs{background:#514453;border:1px solid #82707c;border-radius:10px;padding:4px;gap:5px;box-shadow:0 3px 8px #14263133}
+.game-shell .crew-modes button,.game-shell .bag-tabs button{background:transparent;color:#dacdbd;border:0;border-radius:7px;box-shadow:none;min-height:37px}
+.game-shell .crew-modes button[aria-pressed=true],.game-shell .bag-tabs button[aria-selected=true]{background:#d2a65e;color:#342d30;border:0;box-shadow:inset 0 1px #f5d593;font-weight:800}
+.crew-view[data-mode="profile"] .crew-hero{background:radial-gradient(ellipse at 50% 62%,#f1c77b 0,#c69659 40%,#78564e 100%);border:1px solid #e2b879;box-shadow:inset 0 1px #edce96,0 3px 9px #17273255}
+.crew-view[data-mode="profile"] .crew-hero:after{display:none}
+.crew-view[data-mode="profile"] .crew-identity h3{color:#fff0d0;font-size:18px}
+.crew-view[data-mode="profile"] .crew-level,.crew-view[data-mode="profile"] .crew-identity .rank-badge{color:#f8e3bb}
+.crew-view[data-mode="profile"] .crew-hero .crew-upgrade{background:#e1b25e;color:#392d29;border-color:#f5d392;border-bottom-color:#9f6d37;box-shadow:0 2px 4px #47332b40}
+.crew-view[data-mode="profile"] .crew-hero .crew-upgrade:disabled{background:#867365;color:#eadcc6;border-color:#ab9580}
+.crew-view[data-mode="profile"] .crew-attributes{background:#344d60;border-color:#68818c;box-shadow:inset 0 1px #879c9b44}
+.crew-view[data-mode="profile"] .crew-attributes .crew-section-label{border-color:#84969855}
+.crew-view[data-mode="profile"] .crew-attributes .crew-section-label h4{color:#f1dbb2}
+.crew-view[data-mode="profile"] .crew-attributes dl>div{border-color:#8b9d9f33}
+.crew-view[data-mode="profile"] .crew-attributes dt{color:#d1d9d4}
+.crew-view[data-mode="profile"] .crew-attributes dd{color:#f3cf86}
+.crew-view[data-mode="profile"] .crew-growth .skill-study{background:#375d62;border:1px solid #779e98;border-left:4px solid #a5cab2;box-shadow:none}
+.crew-view[data-mode="profile"] .crew-growth .badge-promotion{background:#605164;border:1px solid #998598;border-left:4px solid #d2b079;box-shadow:none}
+.crew-view[data-mode="profile"] .crew-growth .crew-breakthrough h4{color:#fff0ce}
+.crew-view[data-mode="profile"] .crew-growth .crew-breakthrough h4 small{color:#d0d5cb}
+.crew-view[data-mode="profile"] .crew-growth .growth-effect{color:#ecdfc7}
+.crew-view[data-mode="profile"] .crew-growth .growth-effect.next{color:#d3e9cf}
+.crew-view[data-mode="profile"] .crew-growth .growth-material{background:#e8d9bd;border-color:#af9e7e;box-shadow:none}
+.crew-view[data-mode="profile"] .growth-footer>button.primary{background:#d2a25b;border-color:#e8c68c;color:#382d27}
+.crew-view[data-mode="profile"] .growth-footer>button.primary:disabled{background:#53606a;border-color:#8a9290;color:#d0d3cc;opacity:1;box-shadow:none}
+.crew-view[data-mode="profile"] .crew-skills{background:#e4d7bf;border-color:#a49b86;box-shadow:none}
+.crew-view[data-mode="profile"] .crew-active-skill{background:#f5e8ca;border:1px solid #c2a474;border-left:4px solid #bd7859}
+.crew-view[data-mode="profile"] .crew-passive{background:#d8d5c5;border-color:#adae9d;box-shadow:none}
+.crew-view[data-mode="profile"] .crew-passive.is-dormant{background:#d4d2c5}
+.crew-view[data-mode="equipment"] .equipment-stage{background:radial-gradient(ellipse at 50% 30%,#c8a16a55,#365367 58%,#2b4052);border:1px solid #7f8d91;border-radius:12px}
+.crew-view[data-mode="equipment"] .equipment-heading h3{color:#f3d79f}
+.crew-view[data-mode="equipment"] .equipment-heading>span{color:#c7d0cd}
+.crew-view[data-mode="equipment"] .equipment-heading>button{color:#f0c780}
+.crew-view[data-mode="equipment"] .equipment-bag{background:#233848;border:1px solid #687f8a;border-radius:10px}
+.crew-view[data-mode="equipment"] .equipment-bag-heading,.crew-view[data-mode="equipment"] .equipment-bag-heading button{color:#f1d7a6}
+.crew-view[data-mode="equipment"] .gear-orbit-slot{background:#354b5c;border:1px solid #86949a;box-shadow:inset 0 1px #b8bfad33;border-radius:9px;color:#eee1c6}
+.crew-view[data-mode="equipment"] .gear-orbit-slot b,.crew-view[data-mode="equipment"] .gear-orbit-slot small{color:#eee1c6}
+.crew-view[data-mode="equipment"] .gear-orbit-slot.selected{background:#695246;outline:2px solid #f0c777;outline-offset:1px}
+.game-shell .gear-tile{background:linear-gradient(145deg,#49596a,#344456);border-color:var(--rarity);box-shadow:inset 0 1px #b1bbba33}
+.game-shell .gear-tile .gear-card-main b{color:#f3e5cb}
+.game-shell .gear-tile em{background:#263a4be6;color:#f2d29d;border-radius:3px;padding:1px 3px}
+.game-shell .gear-empty{background:#253b4c;border-color:#506776;box-shadow:inset 0 2px 5px #172c3a55}
+.game-shell .gear-empty:after{color:#81929c33}
+.game-shell .gear-quick-equip{background:#587f78;color:#fff0cb}
+.game-shell .bag-storage{background:#304a5d;border-color:#708894;box-shadow:inset 0 1px #91a3a444}
+.game-shell .bag-wallet{background:#514453;color:#ead7b5;border-color:#8c7481;border-radius:9px;padding:8px}
+.game-shell .bag-wallet b{color:#f2cd84}.game-shell .bag-wallet small{color:#d9cabc}
+.game-shell .bag-slot-tabs button{background:#3d5668;color:#d5ddda;border:1px solid #718590}
+.game-shell .bag-slot-tabs button[aria-selected=true]{background:#a36550;color:#fff0d0;border-color:#d59b72}
+.game-shell .bag-toolbar select{background:#344c5d;color:#e4dcc8;border-color:#758891}
+.game-shell .bag-toolbar button{background:#b8824b;color:#fff0d0;border-color:#dcba83}
+.game-shell .material-list article{background:#435b6a;border-color:#738a94;box-shadow:inset 0 2px #aab6ae33}
+.game-shell .material-list article:nth-child(3n+2){background:#5a5266;border-color:#94849b}
+.game-shell .material-list article:nth-child(3n){background:#456763;border-color:#7e9b8e}
+.game-shell .material-list h3{color:#f1e4ca}.game-shell .material-list article>b{color:#f7d591;font-size:14px}
+.game-shell .crew-avatar-grid{background:#2a4051;border-color:#6b8290}
+.game-shell .crew-avatar-grid .crew-pick{background:#455869;border-color:#7a8c97}
+.game-shell .crew-avatar-grid .crew-pick[aria-pressed=true]{background:#a47b48;border-color:#f1cc7e;box-shadow:inset 0 0 0 1px #e9c17b}
+.game-shell .empty-bag{color:#cbd3d0}
