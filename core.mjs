@@ -19,11 +19,11 @@ import {heroCombatStats,enemyCombatStats,mitigatedDamage} from './combat-stats.m
 export const VERSION=1, MAX_STAGE=600, MAX_LEVEL=100, MAX_PARTY=5;
 export const CATS=[
  {id:'orange',name:'橘座',job:'前排守护',tag:'守护',color:'#edab62',accent:'#c8793b',unlock:0,hp:205,atk:17,skill:'锅盖护体',desc:'获得自身最大生命 45% 的护盾，并为队友提供 12% 护盾。',passive:'受到伤害降低 15%。',quote:'这条街的罐头，我罩了。',gear:'pan'},
- {id:'ink',name:'阿墨',job:'单体输出',tag:'突袭',color:'#42465c',accent:'#929db5',unlock:0,hp:116,atk:25,skill:'飞鱼三连',desc:'连续命中生命最低的敌人，合计造成 330% 攻击力的物理伤害，本次攻击额外获得 25 点护甲穿透。',passive:'暴击率额外提高 15 个百分点。',quote:'别眨眼，鱼已经到了。',gear:'scarf'},
+ {id:'ink',name:'阿墨',job:'单体输出',tag:'突袭',color:'#42465c',accent:'#929db5',unlock:0,hp:116,atk:25,skill:'飞鱼三连',desc:'连续命中生命最低的敌人，合计造成 330% 攻击力的物理伤害，本次攻击额外获得 25 点护甲穿透。',passive:'暴击率额外提高 15%。',quote:'别眨眼，鱼已经到了。',gear:'scarf'},
  {id:'milk',name:'奶盖',job:'全队治疗',tag:'支援',color:'#f8ead8',accent:'#c6a2bf',unlock:3,hp:145,atk:13,skill:'热牛奶时间',desc:'治疗全体队友，数值相当于奶盖最大生命的 28%。',passive:'普攻额外回复 10 能量。',quote:'打完这一架，记得吃饭。',gear:'nurse'},
  {id:'spark',name:'火花',job:'群体灼烧',tag:'爆发',color:'#d98f75',accent:'#8f494b',unlock:8,hp:112,atk:27,skill:'提灯燎原',desc:'对全体敌人造成 160% 攻击力的法术伤害，并施加每秒 30% 攻击力的法术灼烧。',passive:'灼烧持续时间延长 2 秒。',quote:'灯还亮着，跟紧我。',gear:'goggles'},
  {id:'mint',name:'薄荷',job:'眩晕控制',tag:'控制',color:'#a9d4c1',accent:'#4a8d83',unlock:15,hp:133,atk:22,skill:'冰镇气泡',desc:'优先打断蓄力中的敌人，其次压制治疗者，造成 230% 攻击力的法术伤害，眩晕 1.8 秒并打断蓄力。',passive:'眩晕持续时间延长 0.8 秒。',quote:'别急，先冷静一下。',gear:'hood'},
- {id:'bolt',name:'扳手',job:'破甲专家',tag:'破甲',color:'#adbacb',accent:'#636e8b',unlock:25,hp:162,atk:24,skill:'扳手大修',desc:'先降低目标 40% 当前护甲（最多降低开场护甲的 80%），再造成 300% 攻击力的物理伤害。',passive:'技能护甲削减提高 20 个百分点。',quote:'修不好，就再拧一下。',gear:'helmet'},
+ {id:'bolt',name:'扳手',job:'破甲专家',tag:'破甲',color:'#adbacb',accent:'#636e8b',unlock:25,hp:162,atk:24,skill:'扳手大修',desc:'先降低目标 40% 当前护甲（最多降低开场护甲的 80%），再造成 300% 攻击力的物理伤害。',passive:'技能护甲削减提高 20%。',quote:'修不好，就再拧一下。',gear:'helmet'},
  {id:'pudding',name:'石墩',job:'前排输出',tag:'输出',color:'#757780',accent:'#c69358',unlock:40,hp:235,atk:22,skill:'护体劲 · 震街拳',desc:'获得 35% 最大生命值的护盾。护盾达到 30% 最大生命值时蓄力，每秒回复 35 能量；再获得 15% 最大生命值的护盾后，消耗当前护盾，对目标前排及其身后两名敌人造成 180% 当前护盾值的物理伤害。护盾破裂或受到控制时中断蓄力。冷却 8 秒。',passive:'护盾吸收伤害时也回复能量。',quote:'站稳，再出拳。',gear:'cape'},
  {id:'star',name:'星斑',job:'能量辅助',tag:'支援',color:'#c4b1df',accent:'#78669f',unlock:60,hp:150,atk:19,skill:'今晚有星星',desc:'为其他队友回复 36 能量，并治疗相当于星斑攻击 160% 的生命。',passive:'开场拥有 40 点能量。',quote:'许个愿，然后自己去实现。',gear:'wizard'}
 ];
@@ -31,7 +31,7 @@ export const RELICS=[
  {id:'claw',name:'金属猫爪',desc:'全队攻击 +12%',icon:'claw',color:'#f2a278'},
  {id:'coat',name:'棉花披风',desc:'全队生命 +15%',icon:'coat',color:'#b5c8ef'},
  {id:'bell',name:'轻巧铃铛',desc:'暴击 +8%',icon:'bell',color:'#f3d06d'},
- {id:'scope',name:'鱼骨准星',desc:'暴击率 +5 个百分点',icon:'scope',color:'#abdbc6'},
+ {id:'scope',name:'鱼骨准星',desc:'暴击率 +5%',icon:'scope',color:'#abdbc6'},
  {id:'bowl',name:'温热饭碗',desc:'每秒回复全队 0.8% 生命',icon:'bowl',color:'#f5b1bf'},
  {id:'can',name:'救援工具箱',desc:'救援技能冷却缩短 0.8 秒',icon:'can',color:'#a8d7e4'},
  {id:'magnet',name:'招财磁铁',desc:'战斗鱼币奖励 +12%',icon:'magnet',color:'#e6b56f'},

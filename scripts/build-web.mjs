@@ -6,7 +6,7 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const require=createRequire(path.join(root,'wechat/package.json')),sharp=require('sharp'),esbuild=require('esbuild');
 const {FINISHED_ROSTER}=await import('../finished-roster-data.mjs');
 const {FINISHED_SPARK}=await import('../finished-spark-data.mjs');
-const version='0.26.63',map={},audit=[];
+const version='0.26.64',map={},audit=[];
 await fs.mkdir(path.join(root,'assets/mobile'),{recursive:true});
 for(const art of [...Object.values(FINISHED_ROSTER),{...FINISHED_SPARK,portrait:'./assets/finished/spark-portrait-v0211.webp'}]){
  for(const [kind,source] of [['atlas',art.atlas],['portrait',art.portrait]]){
