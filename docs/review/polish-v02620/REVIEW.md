@@ -26,3 +26,7 @@
 - 自动检查在浏览器中执行，不是 iPhone Safari 或微信真机测试。
 - 本地 `scripts/review-companion-display.mjs` 的 Chromium 进程被运行环境限制启动；没有宣称该脚本本地通过。等价的尺寸、像素变化与滚动检查已在上述浏览器页面执行，拖动通过实际浏览器输入验证。
 - 不涉及战斗数值、角色技能或存档结构调整。仍是原有本机存档网页试玩。
+
+## 发布核对
+
+生产提交 `9be09a0af74139aab17d9356e99542706aa58800` 的 GitHub Pages 构建 43608459672 成功。实际打开 `https://heitamu.github.io/can-club-play/?v=0.26.20`，页面显示 0.26.20，并进入「伙伴 → 阵容」核对房间已加载。生产页面截图：[live-room.jpg](live-room.jpg)。
