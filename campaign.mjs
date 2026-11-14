@@ -2,7 +2,7 @@
 const dayOf=n=>Math.floor((n+8*3600000)/86400000);
 const safe=(n,max=1e9)=>Number.isFinite(n)?Math.max(0,Math.min(max,Math.floor(n))):0;
 export const DAILY_TASKS=[
- {id:'patrol',name:'巡一遍街角',desc:'赢得 5 场普通关或旧关巡逻',goal:5},
+ {id:'patrol',name:'街巷出勤',desc:'赢得 5 场战斗',goal:5},
  {id:'train',name:'练练身手',desc:'伙伴累计升级 3 级',goal:3},
  {id:'income',name:'鱼摊交班',desc:'领取 1 次非零鱼摊收入',goal:1},
  {id:'arena',name:'上台切磋',desc:'赢得 1 场委托、擂台或每周挑战',goal:1}

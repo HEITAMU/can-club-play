@@ -1,3 +1,4 @@
+import {normalizeReport} from './battle-flow.mjs';
 import {skillTuning} from './skill-training.mjs';
 import {integer,mulDiv,accrueUnits,resizeAmount} from './integer-math.mjs?v=0.25.1';
 import {newRoster,normalizeRoster,normalizeGrowth,owns,recruit,starQuote,ascend} from './companions.mjs?v=0.25.0';
@@ -62,7 +63,7 @@ export const QUESTS=[
  {id:'half',name:'走到霓虹尽头',desc:'通过第 60 关',key:'highest',goal:60,reward:6000},
  {id:'end',name:'月光罐头收藏家',desc:'通过第 120 关',key:'highest',goal:120,reward:16000}
 ];
-export function initialState(now=Date.now()){return {...normalizeProgression({},CATS.map(c=>c.id)),inventory:createInventory(CATS.map(c=>c.id)),roster:newRoster(),growth:normalizeGrowth(),activities:normalizeActivities(),campaign:normalizeCampaign(),adRewards:normalizeAdRewards(),version:VERSION,gold:200,levels:Object.fromEntries(CATS.map(c=>[c.id,1])),party:['orange','ink'],stage:1,runCleared:0,highest:0,bones:0,prestiges:0,relics:{},pending:null,claimed:[],wins:0,bosses:0,kills:0,upgrades:0,relicCount:0,idle:0,idleRemainder:0,lastAccrued:now,onboarded:false,auto:true,speed:1,sound:false,rescueSeen:false,created:now,seconds:0};}
+export function initialState(now=Date.now()){return {...normalizeProgression({},CATS.map(c=>c.id)),inventory:createInventory(CATS.map(c=>c.id)),roster:newRoster(),growth:normalizeGrowth(),activities:normalizeActivities(),campaign:normalizeCampaign(),adRewards:normalizeAdRewards(),version:VERSION,gold:200,levels:Object.fromEntries(CATS.map(c=>[c.id,1])),party:['orange','ink'],stage:1,runCleared:0,highest:0,bones:0,prestiges:0,relics:{},pending:null,claimed:[],wins:0,bosses:0,kills:0,upgrades:0,relicCount:0,idle:0,idleRemainder:0,idleSupplies:0,supplyRemainder:0,battleReport:null,lastAccrued:now,onboarded:false,auto:true,speed:1,sound:false,rescueSeen:false,created:now,seconds:0};}
 export const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const num=(v,d=0,a=0,b=1e12)=>typeof v==='number'&&Number.isFinite(v)?clamp(v,a,b):d;
 export function unlocked(s){return CATS.filter(c=>owns(s,c.id));}
@@ -79,7 +80,7 @@ export function normalizeState(raw,now=Date.now()){
  s.highest=Math.floor(num(raw.highest,0,0,MAX_STAGE));s.runCleared=Math.floor(num(raw.runCleared,0,0,s.highest));s.stage=Math.min(MAX_STAGE,s.runCleared+1);
  s.roster=normalizeRoster(raw.roster,CATS,s.highest);s.growth=normalizeGrowth(raw.growth);s.activities=normalizeActivities(raw.activities);
  for(const c of CATS)s.levels[c.id]=Math.floor(num(raw.levels?.[c.id],1,1,levelCap(s,c.id)));
- s.rescueSeen=raw.rescueSeen===true;
+ s.rescueSeen=raw.rescueSeen===true;s.battleReport=normalizeReport(raw.battleReport);s.idleSupplies=Math.floor(num(raw.idleSupplies,0,0,100000));s.supplyRemainder=Math.floor(num(raw.supplyRemainder,0,0,59999));
  const available=unlocked(s).map(c=>c.id),seen=new Set();s.party=Array.isArray(raw.party)?raw.party.filter(id=>id===null||available.includes(id)&&!seen.has(id)&&seen.add(id)).slice(0,MAX_PARTY):s.party;while(s.party.length&&!s.party.at(-1))s.party.pop();if(!s.party.some(Boolean))s.party=['orange'];
  s.inventory=[1,2].includes(raw.inventory?.version)?normalizeInventory(raw.inventory,CATS.map(c=>c.id)):createInventory(CATS.map(c=>c.id),raw.relics,s.highest,s.party.filter(Boolean));s.relics={};s.pending=null;
  s.claimed=[...new Set(Array.isArray(raw.claimed)?raw.claimed:[])].filter(id=>QUESTS.some(q=>q.id===id));
@@ -106,12 +107,13 @@ export function catStats(s,id,equipment=null){const c=CATS.find(c=>c.id===id),l=
  return {...base,armor:base.armor+g.armor,magicResist:base.magicResist+g.magicResist,armorPen:base.armorPen+g.armorPen,magicPen:base.magicPen+g.magicPen,hp:mulDiv(grow(c.hp),100+g.hp),atk:mulDiv(grow(c.atk),100+g.atk),crit:Math.min(80,10+g.crit+(id==='ink'&&l>=5?15:0)),level:l,stars,skillRank:s.breakthroughs?.[id]||0,gear:g};
 }
 export function power(s){return s.party.filter(Boolean).reduce((n,id)=>{const c=catStats(s,id);return n+Math.round(c.hp*.3*(1+(c.armor+c.magicResist)/200)+c.atk*3*(1+(c.armorPen+c.magicPen)/200));},0);}
-export function idleRate(s){return Math.round((18+Math.min(Math.max(s.highest,1),60)*3+Math.max(0,s.highest-60)*.6)*buffs(s).idle*(1+.15*stallLevel(s,'stall')));}
-export function accrueIdle(s,now=Date.now()){const elapsed=integer(clamp(now-s.lastAccrued,0,idleMinutes(s)*60000)),total=elapsed*idleRate(s)+(s.idleRemainder||0),amount=Math.floor(total/60000),cap=idleRate(s)*idleMinutes(s);s.idle=Math.min(cap,s.idle+amount);s.idleRemainder=s.idle>=cap?0:total-amount*60000;s.lastAccrued=integer(now);return amount;}
-export function claimIdle(s,now=Date.now()){accrueIdle(s,now);const n=Math.floor(s.idle);s.gold+=n;s.idle-=n;if(n>0)recordActivity(s,'income',1,now);return n;}
+export function idleRate(s){return Math.round((18+Math.min(Math.max(s.highest,1),60)*3+Math.max(0,s.highest-60)*.6)*buffs(s).idle*(1+.15*stallLevel(s,'stall'))*(1+.05*stallLevel(s,'sign')));}
+export function supplyRate(s){return Math.max(1,Math.round((2+Math.floor(s.highest/20))*(1+.1*stallLevel(s,'cart'))));}
+export function accrueIdle(s,now=Date.now()){const elapsed=integer(clamp(now-s.lastAccrued,0,idleMinutes(s)*60000)),total=elapsed*idleRate(s)+(s.idleRemainder||0),amount=Math.floor(total/60000),cap=idleRate(s)*idleMinutes(s);s.idle=Math.min(cap,s.idle+amount);s.idleRemainder=s.idle>=cap?0:total-amount*60000;const supplyTotal=elapsed*supplyRate(s)+(s.supplyRemainder||0),supplyCap=supplyRate(s)*idleMinutes(s);s.idleSupplies=Math.min(supplyCap,(s.idleSupplies||0)+Math.floor(supplyTotal/60000));s.supplyRemainder=s.idleSupplies>=supplyCap?0:supplyTotal%60000;s.lastAccrued=integer(now);return amount;}
+export function claimIdle(s,now=Date.now()){accrueIdle(s,now);const n=Math.floor(s.idle);s.gold+=n;s.idle-=n;const supplies=s.idleSupplies||0;s.supplies+=supplies;s.idleSupplies=0;if(n>0||supplies>0)recordActivity(s,'income',1,now);return n;}
 export function questValue(s,q){return q.key==='cats'?unlocked(s).length:s[q.key]||0;}
 export function claimQuests(s){let sum=0;for(const q of QUESTS){if(!s.claimed.includes(q.id)&&questValue(s,q)>=q.goal){s.claimed.push(q.id);s.gold+=q.reward;sum+=q.reward;}}return sum;}
-export function rewardFor(s,stage,farm=false){return Math.round((30+stage*6)*buffs(s).gold*(1+.05*stallLevel(s,'sign'))*(farm?.6:1));}
+export function rewardFor(s,stage,farm=false){return Math.round((30+stage*6)*buffs(s).gold*(farm?0:1));}
 export function upgradeStall(s,id,now=Date.now()){const q=stallQuote(s,id);if(!q.valid||q.maxed||s.supplies<q.cost)return false;accrueIdle(s,now);s.supplies-=q.cost;s.stall??={};s.stall[id]=q.level+1;return true;}
 export function breakthrough(s,id){const c=CATS.find(c=>c.id===id),q=breakthroughQuote(s,id);if(!c||!owns(s,id)||q.maxed||s.badges<q.cost||s.growth.notes<q.notes||s.growth.seals<q.seals)return false;s.badges-=q.cost;s.growth.notes-=q.notes;s.growth.seals-=q.seals;s.breakthroughs[id]=q.rank+1;return true;}
 export function seeded(seed){let x=(seed>>>0)||1;return ()=>{x=(Math.imul(x,1664525)+1013904223)>>>0;return x/4294967296;};}
@@ -294,11 +296,12 @@ export class Battle {
  }
 }
 export function settleBattle(s,b,now=Date.now()){if(!b.result||b.resolved)return null;b.resolved=true;s.seconds+=Math.floor(b.time);
- if(b.activity){if(b.result==='lose')return {win:false,activity:true,unlocked:[]};const reward=settleActivity(s,b.activity);if(!reward)return null;recordActivity(s,'arena',1,now);return {win:true,activity:true,...reward,unlocked:[],complete:false};}
- if(b.weekly){if(b.result==='lose')return {win:false,arena:true,gold:0,badges:0,unlocked:[]};recordActivity(s,'arena',1,now);const reward=settleWeekly(s,b.weekly.tier,b.weekly.week,now);const gearLoot=reward.badges?gearDrop(s,Math.min(600,b.weekly.tier*150),{guaranteed:true}):null;return {win:true,arena:true,weekly:true,gearLoot,...reward,unlocked:[],complete:false};}
- if(b.mode==='arena'){if(b.result==='lose')return {win:false,arena:true,gold:0,badges:0,unlocked:[]};if(!arenaOpen(s,b.arenaTier))return null;const info=arenaInfo(b.arenaTier),first=b.arenaTier>(s.arenaCleared||0),badges=info.baseReward+(first?info.firstBonus:0);s.badges+=badges;s.arenaCleared=Math.max(s.arenaCleared,b.arenaTier);recordActivity(s,'arena',1,now);const gearLoot=gearDrop(s,Math.min(600,b.arenaTier*45),{guaranteed:true});return {win:true,arena:true,gold:0,badges,gearLoot,first,unlocked:[],complete:false};}
+ if(b.activity){if(b.result==='lose')return {win:false,activity:true,unlocked:[]};const reward=settleActivity(s,b.activity);if(!reward)return null;recordActivity(s,'arena',1,now);recordActivity(s,'patrol',1,now);return {win:true,activity:true,...reward,unlocked:[],complete:false};}
+ if(b.weekly){if(b.result==='lose')return {win:false,arena:true,gold:0,badges:0,unlocked:[]};recordActivity(s,'arena',1,now);recordActivity(s,'patrol',1,now);const reward=settleWeekly(s,b.weekly.tier,b.weekly.week,now);const gearLoot=reward.badges?gearDrop(s,Math.min(600,b.weekly.tier*150),{guaranteed:true}):null;return {win:true,arena:true,weekly:true,gearLoot,...reward,unlocked:[],complete:false};}
+ if(b.mode==='arena'){if(b.result==='lose')return {win:false,arena:true,gold:0,badges:0,unlocked:[]};if(!arenaOpen(s,b.arenaTier))return null;const info=arenaInfo(b.arenaTier),first=b.arenaTier>(s.arenaCleared||0),badges=info.baseReward+(first?info.firstBonus:0);s.badges+=badges;s.arenaCleared=Math.max(s.arenaCleared,b.arenaTier);recordActivity(s,'arena',1,now);recordActivity(s,'patrol',1,now);const gearLoot=gearDrop(s,Math.min(600,b.arenaTier*45),{guaranteed:true});return {win:true,arena:true,gold:0,badges,gearLoot,first,unlocked:[],complete:false};}
+ if(b.farm||b.stage!==s.stage||b.stage<=s.runCleared)return null;
  s.kills+=b.kills;if(b.result==='lose')return {win:false,gold:0,supplies:0,unlocked:[]};
- if(!b.farm&&(b.stage!==s.stage||b.stage<=s.runCleared))return null;
+ if(b.farm||b.stage!==s.stage||b.stage<=s.runCleared)return null;
  const before=s.highest,reward=rewardFor(s,b.stage,b.farm);s.gold+=reward;s.wins++;recordActivity(s,'patrol',1,now);const supplies=suppliesFor(s,b.stage,b.farm);s.supplies+=supplies;
  if(!b.farm){s.runCleared=b.stage;s.highest=Math.max(s.highest,b.stage);s.stage=Math.min(MAX_STAGE,b.stage+1);if(b.stage%5===0)s.bosses++;}
  const joins=[];

@@ -2,9 +2,9 @@
 export const STALL_MAX=20,ARENA_MAX=12,ARENA_UNLOCK=15;
 export const STALL_UPGRADES=[
  {id:'stall',name:'摊位',effect:'每级鱼摊每分钟收入 +15%',icon:'bag'},
- {id:'sign',name:'招财招牌',effect:'每级普通关鱼币收益 +5%',icon:'coin'},
+ {id:'sign',name:'招财招牌',effect:'每级营业收入 +5%',icon:'coin'},
  {id:'icebox',name:'保鲜鱼箱',effect:'每级离线储存时长 +30 分钟',icon:'thermos'},
- {id:'cart',name:'搬运推车',effect:'每级普通关经营物资 +10%',icon:'coat'}
+ {id:'cart',name:'搬运推车',effect:'每级物资补给 +10%',icon:'coat'}
 ];
 const safe=(x,max=1e9)=>typeof x==='number'&&Number.isFinite(x)?Math.min(max,Math.max(0,Math.floor(x))):0;
 export function normalizeProgression(raw,ids){return {supplies:safe(raw.supplies),badges:safe(raw.badges),arenaCleared:safe(raw.arenaCleared,ARENA_MAX),stall:Object.fromEntries(STALL_UPGRADES.map(x=>[x.id,safe(raw.stall?.[x.id],STALL_MAX)])),breakthroughs:Object.fromEntries(ids.map(id=>[id,safe(raw.breakthroughs?.[id],3)]))};}
