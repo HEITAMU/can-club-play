@@ -94,3 +94,16 @@ html body,body button,body input,body select,body textarea,body h1,body h2,body 
 @keyframes growth-ring{0%{opacity:1;transform:scale(.5)}100%{opacity:0;transform:scale(2.4)}}
 @keyframes growth-light{0%,40%{filter:brightness(1.7)}100%{filter:brightness(1)}}
 @media(prefers-reduced-motion:reduce){.growth-success,.growth-flash .lit,.growth-flash .rank-badge svg{animation:none}.growth-flash .crew-portrait:before{display:none!important}}
+
+.growth-purpose{font-size:11px;font-weight:700;margin:5px 0;color:#63452d}.growth-effect{font-size:10px;line-height:1.5;padding:4px 0;color:#63452d}.growth-effect.next{color:#306b60}.crew-breakthrough h4 small{font-size:9px;font-weight:400;margin-left:5px}.growth-costs{display:flex;flex-wrap:wrap;gap:4px;margin:5px 0}.crew-view[data-mode="profile"] .crew-growth .crew-breakthrough .growth-material{display:flex;align-items:center;gap:3px;border:1px solid #c4aa82;background:#f4e6c8;border-radius:6px;padding:4px;margin:0;min-height:36px;text-align:left}.growth-material span{font-size:9px}.growth-material b{display:block;font-size:10px}.growth-material.short b{color:#a34c36}.growth-material.enough b{color:#306b60}.growth-material .material-icon{flex:none}.material-info-card{text-align:center}.material-info-card>p{font-size:13px;line-height:1.6}.material-info-card small{display:block;margin:10px}.skill-level-list{font-size:10px;margin-top:8px;color:#725335}.skill-level-list summary{cursor:pointer;padding:5px}.skill-level-list>div{padding:5px;border-top:1px solid #b99b7040}.skill-level-list .current{background:#cce1ce;color:#325d49}
+
+
+#modal-backdrop:has(.modal[data-kind="material"]){background:transparent;backdrop-filter:none}
+
+.modal[data-kind="material"]{position:fixed;margin:0;transform:none;max-height:70dvh;max-width:calc(100vw - 24px);padding:14px 12px 12px;background:#f3e1bd;border:2px solid #a97d43;border-radius:9px;box-shadow:0 5px 20px #35241466}
+
+.modal[data-kind="material"] #modal-close{width:25px;height:25px;top:5px;right:5px}
+
+.modal[data-kind="material"] h2{font-size:15px;line-height:1.4;margin:0 22px 9px 0}
+
+.modal[data-kind="material"] #modal-close{background:#9a7048;color:#fff0d2;border-color:#c5a273}

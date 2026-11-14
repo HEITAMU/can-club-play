@@ -1,3 +1,4 @@
+import {skillTuning,skillSummary} from './skill-training.mjs';
 import {growthMarkHTML} from './growth-visual.mjs';
 import {growthHTML} from './street-ui.mjs?v=0.25.0';
 import {talentCards} from './talents.mjs?v=0.25.0';
@@ -16,16 +17,16 @@ const number=n=>n>=1e8?Math.floor(n/1e8)+'亿':n>=1e4?Math.floor(n/1e4)+'万':Ma
 const effect=(value,type)=>'<strong class="skill-'+type+'">'+value+'</strong>';
 const scaling=text=>'<span class="skill-scaling">（'+text+'）</span>';
 export function crewSkill(id,level,stats){
- const awake=level>=5,amount=(ratio,stat='atk')=>Math.round(stats[stat]*ratio).toLocaleString('zh-CN');
+ const sk=skillTuning(stats.skillRank),awake=level>=5,amount=(ratio,stat='atk')=>Math.round(stats[stat]*ratio).toLocaleString('zh-CN');
  const skills={
-  orange:{description:'为自身提供 '+effect(amount(.45,'hp'),'shield')+scaling('45% 最大生命值')+' 护盾，并为其他队友提供相当于各自 '+effect('12% 最大生命值','shield')+' 的护盾。',passive:'受到的伤害降低 '+effect('15%','shield')+'。'},
-  ink:{description:'向当前生命值最低的敌人发起三连击，合计造成 '+effect(amount(3.3),'damage')+scaling('330% 攻击力')+' 物理伤害。本次攻击额外获得 '+effect('25 点护甲穿透','armor')+'。',passive:'暴击率提高 '+effect('15 个百分点','damage')+'。'},
-  milk:{description:'为全体队友恢复 '+effect(amount(.28,'hp'),'heal')+scaling('奶盖最大生命值的 28%')+' 生命值。',passive:'普攻回复的能量由 '+effect('22','energy')+' 点提高至 '+effect('32','energy')+' 点。'},
-  spark:{description:'对全体敌人造成 '+effect(amount(1.6),'damage')+scaling('160% 攻击力')+' 法术伤害，并灼烧目标 '+effect(awake?'6 秒':'4 秒','control')+'，每秒造成 '+effect(amount(.3),'damage')+scaling('30% 攻击力')+' 法术伤害。',passive:'灼烧持续时间由 '+effect('4 秒','control')+' 延长至 '+effect('6 秒','control')+'。'},
-  mint:{description:'对当前生命值最高的敌人造成 '+effect(amount(2.3),'damage')+scaling('230% 攻击力')+' 法术伤害，使其 '+effect('眩晕 '+(awake?'2600':'1800')+' 毫秒','control')+' 并打断蓄力。',passive:'眩晕持续时间由 '+effect('1800 毫秒','control')+' 延长至 '+effect('2600 毫秒','control')+'。'},
-  bolt:{description:'使敌方前排目标的当前护甲永久降低 '+effect(awake?'75%':'50%','armor')+'，随后造成 '+effect(amount(3),'damage')+scaling('300% 攻击力')+' 物理伤害。',passive:'技能对当前护甲的削减比例由 '+effect('50%','armor')+' 提高至 '+effect('75%','armor')+'。'},
-  pudding:{description:'满能量为自身增加 '+effect(amount(.35,'hp'),'shield')+scaling('35% 最大生命值')+' 护盾。盾量达到生命 30% 时下蹲蓄力；期间再获生命 15% 的护盾，打出震街拳：100% 攻击力＋锁定盾量的 160% 物理伤害。命中目标所在前排及其身后两名后排，最多三人。',passive:'吸收伤害回复 12 能量（间隔 800 毫秒）；蓄力每秒回复 35 能量。重拳冷却 8 秒。'},
-  star:{description:'为其他队友回复 '+effect('48 点能量','energy')+'，并为全体队友恢复 '+effect(amount(1.6),'heal')+scaling('160% 攻击力')+' 生命值。',passive:'战斗开始时，额外获得 '+effect('40 点能量','energy')+'。'}
+  orange:{description:'为自身提供 '+effect(amount(sk.orangeSelf/100,'hp'),'shield')+scaling(''+sk.orangeSelf+'% 最大生命值')+' 护盾，并为其他队友提供相当于各自 '+effect(''+sk.orangeTeam+'% 最大生命值','shield')+' 的护盾。',passive:'受到的伤害降低 '+effect('15%','shield')+'。'},
+  ink:{description:'向当前生命值最低的敌人发起三连击，合计造成 '+effect(amount(sk.inkHit/100),'damage')+scaling(''+sk.inkHit+'% 攻击力')+' 物理伤害。本次攻击额外获得 '+effect(''+sk.inkPen+' 点护甲穿透','armor')+'。',passive:'暴击率提高 '+effect('15 个百分点','damage')+'。'},
+  milk:{description:'为全体队友恢复 '+effect(amount(sk.milkHeal/100,'hp'),'heal')+scaling('奶盖最大生命值的 '+sk.milkHeal+'%')+' 生命值。',passive:'普攻回复的能量由 '+effect('22','energy')+' 点提高至 '+effect('32','energy')+' 点。'},
+  spark:{description:'对全体敌人造成 '+effect(amount(sk.sparkHit/100),'damage')+scaling(sk.sparkHit+'% 攻击力')+' 法术伤害，并灼烧目标 '+effect(awake?'6 秒':'4 秒','control')+'，每秒造成 '+effect(amount(sk.sparkBurn/100*(level>=40?1.2:1)),'damage')+scaling((sk.sparkBurn*(level>=40?1.2:1))+'% 攻击力')+' 法术伤害。',passive:'灼烧持续时间由 '+effect('4 秒','control')+' 延长至 '+effect('6 秒','control')+'。'},
+  mint:{description:'对当前生命值最高的敌人造成 '+effect(amount(sk.mintHit/100),'damage')+scaling(''+sk.mintHit+'% 攻击力')+' 法术伤害，使其 '+effect('眩晕 '+Math.round((awake?2600:1800)+sk.mintStun*1000)+' 毫秒','control')+' 并打断蓄力。',passive:'眩晕持续时间由 '+effect('1800 毫秒','control')+' 延长至 '+effect('2600 毫秒','control')+'。'},
+  bolt:{description:'使敌方前排目标的当前护甲永久降低 '+effect(((awake?75:50)+sk.boltShred)+'%','armor')+'，随后造成 '+effect(amount(sk.boltHit/100),'damage')+scaling(''+sk.boltHit+'% 攻击力')+' 物理伤害。',passive:'技能对当前护甲的削减比例由 '+effect('50%','armor')+' 提高至 '+effect('75%','armor')+'。'},
+  pudding:{description:'满能量为自身增加 '+effect(amount(sk.puddingSelf/100,'hp'),'shield')+scaling(sk.puddingSelf+'% 最大生命值')+' 护盾。盾量达到生命 30% 时下蹲蓄力；期间再获生命 15% 的护盾，打出震街拳：'+sk.puddingHit+'% 攻击力＋锁定盾量的 '+sk.puddingShieldHit+'% 物理伤害。命中目标所在前排及其身后两名后排，最多三人。',passive:'吸收伤害回复 12 能量（间隔 800 毫秒）；蓄力每秒回复 35 能量。重拳冷却 8 秒。'},
+  star:{description:'为其他队友回复 '+effect(((level>=80?56:48)+sk.starEnergy)+' 点能量','energy')+'，并为全体队友恢复 '+effect(amount(sk.starHeal/100),'heal')+scaling(sk.starHeal+'% 攻击力')+' 生命值。',passive:'战斗开始时，额外获得 '+effect('40 点能量','energy')+'。'}
  };
  return skills[id];
 }
@@ -63,8 +64,8 @@ export function crewProfileHTML(state,id,{modal=false}={}){
    '<div class="crew-section-label"><h4>人物属性</h4><span>'+(open?'普攻 · '+(stats.normalDamageType==='magic'?'法术':'物理'):'Lv.1 预览')+'</span></div>'+
    '<dl>'+[['生命',number(stats.hp)],['攻击',number(stats.atk)],['暴击',stats.crit+'<small>%</small>'],['护甲',stats.armor],['魔抗',stats.magicResist],['护甲穿透',stats.armorPen],['法术穿透',stats.magicPen]].map(([label,value])=>'<div><dt>'+label+'</dt><dd>'+value+'</dd></div>').join('')+'</dl></section>'+
   '<section class="crew-skills" aria-label="'+c.name+'的技能"><div class="crew-section-label"><h4>角色技能</h4></div>'+
-  '<div class="crew-active-skill"><div class="crew-skill-title"><span class="crew-skill-icon">'+relicSVG(skillIcons[id])+'</span><h4>'+c.skill+'</h4><span>主动</span></div>'+
-  '<p class="crew-skill-description">'+skill.description+'</p></div>'+
+  '<div class="crew-active-skill"><div class="crew-skill-title"><span class="crew-skill-icon">'+relicSVG(skillIcons[id])+'</span><h4>'+c.skill+'</h4><span>主动 · Lv.'+(stats.skillRank+1)+'</span></div>'+
+  '<p class="crew-skill-description">'+skill.description+'</p><details class="skill-level-list"><summary>查看技能等级效果</summary>'+[0,1,2,3].map(r=>'<div class="'+(r===stats.skillRank?'current':'')+'"><b>Lv.'+(r+1)+'</b> '+skillSummary(id,r)+'</div>').join('')+'</details></div>'+
   '<div class="crew-passive '+(awake?'is-awake':'is-dormant')+'"><span class="crew-passive-mark" aria-hidden="true">'+icon(awake?'star':'paw',23)+'</span><div><div class="crew-passive-title"><b>'+passiveNames[id]+'</b><span>'+(awake?'被动 · 已觉醒':'被动 · Lv.5 解锁')+'</span></div><p>'+skill.passive+'</p></div></div>'+talentCards(id,level).map(t=>'<div class="crew-passive '+(t.active?'is-awake':'is-dormant')+'"><div><div class="crew-passive-title"><b>'+t.name+'</b><span>'+ (t.active?'被动 · 已解锁':'被动 · Lv.'+t.level+' 解锁')+'</span></div><p>'+t.desc+'</p></div></div>').join('')+'</section>'+
   '</article>';
 }

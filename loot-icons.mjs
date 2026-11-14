@@ -1,5 +1,5 @@
 import {catSVG} from './art.mjs?v=0.25.1';
-export const MATERIAL_NAMES={gold:'鱼币',supplies:'经营物资',badges:'突破徽章',notes:'训练笔记',seals:'历练印记',shards:'伙伴信物',essence:'打磨砂',scrap:'修补零件',gear:'装备'};
+export const MATERIAL_NAMES={gold:'鱼币',supplies:'经营物资',badges:'护送勋章',notes:'训练笔记',seals:'历练印记',shards:'伙伴信物',essence:'打磨砂',scrap:'修补零件',gear:'装备'};
 const paths={
  gold:'<circle cx="16" cy="16" r="12" fill="#d8ae60"/><path d="m7 16 5-4 7 0 6 4-6 4h-7z" fill="#fff0b5"/><circle cx="19" cy="15" r="1" fill="#665134"/>',
  supplies:'<path d="M4 10h24v18H4z" fill="#a77f55"/><path d="m4 10 6-6h16l2 6M16 10v18M4 19h24" stroke="#e4c294"/>',

@@ -1,6 +1,7 @@
+import {skillTuning} from './skill-training.mjs';
 import {integer,mulDiv,accrueUnits,resizeAmount} from './integer-math.mjs?v=0.25.1';
-import {newRoster,normalizeRoster,normalizeGrowth,owns,recruit,starQuote,ascend,STAR_TALENTS} from './companions.mjs?v=0.25.0';
-export {owns as ownsCompanion,recruit as recruitCompanion,starQuote,ascend as ascendCompanion,STAR_TALENTS} from './companions.mjs?v=0.25.0';
+import {newRoster,normalizeRoster,normalizeGrowth,owns,recruit,starQuote,ascend} from './companions.mjs?v=0.25.0';
+export {owns as ownsCompanion,recruit as recruitCompanion,starQuote,ascend as ascendCompanion} from './companions.mjs?v=0.25.0';
 import {normalizeActivities,activityInfo,settleActivity} from './activities.mjs?v=0.25.0';
 import {streetEnemies} from './street-combat.mjs?v=0.25.0';
 import {createInventory,normalizeInventory,gearBonuses,gearDrop} from './equipment.mjs?v=0.25.0';
@@ -101,8 +102,8 @@ export function removeParty(s,id){
 // Old all-party relic stacks are retired; all combat equipment is character-owned.
 export function buffs(){return {atk:1,hp:1,crit:10,regen:0,canCd:12,gold:1,idle:1,reflect:0,shield:0,energy:0,burn:0,boss:1};}
 export function catStats(s,id,equipment=null){const c=CATS.find(c=>c.id===id),l=s.levels[id]||1,g=equipment||gearBonuses(s,id),stars=s.roster?.stars?.[id]||0,base=heroCombatStats(id,l);
- const grow=value=>[100+18*(l-1),100+8*Math.floor(l/10),100+8*s.bones,100+8*(s.breakthroughs?.[id]||0),100+4*stars].reduce((n,p)=>mulDiv(n,p),value);
- return {...base,armor:base.armor+g.armor,magicResist:base.magicResist+g.magicResist,armorPen:base.armorPen+g.armorPen+(id==='bolt'&&stars>=3?8:0),magicPen:base.magicPen+g.magicPen,hp:mulDiv(grow(c.hp),100+g.hp),atk:mulDiv(grow(c.atk),100+g.atk),crit:Math.min(80,10+g.crit+(id==='ink'&&l>=5?15:0)),level:l,stars,gear:g};
+ const grow=value=>[100+18*(l-1),100+8*Math.floor(l/10),100+8*s.bones,100+4*stars].reduce((n,p)=>mulDiv(n,p),value);
+ return {...base,armor:base.armor+g.armor,magicResist:base.magicResist+g.magicResist,armorPen:base.armorPen+g.armorPen,magicPen:base.magicPen+g.magicPen,hp:mulDiv(grow(c.hp),100+g.hp),atk:mulDiv(grow(c.atk),100+g.atk),crit:Math.min(80,10+g.crit+(id==='ink'&&l>=5?15:0)),level:l,stars,skillRank:s.breakthroughs?.[id]||0,gear:g};
 }
 export function power(s){return s.party.filter(Boolean).reduce((n,id)=>{const c=catStats(s,id);return n+Math.round(c.hp*.3*(1+(c.armor+c.magicResist)/200)+c.atk*3*(1+(c.armorPen+c.magicPen)/200));},0);}
 export function idleRate(s){return Math.round((18+Math.min(Math.max(s.highest,1),60)*3+Math.max(0,s.highest-60)*.6)*buffs(s).idle*(1+.15*stallLevel(s,'stall')));}
@@ -112,7 +113,7 @@ export function questValue(s,q){return q.key==='cats'?unlocked(s).length:s[q.key
 export function claimQuests(s){let sum=0;for(const q of QUESTS){if(!s.claimed.includes(q.id)&&questValue(s,q)>=q.goal){s.claimed.push(q.id);s.gold+=q.reward;sum+=q.reward;}}return sum;}
 export function rewardFor(s,stage,farm=false){return Math.round((30+stage*6)*buffs(s).gold*(1+.05*stallLevel(s,'sign'))*(farm?.6:1));}
 export function upgradeStall(s,id,now=Date.now()){const q=stallQuote(s,id);if(!q.valid||q.maxed||s.supplies<q.cost)return false;accrueIdle(s,now);s.supplies-=q.cost;s.stall??={};s.stall[id]=q.level+1;return true;}
-export function breakthrough(s,id){const c=CATS.find(c=>c.id===id),q=breakthroughQuote(s,id);if(!c||!owns(s,id)||q.maxed||s.levels[id]<q.requiredLevel||s.badges<q.cost||s.growth.notes<q.notes||s.growth.seals<q.seals)return false;s.badges-=q.cost;s.growth.notes-=q.notes;s.growth.seals-=q.seals;s.breakthroughs[id]=q.rank+1;return true;}
+export function breakthrough(s,id){const c=CATS.find(c=>c.id===id),q=breakthroughQuote(s,id);if(!c||!owns(s,id)||q.maxed||s.badges<q.cost||s.growth.notes<q.notes||s.growth.seals<q.seals)return false;s.badges-=q.cost;s.growth.notes-=q.notes;s.growth.seals-=q.seals;s.breakthroughs[id]=q.rank+1;return true;}
 export function seeded(seed){let x=(seed>>>0)||1;return ()=>{x=(Math.imul(x,1664525)+1013904223)>>>0;return x/4294967296;};}
 export function relicOptions(){return [];}
 export function chooseRelic(){return false;}
@@ -147,7 +148,7 @@ export class Battle {
   this.stage=stage;this.farm=farm;this.time=0;this.result=null;this.resolved=false;this.rng=seeded(seed);this.events=[];this.kills=0;this.canCd=0;this.buff=buffs(s);this.fxSerial=0;this.round=0;this.turnQueue=[];this.turnActor=null;this.turnStarted=false;this.turnGapUntil=0;
   this.heroes=s.party.map((id,i)=>{if(!id)return null;const c=CATS.find(c=>c.id===id),st=catStats(s,id);return {...st,id:'p'+i,formationSlot:i,catId:id,name:c.name,side:'p',maxHp:st.hp,hp:st.hp,energy:Math.min(99,this.buff.energy+(id==='star'&&st.level>=5?40:0)),shield:st.hp*this.buff.shield,wait:0,stun:0,burn:0,burnTime:0,burnSource:null};}).filter(Boolean);
   for(const h of this.heroes){h.gearSets=h.gear.sets;h.rune=h.gear.rune;h.runeAttacks=0;h.nextRuneSkill=0;h.runeUsed=false;h.shield=0;h.nextGearHeal=6;}
-  for(const h of this.heroes)if(h.catId==='pudding'){h.shieldPunch=createShieldPunch({maxHp:h.maxHp,hp:h.hp,attack:h.atk,energy:h.energy,config:{selfShieldRatio:mulDiv(SHIELD_PUNCH_DEFAULTS.selfShieldRatio,this.shieldFactor(h)),chargeEnergyPerSecond:SHIELD_PUNCH_DEFAULTS.chargeEnergyPerSecond+(h.stars>=3?3:0)}});h.shieldPunch.shield=h.shield;h.shieldState='normal';}
+  for(const h of this.heroes)if(h.catId==='pudding'){h.shieldPunch=createShieldPunch({maxHp:h.maxHp,hp:h.hp,attack:h.atk,energy:h.energy,config:{selfShieldRatio:mulDiv(skillTuning(h.skillRank).puddingSelf,this.shieldFactor(h)),chargeEnergyPerSecond:SHIELD_PUNCH_DEFAULTS.chargeEnergyPerSecond}});h.shieldPunch.shield=h.shield;h.shieldState='normal';}
   this.enemies=(this.activity?streetEnemies(this.activity):arenaTier?arenaEnemies(arenaTier):enemiesFor(stage)).map((e,i)=>({...e,hp:e.maxHp,side:'e',energy:0,shield:e.type==='fridge'?mulDiv(e.maxHp,20):0,wait:0,skillWait:e.boss?(e.skillWait??6):99,charge:0,stun:0,burn:0,burnTime:0,attacks:0,initialArmor:e.armor}));
   if(weekly){for(const e of this.enemies){Object.assign(e,enemyCombatStats(e.type,15+arenaTier*4,false));const strength=[1,1.6,4][weeklyTier-1];e.maxHp=Math.round(e.maxHp*strength);e.hp=e.maxHp;e.atk=Math.round(e.atk*[1,1.25,2][weeklyTier-1]);e.arenaHealer=false;e.boss=false;if(weekly.type==='iron'&&this.enemies.indexOf(e)<2){e.armor=150+weeklyTier*25;e.magicResist=12;}if(weekly.type==='recovery'&&e.id==='e2')e.arenaHealer=true;if(weekly.type==='burst'&&e.id==='e0'){e.boss=true;e.skillWait=6;}if(weekly.type==='haste')e.atk=mulDiv(e.atk,120);e.initialArmor=e.armor;}}
   if(this.heroes.some(h=>h.catId==='star'&&h.level>=40))for(const h of this.heroes)if(h.catId!=='star')h.energy=Math.min(99,h.energy+12);
@@ -194,9 +195,9 @@ export class Battle {
   if(target.rune==='steadfast'&&!target.runeUsed&&target.hp>0&&target.hp<mulDiv(target.maxHp,30)){target.runeUsed=true;this.shield(target,mulDiv(target.maxHp,8),target);}
   if(reflect&&target.side==='p'&&source?.side==='e'&&source.hp>0&&(target.gearSets?.includes('thorn')||this.buff.reflect>0))this.harm(source,mulDiv(hit+shield,target.gearSets?.includes('thorn')?15:this.buff.reflect),target,{reflect:false,type});return hit;
  }
- heal(target,amount,source){if(target.hp<=0)return;amount=integer(amount);target.hp=integer(target.hp);if(source?.gearSets?.includes('spring'))amount=mulDiv(amount,125);if(source?.catId==='milk'&&source.stars>=3)amount=mulDiv(amount,108);if(source?.rune==='warmth'&&target.hp<mulDiv(target.maxHp,50))amount=mulDiv(amount,110);if(target.scorchedUntil>this.time)amount=mulDiv(amount,50);const overflow=Math.max(0,amount-(target.maxHp-target.hp));const n=Math.min(target.maxHp-target.hp,amount);target.hp+=n;if(n>1)this.emit('heal',source,target,n);if(source?.catId==='milk'&&source.level>=40&&overflow>0)this.shield(target,Math.min(mulDiv(target.maxHp,8),mulDiv(overflow,30)),source);}
+ heal(target,amount,source){if(target.hp<=0)return;amount=integer(amount);target.hp=integer(target.hp);if(source?.gearSets?.includes('spring'))amount=mulDiv(amount,125);if(source?.rune==='warmth'&&target.hp<mulDiv(target.maxHp,50))amount=mulDiv(amount,110);if(target.scorchedUntil>this.time)amount=mulDiv(amount,50);const overflow=Math.max(0,amount-(target.maxHp-target.hp));const n=Math.min(target.maxHp-target.hp,amount);target.hp+=n;if(n>1)this.emit('heal',source,target,n);if(source?.catId==='milk'&&source.level>=40&&overflow>0)this.shield(target,Math.min(mulDiv(target.maxHp,8),mulDiv(overflow,30)),source);}
  shieldFactor(target){return mulDiv(target.gearSets?.includes('guard')?120:100,target.rune==='bulwark'?108:100);}
- shield(target,amount,source){if(target.hp<=0)return;amount=mulDiv(integer(amount),this.shieldFactor(target));if(source?.catId==='orange'&&source.stars>=3)amount=mulDiv(amount,105);if(target.shieldPunch){const sp=target.shieldPunch;sp.hp=target.hp;sp.energy=target.energy;sp.shield=target.shield;this.shieldEvents(target,gainShield(sp,amount,this.eventAt??this.time,source?.id||'ally'));return;}const added=Math.min(amount,target.maxHp-target.shield);target.shield+=added;this.emit('shield',source,target,added);}
+ shield(target,amount,source){if(target.hp<=0)return;amount=mulDiv(integer(amount),this.shieldFactor(target));if(target.shieldPunch){const sp=target.shieldPunch;sp.hp=target.hp;sp.energy=target.energy;sp.shield=target.shield;this.shieldEvents(target,gainShield(sp,amount,this.eventAt??this.time,source?.id||'ally'));return;}const added=Math.min(amount,target.maxHp-target.shield);target.shield+=added;this.emit('shield',source,target,added);}
  shieldEvents(h,events){
   const sp=h.shieldPunch;h.energy=sp.energy;h.shield=sp.shield;h.shieldState=sp.state;
   for(const e of events){
@@ -206,12 +207,12 @@ export class Battle {
    if(e.type==='secondTrigger')this.emit('status',h,h,0,{text:'震街拳就绪',at:e.at});
    if(e.type==='cancel'){h.action=null;this.emit('cancel',h,h,0,{at:e.at});}
    if(e.type==='punchStart'){this.turnActor=h.id;this.turnStarted=true;const target=this.enemies.find(x=>x.id===h.shieldTargetId&&x.hp>0)||this.alive('e')[0];h.shieldTargetId=target?.id;h.action={kind:'skill',windup:0,travel:sp.config.punchTravel,impactAt:sp.config.punchTravel,hold:.08,duration:sp.config.punchTravel+sp.config.recovery,elapsed:Math.max(0,this.time-e.at),released:true,impacted:false,targetId:target?.id,shieldStrike:true};this.emit('windup',h,target,0,{kind:'skill',style:'melee',windup:0,at:e.at});this.emit('release',h,target,0,{kind:'skill',style:'melee',travel:sp.config.punchTravel,at:e.at});}
-   if(e.type==='punchHit'){if(h.level>=80){h.energy=Math.min(100,h.energy+20);sp.energy=h.energy;}h.shidunImpactAt=e.at;this.eventAt=e.at;this.emit('skill',h,h,0,{text:'震街拳',targets:shidunTargets(this.enemies,h.shieldTargetId).map(x=>x.id),shieldPunch:true});for(const enemy of shidunTargets(this.enemies,h.shieldTargetId))this.harm(enemy,h.atk+mulDiv(e.shieldAtSecond,160),h,{type:'physical'});this.eventAt=null;if(h.action)h.action.impacted=true;}
+   if(e.type==='punchHit'){if(h.level>=80){h.energy=Math.min(100,h.energy+20);sp.energy=h.energy;}h.shidunImpactAt=e.at;this.eventAt=e.at;this.emit('skill',h,h,0,{text:'震街拳',targets:shidunTargets(this.enemies,h.shieldTargetId).map(x=>x.id),shieldPunch:true});for(const enemy of shidunTargets(this.enemies,h.shieldTargetId))this.harm(enemy,mulDiv(h.atk,skillTuning(h.skillRank).puddingHit)+mulDiv(e.shieldAtSecond,skillTuning(h.skillRank).puddingShieldHit),h,{type:'physical'});this.eventAt=null;if(h.action)h.action.impacted=true;}
    if(e.type==='normal'){h.action=null;h.wait=Math.max(h.wait,.25);}
   }
  }
  updateShieldWarrior(h){const sp=h.shieldPunch;sp.hp=h.hp;sp.maxHp=h.maxHp;sp.energy=h.energy;sp.shield=Math.min(h.shield,mulDiv(h.maxHp,80));sp.attack=h.atk;if(h.stun>0&&sp.state!=='controlled')this.shieldEvents(h,controlShieldPunch(sp,this.time,h.stun));this.shieldEvents(h,tickShieldPunch(sp,this.time,[],{allowRelease:this.turnActor===h.id&&!this.canSequence}));if(h.action?.shieldStrike)h.action.elapsed=this.time-sp.releaseAt;return ['charging','primed','punching','controlled'].includes(sp.state);}
- applyBurn(target,damage,seconds,source){if(source?.catId==='spark'&&source.stars>=3)seconds+=1;if(source?.catId==='spark'&&source.level>=40)damage=mulDiv(integer(damage),120);if(target.burnTime<=0||damage>=target.burn){target.burn=integer(damage);target.burnSource=source;}target.burnTime=Math.max(target.burnTime,seconds);}
+ applyBurn(target,damage,seconds,source){if(source?.catId==='spark'&&source.level>=40)damage=mulDiv(integer(damage),120);if(target.burnTime<=0||damage>=target.burn){target.burn=integer(damage);target.burnSource=source;}target.burnTime=Math.max(target.burnTime,seconds);}
  targetFor(actor,kind='normal'){
   if(kind==='skill'&&['orange','milk','star'].includes(actor.catId))return actor;
   const foes=this.alive(actor.side==='p'?'e':'p');if(!foes.length)return null;
@@ -236,7 +237,7 @@ export class Battle {
   if(!a.impacted&&a.elapsed>=a.impactAt){a.impacted=true;const target=this.targetFor(actor,a.kind);if(target)a.targetId=target.id;this.eventAt=this.time-Math.max(0,a.elapsed-a.impactAt);if(a.kind==='skill')this.skill(actor);else this.normal(actor);this.eventAt=null;}
   if(a.elapsed>=a.duration)actor.action=null;
  }
- normal(actor){const target=this.targetFor(actor);if(!target)return;const crit=actor.side==='p'&&Math.floor(this.rng()*100)<actor.crit;const dealt=this.harm(target,mulDiv(actor.atk,crit?(actor.catId==='ink'&&actor.stars>=3?190:180):100),actor,{crit,type:actor.normalDamageType});
+ normal(actor){const target=this.targetFor(actor);if(!target)return;const crit=actor.side==='p'&&Math.floor(this.rng()*100)<actor.crit;const dealt=this.harm(target,mulDiv(actor.atk,crit?180:100),actor,{crit,type:actor.normalDamageType});
   if(actor.ambusher&&(actor.attacks||0)%3===2&&target.hp>0&&dealt>0){target.energy=Math.max(0,target.energy-12);if(target.shieldPunch)target.shieldPunch.energy=target.energy;this.emit('status',actor,target,0,{text:'能量 -12'});}
   if(actor.side==='p'){actor.runeAttacks++;if(actor.rune==='followup'&&actor.runeAttacks%4===0&&target.hp>0)this.harm(target,mulDiv(actor.atk,40),actor,{type:actor.normalDamageType});}
   if(actor.catId==='bolt'&&actor.level>=40&&target.armor>target.initialArmor*.4)target.armor=Math.max(mulDiv(target.initialArmor,40),target.armor-2);
@@ -244,19 +245,19 @@ export class Battle {
   else {actor.attacks++;if(actor.type==='mop'){target.wait+=.28;this.emit('status',actor,target,0,{text:'迟缓'});}if(actor.type==='bag'&&actor.attacks%3===0&&this.alive('e').length){const ally=this.alive('e').reduce((a,b)=>a.hp/a.maxHp<b.hp/b.maxHp?a:b);this.heal(ally,mulDiv(actor.maxHp,12),actor);}}
  }
  runeSkill(h){if(h.rune==='focus'&&this.time>=h.nextRuneSkill){h.energy=Math.min(100,h.energy+6);h.nextRuneSkill=this.time+8;if(h.shieldPunch)h.shieldPunch.energy=h.energy;}}
- skill(h){h.energy=0;this.emit('skill',h,h,0,{text:CATS.find(c=>c.id===h.catId).skill,targets:this.skillTargets(h).map(a=>a.id)});const es=this.alive('e'),ps=this.alive('p');if(!es.length)return;let t=es[0];
+ skill(h){h.energy=0;this.emit('skill',h,h,0,{text:CATS.find(c=>c.id===h.catId).skill,targets:this.skillTargets(h).map(a=>a.id)});const es=this.alive('e'),ps=this.alive('p');if(!es.length)return;let t=es[0];const sk=skillTuning(h.skillRank);
   if(h.catId==='orange'&&h.level>=40){const weakest=ps.reduce((a,b)=>a.hp/a.maxHp<b.hp/b.maxHp?a:b);this.shield(weakest,mulDiv(weakest.maxHp,8),h);}
   if(h.catId==='orange'&&h.level>=80)for(const p of ps)if(p!==h)p.energy=Math.min(100,p.energy+12);
   if(h.catId==='milk'&&h.level>=80)for(const p of ps){p.burn=0;p.burnTime=0;p.burnSource=null;}
   if(h.catId==='spark'&&h.level>=80)for(const e of es)e.scorchedUntil=this.time+4;
-  if(h.catId==='orange'){this.shield(h,mulDiv(h.maxHp,45),h);for(const p of ps.filter(x=>x!==h))this.shield(p,mulDiv(p.maxHp,12),h);}
-  if(h.catId==='ink'){t=es.reduce((a,b)=>a.hp<b.hp?a:b);this.harm(t,mulDiv(h.atk,330),h,{type:'physical',bonusPen:25});}
-  if(h.catId==='milk')for(const p of ps)this.heal(p,mulDiv(h.maxHp,28),h);
-  if(h.catId==='spark')for(const e of es){this.harm(e,mulDiv(h.atk,160),h,{type:'magic'});this.applyBurn(e,mulDiv(h.atk,30),h.level>=5?6:4,h);}
-  if(h.catId==='mint'){t=es.reduce((a,b)=>a.hp>b.hp?a:b);this.harm(t,mulDiv(h.atk,230),h,{type:'magic'});if(h.level>=80)t.magicResist=mulDiv(t.magicResist,80);t.stun=(h.level>=5?2.6:1.8)+(h.stars>=3?.25:0);if(t.charge>0){t.charge=0;t.skillWait=5;this.emit('interrupt',h,t,0,{text:'已打断'});}}
-  if(h.catId==='bolt'){t.armor=mulDiv(t.armor,h.level>=5?25:50);this.harm(t,h.atk*3,h,{type:'physical'});this.emit('status',h,t,0,{text:'破甲'});}
-  if(h.catId==='pudding')this.shield(h,mulDiv(h.maxHp,35),h);
-  if(h.catId==='star')for(const p of ps){if(p!==h)p.energy=Math.min(100,p.energy+(h.level>=80?56:48)+(h.stars>=3?4:0));this.heal(p,mulDiv(h.atk,160),h);}
+  if(h.catId==='orange'){this.shield(h,mulDiv(h.maxHp,sk.orangeSelf),h);for(const p of ps.filter(x=>x!==h))this.shield(p,mulDiv(p.maxHp,sk.orangeTeam),h);}
+  if(h.catId==='ink'){t=es.reduce((a,b)=>a.hp<b.hp?a:b);this.harm(t,mulDiv(h.atk,sk.inkHit),h,{type:'physical',bonusPen:sk.inkPen});}
+  if(h.catId==='milk')for(const p of ps)this.heal(p,mulDiv(h.maxHp,sk.milkHeal),h);
+  if(h.catId==='spark')for(const e of es){this.harm(e,mulDiv(h.atk,sk.sparkHit),h,{type:'magic'});this.applyBurn(e,mulDiv(h.atk,sk.sparkBurn),h.level>=5?6:4,h);}
+  if(h.catId==='mint'){t=es.reduce((a,b)=>a.hp>b.hp?a:b);this.harm(t,mulDiv(h.atk,sk.mintHit),h,{type:'magic'});if(h.level>=80)t.magicResist=mulDiv(t.magicResist,80);t.stun=(h.level>=5?2.6:1.8)+sk.mintStun;if(t.charge>0){t.charge=0;t.skillWait=5;this.emit('interrupt',h,t,0,{text:'已打断'});}}
+  if(h.catId==='bolt'){t.armor=mulDiv(t.armor,(h.level>=5?25:50)-sk.boltShred);this.harm(t,mulDiv(h.atk,sk.boltHit),h,{type:'physical'});this.emit('status',h,t,0,{text:'破甲'});}
+  if(h.catId==='pudding')this.shield(h,mulDiv(h.maxHp,sk.puddingSelf),h);
+  if(h.catId==='star')for(const p of ps){if(p!==h)p.energy=Math.min(100,p.energy+(h.level>=80?56:48)+sk.starEnergy);this.heal(p,mulDiv(h.atk,sk.starHeal),h);}
   this.runeSkill(h);
  }
  openCan(){
@@ -275,7 +276,7 @@ export class Battle {
   while(c.next<c.targets.length&&age+1e-9>=canHitAt(c.next)){this.eventAt=c.born+canHitAt(c.next);const id=c.targets[c.next++],e=this.enemies.find(e=>e.id===id);if(e?.hp>0)this.harm(e,c.attack,c.source,{type:'physical'});}
   this.eventAt=null;this.canEvent=false;if(this.time+1e-9>=c.until)this.canSequence=null;
  }
- syncStats(s,{preserveHealthRatio=false}={}){this.buff=buffs(s);for(const h of this.heroes){const n=catStats(s,h.catId,h.gear),oldMax=h.maxHp,ratio=h.hp/oldMax,add=n.hp-oldMax;h.maxHp=n.hp;if(h.hp>0)h.hp=preserveHealthRatio?resizeAmount(h,'hp',oldMax,n.hp):clamp(h.hp+Math.max(0,add),1,h.maxHp);h.shield=Math.min(n.hp,preserveHealthRatio?resizeAmount(h,'shield',oldMax,n.hp):h.shield);if(h.shieldPunch)h.shieldPunch.config.chargeEnergyPerSecond+=((n.stars>=3?1:0)-(h.stars>=3?1:0))*3;for(const key of ['atk','crit','level','stars','armor','magicResist','armorPen','magicPen','normalDamageType','skillDamageType'])h[key]=n[key];}}
+ syncStats(s,{preserveHealthRatio=false}={}){this.buff=buffs(s);for(const h of this.heroes){const n=catStats(s,h.catId,h.gear),oldMax=h.maxHp,ratio=h.hp/oldMax,add=n.hp-oldMax;h.maxHp=n.hp;if(h.hp>0)h.hp=preserveHealthRatio?resizeAmount(h,'hp',oldMax,n.hp):clamp(h.hp+Math.max(0,add),1,h.maxHp);h.shield=Math.min(n.hp,preserveHealthRatio?resizeAmount(h,'shield',oldMax,n.hp):h.shield);if(h.shieldPunch)h.shieldPunch.config.selfShieldRatio=mulDiv(skillTuning(n.skillRank).puddingSelf,this.shieldFactor(h));for(const key of ['atk','crit','level','stars','skillRank','armor','magicResist','armorPen','magicPen','normalDamageType','skillDamageType'])h[key]=n[key];}}
  checkEnd(){if(!this.alive('e').length){if(!this.canSequence)this.result='win';}else if(!this.alive('p').length||this.round>30||this.time>=600)this.result='lose';return this.result;}
  tick(dt){if(this.result)return this.events.splice(0);dt=clamp(dt,0,.25);const beforeMs=integer(this.time*1000);this.stepStart=this.time;this.time+=dt;const dtMs=integer(this.time*1000)-beforeMs;this.canCd=Math.max(0,this.canCd-dt);
   this.advanceCan();

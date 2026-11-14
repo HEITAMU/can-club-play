@@ -1,3 +1,5 @@
+import {MATERIAL_INFO,materialHave} from './material-info.mjs';
+import {MATERIAL_NAMES,materialIcon} from './loot-icons.mjs';
 import {BADGE_NAMES} from './growth-visual.mjs';
 import {ActivityReturn,activityRoute} from './activity-navigation.mjs?v=0.25.1';
 const activityReturn=new ActivityReturn();
@@ -122,7 +124,7 @@ function playEvents(events){if(!battle||!events.length||tab!=='battle'||modalTyp
 function onBattleEnd(){for(const a of [...battle.heroes,...battle.enemies])a.action=null;const result=settleBattle(state,battle);if(!result)return;persist();renderHeader();renderParty();const el=$('#battle-message');
  if(result.activity){nextDelay=2.2;el.classList.add('has-actions');el.innerHTML='<strong>'+(result.win?'委托完成':'挑战结束')+'</strong>'+(result.win?rewardIcons(result,{companion:battle.activity.id}):'')+'<div class="activity-result-actions"><button id="activity-back">返回</button><button id="activity-again">再战</button></div>';$('#activity-back').onclick=()=>returnToStreet(activityRoute(battle.activity));$('#activity-again').onclick=()=>startBattle({activity:battle.activity.request});sound(result.win?'win':'hit');renderVitals();return;}
 
- if(result.arena){nextDelay=2.2;el.innerHTML=result.win?`<strong>${battle.weekly?battle.weekly.name:'第 '+battle.arenaTier+' 擂'}获胜</strong><small>${result.weekly?'鱼币 +'+result.gold+' · 物资 +'+result.supplies+' · ':''}突破徽章 +${result.badges}${result.first?' · 首通奖励已领':''}</small>`:'<strong>擂台挑战结束</strong>';sound(result.win?'win':'hit');renderVitals();return;}
+ if(result.arena){nextDelay=2.2;el.innerHTML=result.win?`<strong>${battle.weekly?battle.weekly.name:'第 '+battle.arenaTier+' 擂'}获胜</strong><small>${result.weekly?'鱼币 +'+result.gold+' · 物资 +'+result.supplies+' · ':''}护送勋章 +${result.badges}${result.first?' · 首通奖励已领':''}</small>`:'<strong>擂台挑战结束</strong>';sound(result.win?'win':'hit');renderVitals();return;}
  if(result.win){sound('win');el.innerHTML=`<strong>${battle.farm?'收工，有鱼币！':battle.stage%5===0?'首领拿下！':'街区 +1'}</strong><small>鱼币 +${fmt(result.gold)} · 经营物资 +${result.supplies}${result.gearLoot?.item?' · 装备已入背包':result.gearLoot?.scrap?' · 背包已满，掉落折算零件':''}${result.unlocked.length?' · 新队员来啦':''}</small>`;nextDelay=2.2;}
  else {nextDelay=2.6;el.innerHTML='<strong>整备后再战</strong>';}renderVitals();}
 function changeTab(next){if(next!=='map')districtTools.hidden=true;if(next!=='battle')activityReturn.cancel();disposeDistrict?.();disposeDistrict=null;disposeFormation?.();disposeFormation=null;tab=next;$('#battle-view').hidden=next!=='battle';$('#other-view').hidden=next==='battle';$$('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===next));if(next==='battle'){lastStamp=performance.now();sizeActors();renderVitals();if(running)combatEffects.warm(battle);}if(next==='cats')renderCats();if(next==='relics')renderRelics();if(next==='map')renderMap();$('.game-shell').scrollIntoView({block:'start',behavior:'auto'});}
@@ -159,7 +161,7 @@ function showGrowthSuccess(id,label){
  }
 }
 function bindCrewProfile(root,id){
- root.querySelector('[data-breakthrough]')?.addEventListener('click',()=>{if(!breakthrough(state,id))return;battle?.syncStats(state,{preserveHealthRatio:true});persist();renderHeader();if(modalType==='cat')showCat(id,true);else renderCats();showGrowthSuccess(id,'突破 '+state.breakthroughs[id]+' 阶');toast(cat(id).name+'突破成功，等级上限 '+levelCap(state,id));});
+ root.querySelector('[data-breakthrough]')?.addEventListener('click',()=>{if(!breakthrough(state,id))return;battle?.syncStats(state,{preserveHealthRatio:true});persist();renderHeader();if(modalType==='cat')showCat(id,true);else renderCats();showGrowthSuccess(id,'绝活 Lv.'+(state.breakthroughs[id]+1));toast(cat(id).name+'的'+cat(id).skill+'升至 Lv.'+(state.breakthroughs[id]+1));});
  root.querySelector('[data-ascend]')?.addEventListener('click',()=>{if(!ascendCompanion(state,id))return;battle?.syncStats(state,{preserveHealthRatio:true});persist();renderHeader();if(modalType==='cat')showCat(id,true);else renderCats();showGrowthSuccess(id,BADGE_NAMES[state.roster.stars[id]]+'晋升');toast(cat(id).name+'获得'+BADGE_NAMES[state.roster.stars[id]]);});
  root.querySelector('[data-companion-contract]')?.addEventListener('click',()=>openStreet('recruit',id));
  root.querySelector('[data-growth-materials]')?.addEventListener('click',()=>openStreet('materials','escort'));
@@ -279,3 +281,5 @@ function frame(now){requestAnimationFrame(frame);const dt=lastStamp?Math.min(.1,
 }
 renderHeader();renderParty();previewBattle();persist();if(state.pending)showLoot();else if(!state.onboarded)showIntro();else startBattle();if(recovery)toast(recovery);requestAnimationFrame(frame);watchImageAssets();document.getElementById('boot-status')?.remove();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./sw.js').then(()=>navigator.serviceWorker.ready).then(()=>{swReady=true;}).catch(()=>{});
+
+document.addEventListener('click',e=>{const button=e.target.closest('[data-material-info]');if(!button)return;const key=button.dataset.materialInfo,id=button.dataset.materialCompanion,info=MATERIAL_INFO[key];if(!info)return;gearAnchor=button.getBoundingClientRect();const name=key==='shards'?cat(id).name+'的信物':MATERIAL_NAMES[key];openModal('material',`<div class="material-info-card">${materialIcon(key,38,id)}<h2 id="modal-title">${name}</h2><p>${info.description}</p>${info.source?`<p>${info.source}</p>`:""}<small>当前持有：${materialHave(state,key,id)}</small><button id="material-go" class="primary wide">${key==='shards'?'前往伙伴委托':key==='notes'?'前往后巷清扫':'前往夜班护送'}</button></div>`);positionGearCard();$('#material-go').onclick=()=>{forceClose();openStreet(info.group,key==='shards'?id:info.route);};});
