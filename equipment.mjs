@@ -1,5 +1,9 @@
 import {integer,mulDiv} from './integer-math.mjs?v=0.25.1';
-export const BAG_CAP=120,GEAR_MAX=12;
+export const BAG_CAP=120,GEAR_MAX=15;
+// Attack/health are the long-term equipment budget. Defensive ratings and
+// critical chance stay on their own bounded curve instead of scaling with damage.
+export const GEAR_POWER_TIERS=Object.freeze([1,2,4,8,16,32]);
+export const enhancementPower=level=>100+40*level+8*level*level;
 export const GEAR_SLOTS=[{id:'claw',name:'爪套',main:'atk',icon:0},{id:'coat',name:'围巾',main:'hp',icon:1},{id:'collar',name:'项圈',main:'armor',icon:8},{id:'brace',name:'挂件',main:'magicResist',icon:9},{id:'rune',name:'妙招牌',main:null,icon:11}];
 export const RUNES=[
  {id:'followup',name:'补上一爪',desc:'每 4 次普攻，对原目标追加 40% 攻击力伤害；追加伤害不触发普攻效果。'},
@@ -40,9 +44,9 @@ export function normalizeInventory(raw,ids){
  const r=raw&&typeof raw==='object'?raw:{},items=[],seen=new Set();
  for(const x of list(r.items).slice(0,BAG_CAP)){
   if(!x||!/^g[1-9]\d{0,8}$/.test(x.id)||seen.has(x.id)||!GEAR_SLOTS.some(s=>s.id===x.slot)||(x.slot==='rune'?!RUNES.some(r=>r.id===x.rune):!GEAR_SETS.some(s=>s.id===x.set)))continue;
-  seen.add(x.id);const quality=int(x.quality,3),keys=new Set();const reserved=new Set(list(x.subs).filter(a=>a?.key!=='speed').map(a=>a?.key));const migrated=list(x.subs).map(a=>{if(a?.key!=='speed')return a;const key=['crit','armorPen','magicPen','atk','hp','armor','magicResist'].find(k=>!reserved.has(k)&&k!==GEAR_SLOTS.find(s=>s.id===x.slot).main);reserved.add(key);return {...a,key};});const subs=migrated.filter(a=>a&&ATTRS[a.key]&&!keys.has(a.key)&&(keys.add(a.key),true)).slice(0,QUALITIES[quality].subs).map(a=>({key:a.key,roll:Math.max(80,Math.min(120,integer(Number.isFinite(a.roll)?(r.version===2?a.roll:a.roll*100):100))),growth:int(a.growth,4)}));
-  let growth=Math.floor(int(x.enhance,12)/3);for(const a of subs){a.growth=Math.min(a.growth,growth);growth-=a.growth;}
-  items.push({id:x.id,slot:x.slot,rune:x.slot==='rune'?x.rune:null,set:x.slot==='rune'?null:x.set,tier:Math.max(1,int(x.tier,6)),quality,enhance:int(x.enhance,12),subs,locked:x.locked===true,rerolls:int(x.rerolls,1000000)});
+  seen.add(x.id);const quality=int(x.quality,3),keys=new Set();const reserved=new Set(list(x.subs).filter(a=>a?.key!=='speed').map(a=>a?.key));const migrated=list(x.subs).map(a=>{if(a?.key!=='speed')return a;const key=['crit','armorPen','magicPen','atk','hp','armor','magicResist'].find(k=>!reserved.has(k)&&k!==GEAR_SLOTS.find(s=>s.id===x.slot).main);reserved.add(key);return {...a,key};});const subs=migrated.filter(a=>a&&ATTRS[a.key]&&!keys.has(a.key)&&(keys.add(a.key),true)).slice(0,QUALITIES[quality].subs).map(a=>({key:a.key,roll:Math.max(80,Math.min(120,integer(Number.isFinite(a.roll)?(r.version===2?a.roll:a.roll*100):100))),growth:int(a.growth,Math.floor(GEAR_MAX/3))}));
+  let growth=Math.floor(int(x.enhance,GEAR_MAX)/3);for(const a of subs){a.growth=Math.min(a.growth,growth);growth-=a.growth;}
+  items.push({id:x.id,slot:x.slot,rune:x.slot==='rune'?x.rune:null,set:x.slot==='rune'?null:x.set,tier:Math.max(1,int(x.tier,6)),quality,enhance:int(x.enhance,GEAR_MAX),subs,locked:x.locked===true,rerolls:int(x.rerolls,1000000)});
  }
  for(const e of items)if(e.slot==='rune'){e.tier=1;e.quality=1;e.enhance=0;e.subs=[];e.rerolls=0;}
  const equipped={},used=new Set();for(const id of ids){equipped[id]={};for(const slot of GEAR_SLOTS){const uid=r.equipped?.[id]?.[slot.id],e=items.find(e=>e.id===uid&&e.slot===slot.id);if(e&&!used.has(uid)){equipped[id][slot.id]=uid;used.add(uid);}}}
@@ -66,9 +70,9 @@ export function createInventory(ids,legacy={},stage=1,party=ids.slice(0,2)){
 export const gearOwner=(s,uid)=>Object.entries(s.inventory.equipped).find(([,slots])=>Object.values(slots).includes(uid))?.[0]||null;
 export function equipGear(s,uid,id,allowed){const e=s.inventory.items.find(e=>e.id===uid);if(!e||!allowed.includes(id))return false;for(const slots of Object.values(s.inventory.equipped))for(const k of Object.keys(slots))if(slots[k]===uid)delete slots[k];(s.inventory.equipped[id]??={})[e.slot]=uid;return true;}
 export function unequipGear(s,id,slot){const slots=s.inventory.equipped[id];if(!slots?.[slot])return false;delete slots[slot];return true;}
-export function gearValues(e){if(e.slot==='rune')return {};const slot=GEAR_SLOTS.find(x=>x.id===e.slot),factor=e.tier*QUALITIES[e.quality].factor;
- const values={[slot.main]:mulDiv(ATTRS[slot.main].base*factor,100+6*e.enhance,1000000)};
- for(const a of e.subs)values[a.key]=(values[a.key]||0)+Math.max(1,mulDiv(ATTRS[a.key].base*35*factor*a.roll,100+35*a.growth,10000000000));return values;
+export function gearValues(e){if(e.slot==='rune')return {};const slot=GEAR_SLOTS.find(x=>x.id===e.slot),power=key=>key==='atk'||key==='hp',factor=key=>(power(key)?GEAR_POWER_TIERS[e.tier-1]:e.tier)*QUALITIES[e.quality].factor;
+ const values={[slot.main]:mulDiv(ATTRS[slot.main].base*factor(slot.main),power(slot.main)?enhancementPower(e.enhance):100+8*e.enhance,1000000)};
+ for(const a of e.subs)values[a.key]=(values[a.key]||0)+Math.max(1,mulDiv(ATTRS[a.key].base*35*factor(a.key)*a.roll,100+35*a.growth,10000000000));return values;
 }
 export function gearBonuses(s,id){const values={atk:0,hp:0,armor:0,magicResist:0,armorPen:0,magicPen:0,crit:0},counts={},sets=[];let rune=null;for(const uid of Object.values(s.inventory?.equipped?.[id]||{})){const e=s.inventory.items.find(e=>e.id===uid);if(!e)continue;if(e.slot==='rune'){rune=e.rune;continue;}for(const [k,v]of Object.entries(gearValues(e)))values[k]+=v;counts[e.set]=(counts[e.set]||0)+1;}
  for(const set of GEAR_SETS){const count=counts[set.id]||0;if(count>=2)for(const [k,v]of Object.entries(set.bonus))values[k]+=v;if(count>=4)sets.push(set.id);}return {...values,sets,counts,rune};}

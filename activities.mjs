@@ -38,7 +38,7 @@ export function activityReward(info){const n=info.tier,first=info.first,mult=fir
  if(info.kind==='recruit'){if(!first&&n<6)return r;r.shards=first?[20,12,16,20,24,30][n-1]:6;}
  else if(info.kind==='sweep'){r.notes=(8+n*6)*mult;}
  else if(info.kind==='escort'){r.badges=(2+Math.ceil(n/2))*mult;}
- else if(info.kind==='salvage'){r.essence=(1+Math.floor(n/3))*mult;r.scrap=24*n;}
+ else if(info.kind==='salvage'){r.essence=(1+Math.floor(n/3))*mult;r.scrap=24*n+12*Math.max(0,n-4)**2;}
  else if(info.kind==='hunt'){r.gold=150+Math.min(n,100)*30;}
  else if(info.kind==='hard'){r.seals=n*2*mult;}
  return r;

@@ -50,7 +50,7 @@ test('old saves and inheritance derive all four stats without changing stored in
  assert.equal(restored.gold,9876);assert.equal(restored.levels.spark,35);
  for(const c of CATS)for(const level of [1,50,100]){s.levels[c.id]=level;const stats=catStats(s,c.id);for(const key of ['armor','magicResist','armorPen','magicPen'])assert.ok(Number.isFinite(stats[key])&&stats[key]>=0);}
 });
-test('skill tooltips show current values and the seven visible attributes use combat stats',()=>{
+test('damage skill tooltips show scaling percentages while support values and seven attributes use combat stats',()=>{
  for(const c of CATS){
   const s=initialState();s.highest=120;s.party=[c.id];s.levels[c.id]=10;
   const b=new Battle(s),h=b.heroes[0],e=b.enemies[0];Object.assign(e,{hp:1e6,maxHp:1e6,armor:0,magicResist:0});h.hp=1;
@@ -58,7 +58,11 @@ test('skill tooltips show current values and the seven visible attributes use co
   const type=['orange','pudding'].includes(c.id)?'shield':['milk','star'].includes(c.id)?'heal':'hit';
   const event=b.events.find(x=>x.type===type&&x.from===h.id);
   if(type==='hit')assert.equal(event.damageType,['spark','mint'].includes(c.id)?'magic':'physical');
-  const displayed=c.id==='ink'?b.events.filter(x=>x.type==='hit'&&x.from===h.id).reduce((n,x)=>n+x.value,0):event.value;assert.ok(description.description.includes('>'+displayed.toLocaleString('zh-CN')+'</strong>'),c.id);
+  if(type==='hit'){
+   const percentage={ink:330,spark:160,mint:230,bolt:300}[c.id];
+   assert.ok(description.description.includes('>'+percentage+'% 攻击力</strong>'),c.id);
+   assert.ok(!/class="skill-damage">[\d,]+<\/strong>/.test(description.description));
+  }else assert.ok(description.description.includes('>'+event.value.toLocaleString('zh-CN')+'</strong>'),c.id);
   const html=crewProfileHTML(s,c.id);assert.equal((html.match(/<dt>/g)||[]).length,7);
   for(const name of ['护甲','魔抗','护甲穿透','法术穿透'])assert.ok(html.includes('<dt>'+name+'</dt>'));
   assert.ok(!/NaN|undefined/.test(html));

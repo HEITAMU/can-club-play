@@ -1,10 +1,10 @@
 import {SKILL_STUDY,skillSummary} from '../../skill-training.mjs';
-import {damageTextStyle} from '../../damage-text-style.mjs';
+import {damageTextStyle,criticalFrameSize,drawCriticalFrame} from '../../damage-text-style.mjs';
 import {groundFootY} from '../../battlefield-space.mjs';
 import {STREET_GROUPS,streetChoices,streetSelection,activityDrops} from '../../street-ui.mjs';
 import {activityInfo,activityReward,rewardText} from '../../activities.mjs';
 import {ActivityReturn} from '../../activity-navigation.mjs';
-import {GEAR_SLOTS,GEAR_SETS,RUNES,QUALITIES,ATTRS,BAG_CAP,gearName,gearStory,gearOwner,gearValues,gearBonuses,attrText,materialRows,equipGear,unequipGear,enhanceQuote,enhanceGear,reforgeGear,dismantleGear,craftQuote,craftGear} from '../../equipment.mjs';
+import {GEAR_SLOTS,GEAR_SETS,RUNES,QUALITIES,ATTRS,BAG_CAP,GEAR_MAX,gearName,gearStory,gearOwner,gearValues,gearBonuses,attrText,materialRows,equipGear,unequipGear,enhanceQuote,enhanceGear,reforgeGear,dismantleGear,craftQuote,craftGear} from '../../equipment.mjs';
 import {DAILY_TASKS,JOURNEY,refreshCampaign,dailyReward,claimDaily,claimDailyChest,claimJourney,weeklyInfo} from '../../campaign.mjs';
 import {talentCards} from '../../talents.mjs';
 import {businessBoostQuote,grantBusinessBoost} from '../../rewarded-economy.mjs';
@@ -211,6 +211,7 @@ export class NativeGame {
         ["hit", "heal", "burn"].includes(e.type) &&
         e.value > 0
       ) {
+        for(const previous of this.hitTexts)if(previous.to===e.to&&b.time-previous.born<.24)previous.lift=(previous.lift||0)+24;
         this.hitTexts.push({ ...e, born: b.time });
         if (this.hitTexts.length > 40) this.hitTexts.shift();
       }
@@ -664,6 +665,7 @@ export class NativeGame {
       };
     }
     this.centers = centers;
+    this.textAnchors=Object.fromEntries(actors.map(a=>[a.id,{x:ground[a.id].x,y:ground[a.id].y-sizes[a.id]*.43/ah*100}]));
     this.guards.render(actors, t, centers, sizes, this.fx);
     this.statuses.render(actors, t, centers, sizes, this.fx);
     const particles = this.fx.render(
@@ -738,16 +740,16 @@ export class NativeGame {
     );
     this.hitTexts = this.hitTexts.filter((e) => t - e.born < 0.9);
     for (const e of this.hitTexts) {
-      const p = centers[e.to];
+      const p = this.textAnchors?.[e.to] || centers[e.to];
       if (!p) continue;
       const u = (t - e.born) / 0.9, damageStyle=damageTextStyle(e);
       c.globalAlpha = 1 - Math.max(0, (u - 0.6) / 0.4);
-      if(e.type!=="heal"&&damageStyle.icon){const img=this.art.image(damageStyle.icon.slice(2));c.save();c.translate(p.x*w/100,p.y*ah/100-25-u*24);c.rotate(-8*Math.PI/180);c.font='bold 12px sans-serif';const fw=Math.max(48,c.measureText(fmt(e.value)).width+26);if(img)c.drawImage(img,-fw/2,-16,fw,32);text(c,fmt(e.value),0,0,12,'#171211',700,'center');c.restore();continue;}
+      if(e.type!=="heal"&&damageStyle.icon){const img=this.art.image(damageStyle.icon.slice(2));c.save();c.translate(p.x*w/100,p.y*ah/100-25-u*24-(e.lift||0));c.font='700 '+damageStyle.size+'px sans-serif';const frame=criticalFrameSize(c.measureText(String(e.value)).width);if(img)drawCriticalFrame(c,img,-frame.width/2,-frame.height/2,frame.width,frame.height);text(c,String(e.value),0,0,damageStyle.size,'#171211',700,'center');c.restore();continue;}
       text(
         c,
-        (e.type === "heal" ? "+" : "") + fmt(e.value)+(e.type === "heal"?"":damageStyle.suffix),
+        (e.type === "heal" ? "+" : "") + String(e.value)+(e.type === "heal"?"":damageStyle.suffix),
         (p.x * w) / 100,
-        (p.y * ah) / 100 - 25 - u * 24,
+        (p.y * ah) / 100 - 25 - u * 24 - (e.lift||0),
         damageStyle.size,
         e.type === "heal" ? "#dcf2a9" : damageStyle.color,
         e.type === "heal" ? 800 : damageStyle.weight,
@@ -1164,6 +1166,7 @@ export class NativeGame {
       const e=s.inventory.items.find(e=>e.id===s.inventory.equipped[this.selected]?.[slot.id]),[sx,sy]=spots[i],x=sx,gy=y+sy;
       this.button('gear-slot-'+slot.id,'',x,gy,58,58,()=>{this.bagSlot=slot.id;this.bagPage=0;},{fill:this.bagSlot===slot.id?'#617969':C.dark,stroke:e?QUALITIES[e.quality].color:C.rim});
       this.art.item(c,slot.icon,x+29,gy+18,25);text(c,slot.name,x+29,gy+36,9,C.ink,650,'center');text(c,e?(GEAR_SETS.find(z=>z.id===e.set)?.name||'妙招'):'＋',x+29,gy+49,9,C.gold,700,'center');
+      if(e&&e.enhance>0){c.save();c.font='900 13px sans-serif';c.textAlign='left';c.textBaseline='middle';c.lineWidth=3;c.strokeStyle='#62402e';c.strokeText('+'+e.enhance,x+2,gy+3);text(c,'+'+e.enhance,x+2,gy+3,13,'#ffe5a0',900);c.restore();}
       if(e)this.button('gear-detail-'+slot.id,'···',x+34,gy-7,25,19,()=>{this.bagDetail=e.id;this.scroll=0;},{size:12});
     }
     text(c,this.bagSlot?GEAR_SLOTS.find(x=>x.id===this.bagSlot).name:'未装备',245,y+15,13,C.ink,750);this.button('bag-show-all','全部',330,y,46,25,()=>{this.bagSlot='';this.bagSet='';this.bagPage=0;},{size:10});
@@ -1198,7 +1201,7 @@ export class NativeGame {
     const description=rune?RUNES.find(x=>x.id===e.rune).desc:set.name+'套装\n2 件：'+set.two+'\n4 件：'+set.four;
     y+=rich(c,description,20,y+10,350,{size:13,line:21})+27;
     this.button('gear-equip',owner===this.bagCat?'卸下':'装备 · '+cat(this.bagCat).name,14,y,362,38,()=>{if(owner===this.bagCat)unequipGear(s,this.bagCat,e.slot);else equipGear(s,e.id,this.bagCat,G.unlocked(s).map(c=>c.id));this.bagChanged();this.bagDetail=null;this.scroll=0;},{fill:C.gold,color:C.dark,size:13});y+=52;
-    if(!rune){this.button('gear-enhance',q.maxed?'强化已满 +12':'强化 · '+q.gold+' 鱼币 / '+q.scrap+' 零件',14,y,362,36,()=>{if(enhanceGear(s,e.id))this.bagChanged('强化成功');},{disabled:q.maxed||s.gold<q.gold||s.inventory.materials.scrap<q.scrap,size:12});y+=48;
+    if(!rune){this.button('gear-enhance',q.maxed?'强化已满 +'+GEAR_MAX:'强化 · '+q.gold+' 鱼币 / '+q.scrap+' 零件',14,y,362,36,()=>{if(enhanceGear(s,e.id))this.bagChanged('强化成功');},{disabled:q.maxed||s.gold<q.gold||s.inventory.materials.scrap<q.scrap,size:12});y+=48;
       for(const [i,a]of e.subs.entries()){this.button('gear-reforge-'+i,'洗炼副属性 '+(i+1)+' · '+ATTRS[a.key].name+' · 2 打磨砂',14,y,362,34,()=>{if(reforgeGear(s,e.id,i))this.bagChanged('副属性已更新');},{disabled:s.inventory.materials.essence<2,size:11});y+=46;}}
     this.button('gear-lock',e.locked?'解锁装备':'锁定装备',14,y,362,34,()=>{e.locked=!e.locked;this.bagChanged();});y+=48;
     this.button('gear-dismantle','分解装备',14,y,362,34,async()=>{if(!await this.env.confirm('分解 '+gearName(e),'装备会消失，返还修补零件和部分打磨砂。'))return;const r=dismantleGear(s,e.id);if(r){this.bagDetail=null;this.scroll=0;this.bagChanged('零件 +'+r.scrap+' · 打磨砂 +'+r.essence);}},{disabled:!!owner||e.locked});y+=55;y+=rich(c,gearStory(e),20,y,350,{size:13,line:21});return y+28;

@@ -1,4 +1,5 @@
 import {patrolDrop,grantPatrolDrop} from './patrol-drops.mjs';
+import {equipmentEncounterScale} from './equipment-progression.mjs';
 import {normalizeReport} from './battle-flow.mjs';
 import {skillTuning} from './skill-training.mjs';
 import {integer,mulDiv,accrueUnits,resizeAmount} from './integer-math.mjs?v=0.25.1';
@@ -136,8 +137,8 @@ export function enemiesFor(stage){const boss=stage%5===0,ch=chapterOf(stage),m=(
  const mob=(type,index)=>({id:'e'+index,type,name:names[type],maxHp:Math.round((type==='box'?115:type==='bag'?78:90)*m),atk:Math.round((type==='battery'?13:9)*m),boss:false});
  if(boss){const chapterBoss=stage%20===0;list.push({id:'e0',type:ch.type,name:chapterBoss?ch.boss:['扫街队长','捣蛋头目','罐头大盗'][Math.floor((stage%20)/5)-1]+' · '+ch.boss,maxHp:Math.round((chapterBoss?345:275)*m),atk:Math.round((chapterBoss?16:13)*m),boss:true});if(stage>=15){const count=chapterBoss?4:1;for(let i=1;i<=count;i++){const escort=mob(MOB_TYPES[(ci+i)%6],i);if(count===4){escort.maxHp=Math.round(escort.maxHp*.38);escort.atk=Math.max(1,Math.round(escort.atk*.38));}list.push(escort);}}}
  else {const count=stage===1?1:stage>=16&&stage%4===0?5:stage>=12&&stage%3===0?3:2;for(let i=0;i<count;i++){const e=mob(MOB_TYPES[(stage+ci-1+i)%6],i);if(count===5){e.maxHp=Math.round(mulDiv(e.maxHp,48));e.atk=Math.max(1,Math.round(mulDiv(e.atk,48)));}list.push(e);}}
- const pressure=patrolPressure(stage);
- return list.map(e=>({...e,maxHp:Math.round(e.maxHp*(1+(Math.max(0,stage-120)/200)**2)*pressure.hp),atk:Math.round(e.atk*pressure.atk),...enemyCombatStats(e.type,stage,e.boss)}));
+ const pressure=patrolPressure(stage),equipment=equipmentEncounterScale(stage);
+ return list.map(e=>({...e,maxHp:Math.round(Math.round(e.maxHp*(1+(Math.max(0,stage-120)/200)**2)*pressure.hp)*equipment.hp),atk:Math.round(Math.round(e.atk*pressure.atk)*equipment.atk),...enemyCombatStats(e.type,stage,e.boss)}));
 }
 export function arenaEnemies(tier){const info=arenaInfo(tier),level=8+(tier-1)*7,m=(1+.18*(level-1))*(1+.08*Math.floor(level/10)),types=['box','mop','bag','battery','drone'];return types.map((type,i)=>{const boss=info.type==='burst'&&i===0;return {id:'e'+i,type,name:(boss?'擂台蓄力王':names[type]),maxHp:Math.round((i<2?180:105)*m*(boss?1.4:1)),atk:Math.round((i<2?13:10)*m),boss,...enemyCombatStats(type,15+tier*4,boss),...(info.type==='iron'&&i<2?{armor:110+tier*4,magicResist:12}:{}),arenaHealer:info.type==='recovery'&&i===2,nextHeal:5};});}
 export class Battle {

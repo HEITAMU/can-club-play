@@ -1,4 +1,5 @@
 import {enemyCombatStats} from './combat-stats.mjs?v=0.25.0';
+import {activityEquipmentScale} from './equipment-progression.mjs';
 // Fixed encounters: changing the player's party, equipment or title never scales enemies.
 // Ordinary material/recruitment jobs do not use these endgame multipliers.
 const HARD_PRESSURE={barrier:{hp:4.5,atk:5},healer:{hp:9,atk:4.8},armor:{hp:12,atk:5.5},adaptive:{hp:15,atk:5.5},ambush:{hp:8,atk:7.5},burst:{hp:11,atk:5.5}};
@@ -20,5 +21,6 @@ export function streetEnemies(info){
   e.atk=Math.round(e.atk*pressure.atk*[.4,.68,1][tier-1]);
   if(theme==='burst'&&e.boss){e.atk=Math.round(e.atk*1.6);}
  }
+ const equipment=activityEquipmentScale(info);e.maxHp=Math.round(e.maxHp*equipment.hp);e.atk=Math.round(e.atk*equipment.atk);
  return e;});
 }
