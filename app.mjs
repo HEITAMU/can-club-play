@@ -140,6 +140,7 @@ function onBattleEnd(){
  for(const a of [...battle.heroes,...battle.enemies])a.action=null;
  const before={scrap:state.inventory.materials.scrap,essence:state.inventory.materials.essence};
  const result=settleBattle(state,battle);running=false;if(!result)return;
+ if(!battle.activity&&!battle.weekly&&battle.mode!=='arena'&&!result.win){state.battleReport=null;persist();startBattle();return;}
  if(result.win&&!battle.activity&&!battle.weekly&&battle.mode!=='arena'){state.battleReport=null;persist();renderHeader();renderParty();renderVitals();sound('win');$('#battle-message').innerHTML=rewardIcons(result);nextDelay=result.complete?0:1.2;return;}
  const report=battleReport(battle,result);report.rewards.scrap=state.inventory.materials.scrap-before.scrap;report.rewards.essence=state.inventory.materials.essence-before.essence;
  state.battleReport=report;persist();renderHeader();renderParty();renderVitals();sound(result.win?'win':'hit');showBattleReport();

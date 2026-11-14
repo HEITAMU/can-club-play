@@ -183,6 +183,7 @@ export class NativeGame {
       const result = G.settleBattle(this.state, b);
       if (!result) return;
       this.save();
+      if(!result.win&&b.mode==="patrol"&&!b.activity&&!b.weekly){this.state.battleReport=null;this.start(true);return;}
       this.nextDelay = 2.2;
       b.reward=result;
       if(result.gearLoot?.item)this.toast(gearName(result.gearLoot.item)+" 已放入背包");else if(result.gearLoot?.scrap)this.toast("背包已满，掉落折算为零件 +"+result.gearLoot.scrap);

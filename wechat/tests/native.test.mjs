@@ -222,3 +222,5 @@ test('contract auto-return cannot override a user navigation or rematch',async()
  const h=await harness({state:developed()}),a=h.app;a.activityReturn.finish({kind:'escort',tier:2},a.time);a.change('cats');a.update(2);assert.equal(a.tab,'cats');
  a.change('battle');a.activityReturn.finish({kind:'escort',tier:2},a.time);a.start(true);a.update(2);assert.equal(a.tab,'battle');assert.equal(a.battle.mode,'patrol');h.stop();
 });
+
+test('ordinary defeat immediately restarts same stage without modal or notice',async()=>{const s=G.initialState();s.onboarded=true;const h=await harness({state:s}),a=h.app;a.start(true);const old=a.battle,gold=a.state.gold;for(const hero of old.heroes)hero.hp=0;a.update(.1);assert.notEqual(a.battle,old);assert.equal(a.battle.stage,old.stage);assert.equal(a.battle.result,null);assert.ok(a.battle.heroes.every(x=>x.hp===x.maxHp));assert.equal(a.running,true);assert.equal(a.modal,null);assert.equal(a.state.battleReport,null);assert.equal(a.state.gold,gold);assert.equal(a.state.runCleared,0);h.stop();});
