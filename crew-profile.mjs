@@ -48,12 +48,16 @@ export function crewProfileHTML(state,id,{modal=false}={}){
  const c=CATS.find(c=>c.id===id),open=ownsCompanion(state,c.id),level=state.levels[id],stats=catStats(state,id),cap=levelCap(state,id),bq=breakthroughQuote(state,id);
  const skill=crewSkill(id,level,stats),awake=open&&level>=5,[wash,rim,accent]=palettes[id],cost=upgradeCost(level);
  const heading=modal?'h2':'h3',canInherit=open&&unlocked(state).some(d=>state.levels[d.id]>level);
+ const growthMarkup=(open?'<section class="crew-growth" aria-label="伙伴养成"><div class="crew-section-label"><h4>伙伴养成</h4></div>'+growthHTML(state,id):'')+
+  (open?'<div class="crew-actions"><button class="primary crew-upgrade" data-upgrade="'+id+'" data-profile-upgrade aria-label="'+(level>=cap?c.name+'已满级':'升级'+c.name+'，花费'+cost+'鱼币')+'" '+(level>=cap||state.gold<cost?'disabled':'')+'>'+icon('coin',23)+'<span>'+(level>=cap?'已满级':'升级 · '+number(cost))+'</span></button>'+
+   (canInherit?'<button class="secondary crew-inherit" data-inherit-open="'+id+'">培养继承</button>':'')+'</div></section><button class="crew-deployment-open" data-open-formation>阵容 ›</button>':
+   '<div class="crew-locked-note">收集 20 份'+c.name+'信物即可结识</div><button class="primary wide" data-companion-contract="'+id+'">前往伙伴委托 · '+(state.roster.shards[id]||0)+'/20</button>');
  return '<article class="crew-profile'+(open?'':' is-locked')+'" data-profile-cat="'+id+'" style="--crew-wash:'+wash+';--crew-rim:'+rim+';--crew-accent:'+accent+'">'+
   '<div class="crew-hero"><div class="crew-identity"><span class="crew-role">'+c.job+'</span>'+
   '<'+heading+(modal?' id="modal-title"':'')+'>'+c.name+'</'+heading+'>'+
   '<span class="crew-level">'+(open?'Lv. <b>'+level+'</b>':'等待结识')+'</span>'+
   '<span class="crew-position">'+(open?crewPosition(state,id):'伙伴委托结识')+'</span></div>'+
-  '<div class="crew-portrait"><span class="crew-portrait-halo" aria-hidden="true"></span>'+catSVG(id)+'</div></div>'+
+  '<div class="crew-portrait"><span class="crew-portrait-halo" aria-hidden="true"></span>'+catSVG(id)+'</div>'+growthMarkup+'</div>'+
   '<section class="crew-attributes" aria-label="'+c.name+'的属性">'+
    '<div class="crew-section-label"><h4>人物属性</h4><span>'+(open?'普攻 · '+(stats.normalDamageType==='magic'?'法术':'物理'):'Lv.1 预览')+'</span></div>'+
    '<dl>'+[['生命',number(stats.hp)],['攻击',number(stats.atk)],['暴击',stats.crit+'<small>%</small>'],['护甲',stats.armor],['魔抗',stats.magicResist],['护甲穿透',stats.armorPen],['法术穿透',stats.magicPen]].map(([label,value])=>'<div><dt>'+label+'</dt><dd>'+value+'</dd></div>').join('')+'</dl></section>'+
@@ -61,8 +65,5 @@ export function crewProfileHTML(state,id,{modal=false}={}){
   '<div class="crew-active-skill"><div class="crew-skill-title"><span class="crew-skill-icon">'+relicSVG(skillIcons[id])+'</span><h4>'+c.skill+'</h4><span>主动</span></div>'+
   '<p class="crew-skill-description">'+skill.description+'</p></div>'+
   '<div class="crew-passive '+(awake?'is-awake':'is-dormant')+'"><span class="crew-passive-mark" aria-hidden="true">'+icon(awake?'star':'paw',23)+'</span><div><div class="crew-passive-title"><b>'+passiveNames[id]+'</b><span>'+(awake?'被动 · 已觉醒':'被动 · Lv.5 解锁')+'</span></div><p>'+skill.passive+'</p></div></div>'+talentCards(id,level).map(t=>'<div class="crew-passive '+(t.active?'is-awake':'is-dormant')+'"><div><div class="crew-passive-title"><b>'+t.name+'</b><span>'+ (t.active?'被动 · 已解锁':'被动 · Lv.'+t.level+' 解锁')+'</span></div><p>'+t.desc+'</p></div></div>').join('')+'</section>'+
-  (open?'<section class="crew-growth" aria-label="伙伴养成"><div class="crew-section-label"><h4>伙伴养成</h4></div>'+growthHTML(state,id):'')+
-  (open?'<div class="crew-actions"><button class="primary crew-upgrade" data-upgrade="'+id+'" data-profile-upgrade aria-label="'+(level>=cap?c.name+'已满级':'升级'+c.name+'，花费'+cost+'鱼币')+'" '+(level>=cap||state.gold<cost?'disabled':'')+'>'+icon('coin',23)+'<span>'+(level>=cap?'已满级':'升级 · '+number(cost))+'</span></button>'+
-   (canInherit?'<button class="secondary crew-inherit" data-inherit-open="'+id+'">培养继承</button>':'')+'</div></section><button class="crew-deployment-open" data-open-formation>阵容 ›</button>':
-   '<div class="crew-locked-note">收集 20 份'+c.name+'信物即可结识</div><button class="primary wide" data-companion-contract="'+id+'">前往伙伴委托 · '+(state.roster.shards[id]||0)+'/20</button>')+'</article>';
+  '</article>';
 }

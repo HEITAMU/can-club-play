@@ -1,6 +1,6 @@
-const CACHE='can-club-0.26.24',ART_CACHE='can-club-art-v1';
+const CACHE='can-club-0.26.25',ART_CACHE='can-club-art-v1';
 // Cache only the shell at install. Download artwork when the player needs it.
-const SHELL=['./index.html','./game.bundle.mjs?v=0.26.24','./game.bundle.css?v=0.26.24'];
+const SHELL=['./index.html','./game.bundle.mjs?v=0.26.25','./game.bundle.css?v=0.26.25'];
 self.addEventListener('install',event=>event.waitUntil((async()=>{
  try{const cache=await caches.open(CACHE);await Promise.allSettled(SHELL.map(url=>cache.add(url)));}catch{}
  await self.skipWaiting();

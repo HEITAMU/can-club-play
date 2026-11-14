@@ -47,3 +47,22 @@
 .crew-view[data-mode="equipment"] .equipment-character>.companion-body{--companion-size:calc(var(--equipment-unit,100px)*var(--companion-scale,1))}
 .crew-view[data-mode="equipment"] .slot-coat,.crew-view[data-mode="equipment"] .slot-brace{top:126px}
 .crew-view[data-mode="equipment"] .slot-rune{top:190px}
+
+/* Profile actions live with the companion, above the skill section. */
+.crew-view[data-mode="profile"] .crew-hero{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-height:0}
+.crew-view[data-mode="profile"] .crew-identity{position:static;order:0;text-align:center;padding:0;pointer-events:auto}
+.crew-view[data-mode="profile"] .crew-identity h3{margin:0 0 2px;font-size:16px}
+.crew-view[data-mode="profile"] .crew-portrait{position:relative;order:1;left:auto;right:auto;bottom:auto;top:auto;transform:none;width:100%;height:78px;flex:0 0 78px}
+.crew-view[data-mode="profile"] .crew-portrait>.companion-body{bottom:7px}
+.crew-view[data-mode="profile"] .crew-hero>.crew-growth{order:2;display:flex;flex-direction:column;gap:5px;padding:0;border:0;background:none;box-shadow:none}
+.crew-view[data-mode="profile"] .crew-growth>.crew-section-label{display:none}
+.crew-view[data-mode="profile"] .crew-growth>.crew-actions{order:-1;display:flex;flex-wrap:wrap;gap:4px}
+.crew-view[data-mode="profile"] .crew-growth .crew-actions button{width:100%;flex:1 0 100%;min-height:32px;font-size:11px}
+.crew-view[data-mode="profile"] .crew-growth .crew-breakthrough{padding:5px 6px}
+.crew-view[data-mode="profile"] .crew-growth .crew-breakthrough h4{font-size:11px;margin:0 0 2px}
+.crew-view[data-mode="profile"] .crew-growth .crew-breakthrough p{display:none}
+.crew-view[data-mode="profile"] .crew-growth .reward-icons{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0}
+.crew-view[data-mode="profile"] .crew-growth .material-icon{width:14px!important;height:14px!important}
+.crew-view[data-mode="profile"] .crew-growth .crew-breakthrough button{min-height:28px;margin:2px 3px 0 0;padding:4px 6px;font-size:10px}
+/* Text remains live, crisp UI type, independent of the painted artwork. */
+html body,body button,body input,body select,body textarea,body h1,body h2,body h3,body h4,body b,body strong,body small,body span,body p,body div,body dt,body dd{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Arial,sans-serif!important;text-shadow:none!important;-webkit-text-stroke:0!important;letter-spacing:normal}
