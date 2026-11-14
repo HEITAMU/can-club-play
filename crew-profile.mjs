@@ -61,8 +61,8 @@ export function crewProfileHTML(state,id,{modal=false}={}){
   '<div class="crew-active-skill"><div class="crew-skill-title"><span class="crew-skill-icon">'+relicSVG(skillIcons[id])+'</span><h4>'+c.skill+'</h4><span>主动</span></div>'+
   '<p class="crew-skill-description">'+skill.description+'</p></div>'+
   '<div class="crew-passive '+(awake?'is-awake':'is-dormant')+'"><span class="crew-passive-mark" aria-hidden="true">'+icon(awake?'star':'paw',23)+'</span><div><div class="crew-passive-title"><b>'+passiveNames[id]+'</b><span>'+(awake?'被动 · 已觉醒':'被动 · Lv.5 解锁')+'</span></div><p>'+skill.passive+'</p></div></div>'+talentCards(id,level).map(t=>'<div class="crew-passive '+(t.active?'is-awake':'is-dormant')+'"><div><div class="crew-passive-title"><b>'+t.name+'</b><span>'+ (t.active?'被动 · 已解锁':'被动 · Lv.'+t.level+' 解锁')+'</span></div><p>'+t.desc+'</p></div></div>').join('')+'</section>'+
-  (open?growthHTML(state,id):'')+
+  (open?'<section class="crew-growth" aria-label="伙伴养成"><div class="crew-section-label"><h4>伙伴养成</h4></div>'+growthHTML(state,id):'')+
   (open?'<div class="crew-actions"><button class="primary crew-upgrade" data-upgrade="'+id+'" data-profile-upgrade aria-label="'+(level>=cap?c.name+'已满级':'升级'+c.name+'，花费'+cost+'鱼币')+'" '+(level>=cap||state.gold<cost?'disabled':'')+'>'+icon('coin',23)+'<span>'+(level>=cap?'已满级':'升级 · '+number(cost))+'</span></button>'+
-   (canInherit?'<button class="secondary crew-inherit" data-inherit-open="'+id+'">培养继承</button>':'')+'</div><button class="crew-deployment-open" data-open-formation>阵容 ›</button>':
+   (canInherit?'<button class="secondary crew-inherit" data-inherit-open="'+id+'">培养继承</button>':'')+'</div></section><button class="crew-deployment-open" data-open-formation>阵容 ›</button>':
    '<div class="crew-locked-note">收集 20 份'+c.name+'信物即可结识</div><button class="primary wide" data-companion-contract="'+id+'">前往伙伴委托 · '+(state.roster.shards[id]||0)+'/20</button>')+'</article>';
 }

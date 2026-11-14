@@ -106,3 +106,14 @@ body{background:radial-gradient(ellipse at 22% 30%,#56404d,#292535 75%);color:#f
 .crew-view[data-mode="profile"] .crew-attributes dl>div{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:8px}
 .crew-view[data-mode="profile"] .crew-attributes dt{text-align:left;white-space:nowrap}
 .crew-view[data-mode="profile"] .crew-attributes dd{text-align:right;font-variant-numeric:tabular-nums;min-width:36px}
+
+/* Three warm, bounded regions: attributes, skills and progression. */
+.crew-view[data-mode="profile"] .crew-attributes{background:#ead3a2;border:1px solid #ad8550;box-shadow:inset 0 1px #fff1cc}
+.crew-view[data-mode="profile"] .crew-skills{padding:8px;background:#edd0b2;border:1px solid #b88659;border-radius:11px;box-shadow:inset 0 1px #fff0da}
+.crew-view[data-mode="profile"] .crew-skills>.crew-section-label{margin:0 0 7px;padding:0 2px 6px;border-bottom:1px solid #ba8d604f}
+.crew-view[data-mode="profile"] .crew-skills>.crew-passive:last-child{margin-bottom:0}
+.crew-view[data-mode="profile"] .crew-growth{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px;background:#e5c68d;border:1px solid #ad7f3f;border-radius:11px;box-shadow:inset 0 1px #ffe9ba}
+.crew-view[data-mode="profile"] .crew-growth>.crew-section-label{grid-column:1/-1;margin:0;padding:0 2px 6px;border-bottom:1px solid #ad7f3f55}
+.crew-view[data-mode="profile"] .crew-growth .crew-breakthrough{background:#faedcf;border-color:#c3a16b;padding:7px}
+.crew-view[data-mode="profile"] .crew-growth .crew-actions{margin:0}
+.crew-view[data-mode="profile"] .crew-profile{row-gap:10px}
