@@ -13,7 +13,7 @@ export const WEEK_THEMES=[
  {name:'铁皮搬运队',rule:'敌方前排护甲提高，法术与破甲更有效。',type:'iron'},
  {name:'夜班补给站',rule:'后排每 5 秒治疗前排，控制或集火治疗者。',type:'recovery'},
  {name:'钟声突击队',rule:'首领周期蓄力，保留开罐啦打断。',type:'burst'},
- {name:'疾风巡夜队',rule:'敌方普攻间隔缩短 20%，注意护盾与续航。',type:'haste'}
+ {name:'疾风巡夜队',rule:'敌方攻击提高 20%。',type:'haste'}
 ];
 export function normalizeCampaign(raw={}){raw=raw&&typeof raw==='object'?raw:{};const list=v=>Array.isArray(v)?v:[];return {day:safe(raw.day),week:safe(raw.week),progress:Object.fromEntries(DAILY_TASKS.map(t=>[t.id,safe(raw.progress?.[t.id],t.goal)])),claimed:[...new Set(list(raw.claimed))].filter(x=>DAILY_TASKS.some(t=>t.id===x)),chest:raw.chest===true,journey:[...new Set(list(raw.journey))].filter(x=>JOURNEY.some(j=>j.id===x)),weekly:[...new Set(list(raw.weekly))].filter(x=>[1,2,3].includes(x))};}
 export function refreshCampaign(s,now=Date.now()){

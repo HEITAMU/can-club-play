@@ -28,7 +28,7 @@ test('one-speed is calmer and two-speed keeps an exact two-to-one clock ratio',(
  const t=actionTiming(actor);
  assert.ok(t.hold/battleRate(1)>=.08);
  assert.ok(t.recovery/battleRate(1)>.3);
- assert.ok(t.duration<actor.interval);
+ assert.ok(t.duration>0&&t.duration<3);
 });
 
 test('release and impact timestamps remain aligned across coarse and fine ticks',()=>{

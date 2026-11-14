@@ -56,7 +56,7 @@ export function crewProfileHTML(state,id,{modal=false}={}){
   '<div class="crew-portrait"><span class="crew-portrait-halo" aria-hidden="true"></span>'+catSVG(id)+'</div></div>'+
   '<section class="crew-attributes" aria-label="'+c.name+'的属性">'+
    '<div class="crew-section-label"><h4>人物属性</h4><span>'+(open?'普攻 · '+(stats.normalDamageType==='magic'?'法术':'物理'):'Lv.1 预览')+'</span></div>'+
-   '<dl>'+[['生命',number(stats.hp)],['攻击',number(stats.atk)],['攻速',stats.attackSpeed+'<small>次/分</small>'],['暴击',stats.crit+'<small>%</small>'],['护甲',stats.armor],['魔抗',stats.magicResist],['护甲穿透',stats.armorPen],['法术穿透',stats.magicPen]].map(([label,value])=>'<div><dt>'+label+'</dt><dd>'+value+'</dd></div>').join('')+'</dl></section>'+
+   '<dl>'+[['生命',number(stats.hp)],['攻击',number(stats.atk)],['暴击',stats.crit+'<small>%</small>'],['护甲',stats.armor],['魔抗',stats.magicResist],['护甲穿透',stats.armorPen],['法术穿透',stats.magicPen]].map(([label,value])=>'<div><dt>'+label+'</dt><dd>'+value+'</dd></div>').join('')+'</dl></section>'+
   '<section class="crew-skills" aria-label="'+c.name+'的技能"><div class="crew-section-label"><h4>角色技能</h4></div>'+
   '<div class="crew-active-skill"><div class="crew-skill-title"><span class="crew-skill-icon">'+relicSVG(skillIcons[id])+'</span><h4>'+c.skill+'</h4><span>主动</span></div>'+
   '<p class="crew-skill-description">'+skill.description+'</p></div>'+

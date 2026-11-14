@@ -100,3 +100,9 @@ body{background:radial-gradient(ellipse at 22% 30%,#56404d,#292535 75%);color:#f
 .crew-view[data-mode="profile"] .crew-skill-title>span:last-child,.crew-view[data-mode="profile"] .crew-passive-title span{flex:none;border:1px solid #c3a274;border-radius:4px;padding:2px 5px;font-size:9px;line-height:1.2;background:#eed8ae;color:#78522e}
 .crew-view[data-mode="profile"] .crew-passive.is-dormant{background:#f2e6cd;border-style:dashed}
 .crew-view[data-mode="profile"] .crew-skills>.crew-section-label{margin:3px 0 7px}
+
+/* Attribute labels and values share stable columns, regardless of label length. */
+.crew-view[data-mode="profile"] .crew-attributes dl{grid-template-columns:minmax(0,1fr);gap:5px}
+.crew-view[data-mode="profile"] .crew-attributes dl>div{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:8px}
+.crew-view[data-mode="profile"] .crew-attributes dt{text-align:left;white-space:nowrap}
+.crew-view[data-mode="profile"] .crew-attributes dd{text-align:right;font-variant-numeric:tabular-nums;min-width:36px}

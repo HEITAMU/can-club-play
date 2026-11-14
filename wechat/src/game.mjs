@@ -956,7 +956,6 @@ export class NativeGame {
     const stats = [
       ["生命", fmt(st.hp)],
       ["攻击", fmt(st.atk)],
-      ["攻速", st.attackSpeed + "次/分"],
       ["暴击", st.crit + "%"],
       ["护甲", st.armor],
       ["魔抗", st.magicResist],

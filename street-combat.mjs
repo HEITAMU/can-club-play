@@ -18,7 +18,7 @@ export function streetEnemies(info){
   const pressure=HARD_PRESSURE[theme];
   e.maxHp=Math.round(e.maxHp*pressure.hp*[.3,.58,1][tier-1]);
   e.atk=Math.round(e.atk*pressure.atk*[.4,.68,1][tier-1]);
-  if(theme==='burst'&&e.boss){e.atk=Math.round(e.atk*1.6);e.interval=3.5;}
+  if(theme==='burst'&&e.boss){e.atk=Math.round(e.atk*1.6);}
  }
  return e;});
 }

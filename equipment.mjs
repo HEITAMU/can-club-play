@@ -15,10 +15,10 @@ export const GEAR_SETS=[
  {id:'guard',name:'守摊',two:'生命 +18%',four:'开场获得自身生命 25% 护盾；自身获得的护盾 +20%。',bonus:{hp:18}},
  {id:'ember',name:'炉边',two:'法术穿透 +12',four:'对灼烧目标伤害 +25%；普攻暴击附加 2 秒灼烧，每秒 30% 攻击。',bonus:{magicPen:12}},
  {id:'spring',name:'暖窝',two:'生命 +12%',four:'治疗量 +25%；每 6 秒回复自身 5% 最大生命。',bonus:{hp:12}},
- {id:'clock',name:'叮当',two:'攻击速度 +10%',four:'每次普攻额外回复 8 能量。',bonus:{speed:10}},
+ {id:'clock',name:'叮当',two:'暴击 +10%',four:'每次普攻额外回复 8 能量。',bonus:{crit:10}},
  {id:'thorn',name:'刺球',two:'护甲 +15',four:'反弹自身受到伤害的 15%，反伤不再触发反伤。',bonus:{armor:15}}
 ];
-export const ATTRS={atk:{name:'攻击',base:450,percent:true},hp:{name:'生命',base:700,percent:true},armor:{name:'护甲',base:700},magicResist:{name:'魔抗',base:700},crit:{name:'暴击',base:250,percent:true},speed:{name:'攻速',base:250,percent:true},armorPen:{name:'护甲穿透',base:400},magicPen:{name:'法术穿透',base:400}};
+export const ATTRS={atk:{name:'攻击',base:450,percent:true},hp:{name:'生命',base:700,percent:true},armor:{name:'护甲',base:700},magicResist:{name:'魔抗',base:700},crit:{name:'暴击',base:250,percent:true},armorPen:{name:'护甲穿透',base:400},magicPen:{name:'法术穿透',base:400}};
 const int=(n,max=1e9)=>Number.isFinite(n)?Math.max(0,Math.min(max,Math.floor(n))):0;
 const list=n=>Array.isArray(n)?n:[];
 const roll=seed=>{let n=seed>>>0;return ()=>{n=(Math.imul(n,1664525)+1013904223)>>>0;return n/4294967296;};};
@@ -40,7 +40,7 @@ export function normalizeInventory(raw,ids){
  const r=raw&&typeof raw==='object'?raw:{},items=[],seen=new Set();
  for(const x of list(r.items).slice(0,BAG_CAP)){
   if(!x||!/^g[1-9]\d{0,8}$/.test(x.id)||seen.has(x.id)||!GEAR_SLOTS.some(s=>s.id===x.slot)||(x.slot==='rune'?!RUNES.some(r=>r.id===x.rune):!GEAR_SETS.some(s=>s.id===x.set)))continue;
-  seen.add(x.id);const quality=int(x.quality,3),keys=new Set();const subs=list(x.subs).filter(a=>a&&ATTRS[a.key]&&!keys.has(a.key)&&(keys.add(a.key),true)).slice(0,QUALITIES[quality].subs).map(a=>({key:a.key,roll:Math.max(80,Math.min(120,integer(Number.isFinite(a.roll)?(r.version===2?a.roll:a.roll*100):100))),growth:int(a.growth,4)}));
+  seen.add(x.id);const quality=int(x.quality,3),keys=new Set();const reserved=new Set(list(x.subs).filter(a=>a?.key!=='speed').map(a=>a?.key));const migrated=list(x.subs).map(a=>{if(a?.key!=='speed')return a;const key=['crit','armorPen','magicPen','atk','hp','armor','magicResist'].find(k=>!reserved.has(k)&&k!==GEAR_SLOTS.find(s=>s.id===x.slot).main);reserved.add(key);return {...a,key};});const subs=migrated.filter(a=>a&&ATTRS[a.key]&&!keys.has(a.key)&&(keys.add(a.key),true)).slice(0,QUALITIES[quality].subs).map(a=>({key:a.key,roll:Math.max(80,Math.min(120,integer(Number.isFinite(a.roll)?(r.version===2?a.roll:a.roll*100):100))),growth:int(a.growth,4)}));
   let growth=Math.floor(int(x.enhance,12)/3);for(const a of subs){a.growth=Math.min(a.growth,growth);growth-=a.growth;}
   items.push({id:x.id,slot:x.slot,rune:x.slot==='rune'?x.rune:null,set:x.slot==='rune'?null:x.set,tier:Math.max(1,int(x.tier,6)),quality,enhance:int(x.enhance,12),subs,locked:x.locked===true,rerolls:int(x.rerolls,1000000)});
  }
@@ -70,7 +70,7 @@ export function gearValues(e){if(e.slot==='rune')return {};const slot=GEAR_SLOTS
  const values={[slot.main]:mulDiv(ATTRS[slot.main].base*factor,100+6*e.enhance,1000000)};
  for(const a of e.subs)values[a.key]=(values[a.key]||0)+Math.max(1,mulDiv(ATTRS[a.key].base*35*factor*a.roll,100+35*a.growth,10000000000));return values;
 }
-export function gearBonuses(s,id){const values={atk:0,hp:0,armor:0,magicResist:0,armorPen:0,magicPen:0,speed:0,crit:0},counts={},sets=[];let rune=null;for(const uid of Object.values(s.inventory?.equipped?.[id]||{})){const e=s.inventory.items.find(e=>e.id===uid);if(!e)continue;if(e.slot==='rune'){rune=e.rune;continue;}for(const [k,v]of Object.entries(gearValues(e)))values[k]+=v;counts[e.set]=(counts[e.set]||0)+1;}
+export function gearBonuses(s,id){const values={atk:0,hp:0,armor:0,magicResist:0,armorPen:0,magicPen:0,crit:0},counts={},sets=[];let rune=null;for(const uid of Object.values(s.inventory?.equipped?.[id]||{})){const e=s.inventory.items.find(e=>e.id===uid);if(!e)continue;if(e.slot==='rune'){rune=e.rune;continue;}for(const [k,v]of Object.entries(gearValues(e)))values[k]+=v;counts[e.set]=(counts[e.set]||0)+1;}
  for(const set of GEAR_SETS){const count=counts[set.id]||0;if(count>=2)for(const [k,v]of Object.entries(set.bonus))values[k]+=v;if(count>=4)sets.push(set.id);}return {...values,sets,counts,rune};}
 export function enhanceQuote(e){return {gold:Math.round(120*e.tier*(e.enhance+1)**1.6),scrap:12*e.tier*(e.enhance+1),maxed:e.slot==='rune'||e.enhance>=GEAR_MAX};}
 export function enhanceGear(s,uid){const e=s.inventory.items.find(e=>e.id===uid);if(!e)return false;const q=enhanceQuote(e);if(q.maxed||s.gold<q.gold||s.inventory.materials.scrap<q.scrap)return false;s.gold-=q.gold;s.inventory.materials.scrap-=q.scrap;e.enhance++;if(e.enhance%3===0&&e.subs.length)e.subs[Math.floor(roll(+uid.slice(1)*17+e.enhance)()*e.subs.length)].growth++;return true;}
