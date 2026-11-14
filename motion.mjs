@@ -46,7 +46,7 @@ export function travelOffset(actor,pose,source,target,width,height,bodySize=130,
   const a=actor.action;if(!a.shieldReposition)return {x:0,y:0};const approachEnd=a.impactAt*.65,returnAt=a.impactAt+(a.hold||0);
   const move=a.elapsed<approachEnd?smooth(a.elapsed/approachEnd):a.elapsed<returnAt?1:1-smooth((a.elapsed-returnAt)/(a.duration-returnAt));
   // Meet the target's row at the centre line; stay in front of its body.
-  const destination=Math.min(width*.36,target.x*width/100-(bodySize+targetSize)*.22);
+  const destination=Math.min(width*.5,target.x*width/100-(bodySize+targetSize)*.22);
   return {x:(destination-source.x*width/100)*move,y:(target.y-source.y)*height/100*move};
  }
  if(actor.action&&source&&target){
