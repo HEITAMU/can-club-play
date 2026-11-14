@@ -379,3 +379,19 @@ body{background:radial-gradient(ellipse at 22% 30%,#56404d,#292535 75%);color:#f
 
 /* Keep only the finger-controlled figure visible during a formation drag. */
 .formation-slot.is-drag-source{opacity:0}
+
+/* Framed bag regions and tactile category/filter controls. */
+.bag-page .bag-wallet{padding:10px 12px;border:1px solid #af8759;border-radius:11px;background:#e6ceaa;box-shadow:inset 0 1px #fff4d8,0 2px 0 #78553630;gap:12px;flex-wrap:wrap}
+.bag-page .bag-tabs{gap:9px;padding:0;margin:12px 0;border:0;background:none}
+.bag-page .bag-tabs button,.bag-page .bag-slot-tabs button{border:1px solid #9c7147;border-bottom-width:3px;border-radius:9px;background:linear-gradient(#ead2ad,#cba373);color:#65452d;box-shadow:inset 0 1px #fff1cf;min-height:40px;padding:8px 12px;transition:transform .1s,background .1s;touch-action:manipulation}
+.bag-page .bag-tabs button{font-weight:700;font-size:14px}
+.bag-page .bag-tabs button[aria-selected=true],.bag-page .bag-slot-tabs button[aria-selected=true]{background:linear-gradient(#b9824e,#956034);border-color:#754924;color:#fff2d5;box-shadow:inset 0 1px #e4b77b}
+.bag-page .bag-tabs button:active,.bag-page .bag-slot-tabs button:active{transform:translateY(2px);border-bottom-width:1px;box-shadow:inset 0 2px 4px #5a381f40}
+.bag-page .bag-tabs button:focus-visible,.bag-page .bag-slot-tabs button:focus-visible{outline:2px solid #68452e;outline-offset:2px}
+.bag-page .bag-storage{padding:10px;border:2px solid #ad8354;border-radius:13px;background:#d9bd9655;box-shadow:inset 0 0 0 1px #f5dfb6,0 2px 4px #62432720;min-height:280px}
+.bag-page .bag-slot-tabs{margin:0 0 10px;gap:5px;padding:0 0 4px}
+.bag-page .bag-slot-tabs button{font-size:11px;min-height:34px;padding:6px 9px}
+.bag-page .bag-toolbar{padding:0 0 10px;border-bottom:1px solid #b18b5d80;margin-bottom:12px;gap:8px}
+.bag-page .bag-toolbar select{flex:1}
+.bag-page .bag-toolbar button{min-height:36px;border:1px solid #9c7147;border-bottom-width:3px;border-radius:8px}
+.bag-page .gear-list,.bag-page .material-list{justify-content:space-between}
