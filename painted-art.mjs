@@ -1,4 +1,5 @@
 import {webAsset} from './web-assets.mjs?v=0.25.1';
+import {companionScale,HEAD_CROPS} from './companion-display.mjs';
 import {FINISHED_ROSTER} from './finished-roster-data.mjs?v=0.25.0';
 import {poseFor} from './motion.mjs?v=0.25.0';
 import {rigPose,rigFor,blendRigPose,animationClock} from './rig-motion.mjs?v=0.25.0';
@@ -14,8 +15,12 @@ function sprite(kind,sheet,row,rows,id){
 }
 export function paintedCat(id,portrait=false){
  const art=FINISHED_ROSTER[id]||(id==='spark'?{atlas:'./assets/finished/spark-v0211.webp',portrait:'./assets/finished/spark-portrait-v0211.webp'}:FINISHED_ROSTER.orange);
+ if(portrait){
+  const [x,y,side]=HEAD_CROPS[id]||HEAD_CROPS.orange,[w,h]=id==='spark'?[576,552]:[512,544];
+  return `<span class="painted-sprite painted-thumbnail" data-art="${id}" data-hero="false" aria-hidden="true"><svg class="companion-head" viewBox="${x} ${y} ${side} ${side}" preserveAspectRatio="xMidYMid meet"><image data-asset="${webAsset(art.portrait)}" width="${w}" height="${h}"/></svg></span>`;
+ }
  const fallback=`<span class="anatomy-fallback" data-asset="${webAsset(art.portrait)}" style="background-size:100% 100%"></span>`;
- return `<span class="painted-sprite${portrait?' painted-thumbnail':''}" data-art="${id}" data-hero="${!portrait}" data-atlas="${webAsset(art.atlas)}" aria-hidden="true">${fallback}${portrait?'':'<canvas class="rig-canvas" aria-hidden="true"></canvas>'}</span>`;
+ return `<span class="painted-sprite companion-body" data-art="${id}" data-hero="true" data-atlas="${webAsset(art.atlas)}" style="--companion-scale:${companionScale(id)}" aria-hidden="true">${fallback}<canvas class="rig-canvas" aria-hidden="true"></canvas></span>`;
 }
 export function paintedEnemy(type,boss=false){const id=boss&&type==='box'?'boxBoss':type;const [sheet,row]=foeSheets[id]||foeSheets.dust;return sprite('enemies',sheet,row,4,id);}
 export function paintedPose(root,frame,{actor,time=0,idleTime=time,outcome,preview,renderSize}={}){

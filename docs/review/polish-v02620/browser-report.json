@@ -1,0 +1,347 @@
+[
+  {
+    "width": 320,
+    "height": 568,
+    "unit": 46.4,
+    "figures": [
+      {
+        "id": "orange",
+        "width": 46.390625,
+        "canvas": [
+          67,
+          64
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      },
+      {
+        "id": "ink",
+        "width": 46.390625,
+        "canvas": [
+          67,
+          64
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      },
+      {
+        "id": "milk",
+        "width": 46.390625,
+        "canvas": [
+          67,
+          64
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      },
+      {
+        "id": "spark",
+        "width": 46.390625,
+        "canvas": [
+          67,
+          64
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      },
+      {
+        "id": "mint",
+        "width": 46.390625,
+        "canvas": [
+          67,
+          64
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      },
+      {
+        "id": "bolt",
+        "width": 46.390625,
+        "canvas": [
+          67,
+          64
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      },
+      {
+        "id": "pudding",
+        "width": 56.59375,
+        "canvas": [
+          82,
+          78
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      },
+      {
+        "id": "star",
+        "width": 46.390625,
+        "canvas": [
+          67,
+          64
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      }
+    ],
+    "drawer": {
+      "top": 723,
+      "height": 193,
+      "total": 916
+    },
+    "standing": [
+      {
+        "id": "orange",
+        "width": 46.390625
+      },
+      {
+        "id": "ink",
+        "width": 46.390625
+      },
+      {
+        "id": "milk",
+        "width": 46.390625
+      },
+      {
+        "id": "spark",
+        "width": 46.390625
+      },
+      {
+        "id": "pudding",
+        "width": 56.59375
+      }
+    ],
+    "formationAnimated": true
+  },
+  {
+    "width": 430,
+    "height": 932,
+    "unit": 58,
+    "figures": [
+      {
+        "id": "orange",
+        "width": 58,
+        "canvas": [
+          84,
+          80
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      },
+      {
+        "id": "ink",
+        "width": 58,
+        "canvas": [
+          84,
+          80
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      },
+      {
+        "id": "milk",
+        "width": 58,
+        "canvas": [
+          84,
+          80
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      },
+      {
+        "id": "spark",
+        "width": 58,
+        "canvas": [
+          84,
+          80
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      },
+      {
+        "id": "mint",
+        "width": 58,
+        "canvas": [
+          84,
+          80
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      },
+      {
+        "id": "bolt",
+        "width": 58,
+        "canvas": [
+          84,
+          80
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      },
+      {
+        "id": "pudding",
+        "width": 70.75,
+        "canvas": [
+          102,
+          98
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      },
+      {
+        "id": "star",
+        "width": 58,
+        "canvas": [
+          84,
+          80
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      }
+    ],
+    "drawer": {
+      "top": 1100,
+      "height": 193,
+      "total": 1293
+    },
+    "standing": [
+      {
+        "id": "orange",
+        "width": 58
+      },
+      {
+        "id": "ink",
+        "width": 58
+      },
+      {
+        "id": "milk",
+        "width": 58
+      },
+      {
+        "id": "spark",
+        "width": 58
+      },
+      {
+        "id": "pudding",
+        "width": 70.75
+      }
+    ],
+    "formationAnimated": true
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "unit": 56.55,
+    "figures": [
+      {
+        "id": "orange",
+        "width": 56.546875,
+        "canvas": [
+          81,
+          78
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      },
+      {
+        "id": "ink",
+        "width": 56.546875,
+        "canvas": [
+          81,
+          78
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      },
+      {
+        "id": "milk",
+        "width": 56.546875,
+        "canvas": [
+          81,
+          78
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      },
+      {
+        "id": "spark",
+        "width": 56.546875,
+        "canvas": [
+          81,
+          78
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      },
+      {
+        "id": "mint",
+        "width": 56.546875,
+        "canvas": [
+          81,
+          78
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      },
+      {
+        "id": "bolt",
+        "width": 56.546875,
+        "canvas": [
+          81,
+          78
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      },
+      {
+        "id": "pudding",
+        "width": 68.984375,
+        "canvas": [
+          99,
+          95
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      },
+      {
+        "id": "star",
+        "width": 56.546875,
+        "canvas": [
+          81,
+          78
+        ],
+        "profileAnimated": true,
+        "equipmentAnimated": true
+      }
+    ],
+    "drawer": {
+      "top": 961,
+      "height": 193,
+      "total": 1154
+    },
+    "standing": [
+      {
+        "id": "orange",
+        "width": 56.546875
+      },
+      {
+        "id": "ink",
+        "width": 56.546875
+      },
+      {
+        "id": "milk",
+        "width": 56.546875
+      },
+      {
+        "id": "spark",
+        "width": 56.546875
+      },
+      {
+        "id": "pudding",
+        "width": 68.984375
+      }
+    ],
+    "formationAnimated": true
+  }
+]

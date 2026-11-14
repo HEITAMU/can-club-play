@@ -18,6 +18,7 @@ import {poseFor,attackStyle,travelOffset,battleRate,MotionOffsets} from './motio
 import {HealthTrails,rescueView,bossView} from './battle-ui.mjs?v=0.25.0';
 import {BattleCues,formationPositions,cueColors} from './battle-cues.mjs?v=0.25.0';
 import {FormationMotion,retiringSize} from './formation-motion.mjs?v=0.25.0';
+import {battleUnitSize,companionSize} from './companion-display.mjs';
 import {crewRosterHTML,crewProfileHTML,crewSkill} from './crew-profile.mjs?v=0.25.0';
 const formationMotion=new FormationMotion();
 let selectedCrew='orange',crewMode='profile',disposeFormation=null;
@@ -55,9 +56,19 @@ function renderStageHeader(){
  $('#scene').innerHTML=sceneSVG(q?.scene??ci%6);$('#battle-label').textContent=q?q.name+' · '+(q.kind==='hunt'?'危险 ':'难度 ')+q.tier:battle?.weekly?`${battle.weekly.name} · 第 ${battle.weekly.tier} 档`:battle?.mode==='arena'?`第 ${battle.arenaTier} 擂 · ${battle.arenaRule.name}`:farming?'旧关练习 · 鱼币 ×60%':stage%20===0?'街区首领':stage%5===0?'首领出没':`街区巡逻 · ${battle?.enemies.length||1} 名对手`;
 }
 // Flat side-on composition: the leading hero is nearest the enemy column.
-function sizeActors(){const arena=$('#arena');if(!arena.clientWidth||!arena.clientHeight)return;arenaMetrics.width=arena.clientWidth;arenaMetrics.height=Math.max(100,arena.clientHeight-76);arenaMetrics.size=Math.max(32,Math.min(58,arenaMetrics.height*.18,arenaMetrics.width*.145));const size=arenaMetrics.size.toFixed(1)+'px';if(arena.style.getPropertyValue('--unit-size')!==size)arena.style.setProperty('--unit-size',size);}
+function sizeActors(){
+ const arena=$('#arena'),main=$('#main');
+ if(arena.clientWidth&&arena.clientHeight)arenaMetrics.frameHeight=main.clientHeight-arena.clientHeight;
+ arenaMetrics.width=arena.clientWidth||main.clientWidth;
+ arenaMetrics.height=Math.max(100,(arena.clientHeight||main.clientHeight-(arenaMetrics.frameHeight||78))-76);
+ arenaMetrics.size=battleUnitSize(arenaMetrics.width,arenaMetrics.height);
+ const size=arenaMetrics.size.toFixed(4)+'px';
+ if(arena.style.getPropertyValue('--unit-size')!==size)arena.style.setProperty('--unit-size',size);
+ document.documentElement.style.setProperty('--companion-unit',size);
+}
 new ResizeObserver(sizeActors).observe($('#arena'));
-const bodySize=(a,time=battle.time+endElapsed)=>retiringSize(arenaMetrics.size*(a.boss?1.3:a.catId==='pudding'?1.22:1),a,time);
+new ResizeObserver(sizeActors).observe($('#main'));
+const bodySize=(a,time=battle.time+endElapsed)=>retiringSize(a.boss?arenaMetrics.size*1.3:companionSize(arenaMetrics.size,a.catId),a,time);
 function groundPositions(b,time=b.time+endElapsed){const p=formationMotion.update(b,time),shift=76/arenaMetrics.height*51;for(const v of Object.values(p))v.y+=shift*Math.max(0,95-v.y)/44;return p;}
 function positions(b){const p=groundPositions(b);for(const a of [...b.heroes,...b.enemies]){const offset=motionOffsets.points.get(a.id)||{x:0,y:0};p[a.id]={x:p[a.id].x+offset.x/arenaMetrics.width*100,y:p[a.id].y-bodySize(a)*.43/arenaMetrics.height*100+offset.y/arenaMetrics.height*100};}return p;}
 
@@ -235,7 +246,7 @@ async function shareGame(){const url=location.origin+location.pathname;try{if(na
 function showReset(){openModal('reset',`<h2 id="modal-title">确定重新开始？</h2><p>会清空当前浏览器内的队员训练、关卡、鱼币和装备。建议先导出存档。重新开始后无法在游戏内撤销。</p><button id="confirm-reset" class="danger wide">确认清空，重新开始</button>`);$('#confirm-reset').onclick=()=>{state=initialState();queue=[];running=false;farming=false;try{localStorage.removeItem(BACKUP);localStorage.removeItem(KEY);}catch{}persist();forceClose();renderHeader();renderParty();changeTab('battle');previewBattle();showIntro();};}
 
 $('#battle-income').onclick=claimFishStall;$('.income-coin').innerHTML=icon('coin',15);
-$('#desktop-cat').innerHTML=catSVG('orange',true);$('#settings').innerHTML=icon('settings',18)+'<span>设置</span>';$('#quest-icon').innerHTML=icon('gift',23);$('#can-icon').innerHTML=icon('can',45);$('#modal-close').innerHTML=icon('close',17);
+$('#desktop-cat').innerHTML=catSVG('orange');$('#settings').innerHTML=icon('settings',18)+'<span>设置</span>';$('#quest-icon').innerHTML=icon('gift',23);$('#can-icon').innerHTML=icon('can',45);$('#modal-close').innerHTML=icon('close',17);
 const navIcons={battle:'can',cats:'paw',relics:'bag',map:'map'};$$('[data-tab]').forEach(b=>{b.querySelector('span').innerHTML=icon(navIcons[b.dataset.tab],24);b.onclick=()=>changeTab(b.dataset.tab);});
 $('#settings').onclick=showSettings;$('#quests').onclick=showQuests;$('#objective').onclick=showQuests;$('#stage-map').onclick=()=>{const q=battle?.activity;if(q){streetView.tier=q.tier;openStreet(['hunt','hard','recruit'].includes(q.kind)?q.kind:'materials',q.id||q.kind);streetView.tier=q.tier;openStreet();}else showPatrolRoutes();};$('#modal-close').onclick=closeModal;$('#modal-backdrop').onclick=e=>{if(e.target===$('#modal-backdrop'))closeModal();};
 $('#open-can').onclick=useCan;$('#speed').onclick=()=>{state.speed=state.speed===1?2:1;persist();renderHeader();};
@@ -248,7 +259,11 @@ function frame(now){requestAnimationFrame(frame);const dt=lastStamp?Math.min(.1,
  if(battle?.result&&!document.hidden&&tab==='battle'&&!modalType)endElapsed+=dt;
  if(!document.hidden&&tab==='battle'&&!modalType){const route=activityReturn.update(ambientTime);if(route)returnToStreet(route);}
  renderMotion();if(tab==='map'&&(now-renderStamp>100||$('.district-scene')?._districtTap))renderDistrictAmbient(ambientTime);
- if(!document.hidden&&now-idlePaintStamp>=50){idlePaintStamp=now;for(const sprite of $$('.painted-sprite[data-hero="true"]')){if(!sprite.closest('#actors,.formation-ghost')&&!sprite.closest('[hidden]'))setPose(sprite,0,{time:ambientTime,idleTime:ambientTime,renderSize:sprite.closest('.equipment-character')?.clientWidth});}}
+ if(!document.hidden&&now-idlePaintStamp>=1000/30){idlePaintStamp=now;for(const sprite of $$('.companion-body')){
+  if(sprite.closest('#actors,.formation-ghost,[hidden]'))continue;
+  const box=sprite.getBoundingClientRect();if(!box.width||!box.height||box.bottom<0||box.top>innerHeight)continue;
+  setPose(sprite,0,{time:ambientTime,idleTime:ambientTime,renderSize:companionSize(arenaMetrics.size,sprite.dataset.art)});
+ }}
  if(now-renderStamp>100){if(tab==='battle')renderVitals();$('#farm').textContent=battle?.activity||battle?.mode==='arena'?'返回普通巡逻':farming?'返回主线闯关':'去练练 · 旧关刷币';renderStamp=now;}
  if(now-idleStamp>1200){accrueIdle(state);renderHeader();idleStamp=now;}
  if(now-saveStamp>6000){persist();saveStamp=now;}

@@ -1,0 +1,41 @@
+/* Full figures use the battle scale everywhere; containers only place the feet. */
+.painted-sprite.companion-body{
+ --companion-size:calc(var(--companion-unit,52px)*var(--companion-scale,1));
+ width:var(--companion-size)!important;height:var(--companion-size)!important;
+ min-width:var(--companion-size)!important;max-width:none!important;
+ flex:0 0 var(--companion-size);aspect-ratio:1;filter:none;
+}
+#arena .actor .companion-body{width:100%!important;height:100%!important;min-width:0!important}
+/* Keep the original battlefield canvas mapping in every other view too. */
+.painted-sprite.companion-body>.rig-canvas,
+.crew-view[data-mode="equipment"] .equipment-character .rig-canvas{left:-22%;top:-20%;width:144%;height:138%}
+.crew-portrait>.companion-body{left:50%;margin-left:calc(var(--companion-size)*-.5);top:auto;bottom:12px}
+.crew-view[data-mode="profile"] .crew-portrait{height:96px;bottom:17px}
+.crew-portrait:after{width:42px!important;height:6px!important;left:50%;right:auto!important;bottom:16px!important;transform:translateX(-50%)}
+.crew-portrait-halo{display:none}
+.crew-view[data-mode="equipment"] .equipment-character{display:flex;align-items:flex-end;justify-content:center;width:90px;height:83px;top:26px}
+.crew-view[data-mode="equipment"] .equipment-character>.companion-body{position:relative;left:auto;top:auto}
+.crew-view[data-mode="equipment"] .equipment-character:before{display:none}
+.crew-view[data-mode="equipment"] .equipment-character:after{width:44px;height:6px;bottom:6px}
+.formation-slot-art{width:82px;height:77px;display:flex;align-items:flex-end;justify-content:center}
+.formation-slot-art .companion-body{position:relative;left:auto;top:auto;margin:0}
+.formation-ghost,.formation-ghost .formation-slot-art{width:82px;height:82px}
+.formation-ghost .formation-slot-art{display:flex;align-items:flex-end;justify-content:center}
+.formation-ghost .companion-body{width:var(--companion-size)!important;height:var(--companion-size)!important}
+.intro-hero{gap:24px;align-items:flex-end;padding-bottom:20px}
+.intro-hero .companion-body:first-child,.intro-hero .companion-body:last-child{margin:0}
+.cat-detail-portrait{align-items:flex-end;height:90px;padding-bottom:12px}
+#desktop-cat{display:flex;align-items:center;justify-content:center;height:100px!important;transform:none!important}
+/* Head-only tiles have their own crop, without changing full-body scale. */
+.painted-sprite.painted-thumbnail,
+.crew-view .crew-avatar-grid .crew-pick-art>.painted-thumbnail,
+.formation-card-art .painted-thumbnail{position:relative;display:block;inset:auto;width:100%;height:100%;min-width:0;max-width:none;margin:0;transform:none}
+.companion-head{display:block;width:100%;height:100%;overflow:hidden}
+.crew-view .crew-avatar-grid .crew-pick-art,.formation-card-art{display:block}
+/* A fitted interior, never an enlarged crop of an outdoor scene. */
+.formation-board{height:auto;aspect-ratio:4/5;background:#998575 url('./assets/scenes/formation-room-v02620.webp') center/100% 100%;border-radius:14px;box-shadow:inset 0 0 0 1px #8b715c}
+.crew-view[data-mode="formation"]{background:#69594c}
+.formation-board .formation-column{background:#ede0c7dd;color:#564333;text-shadow:none}
+.formation-slot b{color:#fff1d5;text-shadow:0 1px 2px #463426,0 0 4px #463426}
+.formation-slot:before{background:#30251e40}
+.formation-slot-art>i{color:#ead8bd;text-shadow:0 1px 2px #493c2b}
