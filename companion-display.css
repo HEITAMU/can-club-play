@@ -109,3 +109,25 @@ html body,body button,body input,body select,body textarea,body h1,body h2,body 
 .modal[data-kind="material"] #modal-close{background:#9a7048;color:#fff0d2;border-color:#c5a273}
 
 .crew-view[data-mode="profile"] .crew-growth .growth-material{color:#63452d}.crew-view[data-mode="profile"] .crew-growth .growth-material>span:not(.material-icon){color:#63452d;font-size:10px}.crew-view[data-mode="profile"] .crew-growth .growth-material .material-icon{width:20px!important;height:20px!important}.crew-view[data-mode="profile"] .crew-growth .crew-breakthrough>button{display:block;width:100%;margin:6px 0 0;min-height:32px}.crew-view[data-mode="profile"] .crew-growth .crew-breakthrough h4{font-size:12px}.material-info-card h2{margin-right:0!important}
+
+/* Compact overview; progression is independent of the attribute panel. */
+.crew-view[data-mode="profile"] .crew-profile{grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:10px;align-items:start}
+.crew-view[data-mode="profile"] .crew-hero,.crew-view[data-mode="profile"] .crew-attributes{height:260px;align-self:start;padding:10px}
+.crew-view[data-mode="profile"] .crew-hero{justify-content:center;gap:8px}
+.crew-view[data-mode="profile"] .crew-identity .rank-badge{display:flex;justify-content:center;margin-top:5px}
+.crew-view[data-mode="profile"] .crew-attributes dl{justify-content:flex-start}
+.crew-view[data-mode="profile"] .crew-attributes dl>div{flex:1;min-height:0;padding:4px 0}
+.crew-view[data-mode="profile"] .crew-attributes dt{font-size:12px}
+.crew-view[data-mode="profile"] .crew-attributes dd{font-size:16px}
+.crew-view[data-mode="profile"] .crew-hero .crew-actions{position:static;display:flex;flex-direction:column;gap:4px;margin:0;padding:0}
+.crew-view[data-mode="profile"] .crew-hero .crew-actions button{width:100%;min-height:34px;font-size:12px;padding:5px}
+.crew-view[data-mode="profile"] .crew-profile>.crew-growth{grid-column:1/-1;display:grid;gap:8px;padding:0;background:none;border:0;box-shadow:none}
+.crew-view[data-mode="profile"] .crew-growth .crew-breakthrough{margin:0;padding:10px 12px;border-radius:10px}
+.crew-view[data-mode="profile"] .crew-growth .crew-breakthrough h4{font-size:14px;margin:0 0 5px}
+.crew-view[data-mode="profile"] .crew-growth .crew-breakthrough h4 small{font-size:11px;margin-left:8px}
+.crew-view[data-mode="profile"] .growth-effect{font-size:12px;line-height:1.5;padding:0;margin-bottom:7px}
+.growth-footer{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.crew-view[data-mode="profile"] .growth-footer .growth-costs{margin:0;flex:1;gap:5px}
+.crew-view[data-mode="profile"] .crew-growth .growth-footer>button{flex:none;min-width:76px;min-height:38px;margin:0;padding:6px 9px;font-size:12px}
+.crew-view[data-mode="profile"] .crew-growth .growth-material>span:not(.material-icon){font-size:11px}
+.crew-view[data-mode="profile"] .crew-growth .growth-material b{font-size:12px}
