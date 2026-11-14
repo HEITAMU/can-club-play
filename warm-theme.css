@@ -272,3 +272,18 @@ body{background:radial-gradient(ellipse at 22% 30%,#56404d,#292535 75%);color:#f
 .bag-wallet>span{display:flex;align-items:center;gap:5px}.bag-wallet b{font:600 13px Arial,system-ui,sans-serif;font-variant-numeric:tabular-nums}.bag-wallet small{font-size:10px}
 .crew-view>.crew-roster{overflow-y:hidden;scrollbar-width:none}
 .crew-view>.crew-roster::-webkit-scrollbar{display:none}
+
+/* Tap-to-claim stall replaces the entry modal. */
+.battle-income{position:absolute;left:7px;top:52px;z-index:8;width:44px;height:58px;padding:0;background:none;border:0;box-shadow:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;touch-action:manipulation}
+.income-stall{width:40px;height:42px;filter:drop-shadow(0 2px 1px #412f2c44);transform-origin:50% 85%}
+.income-coin{position:absolute;right:-1px;top:0;opacity:0}
+.has-income .income-stall{animation:stall-sway 3s ease-in-out infinite}
+.has-income .income-coin{opacity:1;animation:stall-coin 2.5s ease-in-out infinite}
+#battle-income-progress{appearance:none;-webkit-appearance:none;width:38px;height:5px;border:1px solid #765131;border-radius:4px;overflow:hidden;background:#62482f;margin-top:2px}
+#battle-income-progress::-webkit-progress-bar{background:#62482f}
+#battle-income-progress::-webkit-progress-value{background:#e9bc66;border-radius:3px}
+#battle-income-progress::-moz-progress-bar{background:#e9bc66}
+.income-full #battle-income-progress{box-shadow:0 0 5px #edbd67}
+@keyframes stall-sway{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+@keyframes stall-coin{0%,100%{transform:translateY(1px)}50%{transform:translateY(-3px)}}
+@media(prefers-reduced-motion:reduce){.has-income .income-stall,.has-income .income-coin{animation:none}}
