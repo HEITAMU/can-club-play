@@ -62,3 +62,7 @@
 .game-shell .crew-avatar-grid .crew-pick{background:#455869;border-color:#7a8c97}
 .game-shell .crew-avatar-grid .crew-pick[aria-pressed=true]{background:#a47b48;border-color:#f1cc7e;box-shadow:inset 0 0 0 1px #e9c17b}
 .game-shell .empty-bag{color:#cbd3d0}
+.crew-view[data-mode="equipment"] .equipment-bag .gear-empty{background:#253b4c;border-color:#506776;box-shadow:inset 0 2px 5px #172c3a55}
+.crew-view[data-mode="equipment"] .equipment-set-strip{background:#284252;border:1px solid #738c91;color:#e8dbbd;border-radius:7px}
+.crew-view[data-mode="equipment"] .equipment-set-strip b,.crew-view[data-mode="equipment"] .equipment-set-strip span,.crew-view[data-mode="equipment"] .set-effect-preview{color:#dbe0cc}
+.crew-view[data-mode="equipment"] .equipment-heading>#gear-craft{background:#d2a65e;color:#392d29;border:1px solid #edc982;box-shadow:none}
