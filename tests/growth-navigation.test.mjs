@@ -1,6 +1,20 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {initialState,idleRate} from '../core.mjs';import {streetHTML} from '../street-ui.mjs';import {nextGrowth,growthGuideHTML} from '../growth-guide.mjs';import {stallHTML} from '../district.mjs';
+import {initialState,idleRate,Battle,settleBattle} from '../core.mjs';import {streetHTML} from '../street-ui.mjs';import {nextGrowth,growthGuideHTML} from '../growth-guide.mjs';import {stallHTML} from '../district.mjs';
 test('next objective leads from main stages to equipment source and then wearing',()=>{const s=initialState();assert.equal(nextGrowth(s).action,'battle');s.highest=3;assert.equal(nextGrowth(s).action,'salvage');s.activities.cleared.salvage=1;assert.equal(nextGrowth(s).action,'battle');delete s.inventory.equipped.orange.claw;assert.equal(nextGrowth(s).action,'equipment');assert.match(growthGuideHTML(s),/伙伴 → 装备/);});
+test('warehouse objective follows entry, defeat, retry and the actual equipment reward',()=>{
+ const s=initialState();s.highest=3;s.runCleared=3;s.stage=4;
+ const request={activity:{kind:'salvage',tier:1}},first=new Battle(s,request);
+ assert.equal(nextGrowth(s,first).title,'正在挑战废件仓库');assert.equal(nextGrowth(s,first).action,'battle');
+ assert.match(growthGuideHTML(s,first),/正在挑战废件仓库/);assert.doesNotMatch(growthGuideHTML(s,first),/前往废件仓库/);
+ assert.equal(s.activities.cleared.salvage||0,0,'entering must not award completion');
+ first.result='lose';settleBattle(s,first);assert.equal(nextGrowth(s,first).action,'salvage');
+ assert.equal(nextGrowth(s,new Battle(s)).action,'salvage','returning to mainline restores the destination');
+ assert.equal(nextGrowth(s,new Battle(s,{activity:{kind:'sweep',tier:1}})).action,'salvage','other challenges do not count as the warehouse');
+ const retry=new Battle(s,request);assert.equal(nextGrowth(s,retry).title,'正在挑战废件仓库');
+ retry.result='win';const reward=settleBattle(s,retry);assert.ok(reward.gearLoot.item);assert.equal(s.activities.cleared.salvage,1);
+ assert.equal(nextGrowth(s,retry).action,'equipment');assert.equal(nextGrowth(s,retry).title,'给伙伴挑一件装备');
+ assert.equal(nextGrowth(s,new Battle(s,request)).title,'正在挑战废件仓库','repeated challenges also show the current activity');
+});
 test('commission list has no embedded detail and chosen detail has no list',()=>{const s=initialState();const list=streetHTML(s,{group:'hard',id:'coldstore',tier:1,detail:false});assert.match(list,/data-street-choice="coldstore"/);assert.doesNotMatch(list,/street-detail|street-fight/);const detail=streetHTML(s,{group:'hard',id:'ironwall',tier:1,detail:true});assert.match(detail,/铁壳拦路/);assert.match(detail,/street-fight/);assert.doesNotMatch(detail,/data-street-choice=/);});
 test('both income upgrades display their real resulting fish coin rate',()=>{const s=initialState();s.highest=17;const html=stallHTML(s);for(const id of ['stall','sign']){const after={...s,stall:{...s.stall,[id]:1}};assert.ok(html.includes(idleRate(s)+' → '+idleRate(after)+' 鱼币 / 分钟'));}assert.match(html,/挂机鱼币额外加成/);});
 import fs from 'node:fs';import vm from 'node:vm';
