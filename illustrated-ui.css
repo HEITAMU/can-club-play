@@ -136,3 +136,17 @@
 .game-shell .crew-view[data-mode="profile"] .crew-hero-column>.crew-actions button{width:100%;flex:none;min-height:32px;margin:0;padding:5px 8px;font-size:12px;border-radius:8px}
 .game-shell .crew-view[data-mode="profile"] .crew-hero-column .upgrade-cost{color:#ecd9af;line-height:14px}
 .game-shell .crew-view[data-mode="profile"] .crew-inherit:disabled{opacity:.5}
+
+/* First visit: reuse the current street, rather than a second six-scene atlas. */
+.modal .intro-hero{background-image:url('./assets/mobile/street-0-v02684.webp');background-size:cover;background-position:center}
+.intro-how{text-align:center;font-size:13px!important}
+.arena-badges{right:48px!important;align-items:flex-start;gap:5px;pointer-events:none}
+#battle-label{max-width:70%;white-space:normal;line-height:1.35;font-size:11px;font-weight:700;background:#493b31e8;color:#ffebbd;border:1px solid #c9a36b;border-radius:8px;padding:5px 7px}
+#battle-time{white-space:nowrap;font-size:10px}
+#new-player-guide{position:fixed;inset:0;z-index:240;pointer-events:none}
+#new-player-guide[hidden]{display:none}
+.guide-focus{position:fixed;border:2px solid #ffdc83;border-radius:9px;box-shadow:0 0 0 9999px #15252d80,0 0 16px #ffcb6f;pointer-events:none;box-sizing:border-box}
+.guide-card{position:fixed;box-sizing:border-box;padding:12px 14px;background:#f4e6c5;border:2px solid #b18a54;border-radius:12px;color:#604429;box-shadow:0 4px 14px #17232966;pointer-events:auto}
+.guide-card b{display:block;font-size:15px;color:#61442c}.guide-card p{font-size:12px;line-height:1.65;margin:7px 0;color:#71553a}.guide-card button{display:block;margin-left:auto;background:none;border:0;text-decoration:underline;color:#8b765b;font-size:11px;padding:5px}
+
+.pause-audio{display:flex;gap:8px;margin:12px 0}.pause-audio button{flex:1;padding:9px;border:1px solid #b59666;border-radius:7px;background:#e6d2ab;color:#654b30}

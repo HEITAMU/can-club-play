@@ -43,5 +43,5 @@ export function paintedItem(index,size){return `<span class="painted-item" data-
 // Portrait cells are 418 x 627. The SVG viewport crops uniformly on every screen.
 export function paintedScene(index){
  const cell=Math.max(0,Math.min(5,Math.floor(Number(index)||0))),x=cell%3*418,y=Math.floor(cell/3)*627;
- return layeredScene({file:'./assets/scenes/streets-v019.webp',x,y,width:418,height:627,cut:[290,270,265,275,245,270][cell]});
+ return layeredScene({file:`./assets/mobile/street-${cell}-v02684.webp`,x:0,y:0,width:418,height:627,sheetWidth:418,sheetHeight:627,cut:[290,270,265,275,245,270][cell]});
 }
