@@ -1,17 +1,14 @@
-# 成长试玩 v0.28.0
+# 成长试玩版 preview.4
 
-试玩： https://heitamu.github.io/can-club-play/growth-preview/play.html?v=0.28.0-preview.2
+入口：./play.html?v=0.28.0-preview.4
 
-原版： https://heitamu.github.io/can-club-play/?v=0.27.6
+- 升级改为平缓成长；升星和猫牌进阶提供主要早期跃升，之后逐渐转向装备、套装与妙招牌。
+- 保留布绳、铜、银、金、琉光、曜金的顺序，以及每阶段五次点亮和单独进阶。
+- 升星前显示实际攻击、生命前后值；成功后显示队伍战力变化和实际推关计数。
+- 装备奖励详情居中覆盖结算，点击外侧先收起详情；穿戴引导完成后记住状态，不被换下来的装备再次触发。
+- 底栏与手账识别当前委托、擂台、周常；获胜、失败、退出、穿戴和读档后更新目标。
+- 旧试玩存档保留等级、星级与关卡进度，补回对应升星材料与原等级跃升额外收费；不自动改变猫牌阶段。
 
-本目录是独立试玩导出，根目录 v0.27.6 源码、构建、美术及原版存档保持不变。
-
-源码与验证记录： [experiment/growth-v0.28.0](https://github.com/HEITAMU/can-club-play/tree/3082581e87f3d6bdf94f75ac53c94046159fd870)，说明见 docs/review/growth-v0280/README.md。
-
-基线回退点：stable/v0.27.6-before-growth，99ba272ce6bf703fdd9d5f8821b22a2db511d881。
-
-试玩保存到独立的 can-club-growth-preview-v1，不读取或覆盖原版存档。返回旧链接即可继续原版。
-
-入口须使用 play.html：避免原版 Service Worker 的目录/index.html 缓存回退。外部 CSS 美术 URL 使用 ../assets/。不要更改原版 SW 来部署本试验。
-
-验证：352 项全套检查 + 2 项打包回归通过；浏览器验证完整加载、升级实际属性、推进计数及返回原版，已恢复浏览器测试前的试玩新档。无微信真机验收声明。
+原版入口：../?v=0.27.6。原版源码和美术资源未改。
+试玩使用 can-club-growth-preview-v1 存档；原版使用 can-club-save-v1，两者隔离。
+源码与验证：experiment/growth-v0.28.0 分支，docs/review/growth-v0280/feedback/。
