@@ -1,3 +1,4 @@
+import {SHARED_BATTLE_ASSETS,loadBattleAssets,battleAssetsReady} from './battle-loading.mjs';
 import {GameAudio} from './game-audio.mjs';
 import {GUIDE,GUIDE_DONE,nextGuide} from './onboarding.mjs';
 import {chapterBanner} from './chapter-entry-art.mjs';
@@ -40,7 +41,7 @@ const arenaMetrics={width:390,height:300,size:52};
 const battleCues=new BattleCues();
 let ambientTime=0,idleOffset=0,endElapsed=0,bossNotice=null;const healthTrails=new HealthTrails();const combatText=new CombatText(document.querySelector('#fx'));const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $=q=>document.querySelector(q), $$=q=>[...document.querySelectorAll(q)],KEY='can-club-save-v1',BACKUP=KEY+'-backup';
-let entranceRemaining=0;
+let entranceRemaining=0,resourceLoading=false,loadingSerial=0;
 const resultLayer=document.createElement('div');resultLayer.id='result-layer';resultLayer.hidden=true;document.body.append(resultLayer);
 const entranceLayer=document.createElement('div');entranceLayer.id='battle-entrance';entranceLayer.hidden=true;document.body.append(entranceLayer);
 let pausedBattle=null;
@@ -62,13 +63,13 @@ const guideLayer=document.createElement('div');guideLayer.id='new-player-guide';
 let guideLast=-1;
 function guideEvent(event){const next=nextGuide(state.guideStep,event);if(next===state.guideStep)return;state.guideStep=next;persist();renderGuide();if(next===GUIDE_DONE)toast('教学完成！继续推进主线，去街区委托板获取伙伴与装备。');}
 function renderGuide(){
- const step=state.guideStep,g=GUIDE[step];guideLayer.hidden=!g||!state.onboarded;if(guideLayer.hidden)return;
+ const step=state.guideStep,g=GUIDE[step];guideLayer.hidden=resourceLoading||!g||!state.onboarded;if(guideLayer.hidden)return;
  if(guideLast!==step){guideLast=step;guideLayer.innerHTML='<div class="guide-focus"></div><section class="guide-card"><b>'+g.title+'</b><p>'+g.text+'</p><button id="guide-skip">跳过教学</button></section>';$('#guide-skip').onclick=()=>{state.guideStep=GUIDE_DONE;persist();renderGuide();if(!running&&battle?.result==='win')startBattle();};}
  const target=document.querySelector(g.target);if(!target)return;const r=target.getBoundingClientRect(),focus=guideLayer.querySelector('.guide-focus'),card=guideLayer.querySelector('.guide-card'),shell=$('.game-shell').getBoundingClientRect();
  Object.assign(focus.style,{left:(r.left-4)+'px',top:(r.top-4)+'px',width:(r.width+8)+'px',height:(r.height+8)+'px'});
  const width=Math.min(290,shell.width-24);Object.assign(card.style,{width:width+'px',left:Math.max(12,Math.min(innerWidth-width-12,shell.left+(shell.width-width)/2))+'px',top:Math.max(12,Math.min(innerHeight-160,r.top>innerHeight*.55?r.top-150:r.bottom+18))+'px'});
 }
-document.addEventListener('click',e=>{const g=GUIDE[state.guideStep];if(!g||!state.onboarded)return;if(e.target.closest('#guide-skip'))return;const target=document.querySelector(g.target);if(!target?.contains(e.target)){e.preventDefault();e.stopImmediatePropagation();}},true);
+document.addEventListener('click',e=>{const g=GUIDE[state.guideStep];if(resourceLoading||!g||!state.onboarded)return;if(e.target.closest('#guide-skip'))return;const target=document.querySelector(g.target);if(!target?.contains(e.target)){e.preventDefault();e.stopImmediatePropagation();}},true);
 document.addEventListener('click',e=>{if(e.target.closest('[data-tab="cats"]'))guideEvent('companions');else if(e.target.closest('[data-crew-mode="equipment"]'))guideEvent('equipment');else if(e.target.closest('#modal-close'))guideEvent('close');else if(e.target.closest('[data-tab="battle"]'))guideEvent('battle');});
 function renderHeader(){ $$('[data-wallet-gold]').forEach(n=>n.textContent=Math.floor(state.gold).toLocaleString('zh-CN'));$$('[data-wallet-badges]').forEach(n=>n.textContent=fmt(state.badges));$('#cats-count').textContent=unlocked(state).length+'/8';const ready=QUESTS.filter(q=>!state.claimed.includes(q.id)&&questValue(state,q)>=q.goal);districtTools.querySelector('#quest-dot').hidden=!ready.length;$('#power').textContent=fmt(power(state));renderFishStall();$('#speed').textContent='×'+state.speed;
  const next=QUESTS.find(q=>!state.claimed.includes(q.id));$('#objective-text').textContent=ready.length?`${ready.length} 项成长奖励待领取 · +${fmt(ready.reduce((n,q)=>n+q.reward,0))} 鱼币`:next?`${next.desc} · ${Math.min(questValue(state,next),next.goal)}/${next.goal}`:'成长清单';
@@ -117,18 +118,43 @@ function renderBossHUD(){
  const warning=$('#boss-warning');if(warning.textContent!==label)warning.textContent=label;
 }
 
+function battleAssetURLs(){
+ const urls=[...SHARED_BATTLE_ASSETS];
+ for(const el of document.querySelectorAll('#scene [data-asset],#actors [data-asset],#actors [data-atlas]')){if(el.dataset.asset)urls.push(el.dataset.asset);if(el.dataset.atlas)urls.push(el.dataset.atlas);}
+ if(state.party.includes('pudding'))urls.push('./assets/vfx/shidun-impact-v0211.webp');
+ // Small visible navigation/health UI is prepared with the fight, not on first use.
+ for(const el of document.querySelectorAll('.bottom-nav *,#open-can *')){const css=getComputedStyle(el);for(const value of [css.backgroundImage,css.borderImageSource])for(const m of value.matchAll(/url\(["']?([^"')]+)["']?\)/g))urls.push(m[1]);}
+ return urls;
+}
+async function prepareBattle(){
+ const urls=battleAssetURLs();if(battleAssetsReady(urls)&&$('#boot-status')?.hidden)return true;
+ const serial=++loadingSerial;resourceLoading=true;
+ let layer=$('#boot-status');if(!layer){layer=document.createElement('div');layer.id='boot-status';document.body.append(layer);}
+ layer.hidden=false;layer.removeAttribute('style');layer.className='loading-screen';
+ layer.innerHTML='<section><span class="loading-can">'+icon('can',40)+'</span><h2>罐头远征队</h2><p id="loading-message">正在准备本场冒险</p><progress id="loading-progress" max="100" value="0"></progress><b id="loading-count">0%</b><small>角色、场景与特效准备完成后进入</small><button id="loading-retry" hidden>重新加载</button></section>';
+ while(serial===loadingSerial){try{
+  await loadBattleAssets(urls,{onProgress:(n,total)=>{if(serial!==loadingSerial)return;const percent=total?Math.round(n/total*100):100;$('#loading-progress').value=percent;$('#loading-count').textContent=percent+'% · '+n+'/'+total;}});
+  if(serial!==loadingSerial)return false;
+  // Decode and paint the first pose before exposing the arena.
+  for(const a of [...battle.heroes,...battle.enemies]){const ref=actorRefs.get(a.id);if(ref)setPose(ref.body,0,{actor:a,time:battle.time,idleTime:battle.time,renderSize:bodySize(a,battle.time)});}
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  if(serial!==loadingSerial)return false;resourceLoading=false;layer.hidden=true;lastStamp=performance.now();renderGuide();return true;
+ }catch{if(serial!==loadingSerial)return false;$('#loading-message').textContent='部分资源加载失败，请检查网络后重试';$('#loading-retry').hidden=false;await new Promise(resolve=>$('#loading-retry').onclick=resolve);$('#loading-retry').hidden=true;$('#loading-message').textContent='正在重新准备资源';}}
+ return false;
+}
 function previewBattle(){battle=new Battle(state);idleOffset=ambientTime;renderStageHeader();renderActors();$('#battle-message').innerHTML='';}
-function startBattle({stage,arenaTier=0,weeklyTier=0,activity=null,entrance=false}={}){
+async function startBattle({stage,arenaTier=0,weeklyTier=0,activity=null,entrance=false}={}){
  activityReturn.cancel();if(state.battleReport){showBattleReport();return;}if(state.pending){showLoot();return;}
  if(state.runCleared>=MAX_STAGE&&!arenaTier&&!weeklyTier&&!activity){showVictory();return;}
  const selected=arenaTier||weeklyTier||activity?stage:state.stage;
- farming=false;battle=new Battle(state,{stage:selected,arenaTier,weeklyTier,activity});idleOffset=ambientTime;running=true;nextDelay=0;$('#battle-message').innerHTML='';$('#battle-message').classList.remove('has-actions');$('#fx').innerHTML='';
+ farming=false;battle=new Battle(state,{stage:selected,arenaTier,weeklyTier,activity});idleOffset=ambientTime;running=false;nextDelay=0;$('#battle-message').innerHTML='';$('#battle-message').classList.remove('has-actions');$('#fx').innerHTML='';
  if(tab==='battle')combatEffects.warm(battle);renderStageHeader();renderActors();renderHeader();
  if(entrance||activity||arenaTier||weeklyTier){entranceRemaining=reducedMotion?.25:1.1;running=false;entranceLayer.innerHTML='<section><small>'+ (activity?'猫巷委托':arenaTier||weeklyTier?'街头挑战':'街区开拓')+'</small><h2>'+esc(battle.activity?.name||battle.weekly?.name||(arenaTier?'第 '+arenaTier+' 擂':'第 '+battle.stage+' 关'))+'</h2><div class="entrance-party">'+state.party.filter(Boolean).map(id=>catSVG(id,true)).join('')+'</div><i></i></section>';entranceLayer.hidden=false;}
+ const prepared=battle;if(await prepareBattle()&&battle===prepared)running=entranceRemaining<=0;
 }
 function useCan(){if(!running||state.battleReport||modalType||tab!=='battle'||!battle||battle.result)return;if(battle.openCan()){if(!state.rescueSeen){state.rescueSeen=true;persist();}sound('can');playEvents(battle.events.splice(0));renderVitals();}}
 function clearEffects(){combatText.clear();$('#fx').replaceChildren();}
-function renderMotion(){if(!battle||document.hidden||tab!=='battle'||modalType)return;const ground=groundPositions(battle),w=arenaMetrics.width,h=arenaMetrics.height,time=battle.time+endElapsed,sizes={},feet={};
+function renderMotion(){if(resourceLoading||!battle||document.hidden||tab!=='battle'||modalType)return;const ground=groundPositions(battle),w=arenaMetrics.width,h=arenaMetrics.height,time=battle.time+endElapsed,sizes={},feet={};
  for(const a of [...battle.heroes,...battle.enemies]){const ref=actorRefs.get(a.id);if(!ref)continue;const {el,body,trail,shadow}=ref,size=bodySize(a,time);sizes[a.id]=size;el.style.setProperty('--actor-size',size.toFixed(2)+'px');el.style.left=ground[a.id].x+'%';el.style.top=ground[a.id].y+'%';const pose=poseFor(a,time);setPose(body,pose.frame,{actor:a,time,idleTime:time+idleOffset,outcome:battle.result,renderSize:size});el.dataset.phase=pose.phase;
   const targetId=a.action?.targetId||battle.targetFor(a)?.id,target=[...battle.heroes,...battle.enemies].find(b=>b.id===targetId),tar=ground[targetId],src=ground[a.id];
   const desired=travelOffset(a,pose,src,tar,w,h,size,target?bodySize(target,time):size,time),{x,y}=motionOffsets.value(a,desired,time);
@@ -331,9 +357,9 @@ $('#open-can').onclick=useCan;$('#speed').onclick=()=>{state.speed=state.speed==
 document.addEventListener('keydown',e=>{if(!resultLayer.hidden){if(e.key==='Escape'){const card=resultLayer.querySelector('.result-item');if(card&&!card.hidden)card.hidden=true;else dismissReport();}if(e.key==='Tab'){const items=[...resultLayer.querySelectorAll('button')];if(items.length){const i=items.indexOf(document.activeElement);e.preventDefault();items[(i+(e.shiftKey?-1:1)+items.length)%items.length].focus();}else e.preventDefault();}return;}if(e.key==='Escape'){closeModal();return}if(e.code==='Space'&&!['INPUT','TEXTAREA','BUTTON'].includes(document.activeElement.tagName)&&tab==='battle'&&!modalType){e.preventDefault();useCan();}if(e.key==='Tab'&&modalType){const focusables=[...$('#modal').querySelectorAll('button:not([disabled]):not([hidden]),summary,textarea,input')].filter(x=>x.offsetParent!==null);if(!focusables.length)return;const first=focusables[0],last=focusables[focusables.length-1];if(e.shiftKey&&(document.activeElement===first||document.activeElement===$('#modal'))){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});
 document.addEventListener('visibilitychange',()=>{audioSettings();if(!document.hidden)gameAudio.unlock();lastStamp=performance.now();accrueIdle(state);persist();renderHeader();});window.addEventListener('pagehide',()=>{accrueIdle(state);persist();});
 function frame(now){requestAnimationFrame(frame);const dt=lastStamp?Math.min(.1,(now-lastStamp)/1000):0;lastStamp=now;if(!document.hidden){ambientTime+=dt;if(battle?.time===0&&!running)idleOffset+=dt;}
- if(!document.hidden&&!pausedBattle&&entranceRemaining>0){entranceRemaining-=dt;if(entranceRemaining<=0){entranceLayer.hidden=true;running=true;}}
- if(!document.hidden&&running&&!state.battleReport){if(battle&&!battle.result){let remain=dt*battleRate(state.speed);while(remain>0&&!battle.result){const slice=Math.min(.1,remain);playEvents(battle.tick(slice));remain-=slice;}if(battle.result&&!battle.resolved)onBattleEnd();}}
- if(!document.hidden&&!pausedBattle&&nextDelay>0&&!state.battleReport){nextDelay-=dt;if(nextDelay<=0)startBattle();}
+ if(!resourceLoading&&!document.hidden&&!pausedBattle&&entranceRemaining>0){entranceRemaining-=dt;if(entranceRemaining<=0){entranceLayer.hidden=true;running=true;}}
+ if(!resourceLoading&&!document.hidden&&running&&!state.battleReport){if(battle&&!battle.result){let remain=dt*battleRate(state.speed);while(remain>0&&!battle.result){const slice=Math.min(.1,remain);playEvents(battle.tick(slice));remain-=slice;}if(battle.result&&!battle.resolved)onBattleEnd();}}
+ if(!resourceLoading&&!document.hidden&&!pausedBattle&&nextDelay>0&&!state.battleReport){nextDelay-=dt;if(nextDelay<=0)startBattle();}
  if(battle?.result&&!document.hidden&&tab==='battle'&&!modalType)endElapsed+=dt;
  if(!document.hidden&&tab==='battle'&&!modalType){const route=activityReturn.update(ambientTime);if(route)returnToStreet(route);}
  if(!document.hidden&&tab==='battle'&&now-idlePaintStamp>=1000/30){const rain=$('#scene .scene-rain');if(rain)paintRain(rain,ambientTime,arenaMetrics.size,reducedMotion);}
@@ -348,7 +374,9 @@ function frame(now){requestAnimationFrame(frame);const dt=lastStamp?Math.min(.1,
  if(now-idleStamp>1200){accrueIdle(state);renderHeader();idleStamp=now;}
  if(now-saveStamp>6000){persist();saveStamp=now;}
 }
-renderHeader();renderParty();previewBattle();persist();if(state.pending)showLoot();else if(!state.onboarded)showIntro();else if(state.battleReport)showBattleReport();else if(state.guideStep>=2&&state.guideStep<=7){running=false;if(state.guideStep>=3){crewMode=state.guideStep>=5?'equipment':'profile';changeTab('cats');if(state.guideStep===6){state.guideStep=5;persist();}}}else startBattle();if(recovery)toast(recovery);requestAnimationFrame(frame);watchImageAssets();document.getElementById('boot-status')?.remove();
+async function bootGame(){renderHeader();renderParty();previewBattle();persist();watchImageAssets();await prepareBattle();if(state.pending)showLoot();else if(!state.onboarded)showIntro();else if(state.battleReport)showBattleReport();else if(state.guideStep>=2&&state.guideStep<=7){running=false;if(state.guideStep>=3){crewMode=state.guideStep>=5?'equipment':'profile';changeTab('cats');if(state.guideStep===6){state.guideStep=5;persist();}}}else startBattle();if(recovery)toast(recovery);requestAnimationFrame(frame);
+}
+bootGame().catch(()=>{const layer=$('#boot-status');if(layer)layer.textContent='进入失败，请刷新页面重试';});
 if('serviceWorker' in navigator&&location.protocol==='https:'){const install=()=>setTimeout(()=>navigator.serviceWorker.register('./sw.js').then(()=>navigator.serviceWorker.ready).then(()=>{swReady=true;}).catch(()=>{}),3500);if(document.readyState==='complete')install();else window.addEventListener('load',install,{once:true});}
 
 document.addEventListener('click',e=>{const button=e.target.closest('[data-material-info]');if(!button)return;const key=button.dataset.materialInfo,id=button.dataset.materialCompanion,info=MATERIAL_INFO[key];if(!info)return;gearAnchor=button.getBoundingClientRect();const name=key==='shards'?cat(id).name+'的信物':MATERIAL_NAMES[key];openModal('material',`<div class="material-info-card">${materialIcon(key,38,id)}<h2 id="modal-title">${name}</h2><p>${info.description}</p>${info.source?`<p>${info.source}</p>`:""}<small>当前持有：${materialHave(state,key,id)}</small>${info.group?`<button id="material-go" class="primary wide">前往获取</button>`:""}</div>`);positionGearCard();if($('#material-go'))$('#material-go').onclick=()=>{forceClose();openStreet(info.group,key==='shards'?id:info.route);};});
