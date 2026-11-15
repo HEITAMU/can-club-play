@@ -135,7 +135,7 @@ await esbuild.build({
   ],
 });
 const manifest = {
-  version: "0.26.89",
+  version: "0.26.90",
   rewardedAdUnitId,
   appid,
   packages: packages.map(({ name, root }) => ({ name, root })),
