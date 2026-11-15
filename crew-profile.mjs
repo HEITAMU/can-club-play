@@ -47,10 +47,10 @@ export function crewRosterHTML(state,selected){
 }
 export function crewProfileHTML(state,id,{modal=false}={}){
  const c=CATS.find(c=>c.id===id),open=ownsCompanion(state,c.id),level=state.levels[id],stats=catStats(state,id),cap=levelCap(state,id),bq=breakthroughQuote(state,id);
- const skill=crewSkill(id,level,stats),study=SKILL_STUDY[id],studyHTML='<details class="skill-level-list"><summary>技能升级</summary>'+[0,1,2,3].map(r=>'<div class="'+(r===stats.skillRank?'current':'')+'"><b>Lv.'+(r+1)+'</b> '+skillSummary(id,r)+'</div>').join('')+'</details>',awake=open&&level>=5,[wash,rim,accent]=palettes[id],cost=upgradeCost(level);
+ const skill=crewSkill(id,level,stats),study=SKILL_STUDY[id],studyHTML='<details class="skill-level-list"><summary>技能升级</summary>'+[0,1,2,3].map(r=>'<div class="'+(r===stats.skillRank?'current':'')+'"><b>Lv.'+(r+1)+'</b> '+skillSummary(id,r)+'</div>').join('')+'</details>',awake=open&&level>=5,[wash,rim,accent]=palettes[id],quote=upgradeQuote(level,10,cap),cost=quote.cost;
  const heading=modal?'h2':'h3',canInherit=open&&unlocked(state).some(d=>state.levels[d.id]>level);
  const growthMarkup=open?'<section class="crew-growth" aria-label="伙伴养成">'+growthHTML(state,id)+'</section>':'';
- const upgradeMarkup=open?'<div class="crew-actions"><button class="primary crew-upgrade" data-upgrade="'+id+'" data-profile-upgrade '+(level>=cap||state.gold<cost?'disabled':'')+'>'+icon('coin',20)+'<span>'+(level>=cap?'已满级':'升级 · '+number(cost))+'</span></button>'+(canInherit?'<button class="secondary crew-inherit" data-inherit-open="'+id+'">培养继承</button>':'')+'</div>':'<div class="crew-locked-note">尚未结识</div>';
+ const upgradeMarkup=open?'<div class="crew-actions"><button class="primary crew-upgrade" data-upgrade="'+id+'" data-profile-upgrade data-upgrade-count="10" '+(level>=cap||state.gold<cost?'disabled':'')+'>'+icon('coin',20)+'<span>'+(level>=cap?'已满级':'升 '+quote.levels+' 级 · '+cost.toLocaleString('zh-CN'))+'</span></button>'+(canInherit?'<button class="secondary crew-inherit" data-inherit-open="'+id+'">培养继承</button>':'')+'</div>':'<div class="crew-locked-note">尚未结识</div>';
  return '<article class="crew-profile'+(open?'':' is-locked')+'" data-profile-cat="'+id+'" style="--crew-wash:'+wash+';--crew-rim:'+rim+';--crew-accent:'+accent+'">'+
   '<div class="crew-hero"><div class="crew-identity"><span class="crew-role">'+c.job+'</span>'+
   '<'+heading+(modal?' id="modal-title"':'')+'>'+c.name+'</'+heading+'>'+

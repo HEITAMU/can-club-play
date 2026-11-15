@@ -44,3 +44,34 @@
 @media(max-width:350px){.game-shell .crew-view[data-mode="equipment"] .gear-slot-node,.game-shell .crew-view[data-mode="equipment"] .gear-orbit-slot{width:40px;height:40px}.game-shell .crew-view[data-mode="equipment"] .gear-orbit-slot .painted-item{width:33px;height:33px}.game-shell .crew-view[data-mode="equipment"] .slot-claw,.game-shell .crew-view[data-mode="equipment"] .slot-coat{left:8px}.game-shell .crew-view[data-mode="equipment"] .slot-collar,.game-shell .crew-view[data-mode="equipment"] .slot-brace{right:8px}}
 .game-shell .crew-view[data-mode="equipment"] .equipment-stage{background-blend-mode:normal}
 .game-shell .crew-view[data-mode="equipment"] .equipment-character{transform:translateX(-50%)}
+/* Portraits are static image resources, independent of SVG intersection observers. */
+.game-shell .crew-avatar-rail .crew-pick-art{position:relative;inset:auto;width:100%;height:100%;}
+.game-shell .crew-avatar-rail .crew-pick-art>.painted-thumbnail{position:relative!important;inset:auto!important;transform:none!important;margin:0!important;width:100%!important;height:100%!important;background:none!important;}
+.game-shell .crew-avatar-rail .companion-head{display:block;width:100%;height:100%;overflow:hidden;}
+.game-shell .crew-view[data-mode="profile"] .crew-attributes{position:relative;background:#ecd9b4 url('./assets/ui/paper-grain-v02642.webp') center/260px;background-blend-mode:multiply;border:1px solid #a88c64;border-radius:4px 9px 6px 3px;padding:12px 10px;box-shadow:0 2px 3px #243a3e44,inset 0 0 0 3px #f4e6c84d;}
+.game-shell .crew-view[data-mode="profile"] .crew-attributes .crew-section-label{border-bottom:2px solid #ae906458;padding-bottom:8px;}
+.game-shell .crew-view[data-mode="profile"] .crew-attributes .crew-section-label h4{color:#614c37;font-weight:700;}
+.game-shell .crew-view[data-mode="profile"] .crew-attributes dl>div{border:0;border-bottom:1px solid #ae90643d;background:none;box-shadow:none;padding:5px 0;gap:5px;}
+.game-shell .crew-view[data-mode="profile"] .crew-attributes dl>div:last-child{border-bottom:0;}
+.game-shell .crew-view[data-mode="profile"] .crew-attributes dt{color:#79634a;font-size:11px;letter-spacing:0;}
+.game-shell .crew-view[data-mode="profile"] .crew-attributes dd{color:#58422f;font:600 16px/1.3 Georgia,'Times New Roman',serif;letter-spacing:0;text-shadow:none;-webkit-text-stroke:0;font-variant-numeric:tabular-nums;}
+.game-shell .crew-view[data-mode="profile"] .crew-attributes dd small{font-size:10px;margin-left:2px;}
+.companion-tag{gap:3px;}.rank-badge.companion-tag svg{width:38px;height:35px;}.companion-tag>span{display:grid;gap:4px;text-align:left;}.companion-tag b{font-size:9px;color:#674c34;}.tag-ranks{display:flex;gap:3px;}.tag-ranks>i{width:4px;height:4px;border:1px solid #987c54;border-radius:50%;background:#c2ac86;}.tag-ranks>i.lit{background:#a36c38;border-color:#775335;}
+@media(max-width:350px){.game-shell .crew-view[data-mode="profile"] .crew-attributes{padding:10px 8px;}.game-shell .crew-view[data-mode="profile"] .crew-attributes dt{font-size:10px;}.game-shell .crew-view[data-mode="profile"] .crew-attributes dd{font-size:15px;}}
+/* Compact equipment UI: 165px display + 8px gap + two 32px set rows = 253px. */
+.game-shell .crew-view[data-mode="equipment"] .equipment-stage{height:165px;min-height:165px;background:#d7c19a url('./assets/ui/paper-grain-v02642.webp') center/240px;background-blend-mode:multiply;border:2px solid #846446;border-radius:12px 9px 11px 8px;box-shadow:inset 0 0 0 2px #f1dfb6,0 3px 0 #293b3c55;}
+.game-shell .crew-view[data-mode="equipment"] .equipment-stage:before{display:block;content:"";position:absolute;inset:8px;border:1px solid #a4875b80;border-radius:6px;pointer-events:none;}
+.game-shell .crew-view[data-mode="equipment"] .equipment-character{bottom:41px;height:76px;z-index:1;}
+.game-shell .crew-view[data-mode="equipment"] .gear-slot-node,.game-shell .crew-view[data-mode="equipment"] .gear-orbit-slot{width:40px;height:40px;}
+.game-shell .crew-view[data-mode="equipment"] .gear-orbit-slot{background:#f0dfbc;border:2px solid #957448;outline:1px solid var(--rarity);outline-offset:-4px;border-radius:8px;box-shadow:inset 0 1px #fff2d3,0 2px 0 #8b6e4b66;}
+.game-shell .crew-view[data-mode="equipment"] .slot-claw{left:10px;top:13px;}
+.game-shell .crew-view[data-mode="equipment"] .slot-collar{right:10px;top:13px;}
+.game-shell .crew-view[data-mode="equipment"] .slot-coat{left:10px;top:69px;}
+.game-shell .crew-view[data-mode="equipment"] .slot-brace{right:10px;top:69px;}
+.game-shell .crew-view[data-mode="equipment"] .slot-rune{bottom:10px;}
+.game-shell .crew-view[data-mode="equipment"] .equipment-bag{height:253px;min-height:253px;max-height:253px;}
+.game-shell .crew-view[data-mode="equipment"] .equipment-set-strip{display:grid;gap:4px;margin-top:8px;padding:6px;border:2px solid #7b8667;border-radius:7px;background:#d6d6b9 url('./assets/ui/paper-grain-v02642.webp') center/240px;color:#4d5943;box-sizing:border-box;}
+.game-shell .crew-view[data-mode="equipment"] .equipment-set-strip:empty{display:none;}
+.game-shell .crew-view[data-mode="equipment"] .set-effect-preview{display:block;box-sizing:border-box;height:30px;min-height:30px;padding:0;border:0;border-radius:0;background:none;box-shadow:none;text-align:left;color:#4d5943;overflow:hidden;}
+.game-shell .crew-view[data-mode="equipment"] .set-effect-preview b{display:block;height:14px;line-height:14px;font-size:9px;color:#526046;margin:0;}
+.game-shell .crew-view[data-mode="equipment"] .set-effect-preview>span.active{display:block;height:16px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:#5c6048;margin:0;}
