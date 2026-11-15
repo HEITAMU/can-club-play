@@ -53,3 +53,8 @@
 .commission-tier:disabled{opacity:.65;background:#c9c4b2;border-color:#a9a08a;color:#7b7768;box-shadow:none}.tier-window-nav{display:flex;justify-content:space-between;margin-top:8px}.tier-window-nav button{width:44px;height:32px;background:#e9d6ad;border:1px solid #a38658;border-radius:6px;color:#715134}
 
 .commission-quota{padding:8px 12px;margin:8px 0;color:#f3dbad;text-align:center;font-size:12px;border-top:1px dashed #ba987060}
+
+.commission-board button[aria-disabled="true"]{opacity:.48;cursor:pointer}
+.unlock-float{position:fixed;z-index:2000;pointer-events:none;max-width:calc(100vw - 32px);width:max-content;text-align:center;color:#ffe7a5;font-size:17px;font-weight:800;line-height:1.45;text-shadow:0 2px 2px #4c2c20,-1px -1px 0 #5b3926,1px -1px 0 #5b3926,-1px 1px 0 #5b3926,1px 1px 0 #5b3926;transform:translate(-50%,-100%);animation:unlock-rise 1.5s ease-out both}
+@keyframes unlock-rise{0%{opacity:0;transform:translate(-50%,-70%) scale(.92)}12%,65%{opacity:1}100%{opacity:0;transform:translate(-50%,calc(-100% - 42px)) scale(1)}}
+@media(prefers-reduced-motion:reduce){.unlock-float{animation:unlock-fade 1.5s linear both}@keyframes unlock-fade{0%,75%{opacity:1}100%{opacity:0}}}

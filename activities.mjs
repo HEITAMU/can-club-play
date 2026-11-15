@@ -70,3 +70,12 @@ export function settleActivity(s,info,now=Date.now()){const current=activityInfo
  return {...r,first:current.first,gearLoot,rewardCapped:!current.rewardable};
 }
 export function rewardText(r){return [['信物',r.shards],['训练笔记',r.notes],['护送勋章',r.badges],['历练印记',r.seals],['打磨砂',r.essence],['零件',r.scrap]].filter(x=>x[1]).map(([k,v])=>k+' +'+v).join(' · ')+(r.gearLoot?.item?' · 装备已入包':r.gearLoot?.scrap?' · 满包掉落已折算零件':'');}
+
+export function activityLockReason(s,info){
+ if(!info.valid)return '该委托暂未开放';
+ if(info.exhausted)return '该难度已完成';
+ const conditions=[];
+ if(s.highest<info.required)conditions.push('通关第 '+info.required+' 关');
+ if(info.tier>info.cleared+1)conditions.push('完成难度 '+(info.tier-1));
+ return conditions.length?conditions.join('，并')+'后解锁':'';
+}
