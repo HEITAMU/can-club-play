@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {orangeMotion,drawOrangePuppet} from '../orange-puppet.mjs';import {actionTiming} from '../motion.mjs';
+test('rig has finite bounded joints and settles at action end',()=>{for(const kind of ['normal','skill']){const timing=actionTiming({catId:'orange',side:'p'},kind);for(let t=0;t<=timing.duration;t+=1/240){const p=orangeMotion({action:{...timing,kind,elapsed:t}},t);Object.values(p).forEach(v=>assert.ok(Number.isFinite(v)));assert.ok(Math.abs(p.shoulder)<=1);assert.ok(p.shieldReach<60);}
+const p=orangeMotion({action:{...timing,kind,elapsed:timing.duration}},timing.duration);for(const key of ['lean','shoulder','elbow','shield','shieldReach','stride'])assert.equal(p[key],0);}});
+test('native canvas interface paints bounded layers without clipping triangles',()=>{let draws=0,depth=0;const ctx=new Proxy({save(){depth++;},restore(){depth--;assert.ok(depth>=0);},drawImage(){draws++;}}, {get(target,key){return target[key]||(()=>{});}});drawOrangePuppet(ctx,{}, {width:2048},{},0,400,384);assert.equal(depth,0);assert.equal(draws,10);});
