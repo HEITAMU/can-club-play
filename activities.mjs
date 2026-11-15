@@ -4,7 +4,7 @@ import {gearDrop,addGear} from './equipment.mjs?v=0.25.0';
 const safe=(n,max=10000)=>Number.isFinite(n)?Math.max(0,Math.min(max,Math.floor(n))):0;
 export const MATERIAL_JOBS=[
  {id:'sweep',name:'后巷清扫',rule:'杂物怪成群出现，稳住前排并准备群体伤害。',reward:'训练笔记',theme:'crowd'},
- {id:'escort',name:'夜班护送',rule:'追兵蓄力重击，保留开罐啦或控制技能打断。',reward:'护送勋章',theme:'burst'},
+ {id:'escort',name:'夜班护送',rule:'追兵蓄力重击，保留开罐啦或控制技能打断。',reward:'训练笔记',theme:'burst'},
  {id:'salvage',name:'废件仓库',rule:'前排铁壳高护甲，后排电池高魔抗，混合伤害或破甲更有效。',reward:'装备',theme:'armor'},
  {id:'parts',name:'旧件回收场',rule:'拆卸队占着废料堆，准备群体伤害。',reward:'零件',theme:'crowd'},
  {id:'polish',name:'磨砂作坊',rule:'铁壳守卫堵住作坊，混合伤害或破甲更有效。',reward:'打磨砂',theme:'armor'}
@@ -47,7 +47,7 @@ const ESCORT_STORY="车夫说，这条路上的追兵已经跟了他好几天。
 const KEYS=[...MATERIAL_JOBS.map(x=>x.id),...HUNTS.map(x=>'hunt:'+x.id),...HARD_JOBS.map(x=>'hard:'+x.id),...COMPANION_IDS.map(x=>'recruit:'+x)];
 export function normalizeActivities(raw){return {rewardVersion:1,rewardDay:safe(raw?.rewardDay,1e9),repeatClaims:Object.fromEntries(Object.entries(raw?.repeatClaims||{}).filter(([k])=>['sweep','escort','salvage','parts','polish','hunt','hard',...COMPANION_IDS.map(id=>'recruit:'+id)].includes(k)).map(([k,v])=>[k,safe(v,100)])),cleared:Object.fromEntries(KEYS.map(k=>[k,safe(raw?.cleared?.[k],k.startsWith('hunt:')?10000:k.startsWith('hard:')?3:k.startsWith('recruit:')?6:8)])),wins:safe(raw?.wins,1e9)};}
 export function activityInfo(s,request={},now=Date.now()){
- const kind=request.kind||'sweep',tier=request.tier===undefined?1:request.tier,id=request.id||'',recruit=kind==='recruit',hunt=kind==='hunt',hard=kind==='hard',job=recruit?{name:'伙伴委托',rule:'完成指定伙伴的委托，获得该伙伴信物。凑齐 20 份即可结识，之后可用于徽章晋升。',theme:'crowd'}:hunt?HUNTS.find(x=>x.id===id):hard?HARD_JOBS.find(x=>x.id===id):MATERIAL_JOBS.find(x=>x.id===kind);
+ const kind=request.kind||'sweep',tier=request.tier===undefined?1:request.tier,id=request.id||'',recruit=kind==='recruit',hunt=kind==='hunt',hard=kind==='hard',job=recruit?{name:'伙伴委托',rule:'完成指定伙伴的委托，获得该伙伴信物。凑齐 20 份即可结识，之后可用于伙伴升星。',theme:'crowd'}:hunt?HUNTS.find(x=>x.id===id):hard?HARD_JOBS.find(x=>x.id===id):MATERIAL_JOBS.find(x=>x.id===kind);
  const key=recruit?'recruit:'+id:hunt?'hunt:'+id:hard?'hard:'+id:kind,cleared=s.activities?.cleared?.[key]||0,max=hunt?Math.min(10000,cleared+1):hard?3:recruit?6:8;
  const required=hard?[120,240,400][tier-1]:hunt?30:recruit?[3,10,30,60,120,220][tier-1]:[3,10,30,60,100,160,240,360][tier-1];
  const valid=Number.isInteger(tier)&&!!job&&(!recruit||COMPANION_IDS.includes(id))&&tier>=1&&tier<=max;
@@ -61,11 +61,11 @@ export function activityReward(info){const n=info.tier,first=info.first,mult=fir
  if(info.rewardable===false)return r;
  if(info.kind==='recruit'){if(!first&&n<6)return r;r.shards=first?[20,12,16,20,24,30][n-1]:6;}
  else if(info.kind==='sweep'){r.notes=(8+n*6)*mult;}
- else if(info.kind==='escort'){r.badges=(2+Math.ceil(n/2))*mult;}
+ else if(info.kind==='escort'){r.notes=(2+Math.ceil(n/2))*mult*5;}
  else if(info.kind==='parts'){r.scrap=24*n+12*Math.max(0,n-4)**2;}
  else if(info.kind==='polish'){r.essence=(1+Math.floor(n/3))*mult;}
  else if(info.kind==='hunt'){r.gold=150+Math.min(n,100)*30;}
- else if(info.kind==='hard'){r.seals=n*2*mult;}
+ else if(info.kind==='hard'){r.notes=n*2*mult*20;}
  return r;
 }
 export function settleActivity(s,info,now=Date.now()){const current=activityInfo(s,info.request,now);if(!current.open)return null;const r=activityReward(current);s.activities.cleared[info.key]=Math.max(s.activities.cleared[info.key]||0,info.tier);s.activities.wins++;if(current.rewardable&&!current.first)consumeRepeat(s.activities,current.quota);s.gold+=r.gold;s.badges+=r.badges;s.growth.notes+=r.notes;s.growth.seals+=r.seals;s.inventory.materials.scrap+=r.scrap;s.inventory.materials.essence+=r.essence;if(r.shards)s.roster.shards[info.id]+=r.shards;

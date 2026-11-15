@@ -7,7 +7,7 @@ const now=Date.UTC(2026,10,14,12);
 function ready(){const s=initialState(now);s.highest=600;return s;}
 function win(s,request,time=now){return settleActivity(s,activityInfo(s,request,time),time);}
 test('materials have exclusive commission sources',()=>{
- const expected={sweep:'notes',escort:'badges',recruit:'shards',hard:'seals'};
+ const expected={sweep:'notes',escort:'notes',recruit:'shards',hard:'notes'};
  for(const [kind,key] of Object.entries(expected)){
   const info=activityInfo(ready(),{kind,id:kind==='recruit'?'milk':kind==='hard'?'coldstore':'',tier:1},now),r=activityReward(info);
   assert.ok(r[key]>0);for(const other of ['notes','badges','shards','seals'])if(other!==key)assert.equal(r[other],0);

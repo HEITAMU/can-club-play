@@ -4,7 +4,7 @@ import {equipmentEncounterScale} from './equipment-progression.mjs';
 import {normalizeReport} from './battle-flow.mjs';
 import {skillTuning} from './skill-training.mjs';
 import {integer,mulDiv,resizeAmount} from './integer-math.mjs?v=0.25.1';
-import {newRoster,normalizeRoster,normalizeGrowth,owns,recruit,starQuote,ascend,tagBonus} from './companions.mjs?v=0.25.0';
+import {newRoster,normalizeRoster,normalizeGrowth,migrateGrowthMaterials,owns,recruit,starQuote,ascend,tagBonus} from './companions.mjs?v=0.25.0';
 export {owns as ownsCompanion,recruit as recruitCompanion,starQuote,ascend as ascendCompanion} from './companions.mjs?v=0.25.0';
 import {normalizeActivities,activityInfo,settleActivity} from './activities.mjs?v=0.25.0';
 import {streetEnemies} from './street-combat.mjs?v=0.25.0';
@@ -59,7 +59,7 @@ export const QUESTS=[
  {id:'train',name:'练一练，强一点',desc:'累计训练猫咪 10 次',key:'upgrades',goal:10,reward:260},
  {id:'boss',name:'大个子也没在怕',desc:'累计击败 3 位首领',key:'bosses',goal:3,reward:500},
  {id:'wins',name:'这条街我熟',desc:'累计胜利 20 场',key:'wins',goal:20,reward:650},
- {id:'relic',name:'叮叮当当一大包',desc:'累计取得 5 件战利品',key:'relicCount',goal:5,reward:800},
+ {id:'relic',name:'旧家伙也能派上用场',desc:'将一件装备强化至 +3',key:'maxEnhance',goal:3,reward:800},
  {id:'chapter',name:'天台已经安全',desc:'通过第 20 关',key:'highest',goal:20,reward:1600},
  {id:'roster',name:'一家猫就要整整齐齐',desc:'解锁 6 位队员',key:'cats',goal:6,reward:2400},
  {id:'arena-first',name:'上台露一手',desc:'通过擂台第 1 擂',key:'arenaCleared',goal:1,reward:2400},
@@ -81,7 +81,7 @@ export function normalizeState(raw,now=Date.now()){
  const s=initialState(now);s.adRewards=normalizeAdRewards(raw.adRewards);s.campaign=normalizeCampaign(raw.campaign);Object.assign(s,normalizeProgression(raw,CATS.map(c=>c.id)));
  for(const k of ['gold','bones','prestiges','wins','bosses','kills','upgrades','relicCount','seconds'])s[k]=Math.floor(num(raw[k]));
  s.highest=Math.floor(num(raw.highest,0,0,MAX_STAGE));s.runCleared=Math.floor(num(raw.runCleared,0,0,s.highest));s.stage=Math.min(MAX_STAGE,s.runCleared+1);
- s.roster=normalizeRoster(raw.roster,CATS,s.highest);s.growth=normalizeGrowth(raw.growth);s.activities=normalizeActivities(raw.activities);if(raw.activities&&raw.activities.rewardVersion!==1){for(const c of CATS){const cleared=s.activities.cleared["recruit:"+c.id]||0;for(let n=1;n<=cleared;n++)s.roster.shards[c.id]+=[20,12,16,20,24,30][n-1]-(2+Math.ceil(n/2))*2;}}
+ s.roster=normalizeRoster(raw.roster,CATS,s.highest);s.growth=normalizeGrowth(raw.growth);migrateGrowthMaterials(s,raw);s.activities=normalizeActivities(raw.activities);if(raw.activities&&raw.activities.rewardVersion!==1){for(const c of CATS){const cleared=s.activities.cleared["recruit:"+c.id]||0;for(let n=1;n<=cleared;n++)s.roster.shards[c.id]+=[20,12,16,20,24,30][n-1]-(2+Math.ceil(n/2))*2;}}
  for(const c of CATS)s.levels[c.id]=Math.floor(num(raw.levels?.[c.id],1,1,levelCap(s,c.id)));
  s.rescueSeen=raw.rescueSeen===true;s.battleReport=normalizeReport(raw.battleReport);if(s.battleReport?.mode==='patrol')s.battleReport=null;s.idleSupplies=Math.floor(num(raw.idleSupplies,0,0,100000));s.supplyRemainder=Math.floor(num(raw.supplyRemainder,0,0,raw.supplyClock===2?599999:59999)*(raw.supplyClock===2?1:10));
  const available=unlocked(s).map(c=>c.id),seen=new Set();s.party=Array.isArray(raw.party)?raw.party.filter(id=>id===null||available.includes(id)&&!seen.has(id)&&seen.add(id)).slice(0,MAX_PARTY):s.party;while(s.party.length&&!s.party.at(-1))s.party.pop();if(!s.party.some(Boolean))s.party=['orange'];
@@ -106,19 +106,19 @@ export function removeParty(s,id){
 // Old all-party relic stacks are retired; all combat equipment is character-owned.
 export function buffs(){return {atk:1,hp:1,crit:10,regen:0,canCd:8,gold:1,idle:1,reflect:0,shield:0,energy:0,burn:0,boss:1};}
 export function catStats(s,id,equipment=null){const c=CATS.find(c=>c.id===id),l=s.levels[id]||1,g=equipment||gearBonuses(s,id),stars=s.roster?.stars?.[id]||0,base=heroCombatStats(id,l);
- const grow=value=>[100+18*(l-1),100+8*Math.floor(l/10),100+8*s.bones,10000+tagBonus(s,id)].reduce((n,p,i)=>mulDiv(n,p,i===3?10000:100),value);
- return {...base,armor:base.armor+g.armor,magicResist:base.magicResist+g.magicResist,armorPen:base.armorPen+g.armorPen,magicPen:base.magicPen+g.magicPen,hp:mulDiv(grow(c.hp),100+g.hp),atk:mulDiv(grow(c.atk),100+g.atk),crit:Math.min(80,10+g.crit+(id==='ink'&&l>=5?15:0)),level:l,stars,skillRank:s.breakthroughs?.[id]||0,gear:g};
+ const grow=(value,minimumStarGain=false)=>{const base=[100+18*(l-1),100+8*Math.floor(l/10),100+8*s.bones].reduce((n,p)=>mulDiv(n,p,100),value);return Math.max(mulDiv(base,10000+tagBonus(s,id),10000),base+(minimumStarGain?stars:0));};
+ return {...base,armor:base.armor+g.armor,magicResist:base.magicResist+g.magicResist,armorPen:base.armorPen+g.armorPen,magicPen:base.magicPen+g.magicPen,hp:mulDiv(grow(c.hp),100+g.hp),atk:mulDiv(grow(c.atk,true),100+g.atk),crit:Math.min(80,10+g.crit+(id==='ink'&&l>=5?15:0)),level:l,stars,skillRank:s.breakthroughs?.[id]||0,gear:g};
 }
 export function power(s){return s.party.filter(Boolean).reduce((n,id)=>{const c=catStats(s,id);return n+Math.round(c.hp*.3*(1+(c.armor+c.magicResist)/200)+c.atk*3*(1+(c.armorPen+c.magicPen)/200));},0);}
 export function idleRate(s){return Math.round((18+Math.min(Math.max(s.highest,1),60)*3+Math.max(0,s.highest-60)*.6)*buffs(s).idle*(1+.15*stallLevel(s,'stall'))*(1+.05*stallLevel(s,'sign')));}
 export function supplyRate(s){return Math.max(1,Math.round((2+Math.floor(s.highest/20))*(1+.1*stallLevel(s,'cart'))*10)/10);}
 export function accrueIdle(s,now=Date.now()){const elapsed=integer(clamp(now-s.lastAccrued,0,idleMinutes(s)*60000)),total=elapsed*idleRate(s)+(s.idleRemainder||0),amount=Math.floor(total/60000),cap=idleRate(s)*idleMinutes(s);s.idle=Math.min(cap,s.idle+amount);s.idleRemainder=s.idle>=cap?0:total-amount*60000;const supplyTotal=elapsed*Math.round(supplyRate(s)*10)+(s.supplyRemainder||0),supplyCap=supplyRate(s)*idleMinutes(s);s.idleSupplies=Math.min(supplyCap,(s.idleSupplies||0)+Math.floor(supplyTotal/600000));s.supplyRemainder=s.idleSupplies>=supplyCap?0:supplyTotal%600000;s.lastAccrued=integer(now);return amount;}
 export function claimIdle(s,now=Date.now()){accrueIdle(s,now);const n=Math.floor(s.idle);s.gold+=n;s.idle-=n;const supplies=s.idleSupplies||0;s.supplies+=supplies;s.idleSupplies=0;if(n>0||supplies>0)recordActivity(s,'income',1,now);return n;}
-export function questValue(s,q){return q.key==='cats'?unlocked(s).length:s[q.key]||0;}
+export function questValue(s,q){return q.key==='maxEnhance'?Math.max(0,...s.inventory.items.map(e=>e.enhance||0)):q.key==='cats'?unlocked(s).length:s[q.key]||0;}
 export function claimQuests(s){let sum=0;for(const q of QUESTS){if(!s.claimed.includes(q.id)&&questValue(s,q)>=q.goal){s.claimed.push(q.id);s.gold+=q.reward;sum+=q.reward;}}return sum;}
 export function rewardFor(s,stage,farm=false){return Math.round((30+stage*6)*buffs(s).gold*(farm?0:1));}
 export function upgradeStall(s,id,now=Date.now()){const q=stallQuote(s,id);if(!q.valid||q.maxed||s.supplies<q.cost)return false;accrueIdle(s,now);s.supplies-=q.cost;s.stall??={};s.stall[id]=q.level+1;return true;}
-export function breakthrough(s,id){const c=CATS.find(c=>c.id===id),q=breakthroughQuote(s,id);if(!c||!owns(s,id)||q.maxed||s.badges<q.cost||s.growth.notes<q.notes||s.growth.seals<q.seals)return false;s.badges-=q.cost;s.growth.notes-=q.notes;s.growth.seals-=q.seals;s.breakthroughs[id]=q.rank+1;return true;}
+export function breakthrough(s,id){const c=CATS.find(c=>c.id===id),q=breakthroughQuote(s,id);if(!c||!owns(s,id)||q.maxed||!q.canAfford)return false;s.growth.notes-=q.notes;s.breakthroughs[id]=q.rank+1;return true;}
 export function seeded(seed){let x=(seed>>>0)||1;return ()=>{x=(Math.imul(x,1664525)+1013904223)>>>0;return x/4294967296;};}
 export function relicOptions(){return [];}
 export function chooseRelic(){return false;}
