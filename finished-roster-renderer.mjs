@@ -1,3 +1,4 @@
+import {paintedLayers} from './painted-transition.mjs';
 import {FINISHED_ROSTER} from './finished-roster-data.mjs?v=0.25.0';
 let factory,snapshot;
 export function setRosterCanvasFactory(f,freeze){factory=f;snapshot=freeze;}
@@ -42,15 +43,19 @@ function drawRosterCel(ctx,id,pose,atlas,face,override){
  ctx.restore();
 }
 
-// Blend adjacent authored drawings instead of rounding the animation track.
+// Hold complete silhouettes and limit adjacent-drawing overlap to the approved window.
 export function drawFinishedRoster(ctx,id,pose,atlas,face){
+ const alpha=ctx.globalAlpha;
+ let layers;
  if(id==='pudding'||(id==='bolt'&&pose.boltCel>=0)){
-  const a=id==='pudding'?pose.shidunFrom:pose.boltFrom,b=id==='pudding'?pose.shidunCel:pose.boltCel,mix=clamp((id==='pudding'?pose.shidunMix:pose.boltMix)??1),alpha=ctx.globalAlpha;
-  if(mix<1){ctx.globalAlpha=alpha*(1-mix);drawRosterCel(ctx,id,pose,atlas,face,a||0);}
-  ctx.globalAlpha=alpha*mix;drawRosterCel(ctx,id,pose,atlas,face,b||0);ctx.globalAlpha=alpha;return;
+  const a=id==='pudding'?pose.shidunFrom:pose.boltFrom,b=id==='pudding'?pose.shidunCel:pose.boltCel;
+  const mix=(id==='pudding'?pose.shidunMix:pose.boltMix)??1;
+  layers=paintedLayers(a||0,b||0,mix,{short:true});
+ }else{
+  const value=Math.max(0,Math.min(4,pose.rosterCel||0)),lo=Math.floor(value),hi=Math.ceil(value);
+  const a=rosterCel({...pose,rosterCel:lo}),b=rosterCel({...pose,rosterCel:hi});
+  layers=paintedLayers(a,b,value-lo);
  }
- const value=Math.max(0,Math.min(4,pose.rosterCel||0)),lo=Math.floor(value),hi=Math.ceil(value),mix=value-lo,alpha=ctx.globalAlpha;
- const a=rosterCel({...pose,rosterCel:lo}),b=rosterCel({...pose,rosterCel:hi});
- ctx.globalAlpha=alpha*(a===b?1:1-mix);drawRosterCel(ctx,id,pose,atlas,face,a);
- if(a!==b&&mix>0){ctx.globalAlpha=alpha*mix;drawRosterCel(ctx,id,pose,atlas,face,b);}ctx.globalAlpha=alpha;
+ for(const [cel,weight] of layers){ctx.globalAlpha=alpha*weight;drawRosterCel(ctx,id,pose,atlas,face,cel);}
+ ctx.globalAlpha=alpha;
 }

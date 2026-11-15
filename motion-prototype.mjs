@@ -1,6 +1,7 @@
 import {FINISHED_ROSTER} from './finished-roster-data.mjs';
 import {FINISHED_SPARK} from './finished-spark-data.mjs';
 import {renderPuppetFrame} from './rig-renderer.mjs';
+import {renderBaselineFrame} from './motion-baseline-renderer.mjs';
 import {rigPose} from './rig-motion.mjs';
 import {actionTiming} from './motion.mjs';
 import {createPaintedGPU} from './motion-prototype-renderer.mjs';
@@ -8,14 +9,14 @@ const $=s=>document.querySelector(s),images={};
 try{
 await Promise.all(['orange','spark'].map(async id=>{const image=new Image();image.src=id==='spark'?FINISHED_SPARK.atlas:FINISHED_ROSTER[id].atlas;await image.decode();images[id]=image;}));
 const oldCanvas=$('#old canvas'),newCanvas=$('#new canvas'),ctx=oldCanvas.getContext('2d');let gpu,backend='WebGL';
-function renderer(){try{return createPaintedGPU(newCanvas,images);}catch{backend='Canvas 兼容';const fallback=newCanvas.getContext('2d');if(!fallback)throw new Error('Canvas unavailable');return {draw(id,pose){const key=id==='spark'?'sparkCel':'rosterCel',v=pose[key]||0,f=Math.max(0,Math.min(1,(v%1-.41)/.18)),p={...pose,[key]:Math.floor(v)+f*f*(3-2*f)};renderPuppetFrame(fallback,id,p,images[id],400,384,null,{to:'neutral'});return null;}};}}
+function renderer(){try{return createPaintedGPU(newCanvas,images);}catch{backend='Canvas 兼容';const fallback=newCanvas.getContext('2d');if(!fallback)throw new Error('Canvas unavailable');return {draw(id,pose){renderPuppetFrame(fallback,id,pose,images[id],400,384,null,{to:'neutral'});return null;}};}}
 gpu=renderer();
 let id='orange',kind='normal',clock=0,paused=false,last=performance.now(),counter=0,oldTotal=0,newTotal=0;
 const timings=()=>actionTiming({catId:id,side:'p'},kind);
 const duration=()=>timings().duration+1.1;
 const smooth=x=>{x=Math.max(0,Math.min(1,x));return x*x*(3-2*x);};
 function draw(){const timing=timings(),t=clock%duration(),elapsed=t-.45,actor={catId:id,side:'p',hp:100,interval:1.5};if(elapsed>=0&&elapsed<timing.duration)actor.action={...timing,kind,elapsed};const pose=rigPose(id,actor,clock,clock);
-const start=performance.now();renderPuppetFrame(ctx,id,pose,images[id],400,384,null,{to:'neutral'});const mid=performance.now(),draws=gpu.draw(id,pose),end=performance.now();oldTotal+=mid-start;newTotal+=end-mid;counter++;
+const start=performance.now();renderBaselineFrame(ctx,id,pose,images[id],400,384,null,{to:'neutral'});const mid=performance.now(),draws=gpu.draw(id,pose),end=performance.now();oldTotal+=mid-start;newTotal+=end-mid;counter++;
 const distance=Math.max(0,$('#new').clientWidth-200),hitAt=timing.impactAt;
 let travel=0;if(id==='orange'&&elapsed>=0){travel=elapsed<hitAt?smooth((elapsed-timing.windup)/timing.travel):1-smooth((elapsed-hitAt-timing.hold)/timing.recovery);}
 for(const lane of ['old','new']){const el=$('#'+lane);el.querySelector('canvas').style.transform=`translateX(${distance*travel}px)`;const hit=elapsed-hitAt,target=el.querySelector('.target');target.style.transform=`translateX(${hit>=0&&hit<.22?Math.sin(hit/.22*Math.PI)*7:0}px) rotate(${hit>=0&&hit<.22?Math.sin(hit/.22*Math.PI)*7:0}deg)`;target.style.filter=hit>=0&&hit<.09?'brightness(1.8)':'';

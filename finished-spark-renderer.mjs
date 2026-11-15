@@ -1,3 +1,4 @@
+import {paintedLayers} from './painted-transition.mjs';
 import {FINISHED_SPARK as ART} from './finished-spark-data.mjs?v=0.25.0';
 
 // Every action drawing is one complete character. A limb is never separately
@@ -98,9 +99,8 @@ function drawSparkCel(ctx,pose,atlas,face,index){
 }
 
 export function drawFinishedSpark(ctx,pose,atlas,face){
- const value=clamp(pose.sparkCel||0,0,5),lo=Math.floor(value),hi=Math.ceil(value),mix=value-lo,alpha=ctx.globalAlpha;
+ const value=clamp(pose.sparkCel||0,0,5),lo=Math.floor(value),hi=Math.ceil(value),alpha=ctx.globalAlpha;
  const a=sparkCel({...pose,sparkCel:lo}),b=sparkCel({...pose,sparkCel:hi});
- ctx.globalAlpha=alpha*(a===b?1:1-mix);drawSparkCel(ctx,pose,atlas,face,a);
- if(a!==b&&mix>0){ctx.globalAlpha=alpha*mix;drawSparkCel(ctx,pose,atlas,face,b);}
+ for(const [cel,weight] of paintedLayers(a,b,value-lo)){ctx.globalAlpha=alpha*weight;drawSparkCel(ctx,pose,atlas,face,cel);}
  ctx.globalAlpha=alpha;
 }
