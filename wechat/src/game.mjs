@@ -1227,8 +1227,8 @@ export class NativeGame {
   drawGrowth(y,id){const c=this.ctx,s=this.state,b=G.breakthroughQuote(s,id),a=G.starQuote(s,id);text(c,SKILL_STUDY[id].name+' · Lv.'+(b.rank+1),20,y+22,18,C.gold,800);y+=42;y+=rich(c,b.maxed?skillSummary(id,b.rank):'下一级：'+skillSummary(id,b.rank+1),20,y,350,{size:12,line:19})+20;
     y+=rich(c,'徽章 '+s.badges+'/'+b.cost+' · 训练笔记 '+s.growth.notes+'/'+b.notes+' · 历练印记 '+s.growth.seals+'/'+b.seals,20,y,350,{size:12,line:19})+20;
     this.button('breakthrough-'+id,b.maxed?'已满级':'研习',14,y,362,35,()=>{if(G.breakthrough(s,id)){this.battle?.syncStats(s,{preserveHealthRatio:true});this.save();this.toast('技能升级');}},{disabled:b.maxed||s.levels[id]<b.requiredLevel||!b.canAfford});y+=47;this.button('growth-materials','获取研习材料',14,y,362,32,()=>this.openStreet('materials','escort'));y+=58;
-    text(c,'升星 '+a.rank+' / 5',20,y+20,18,C.gold,800);y+=40;y+=rich(c,'生命、攻击 +'+(4*a.rank)+'%',20,y,350,{size:12,line:19})+20;
-    text(c,'信物 '+a.have+'/'+a.shards+' · 训练笔记 '+s.growth.notes+'/'+a.notes,20,y+15,12,C.ink);y+=36;this.button('ascend-'+id,a.maxed?'已满星':'升至 '+(a.rank+1)+' 星',14,y,362,35,()=>{if(G.ascendCompanion(s,id)){this.battle?.syncStats(s,{preserveHealthRatio:true});this.save();this.toast('升星成功');}},{disabled:a.maxed||a.have<a.shards||s.growth.notes<a.notes});y+=47;this.button('growth-shards','获取'+cat(id).name+'信物',14,y,362,32,()=>this.openStreet('recruit',id));return y+55;
+    text(c,'猫牌 '+a.rank+'阶 · '+a.step+'/5',20,y+20,18,C.gold,800);y+=40;y+=rich(c,'生命、攻击 +'+a.bonus+'%',20,y,350,{size:12,line:19})+20;
+    text(c,'信物 '+a.have+'/'+a.shards+' · 训练笔记 '+s.growth.notes+'/'+a.notes,20,y+15,12,C.ink);y+=36;this.button('ascend-'+id,a.maxed?'已满阶':a.step===4?'进阶猫牌':'点亮爪印',14,y,362,35,()=>{if(G.ascendCompanion(s,id)){this.battle?.syncStats(s,{preserveHealthRatio:true});this.save();this.toast('猫牌成长');}},{disabled:a.maxed||a.have<a.shards||s.growth.notes<a.notes});y+=47;this.button('growth-shards','获取'+cat(id).name+'信物',14,y,362,32,()=>this.openStreet('recruit',id));return y+55;
   }
   async watchBusinessBoost() {
     if(this.adPending)return;

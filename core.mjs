@@ -3,7 +3,7 @@ import {equipmentEncounterScale} from './equipment-progression.mjs';
 import {normalizeReport} from './battle-flow.mjs';
 import {skillTuning} from './skill-training.mjs';
 import {integer,mulDiv,resizeAmount} from './integer-math.mjs?v=0.25.1';
-import {newRoster,normalizeRoster,normalizeGrowth,owns,recruit,starQuote,ascend} from './companions.mjs?v=0.25.0';
+import {newRoster,normalizeRoster,normalizeGrowth,owns,recruit,starQuote,ascend,tagBonus} from './companions.mjs?v=0.25.0';
 export {owns as ownsCompanion,recruit as recruitCompanion,starQuote,ascend as ascendCompanion} from './companions.mjs?v=0.25.0';
 import {normalizeActivities,activityInfo,settleActivity} from './activities.mjs?v=0.25.0';
 import {streetEnemies} from './street-combat.mjs?v=0.25.0';
@@ -105,7 +105,7 @@ export function removeParty(s,id){
 // Old all-party relic stacks are retired; all combat equipment is character-owned.
 export function buffs(){return {atk:1,hp:1,crit:10,regen:0,canCd:3,gold:1,idle:1,reflect:0,shield:0,energy:0,burn:0,boss:1};}
 export function catStats(s,id,equipment=null){const c=CATS.find(c=>c.id===id),l=s.levels[id]||1,g=equipment||gearBonuses(s,id),stars=s.roster?.stars?.[id]||0,base=heroCombatStats(id,l);
- const grow=value=>[100+18*(l-1),100+8*Math.floor(l/10),100+8*s.bones,100+4*stars].reduce((n,p)=>mulDiv(n,p),value);
+ const grow=value=>[100+18*(l-1),100+8*Math.floor(l/10),100+8*s.bones,10000+tagBonus(s,id)].reduce((n,p,i)=>mulDiv(n,p,i===3?10000:100),value);
  return {...base,armor:base.armor+g.armor,magicResist:base.magicResist+g.magicResist,armorPen:base.armorPen+g.armorPen,magicPen:base.magicPen+g.magicPen,hp:mulDiv(grow(c.hp),100+g.hp),atk:mulDiv(grow(c.atk),100+g.atk),crit:Math.min(80,10+g.crit+(id==='ink'&&l>=5?15:0)),level:l,stars,skillRank:s.breakthroughs?.[id]||0,gear:g};
 }
 export function power(s){return s.party.filter(Boolean).reduce((n,id)=>{const c=catStats(s,id);return n+Math.round(c.hp*.3*(1+(c.armor+c.magicResist)/200)+c.atk*3*(1+(c.armorPen+c.magicPen)/200));},0);}

@@ -1,0 +1,2 @@
+export function chapterEntryArt(kind='journal'){return `<span class="chapter-entry-art" aria-hidden="true"><svg viewBox="${kind==='journal'?3:771} 3 762 1018" preserveAspectRatio="xMidYMid slice"><image href="./assets/ui/journal-challenge-v02677.webp" width="1536" height="1024"/></svg></span>`;}
+export function chapterBanner(kind,title){return `<header class="chapter-art-banner">${chapterEntryArt(kind)}<h2 id="modal-title">${title}</h2></header>`;}

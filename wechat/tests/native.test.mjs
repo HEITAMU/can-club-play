@@ -204,7 +204,7 @@ function tapScrolled(h,id){const a=h.app;a.render();for(let y=0;y<=a.scrollMax+1
 test('native companion contracts, star growth and breakthroughs save exact costs',async()=>{
  const state=G.initialState();state.onboarded=true;state.highest=600;state.runCleared=3;state.stage=4;state.roster.shards.milk=20;state.roster.shards.orange=20;state.growth={notes:2000,seals:30};state.badges=100;state.levels.orange=40;
  const h=await harness({state}),a=h.app;a.openStreet('recruit','milk');tapScrolled(h,'street-recruit');assert.ok(a.state.roster.owned.includes('milk'));assert.equal(a.state.roster.shards.milk,0);assert.equal(a.state.party.at(-1),'milk');
- a.change('cats');a.selected='orange';tapScrolled(h,'ascend-orange');assert.equal(a.state.roster.stars.orange,1);assert.equal(a.state.roster.shards.orange,0);assert.equal(a.state.growth.notes,1970);
+ a.change('cats');a.selected='orange';for(let i=0;i<5;i++){a.scroll=0;tapScrolled(h,'ascend-orange');}assert.equal(a.state.roster.stars.orange,1);assert.equal(a.state.roster.shards.orange,0);assert.equal(a.state.growth.notes,1970);
  tapScrolled(h,'breakthrough-orange');assert.equal(a.state.breakthroughs.orange,1);assert.equal(a.state.badges,92);assert.equal(a.state.growth.notes,1920);
  const restored=G.decodeSave(h.storage.get('can-club-wechat-v1'));assert.deepEqual(restored.roster,a.state.roster);assert.deepEqual(restored.growth,a.state.growth);h.stop();
 });
