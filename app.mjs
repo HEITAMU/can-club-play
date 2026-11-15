@@ -216,7 +216,7 @@ function bindEquipment(){
  $$('[data-bag-slot]').forEach(b=>b.onclick=()=>{bagView.slot=b.dataset.bagSlot;bagView.page=0;refreshEquipment();});
  const set=$('#bag-set');if(set)set.onchange=()=>{bagView.set=set.value;bagView.page=0;refreshEquipment();};
  $$('[data-gear]').forEach(b=>b.onclick=()=>showGear(b.dataset.gear,b));
- $$('[data-slot]').forEach(b=>b.onclick=()=>{if(b.dataset.equipped){showGear(b.dataset.equipped,b);return;}bagView.slot=b.dataset.slot;bagView.page=0;refreshEquipment();});
+ $$('.crew-equipment [data-slot]').forEach(b=>b.onclick=()=>{const slot=b.dataset.slot,uid=b.dataset.equipped;bagView.slot=bagView.slot===slot?'':slot;bagView.page=0;refreshEquipment();if(uid)showGear(uid,document.querySelector('.crew-equipment [data-slot="'+slot+'"]'));});
 
  $$('[data-page]').forEach(b=>b.onclick=()=>{bagView.page+=+b.dataset.page;refreshEquipment();});
  const craft=$('#gear-craft');if(craft)craft.onclick=()=>{openModal('craft',craftHTML(state));$('#craft-confirm').onclick=()=>{const e=craftGear(state,$('#craft-set').value,$('#craft-slot').value);if(e){persist();renderHeader();refreshEquipment();showGear(e.id);}};};
