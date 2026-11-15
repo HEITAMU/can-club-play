@@ -35,7 +35,7 @@
 .commission-board .street-choice-card .material-icon{width:30px!important;height:30px!important}
 .commission-board .street-detail{position:relative;background:#ebdec4;border:1px solid #bda176;border-top:4px solid #b48348;border-radius:10px;padding:13px;color:#4d3c2c}
 .modal .commission-kicker{font-size:10px;color:#98744b;letter-spacing:1px}.modal .commission-board .street-detail h3{color:#573e2b;font-size:19px;margin:4px 0 7px}
-.modal .commission-rule{font-size:12px;color:#725e47;line-height:1.6;margin:0 0 10px}
+.modal .commission-rule{font-size:13px;color:#725e47;line-height:1.85;white-space:pre-line;overflow-wrap:anywhere;margin:0 0 14px}
 .commission-board .street-detail .bag-pages{margin:9px 0;padding:6px;background:#dac8a8;border-radius:7px;color:#5a4630}.commission-board .bag-pages button{background:#f0e4cc;color:#7e603a;border:1px solid #bca37d}
 .commission-board .street-detail>.reward-icons{display:flex;justify-content:flex-start;gap:12px;background:#faf0d8;border:1px solid #d0b98f;padding:10px;border-radius:8px;margin:12px 0}
 .commission-board .street-detail .reward-chip>b{color:#6c4930;font-size:14px}.commission-board .street-detail .material-icon{width:37px!important;height:37px!important}
