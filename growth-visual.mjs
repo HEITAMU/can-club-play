@@ -1,5 +1,5 @@
 // Keep the exported name and stored rank for save compatibility; presentation is a companion collar tag.
-export const BADGE_NAMES=['布绳项牌','铜爪项牌','银爪项牌','金爪项牌','琉光项牌','曜金项牌'];
+export const BADGE_NAMES=['布绳猫牌','铜爪猫牌','银爪猫牌','金爪猫牌','琉光猫牌','曜金猫牌'];
 const colors=['#b59b71','#bb8051','#b9c2bd','#d3aa58','#8fb6ac','#dfbc72'];
 export function badgeHTML(rank=0){
  rank=Math.max(0,Math.min(5,Math.floor(Number(rank)||0)));
