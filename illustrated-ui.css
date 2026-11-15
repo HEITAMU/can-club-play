@@ -169,3 +169,6 @@
 #new-player-guide .guide-card{background:#fff2cf;border:3px solid #e9b643;box-shadow:0 5px 22px #0008}
 #new-player-guide .guide-card b{font-size:17px;color:#4b2d0f}
 #new-player-guide .guide-card p{font-size:13px;color:#583c21}
+
+/* A real touch surface also makes blank-area taps reliable on mobile Safari. */
+#new-player-guide[data-mode="info"]{pointer-events:auto;cursor:pointer;touch-action:manipulation}

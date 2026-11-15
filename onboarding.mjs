@@ -1,8 +1,8 @@
 export const GUIDE_DONE=9;
 export function normalizeGuide(raw,onboarded){return raw===10?2:Number.isInteger(raw)?Math.max(0,Math.min(GUIDE_DONE,raw)):onboarded?GUIDE_DONE:0;}
-export function nextGuide(step,event,cleared=0){if(step===1&&event==='continue')return 2;return ({'0:start':1,'10:win':2,'2:companions':3,'3:upgrade':4,'4:equipment':5,'5:gear':6,'6:continue':7,'7:battle':8,'8:continue':9})[step+':'+event]??step;}
+export function nextGuide(step,event){if(step===1&&event==='continue')return 2;return ({'0:start':1,'2:companions':3,'3:upgrade':4,'4:equipment':5,'5:gear':6,'6:continue':7,'7:battle':8,'8:continue':9})[step+':'+event]??step;}
 export const GUIDE=[null,
- {mode:'info',title:'第 1 关 · 自动出击',text:'两名伙伴会轮流攻击，无需手动点击攻击，通关后继续培养伙伴。',target:'#battle-label'},
+ {mode:'info',title:'第 1 关 · 自动出击',text:'伙伴会自动轮流攻击。先认识操作，完成引导后就会出发。',target:'#battle-label'},
  {mode:'action',title:'先培养伙伴',text:'点“伙伴”，用鱼币给橘座升一级。',target:'[data-tab="cats"]'},
  {mode:'action',title:'让橘座升一级',text:'点击“升 1 级”，提高橘座的战斗属性。',target:'[data-profile-upgrade]'},
  {mode:'action',title:'再看看装备',text:'点击“装备”，查看橘座正在使用的装备。',target:'[data-crew-mode="equipment"]'},
