@@ -60,9 +60,9 @@ export function crewProfileHTML(state,id,{modal=false}={}){
   '<section class="crew-attributes" aria-label="'+c.name+'的属性">'+
    '<div class="crew-section-label"><h4>人物属性</h4><span>'+(open?'普攻 · '+(stats.normalDamageType==='magic'?'法术':'物理'):'Lv.1 预览')+'</span></div>'+
    '<dl>'+[['生命',number(stats.hp)],['攻击',number(stats.atk)],['暴击',stats.crit+'<small>%</small>'],['护甲',stats.armor],['魔抗',stats.magicResist],['护甲穿透',stats.armorPen],['法术穿透',stats.magicPen]].map(([label,value])=>'<div><dt>'+label+'</dt><dd>'+value+'</dd></div>').join('')+'</dl></section>'+
-  growthMarkup+'<section class="crew-skills" aria-label="'+c.name+'的技能"><div class="crew-section-label"><h4>角色技能</h4></div>'+
+  '<section class="crew-skills" aria-label="'+c.name+'的技能"><div class="crew-section-label"><h4>角色技能</h4></div>'+
   '<div class="crew-active-skill"><div class="crew-skill-title"><span class="crew-skill-icon">'+skillSVG(id)+'</span><h4>'+c.skill+'</h4><span>主动 · Lv.'+(study.index===0?stats.skillRank+1:1)+'</span></div>'+
   '<p class="crew-skill-description">'+skill.description+'</p>'+(study.index===0?studyHTML:'')+'</div>'+
   '<div class="crew-passive '+(awake?'is-awake':'is-dormant')+'"><span class="crew-passive-mark" aria-hidden="true">'+icon(awake?'star':'paw',23)+'</span><div><div class="crew-passive-title"><b>'+passiveNames[id]+'</b><span>'+(awake?'被动 · Lv.'+(study.index===1?stats.skillRank+1:1):'被动 · 角色 Lv.5 解锁')+'</span></div><p>'+skill.passive+'</p>'+(study.index===1?studyHTML:'')+'</div></div>'+talentCards(id,level,stats.skillRank).map(t=>'<div class="crew-passive '+(t.active?'is-awake':'is-dormant')+'"><div><div class="crew-passive-title"><b>'+t.name+'</b><span>'+ (t.active?'被动 · Lv.'+t.rank:'被动 · 角色 Lv.'+t.level+' 解锁')+'</span></div><p>'+t.desc+'</p>'+(t.trainable?studyHTML:'')+'</div></div>').join('')+'</section>'+
-  '</article>';
+  growthMarkup+'</article>';
 }

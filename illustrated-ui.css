@@ -1,0 +1,46 @@
+/* v0.26.72: painted locations remain separate from live, accessible controls. */
+.game-shell #battle-view .arena{border-top:0}
+#battle-pause{position:absolute;right:9px;top:8px;z-index:12;width:34px;height:34px;padding:0;border:1px solid #caa776;border-radius:50%;background:#443b31e8;color:#ffe7b4;font:800 20px Georgia;box-shadow:0 2px 4px #17232d55;touch-action:manipulation}
+.game-shell .arena-badges{right:51px;top:10px}
+.modal[data-kind="pause"]{max-width:300px;background:#efe0bd url('./assets/ui/paper-grain-v02642.webp') center/240px;border:2px solid #9c784b}
+.pause-menu{padding:20px 8px 8px;text-align:center}.pause-menu h2{margin-bottom:22px}.pause-menu button{min-height:48px;margin:9px 0}
+.game-shell .crew-view .crew-avatar-rail{display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;flex-wrap:nowrap;scrollbar-width:thin;padding:9px;margin:4px 0 12px;border-block:1px solid #a58c65;background:#344b4e url('./assets/ui/paper-grain-v02642.webp') center/220px;background-blend-mode:multiply;box-shadow:inset 0 2px 5px #172b3340;border-radius:9px;touch-action:pan-x}
+.crew-avatar-rail .crew-roster-card{flex:0 0 56px;width:56px;height:56px;padding:0;background:none;border:0;box-shadow:none}
+.game-shell .crew-avatar-rail .crew-pick{position:relative;display:block;width:56px;height:56px;min-height:0;padding:2px!important;border:2px solid #b59a72;border-radius:9px;background:#deca9e;overflow:hidden}
+.game-shell .crew-avatar-rail .crew-pick[aria-pressed=true]{border-color:#ffdc8a;box-shadow:0 0 0 2px #7e5935,inset 0 0 0 1px #8c683f;background:#b99560}
+.crew-avatar-rail .crew-pick-art{display:block;width:100%;height:100%;overflow:hidden;border-radius:5px}.crew-avatar-rail .crew-pick-art>.painted-thumbnail{width:100%!important;height:100%!important;display:block}.crew-avatar-rail .crew-in-party{display:none}
+.crew-view[data-mode="profile"] .crew-profile>.crew-skills{grid-column:1/-1;order:2}.crew-view[data-mode="profile"] .crew-profile>.crew-growth{grid-column:1/-1;order:3}
+.crew-view[data-mode="equipment"] .equipment-display{min-width:0}
+.game-shell .crew-view[data-mode="equipment"] .equipment-stage{height:330px;min-height:330px;padding:0;border:0;border-radius:9px;background:#3c514b url('./assets/scenes/equipment-room-v02672.webp') center/100% 100% no-repeat;box-shadow:0 3px 8px #14272d50;overflow:hidden}
+.game-shell .crew-view[data-mode="equipment"] .equipment-stage:before,.game-shell .crew-view[data-mode="equipment"] .equipment-stage:after{display:none}
+.game-shell .crew-view[data-mode="equipment"] .equipment-character{top:auto;bottom:61px;left:50%;width:90px;height:96px;max-width:90px;z-index:1}
+.game-shell .crew-view[data-mode="equipment"] .equipment-character:before,.game-shell .crew-view[data-mode="equipment"] .equipment-character:after{display:none}
+.game-shell .crew-view[data-mode="equipment"] .gear-slot-node{width:46px;height:46px}
+.game-shell .crew-view[data-mode="equipment"] .gear-orbit-slot{width:46px;height:46px;border:1px solid var(--rarity);border-radius:9px;background:#273b37ba;box-shadow:0 2px 3px #15211d66,inset 0 1px #e4d4aa55;padding:3px}
+.game-shell .crew-view[data-mode="equipment"] .gear-orbit-slot .painted-item{width:38px;height:38px}
+.game-shell .crew-view[data-mode="equipment"] .slot-claw{left:12px;top:55px}.game-shell .crew-view[data-mode="equipment"] .slot-collar{right:12px;top:55px}
+.game-shell .crew-view[data-mode="equipment"] .slot-coat{left:12px;top:130px}.game-shell .crew-view[data-mode="equipment"] .slot-brace{right:12px;top:130px}
+.game-shell .crew-view[data-mode="equipment"] .slot-rune{left:50%;top:auto;bottom:12px}
+.game-shell .equipment-display .equipment-set-strip{position:static;margin:8px 0 0;padding:8px;background:#314d46;border:1px solid #788b6a;border-radius:7px}.game-shell .equipment-display .equipment-set-strip:empty{display:none}
+.commission-art{display:block;position:absolute;inset:0;overflow:hidden;pointer-events:none}.commission-art svg{display:block;width:100%;height:100%}
+.commission-board .street-entry,.commission-board .street-choice-card{position:relative;isolation:isolate;overflow:hidden}
+.commission-board .street-entry{height:110px;border:1px solid #b59565;border-radius:9px;padding:14px;background:none;align-items:flex-end}
+.commission-board .street-entry:after,.commission-board .street-choice-card:after,.commission-tier:after{content:'';position:absolute;inset:0;background:linear-gradient(transparent 20%,#192b36dc 100%);z-index:-1;pointer-events:none}
+.commission-board .street-entry .commission-art,.street-choice-card>.commission-art,.commission-tier>.commission-art{z-index:-2}
+.commission-board .street-entry>span:not(.commission-art){position:relative;z-index:1}.commission-board .street-entry b,.modal .commission-board .street-entry small,.commission-board .street-entry>i{color:#fff0c9;text-shadow:0 1px 3px #152533}
+.commission-board .street-choices{max-height:300px;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.commission-board .street-choice-card{height:126px;min-height:126px;padding:64px 9px 7px;border:1px solid #9d977b;background:none;color:#fff0cd;border-radius:8px}
+.commission-board .street-choice-card[aria-pressed=true]{background:none;border:2px solid #f0cd82;padding:63px 8px 6px;box-shadow:0 0 0 1px #7a5835}
+.commission-board .street-choice-card b{position:relative;z-index:1;color:#fff0cd;font-size:14px;margin:0 0 6px;text-shadow:0 1px 4px #122532}
+.commission-board .street-choice-card .reward-icons{position:relative;z-index:1}.commission-board .street-choice-card .material-icon{width:23px!important;height:23px!important}
+.commission-cat{position:absolute;right:4px;top:5px;width:67px;height:67px;overflow:hidden;border-radius:50%;background:#f1ddb4c9;border:1px solid #efd29d}.commission-cat>.painted-thumbnail{width:100%!important;height:100%!important;display:block}
+.commission-board .street-detail{padding-top:140px;background:#e7d7b5 url('./assets/ui/paper-grain-v02642.webp') center/240px;border-top:1px solid #bda176;overflow:hidden}
+.street-detail>.commission-art{height:125px;bottom:auto;border-bottom:3px solid #8a704c}
+.commission-board .commission-tier-picker{background:none;border:0;box-shadow:none;padding:0}
+.commission-board .commission-tier{isolation:isolate;overflow:hidden;min-height:84px;border:1px solid #947d58;background:none;color:#fff0cb;box-shadow:0 2px 3px #5b482c44;border-radius:8px}
+.commission-board .commission-tier[aria-pressed=true]{background:none;border:2px solid #aa702e;box-shadow:0 0 0 2px #f5d58b;transform:none}
+.commission-board .commission-tier:disabled{opacity:.62;background:none;color:#fff0cb;filter:saturate(.45)}
+.commission-tier>b,.commission-tier>small,.commission-tier>.tier-pin{color:#fff0cb;text-shadow:0 1px 4px #102534;z-index:1}.commission-tier>b{font-size:24px}.commission-tier>.tier-pin{color:#ffe2a3}
+@media(max-width:350px){.game-shell .crew-view[data-mode="equipment"] .gear-slot-node,.game-shell .crew-view[data-mode="equipment"] .gear-orbit-slot{width:40px;height:40px}.game-shell .crew-view[data-mode="equipment"] .gear-orbit-slot .painted-item{width:33px;height:33px}.game-shell .crew-view[data-mode="equipment"] .slot-claw,.game-shell .crew-view[data-mode="equipment"] .slot-coat{left:8px}.game-shell .crew-view[data-mode="equipment"] .slot-collar,.game-shell .crew-view[data-mode="equipment"] .slot-brace{right:8px}}
+.game-shell .crew-view[data-mode="equipment"] .equipment-stage{background-blend-mode:normal}
+.game-shell .crew-view[data-mode="equipment"] .equipment-character{transform:translateX(-50%)}
