@@ -75,3 +75,12 @@
 .game-shell .crew-view[data-mode="equipment"] .set-effect-preview{display:block;box-sizing:border-box;height:30px;min-height:30px;padding:0;border:0;border-radius:0;background:none;box-shadow:none;text-align:left;color:#4d5943;overflow:hidden;}
 .game-shell .crew-view[data-mode="equipment"] .set-effect-preview b{display:block;height:14px;line-height:14px;font-size:9px;color:#526046;margin:0;}
 .game-shell .crew-view[data-mode="equipment"] .set-effect-preview>span.active{display:block;height:16px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px;color:#5c6048;margin:0;}
+/* Keep identity beside the character, not in a separate equipment heading. */
+.game-shell .crew-view[data-mode="profile"] .crew-hero{gap:4px;}
+.game-shell .crew-view[data-mode="profile"] .crew-identity{margin-top:20px;}
+.game-shell .crew-view[data-mode="profile"] .crew-portrait{height:58px;flex-basis:58px;}
+.game-shell .crew-view[data-mode="equipment"] .equipment-layout{margin-top:0;}
+.equipment-identity{position:absolute;top:24px;left:50%;transform:translateX(-50%);width:70px;text-align:center;z-index:2;pointer-events:none;color:#63482f;}
+.equipment-identity h3{margin:0 0 2px;font-size:14px;line-height:18px;color:#513c2b;}
+.equipment-identity>span{display:block;font-size:9px;line-height:12px;color:#7e6547;}
+.game-shell .crew-view[data-mode="equipment"] .equipment-character{bottom:55px;}
