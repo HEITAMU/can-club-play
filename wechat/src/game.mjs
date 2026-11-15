@@ -2,10 +2,10 @@ import {battleUnitSize} from '../../companion-display.mjs';
 import {SKILL_STUDY,skillSummary} from '../../skill-training.mjs';
 import {damageTextStyle,criticalFrameSize,drawCriticalFrame} from '../../damage-text-style.mjs';
 import {groundFootY} from '../../battlefield-space.mjs';
-import {STREET_GROUPS,streetChoices,streetSelection,activityDrops} from '../../street-ui.mjs';
+import {STREET_GROUPS,streetChoices,streetSelection,streetRequest,activityDrops} from '../../street-ui.mjs';
 import {activityInfo,activityReward,rewardText} from '../../activities.mjs';
 import {ActivityReturn} from '../../activity-navigation.mjs';
-import {GEAR_SLOTS,GEAR_SETS,RUNES,QUALITIES,ATTRS,BAG_CAP,GEAR_MAX,gearName,gearStory,gearOwner,gearValues,gearBonuses,attrText,materialRows,equipGear,unequipGear,enhanceQuote,enhanceGear,reforgeGear,dismantleGear,craftQuote,craftGear} from '../../equipment.mjs';
+import {GEAR_SLOTS,GEAR_SETS,RUNES,QUALITIES,ATTRS,BAG_CAP,GEAR_MAX,gearName,gearStory,gearOwner,gearValues,gearBonuses,attrText,materialRows,equipGear,unequipGear,enhanceQuote,enhanceGear,reforgeGear,dismantleGear} from '../../equipment.mjs';
 import {DAILY_TASKS,JOURNEY,refreshCampaign,dailyReward,claimDaily,claimDailyChest,claimJourney,weeklyInfo} from '../../campaign.mjs';
 import {talentCards} from '../../talents.mjs';
 import {businessBoostQuote,grantBusinessBoost} from '../../rewarded-economy.mjs';
@@ -875,7 +875,7 @@ export class NativeGame {
   drawCrew(y) {
     const c = this.ctx;
     this.button('companion-quests','结识',14,y,362,32,()=>this.openStreet('recruit'),{size:12});y+=44;
-    for(const [i,[id,name]]of [['profile','养成'],['equipment','装备'],['formation','阵容']].entries())this.button(id,name,14+i*124,y,114,33,()=>{this.mode=id;if(id==='equipment'&&!G.ownsCompanion(this.state,this.selected))this.selected=G.unlocked(this.state)[0].id;this.bagDetail=null;this.bagCraft=null;this.scroll=0;},{fill:this.mode===id?'#7d8f78':C.panel});y+=45;
+    for(const [i,[id,name]]of [['profile','养成'],['equipment','装备'],['formation','阵容']].entries())this.button(id,name,14+i*124,y,114,33,()=>{this.mode=id;if(id==='equipment'&&!G.ownsCompanion(this.state,this.selected))this.selected=G.unlocked(this.state)[0].id;this.bagDetail=null;this.scroll=0;},{fill:this.mode===id?'#7d8f78':C.panel});y+=45;
     if (this.mode === "formation") return this.drawFormation(y);
     c.save();
     c.beginPath();
@@ -1159,8 +1159,8 @@ export class NativeGame {
   bagRows(){return this.state.inventory.items.filter(e=>!gearOwner(this.state,e.id)&&(!this.bagSlot||e.slot===this.bagSlot)&&(!this.bagSet||e.set===this.bagSet)).sort((a,b)=>b.quality-a.quality||b.tier-a.tier||+b.id.slice(1)-+a.id.slice(1));}
   drawEquipment(y){
     const c=this.ctx,s=this.state;this.bagCat=this.selected;this.bagSet='';this.bagPage??=0;
-    if(this.bagDetail)return this.drawGearDetail(y);if(this.bagCraft)return this.drawGearCraft(y);
-    text(c,cat(this.selected).name,16,y+20,21,C.gold,850);this.button('bag-craft','拼装',296,y,80,30,()=>{this.bagCraft={set:'hunt',slot:'claw'};this.scroll=0;});y+=45;
+    if(this.bagDetail)return this.drawGearDetail(y);
+    text(c,cat(this.selected).name,16,y+20,21,C.gold,850);y+=45;
     box(c,14,y,216,300,C.panel,null,14);this.art.actor(c,this.selected,'equipment-'+this.selected,122,y+235,151,this.time);
     const spots=[[20,14],[166,14],[20,122],[166,122],[93,235]];
     for(const [i,slot]of GEAR_SLOTS.entries()){
@@ -1179,13 +1179,13 @@ export class NativeGame {
   }
   drawRelics(y) {
     const c=this.ctx,s=this.state;this.bagTab??='equipment';this.bagPage??=0;this.bagSlot??='';this.bagSet??='';
-    if(this.bagCraft)return this.drawGearCraft(y);
+
     text(c,'背包',16,y+20,24,C.ink,850);text(c,s.inventory.items.filter(e=>!gearOwner(s,e.id)).length,374,y+20,12,C.muted,500,'right');y+=44;
     for(const [i,id]of ['equipment','materials'].entries())this.button('bag-tab-'+id,['装备','材料'][i],14+i*187,y,175,36,()=>{this.bagTab=id;this.scroll=0;},{fill:this.bagTab===id?C.gold:C.panel,color:this.bagTab===id?C.dark:C.ink});y+=53;
     if(this.bagTab==='materials'){for(const m of materialRows(s)){box(c,14,y,362,62,C.panel,C.rim,12);this.art.item(c,m.icon,46,y+31,34);text(c,m.name,72,y+30,17,C.ink,800);text(c,fmt(m.count),360,y+30,18,C.gold,800,'right');y+=74;}return y;}
     for(const [i,slot]of [{id:'',name:'全部'},...GEAR_SLOTS].entries())this.button('bag-filter-slot-'+(slot.id||'all'),slot.name,14+i%3*124,y+Math.floor(i/3)*37,114,29,()=>{this.bagSlot=slot.id;this.bagPage=0;},{fill:this.bagSlot===slot.id?C.gold:C.panel,color:this.bagSlot===slot.id?C.dark:C.ink,size:11});y+=86;
     this.button('bag-filter-set',this.bagSet?GEAR_SETS.find(x=>x.id===this.bagSet).name:'全部套装',14,y,175,32,()=>{const ids=['',...GEAR_SETS.map(x=>x.id)];this.bagSet=ids[(ids.indexOf(this.bagSet)+1)%ids.length];this.bagPage=0;},{size:11});
-    this.button('bag-craft','拼装',201,y,175,32,()=>{this.bagCraft={set:'hunt',slot:'claw'};this.scroll=0;},{size:11});y+=50;
+    y+=50;
     const rows=this.bagRows();this.bagPage=Math.min(this.bagPage,Math.max(0,Math.ceil(rows.length/6)-1));
     for(const e of rows.slice(this.bagPage*6,this.bagPage*6+6)){const desc=e.slot==='rune'?RUNES.find(x=>x.id===e.rune).desc:Object.entries(gearValues(e)).map(([k,v])=>attrText(k,v)).join(' / '),ht=rich(c,desc,72,0,282,{draw:false,size:11,line:18})+60;
       this.button('gear-item-'+e.id,'',14,y,362,ht,()=>{this.change('cats');this.mode='equipment';if(!G.ownsCompanion(s,this.selected))this.selected=G.unlocked(s)[0].id;this.bagCat=this.selected;this.bagDetail=e.id;},{fill:C.panel,stroke:QUALITIES[e.quality].color});this.art.item(c,GEAR_SLOTS.find(x=>x.id===e.slot).icon,43,y+33,36);text(c,gearName(e)+(e.enhance?' +'+e.enhance:''),72,y+25,15,C.ink,750);rich(c,desc,72,y+51,282,{size:11,line:18});y+=ht+12;}
@@ -1207,18 +1207,12 @@ export class NativeGame {
     this.button('gear-lock',e.locked?'解锁装备':'锁定装备',14,y,362,34,()=>{e.locked=!e.locked;this.bagChanged();});y+=48;
     this.button('gear-dismantle','分解装备',14,y,362,34,async()=>{if(!await this.env.confirm('分解 '+gearName(e),'装备会消失，返还修补零件和部分打磨砂。'))return;const r=dismantleGear(s,e.id);if(r){this.bagDetail=null;this.scroll=0;this.bagChanged('零件 +'+r.scrap+' · 打磨砂 +'+r.essence);}},{disabled:!!owner||e.locked});y+=55;y+=rich(c,gearStory(e),20,y,350,{size:13,line:21});return y+28;
   }
-  drawGearCraft(y){const c=this.ctx,s=this.state,q=craftQuote(s),v=this.bagCraft;
-    this.button('bag-craft-back','‹ 返回装备',14,y,124,32,()=>{this.bagCraft=null;this.scroll=0;});y+=58;text(c,'拼装装备',16,y+20,24,C.ink,850);y+=44;
-    for(const [i,set]of GEAR_SETS.entries())this.button('craft-set-'+set.id,set.name,14+i%3*124,y+Math.floor(i/3)*44,114,34,()=>v.set=set.id,{fill:v.set===set.id?C.gold:C.panel,color:v.set===set.id?C.dark:C.ink});y+=102;
-    for(const [i,slot]of GEAR_SLOTS.filter(x=>x.id!=='rune').entries())this.button('craft-slot-'+slot.id,slot.name,14+i*93,y,83,34,()=>v.slot=slot.id,{fill:v.slot===slot.id?C.gold:C.panel,color:v.slot===slot.id?C.dark:C.ink});y+=65;
-    text(c,q.gold+' 鱼币 · '+q.scrap+' 零件 · '+q.essence+' 打磨砂',20,y+20,13,C.ink);y+=48;
-    this.button('craft-confirm','拼装',14,y,362,40,()=>{const e=craftGear(s,v.set,v.slot);if(e){this.bagCraft=null;this.bagDetail=e.id;this.change('cats');this.mode='equipment';if(!G.ownsCompanion(s,this.selected))this.selected=G.unlocked(s)[0].id;this.bagCat=this.selected;this.bagChanged('装备已放入背包');}},{disabled:s.gold<q.gold||s.inventory.materials.scrap<q.scrap||s.inventory.materials.essence<q.essence||s.inventory.items.length>=BAG_CAP,fill:C.gold,color:C.dark});return y+65;
-  }
+
   openStreet(group='recruit',id){this.modal=null;this.change('map');this.mapPlace='street';this.streetView={group,id:id||(group==='recruit'?'milk':''),tier:1};}
   drawDrops(reward,x,y,counts=true){const c=this.ctx,icons={gold:12,supplies:14,badges:9,notes:15,seals:11,essence:11,scrap:0,gear:4,shards:6};let dx=x;for(const [k,v]of Object.entries(reward)){if(!(v>0)||icons[k]===undefined)continue;this.art.item(c,icons[k],dx+12,y+12,24);if(counts){text(c,fmt(v),dx+28,y+12,11,C.ink,650);dx+=65;}else dx+=29;}return dx-x;}
-  drawStreet(y){const c=this.ctx,s=this.state,v=this.streetView??={group:'recruit',id:'milk',tier:1},q=streetSelection(s,v),choices=streetChoices(v.group);text(c,STREET_GROUPS.find(g=>g.id===v.group).name,16,y+22,24,C.gold,850);y+=46;
-    for(const [i,g]of STREET_GROUPS.entries())this.button('street-group-'+g.id,g.name,14+i%2*187,y+Math.floor(i/2)*40,175,32,()=>this.openStreet(g.id),{fill:g.id===v.group?C.gold:C.panel,color:g.id===v.group?C.dark:C.ink,size:12});y+=91;
-    for(const [i,item]of choices.entries()){const x=14+i%3*124,gy=y+Math.floor(i/3)*68,info=activityInfo(s,{kind:v.group==='materials'?item.id:v.group,id:v.group==='materials'?'':item.id,tier:1});this.button('street-choice-'+item.id,'',x,gy,114,57,()=>{v.id=item.id;v.tier=1;},{fill:item.id===v.id?'#7d8f78':C.panel});text(c,item.name,x+57,gy+17,12,C.ink,750,'center');this.drawDrops(activityDrops(info),x+12,gy+29,false);}y+=Math.ceil(choices.length/3)*68+18;
+  drawStreet(y){const c=this.ctx,s=this.state,v=this.streetView??={group:'recruit',id:'milk',tier:1},q=streetSelection(s,v),choices=streetChoices(v.group);text(c,(STREET_GROUPS.find(g=>g.id===v.group)?.name||'委托'),16,y+22,24,C.gold,850);y+=46;
+    for(const [i,g]of STREET_GROUPS.entries())this.button('street-group-'+g.id,g.name,14+i%2*187,y+Math.floor(i/2)*40,175,32,()=>this.openStreet(g.id),{fill:g.id===v.group?C.gold:C.panel,color:g.id===v.group?C.dark:C.ink,size:12});y+=Math.ceil(STREET_GROUPS.length/2)*40+11;
+    for(const [i,item]of choices.entries()){const x=14+i%3*124,gy=y+Math.floor(i/3)*68,info=activityInfo(s,streetRequest(v.group,item.id));this.button('street-choice-'+item.id,'',x,gy,114,57,()=>{v.id=item.id;v.tier=1;},{fill:item.id===v.id?'#7d8f78':C.panel});text(c,item.name,x+57,gy+17,12,C.ink,750,'center');this.drawDrops(activityDrops(info),x+12,gy+29,false);}y+=Math.ceil(choices.length/3)*68+18;
     text(c,v.group==='recruit'?cat(v.id).name:q.name,16,y+20,19,C.ink,750);y+=41;
     this.button('street-prev','‹',14,y,98,32,()=>v.tier--,{disabled:q.tier<=1});text(c,q.tier,195,y+17,17,C.gold,800,'center');this.button('street-next','›',278,y,98,32,()=>v.tier++,{disabled:q.tier>=q.max||q.tier>q.cleared});y+=48;
     this.drawDrops(activityDrops(q),20,y);y+=43;

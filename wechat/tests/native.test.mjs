@@ -187,7 +187,7 @@ test("build is a native game bound to requested AppID and stays within budgets",
     await fs.access(path.join(build, p));
 });
 test('commission journal opens, daily claim works and weekly retry keeps its mode',async()=>{
- const h=await harness({state:developed()}),a=h.app;a.change('map');a.mapPlace='arena';h.tap('open-journal');assert.equal(a.mapPlace,'journal');a.state.campaign.progress.patrol=5;a.render();const gold=a.state.gold;h.tap('daily-patrol');assert.ok(a.state.gold>gold);assert.equal(a.buttons.some(b=>b.id==='daily-patrol'),false);
+ const h=await harness({state:developed()}),a=h.app;a.change('map');a.mapPlace='arena';tapScrolled(h,'open-journal');assert.equal(a.mapPlace,'journal');a.state.campaign.progress.patrol=5;a.render();const gold=a.state.gold;h.tap('daily-patrol');assert.ok(a.state.gold>gold);assert.equal(a.buttons.some(b=>b.id==='daily-patrol'),false);
  a.mapPlace='arena';a.scroll=0;a.start(true,{weeklyTier:2});assert.equal(a.battle.weekly.tier,2);a.battle.result='lose';a.pause();assert.equal(a.battle.weekly.tier,2);assert.equal(a.state.arenaCleared,0);
 });
 

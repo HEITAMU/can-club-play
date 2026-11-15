@@ -410,3 +410,7 @@ body{background:radial-gradient(ellipse at 22% 30%,#56404d,#292535 75%);color:#f
 #battle-income .income-coin{right:-1px;top:-1px;background:#ffdf68;border:1.5px solid #704329;border-radius:50%;width:19px;height:19px;display:grid;place-items:center}
 #battle-income-progress{width:43px;height:5px;margin-top:2px;border-color:#fff0c5;background:#593e31}
 #battle-income:active{transform:translateY(1px) scale(.96)}
+
+#battle-income .income-stall{width:56px;height:56px;object-fit:contain;filter:drop-shadow(0 1px 1px #ffe7acaa) drop-shadow(0 3px 2px #211822b0)}
+#battle-income .income-label{background:#f2dcad;border-color:#795337;color:#66432a;font-size:10px;border-radius:5px 4px 6px 4px}
+#battle-income.has-income .income-label{background:#e9ba68;color:#513220}

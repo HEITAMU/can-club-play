@@ -13,7 +13,7 @@ function outfit(){
  for(const id of s.party)for(const slot of E.GEAR_SLOTS){const available=s.inventory.items.filter(e=>e.slot===slot.id&&(!E.gearOwner(s,e.id)||E.gearOwner(s,e.id)===id||!s.party.includes(E.gearOwner(s,e.id)))).sort((a,b)=>score(b,target[id])-score(a,target[id]));if(available[0])E.equipGear(s,available[0].id,id,s.party);}
  // Recycle only clearly obsolete unprotected items; keep current-tier set options.
  for(const e of [...s.inventory.items])if(!E.gearOwner(s,e.id)&&!e.locked&&e.tier<E.gearTier(s.highest)-1)E.dismantleGear(s,e.id);
- for(const id of s.party)for(const slot of E.GEAR_SLOTS.slice(0,4)){let e=s.inventory.items.find(x=>x.id===s.inventory.equipped[id]?.[slot.id]);if(!e||e.tier<E.gearTier(s.highest)||e.set!==target[id]){const made=E.craftGear(s,target[id],slot.id);if(made){E.equipGear(s,made.id,id,s.party);e=made;}}if(e&&e.enhance<6&&s.gold>10000)E.enhanceGear(s,e.id);}
+ for(const id of s.party)for(const slot of E.GEAR_SLOTS.slice(0,4)){let e=s.inventory.items.find(x=>x.id===s.inventory.equipped[id]?.[slot.id]);if(e&&e.enhance<6&&s.gold>10000)E.enhanceGear(s,e.id);}
 }
 function train(){
  for(const id of s.party)while(G.breakthrough(s,id)){}
@@ -48,5 +48,5 @@ for(let day=1;day<=30;day++){
  }
  rows.push({day,stage:s.highest,newStages:s.highest-before,levels:s.party.map(id=>s.levels[id]).join('/'),owned:s.roster.owned.length,stars:s.party.map(id=>s.roster.stars[id]).join('/'),arena:s.arenaCleared,journey:s.campaign.journey.length,stall:s.stall.stall,storageHours:G.idleMinutes(s)/60,gold:s.gold,battles:battles-beforeBattles,losses:losses-beforeLoss});
 }
-const result={formation,assumptions:['每日两次，每次最多10分钟实际战斗时间','相隔12小时收鱼摊，不看广告','实际刷指定信物招募目标阵容；按突破缺口刷笔记、徽章与印记；自动升级、换装、强化与拼装，及时开罐','模拟无手动操作耗时；不代表真实留存或真机表现'],rows,final:{stage:s.highest,roster:s.roster,growth:s.growth,levels:s.levels,breakthroughs:s.breakthroughs,equipment:s.inventory.items.length,equipped:s.inventory.equipped,materials:s.inventory.materials,stall:s.stall},battles,losses};
+const result={formation,assumptions:['每日两次，每次最多10分钟实际战斗时间','相隔12小时收鱼摊，不看广告','实际刷指定信物招募目标阵容；按突破缺口刷笔记、徽章与印记；自动升级、换装、强化，及时开罐','模拟无手动操作耗时；不代表真实留存或真机表现'],rows,final:{stage:s.highest,roster:s.roster,growth:s.growth,levels:s.levels,breakthroughs:s.breakthroughs,equipment:s.inventory.items.length,equipped:s.inventory.equipped,materials:s.inventory.materials,stall:s.stall},battles,losses};
 fs.mkdirSync('docs/review/release-v02649',{recursive:true});fs.writeFileSync('docs/review/release-v02649/'+(process.env.MONTH_FORMATION==='control'?'simulation-control':'simulation')+'.json',JSON.stringify(result,null,2));console.table(rows);console.log(JSON.stringify(result.final));

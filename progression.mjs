@@ -1,8 +1,8 @@
 // Permanent neighborhood progression. These resources never reset on a new shift.
 export const STALL_MAX=20,ARENA_MAX=12,ARENA_UNLOCK=15;
 export const STALL_UPGRADES=[
- {id:'stall',name:'摊位',effect:'每级鱼摊每分钟收入 +15%',icon:'bag'},
- {id:'sign',name:'招财招牌',effect:'每级营业收入 +5%',icon:'coin'},
+ {id:'stall',name:'摊位',effect:'每级挂机鱼币加成 +15%',icon:'bag'},
+ {id:'sign',name:'招财招牌',effect:'每级挂机鱼币额外加成 +5%',icon:'coin'},
  {id:'icebox',name:'保鲜鱼箱',effect:'每级离线储存时长 +30 分钟',icon:'thermos'},
  {id:'cart',name:'搬运推车',effect:'每级物资补给 +10%',icon:'coat'}
 ];

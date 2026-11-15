@@ -4,6 +4,7 @@ import {ICON_BOUNDS} from './icon-bounds.mjs';
 import {webAsset} from './web-assets.mjs';
 // Shared first-visit surfaces; never download unowned characters at startup.
 export const COMMON_UI_ASSETS=[
+ './assets/ui/income-stall-v0272.webp',
  './assets/painted/items.webp',
  './assets/scenes/neighborhood-v0220.webp',
  './assets/scenes/formation-room-v02620.webp',

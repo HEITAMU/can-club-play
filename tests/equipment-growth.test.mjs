@@ -45,7 +45,7 @@ test('target numbers share a fixed origin, move vertically and keep normal/criti
  text.clear();assert.equal(nodes.length,0);
 });
 test('upper salvage tiers support fifteen enhancement steps without inflating early rewards',()=>{
- assert.equal(activityReward({kind:'salvage',tier:1,first:false}).scrap,24);
- assert.equal(activityReward({kind:'salvage',tier:8,first:false}).scrap,384);
- assert.equal(activityReward({kind:'salvage',tier:8,first:false,rewardable:false}).scrap,0);
+ assert.equal(activityReward({kind:'parts',tier:1,first:false}).scrap,24);
+ assert.equal(activityReward({kind:'parts',tier:8,first:false}).scrap,384);
+ assert.equal(activityReward({kind:'parts',tier:8,first:false,rewardable:false}).scrap,0);
 });
