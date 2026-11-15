@@ -8,7 +8,7 @@ test('rear battle canvases survive stale offscreen/zero-size reports and a lost 
  globalThis.ResizeObserver=class {constructor(cb){resize.push(cb);}observe(){}unobserve(){}};
  globalThis.IntersectionObserver=class {constructor(cb){intersections.push(cb);}observe(){}unobserve(){}};
  const {drawRig}=await import('../rig-renderer.mjs?visibility-regression');
- for(const id of ['milk','mint','bolt']){
+ for(const id of ['orange','ink','milk','spark','mint','bolt','pudding','star']){
   const classes=new Set(),listeners={},ctx={draws:0,clears:0,globalAlpha:1,setTransform(){},clearRect(){this.clears++;},save(){},restore(){},translate(){},rotate(){},scale(){},beginPath(){},moveTo(){},lineTo(){},closePath(){},clip(){},transform(){},stroke(){},fill(){},drawImage(){this.draws++;}};
   const canvas={width:300,height:150,getContext:()=>ctx,addEventListener:(name,cb)=>listeners[name]=cb};
   const el={dataset:{},clientWidth:66,clientHeight:66,querySelector:()=>canvas,classList:{contains:c=>classes.has(c),add:c=>classes.add(c),remove:c=>classes.delete(c)}};
@@ -26,3 +26,5 @@ test('rear battle canvases survive stale offscreen/zero-size reports and a lost 
  }
  delete globalThis.Image;delete globalThis.ResizeObserver;delete globalThis.IntersectionObserver;
 });
+
+test('every full-body portrait has a direct image fallback, independent of observer loading',async()=>{const {paintedCat}=await import('../painted-art.mjs');for(const id of ['orange','ink','milk','spark','mint','bolt','pudding','star']){const html=paintedCat(id);assert.match(html,/<img class="anatomy-fallback" src="\.\/assets\/mobile\/[^\"]+"/);assert.match(html,/fetchpriority="high"/);assert.doesNotMatch(html,/class="anatomy-fallback"[^>]*background-size/);}});

@@ -21,7 +21,7 @@ export function paintedCat(id,portrait=false){
   const [x,y,side]=HEAD_CROPS[id]||HEAD_CROPS.orange,[w,h]=id==='spark'?[576,552]:[512,544];
   return `<span class="painted-sprite painted-thumbnail" data-art="${id}" data-hero="false" aria-hidden="true"><svg class="companion-head" viewBox="${x} ${y} ${side} ${side}" preserveAspectRatio="xMidYMid meet"><image href="${webAsset(art.portrait)}" width="${w}" height="${h}"/></svg></span>`;
  }
- const fallback=`<span class="anatomy-fallback" data-asset="${webAsset(art.portrait)}" style="background-size:100% 100%"></span>`;
+ const fallback=`<img class="anatomy-fallback" src="${webAsset(art.portrait)}" data-asset="${webAsset(art.portrait)}" alt="" decoding="async" fetchpriority="high" draggable="false">`;
  return `<span class="painted-sprite companion-body" data-art="${id}" data-hero="true" data-atlas="${webAsset(art.atlas)}" style="--companion-scale:${companionScale(id)}" aria-hidden="true">${fallback}<canvas class="rig-canvas" aria-hidden="true"></canvas></span>`;
 }
 export function paintedCarrier(actor){const id=carrierId(actor);if(!id)return '';const row=CARRIER_ART[id].row;return `<span class="painted-sprite material-carrier" data-art="${id}" data-hero="false" data-atlas="${CARRIER_ATLAS}" data-asset="${CARRIER_ATLAS}" data-row="${row}" data-rows="2" data-pose="0" style="--atlas:url('${CARRIER_ATLAS}');--sheet-rows:2;background-size:500% 200%;background-position:0% ${row*100}%" aria-hidden="true"><canvas class="rig-canvas" aria-hidden="true"></canvas></span>`;}
