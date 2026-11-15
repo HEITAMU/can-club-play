@@ -1,6 +1,6 @@
 {
   "version": "0.28.0-preview",
-  "moduleRequestsBefore": 76,
+  "moduleRequestsBefore": 78,
   "scriptRequestsAfter": 1,
   "cssRequestsBefore": 16,
   "cssRequestsAfter": 1,

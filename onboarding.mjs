@@ -25,7 +25,7 @@ export const GUIDE=[null,
  {mode:'info',title:'装备已经放进背包',text:'这里是橘座的装备页。右侧是还没穿戴的装备，先点开刚拿到的那一件。',target:'.equipment-bag'},
  {mode:'action',title:'查看新装备',text:'点击高亮装备，查看它的属性。',target:'.equipment-bag [data-gear]'},
  {mode:'action',title:'给橘座穿上',text:'点击穿戴，装备就会放到对应部位，原来那件会回到背包。',target:'#gear-equip'},
- {mode:'info',title:'穿好了，继续出发',text:'以后换装备也是这样。点身上装备还能强化；缺装备就去废件仓库，主线第 30 关后还能去深夜追猎。',target:'.crew-equipment'}
+ {mode:'info',title:'穿好了，继续出发',text:'以后换装备也是这样。点身上装备还能强化；缺装备就到委托板的旧街寻宝，按需要的部位选择据点。',target:'.crew-equipment'}
 ];
 
 // Restore the actionable screen; equipment cards are transient and must reopen.

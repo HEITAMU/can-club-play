@@ -1,3 +1,4 @@
+import {EQUIPMENT_ROUTES,equipmentRoute,equipmentRouteInfo,rotationSlots,routeGearOptions} from './equipment-routes.mjs';
 import {repeatQuota,consumeRepeat} from './economy-limits.mjs';
 import {COMPANION_IDS} from './companions.mjs?v=0.25.0';
 import {gearDrop,addGear} from './equipment.mjs?v=0.25.0';
@@ -5,7 +6,7 @@ const safe=(n,max=10000)=>Number.isFinite(n)?Math.max(0,Math.min(max,Math.floor(
 export const MATERIAL_JOBS=[
  {id:'sweep',name:'后巷清扫',rule:'杂物怪成群出现，稳住前排并准备群体伤害。',reward:'训练笔记',theme:'crowd'},
  {id:'escort',name:'夜班护送',rule:'追兵蓄力重击，保留开罐啦或控制技能打断。',reward:'护送勋章',theme:'burst'},
- {id:'salvage',name:'废件仓库',rule:'前排铁壳高护甲，后排电池高魔抗，混合伤害或破甲更有效。',reward:'装备',theme:'armor'},
+ ...EQUIPMENT_ROUTES.map(x=>({...x,reward:'装备'})),
  {id:'parts',name:'旧件回收场',rule:'拆卸队占着废料堆，准备群体伤害。',reward:'零件',theme:'crowd'},
  {id:'polish',name:'磨砂作坊',rule:'铁壳守卫堵住作坊，混合伤害或破甲更有效。',reward:'打磨砂',theme:'armor'}
 ];
@@ -45,7 +46,7 @@ const RECRUIT_STORIES={
 const CLOCKWORK_STORY="钟楼上住着两个家伙，附近的人总说他们不和，隔着一条街都能听见争吵。\n\n上回有人趁他们吵架闯了进去，才发现不是那么回事。一个刚刚停手，另一个就已经准备好了，根本不给人喘气的工夫。\n\n逃回来的人说，早知道就不该同时招惹他们两个。";
 const ESCORT_STORY="车夫说，这条路上的追兵已经跟了他好几天。领头的每次都要先停一下，攒足了劲，才朝着车厢撞过来。\n\n昨天车上掉下一只空罐头，正好砸在他脑门上。他那一下没撞出来，车夫趁机赶着车跑了，直到过了桥才敢回头。";
 const KEYS=[...MATERIAL_JOBS.map(x=>x.id),...HUNTS.map(x=>'hunt:'+x.id),...HARD_JOBS.map(x=>'hard:'+x.id),...COMPANION_IDS.map(x=>'recruit:'+x)];
-export function normalizeActivities(raw){return {rewardVersion:1,rewardDay:safe(raw?.rewardDay,1e9),repeatClaims:Object.fromEntries(Object.entries(raw?.repeatClaims||{}).filter(([k])=>['sweep','escort','salvage','parts','polish','hunt','hard',...COMPANION_IDS.map(id=>'recruit:'+id)].includes(k)).map(([k,v])=>[k,safe(v,100)])),cleared:Object.fromEntries(KEYS.map(k=>[k,safe(raw?.cleared?.[k],k.startsWith('hunt:')?10000:k.startsWith('hard:')?3:k.startsWith('recruit:')?6:8)])),wins:safe(raw?.wins,1e9)};}
+export function normalizeActivities(raw){return {rewardVersion:1,rewardDay:safe(raw?.rewardDay,1e9),repeatClaims:Object.fromEntries(Object.entries(raw?.repeatClaims||{}).filter(([k])=>['sweep','escort','salvage','wardrobe','nightwatch','parts','polish','hunt','hard',...COMPANION_IDS.map(id=>'recruit:'+id)].includes(k)).map(([k,v])=>[k,safe(v,100)])),cleared:Object.fromEntries(KEYS.map(k=>[k,safe(raw?.cleared?.[k],k.startsWith('hunt:')?10000:k.startsWith('hard:')?3:k.startsWith('recruit:')?6:8)])),wins:safe(raw?.wins,1e9)};}
 export function activityInfo(s,request={},now=Date.now()){
  const kind=request.kind||'sweep',tier=request.tier===undefined?1:request.tier,id=request.id||'',recruit=kind==='recruit',hunt=kind==='hunt',hard=kind==='hard',job=recruit?{name:'伙伴委托',rule:'完成指定伙伴的委托，获得该伙伴信物。凑齐 20 份即可结识，之后可用于徽章晋升。',theme:'crowd'}:hunt?HUNTS.find(x=>x.id===id):hard?HARD_JOBS.find(x=>x.id===id):MATERIAL_JOBS.find(x=>x.id===kind);
  const key=recruit?'recruit:'+id:hunt?'hunt:'+id:hard?'hard:'+id:kind,cleared=s.activities?.cleared?.[key]||0,max=hunt?Math.min(10000,cleared+1):hard?3:recruit?6:8;
@@ -53,9 +54,9 @@ export function activityInfo(s,request={},now=Date.now()){
  const valid=Number.isInteger(tier)&&!!job&&(!recruit||COMPANION_IDS.includes(id))&&tier>=1&&tier<=max;
  const exhausted=recruit&&tier<=cleared&&tier<6;const open=valid&&s.highest>=required&&tier<=cleared+1&&!exhausted;
  const level=hard?[70,115,160][tier-1]:hunt?Math.min(160,35+tier*5):recruit?[5,20,40,70,100,130][tier-1]:[8,25,40,60,85,110,135,160][tier-1];
- const theme=hunt?job.themes[(tier-1)%3]:job?.theme;
+ const gearRoute=equipmentRouteInfo(kind,now,request.runeSearch),theme=gearRoute?.runeSearch?'ambush':hunt?job.themes[(tier-1)%3]:job?.theme;
  const quota=repeatQuota(s.activities,kind,id,now),rewardable=tier>cleared||quota.remaining>0;
- return {valid,open,exhausted,quota,rewardable,request:{kind,id,tier},kind,id,tier,key,cleared,max,required,level,theme,story:recruit?RECRUIT_STORIES[id]||ENCOUNTER_STORIES.crowd:hard&&theme==='burst'?CLOCKWORK_STORY:kind==='escort'?ESCORT_STORY:ENCOUNTER_STORIES[theme]||ENCOUNTER_STORIES.crowd,name:job?.name||'未知委托',rule:(hunt?([...HARD_JOBS].find(x=>x.theme===theme)?.rule):job?.rule)||'',first:tier>cleared,scene:hard?({coldstore:1,lifeline:3,ironwall:3,alarm:2,blackout:5,clockwork:4}[id]):hunt?({market:1,depot:3,station:5}[id]):kind==='salvage'?3:0};
+ return {valid,open,exhausted,quota,rewardable,...gearRoute,request:{kind,id,tier,...(kind==='nightwatch'?{runeSearch:gearRoute.runeSearch}:{})},kind,id,tier,key,cleared,max,required,level,theme,story:recruit?RECRUIT_STORIES[id]||ENCOUNTER_STORIES.crowd:hard&&theme==='burst'?CLOCKWORK_STORY:kind==='escort'?ESCORT_STORY:ENCOUNTER_STORIES[theme]||ENCOUNTER_STORIES.crowd,name:job?.name||'未知委托',rule:(hunt?([...HARD_JOBS].find(x=>x.theme===theme)?.rule):job?.rule)||'',first:tier>cleared,scene:hard?({coldstore:1,lifeline:3,ironwall:3,alarm:2,blackout:5,clockwork:4}[id]):hunt?({market:1,depot:3,station:5}[id]):equipmentRoute(kind)?3:0};
 }
 export function activityReward(info){const n=info.tier,first=info.first,mult=first?2:1,r={gold:0,supplies:0,badges:0,notes:0,seals:0,shards:0,essence:0,scrap:0};
  if(info.rewardable===false)return r;
@@ -68,10 +69,19 @@ export function activityReward(info){const n=info.tier,first=info.first,mult=fir
  else if(info.kind==='hard'){r.seals=n*2*mult;}
  return r;
 }
-export function settleActivity(s,info,now=Date.now()){const current=activityInfo(s,info.request,now);if(!current.open)return null;const r=activityReward(current);s.activities.cleared[info.key]=Math.max(s.activities.cleared[info.key]||0,info.tier);s.activities.wins++;if(current.rewardable&&!current.first)consumeRepeat(s.activities,current.quota);s.gold+=r.gold;s.badges+=r.badges;s.growth.notes+=r.notes;s.growth.seals+=r.seals;s.inventory.materials.scrap+=r.scrap;s.inventory.materials.essence+=r.essence;if(r.shards)s.roster.shards[info.id]+=r.shards;
- let gearLoot=null;if(current.rewardable&&(info.kind==='salvage'||info.kind==='hard'&&current.first||info.kind==='hunt')){const stage=info.kind==='hard'?600:info.kind==='salvage'?Math.min(600,info.tier*75):Math.min(600,info.tier*25);gearLoot=info.kind==='salvage'&&info.tier===1&&current.first?addGear(s,3,{slot:'claw',set:'guard',quality:1}):info.kind==='hard'&&current.first?addGear(s,stage,{quality:3,slot:['claw','coat','collar','brace'][(info.tier-1)%4]}):gearDrop(s,stage,{guaranteed:true,maxQuality:info.kind==='salvage'?(info.tier<3?1:info.tier<5?2:3):3});}
- if(info.kind==='salvage'&&info.tier===2&&current.first&&gearLoot?.item){const e=gearLoot.item;Object.assign(e,{slot:'rune',set:null,rune:'followup',tier:1,quality:1,enhance:0,subs:[],rerolls:0});}
- if(info.kind==='salvage'&&info.tier===1&&current.first&&gearLoot?.item)gearLoot.item.enhance=1;
+export function settleActivity(s,info,now=Date.now(),random=Math.random){const current=activityInfo(s,info.request,now);if(!current.open)return null;const r=activityReward(current);s.activities.cleared[info.key]=Math.max(s.activities.cleared[info.key]||0,info.tier);s.activities.wins++;if(current.rewardable&&!current.first)consumeRepeat(s.activities,current.quota);s.gold+=r.gold;s.badges+=r.badges;s.growth.notes+=r.notes;s.growth.seals+=r.seals;s.inventory.materials.scrap+=r.scrap;s.inventory.materials.essence+=r.essence;if(r.shards)s.roster.shards[info.id]+=r.shards;
+ let gearLoot=null;
+ if(current.rewardable&&equipmentRoute(current.kind)){
+  // Keep the entered rotation across midnight; reward quotas still use settlement time.
+  const locked={...current,dropSlots:current.kind==='nightwatch'?rotationSlots(info.rotationDay):current.dropSlots};
+  const starter=current.kind==='salvage'&&current.tier===1&&current.first;
+  const options=starter?{slot:'claw',set:'guard',quality:1}:routeGearOptions(locked,random);
+  gearLoot=addGear(s,starter?3:Math.min(600,current.tier*75),{...options,maxQuality:current.tier<3?1:current.tier<5?2:3});
+  if(starter&&gearLoot.item)gearLoot.item.enhance=1;
+ }else if(current.rewardable&&(info.kind==='hard'&&current.first||info.kind==='hunt')){
+  const stage=info.kind==='hard'?600:Math.min(600,info.tier*25);
+  gearLoot=info.kind==='hard'?addGear(s,stage,{quality:3,slot:['claw','coat','collar','brace'][(info.tier-1)%4]}):gearDrop(s,stage,{guaranteed:true});
+ }
  return {...r,first:current.first,gearLoot,rewardCapped:!current.rewardable};
 }
 export function rewardText(r){return [['信物',r.shards],['训练笔记',r.notes],['护送勋章',r.badges],['历练印记',r.seals],['打磨砂',r.essence],['零件',r.scrap]].filter(x=>x[1]).map(([k,v])=>k+' +'+v).join(' · ')+(r.gearLoot?.item?' · 装备已入包':r.gearLoot?.scrap?' · 满包掉落已折算零件':'');}

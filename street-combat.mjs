@@ -22,6 +22,7 @@ export function streetEnemies(info){
   if(theme==='burst'&&e.boss){e.atk=Math.round(e.atk*1.6);}
  }
  if(!['hard','hunt','recruit'].includes(kind)&&tier===1){e.maxHp=Math.round(e.maxHp*.5);e.atk=Math.round(e.atk*.5);if(theme==='armor'){e.armor=Math.min(e.armor,85);e.magicResist=Math.min(e.magicResist,75);}}
+ if(info.runeSearch){e.maxHp*=3;e.atk*=2;}
  const equipment=activityEquipmentScale(info);e.maxHp=Math.round(e.maxHp*equipment.hp);e.atk=Math.round(e.atk*equipment.atk);
  return e;});
 }

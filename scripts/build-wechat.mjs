@@ -38,6 +38,7 @@ const list = [
   "painted/enemies-b.webp",
   "painted/enemies-c.webp",
   "painted/items.webp",
+  "ui/equipment-slots-v0281.webp",
   "scenes/streets-v019.webp",
   "scenes/commissions-v02646.webp",
   "vfx/effects-v0216.webp",

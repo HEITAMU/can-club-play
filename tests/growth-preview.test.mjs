@@ -31,9 +31,9 @@ test('card strength changes combat without silently changing displayed power',()
  for(const id of s.party){const e=E.addGear(s,1,{slot:'rune',rune:'focus'}).item;E.equipGear(s,e.id,id,s.party);}
  assert.equal(G.power(s),before);assert.ok(frontier(s)>a);
 });
-test('second warehouse first-clear guarantees an early card and does not repeat the first-clear grant',()=>{
+test('second warehouse first-clear stays in its ordinary slot pool and does not repeat first-clear rewards',()=>{
  const s=G.initialState();s.highest=10;s.activities.cleared.salvage=1;const request={kind:'salvage',tier:2};const r=settleActivity(s,activityInfo(s,request));
- assert.equal(r.gearLoot.item.slot,'rune');assert.equal(r.gearLoot.item.rune,'followup');assert.equal(s.activities.cleared.salvage,2);assert.equal(activityInfo(s,request).first,false);
+ assert.ok(['claw','brace'].includes(r.gearLoot.item.slot));assert.equal(s.activities.cleared.salvage,2);assert.equal(activityInfo(s,request).first,false);
 });
 test('equipment refresh updates current combat but never re-arms an already-used survival card',()=>{
  const s=G.initialState(),b=new G.Battle(s),h=b.heroes[1];h.hp=Math.floor(h.hp/2);h.runeUsed=true;h.nextRuneSkill=9;const old=h.atk;

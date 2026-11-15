@@ -127,7 +127,7 @@ export class NativeArt {
       );
   }
   scene(ctx, index, x, y, w, h, activity=null) {
-    const i=activity?({sweep:0,escort:1,salvage:2,recruit:3,hunt:4,hard:5})[activity.kind]??0:index;
+    const i=activity?({sweep:0,escort:1,salvage:2,wardrobe:2,nightwatch:2,recruit:3,hunt:4,hard:5})[activity.kind]??0:index;
     const img=this.image(activity?'assets/scenes/commissions-v02646.webp':'assets/scenes/streets-v019.webp');if(!img)return;
     const cw=img.width/3,ch=img.height/2,sx=i%3*cw,sy=Math.floor(i/3)*ch,cut=(activity?[300,286,286,276,278,286][i]/512:[290,270,265,275,245,270][i]/627)*ch,top=h*BACKDROP_FRACTION;
     ctx.drawImage(img,sx,sy,cw,cut,x,y,w,top);ctx.drawImage(img,sx,sy+cut,cw,ch-cut,x,y+top,w,h-top);

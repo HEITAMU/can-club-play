@@ -1,0 +1,122 @@
+[
+  {
+    "runeSearch": false,
+    "enemies": [
+      {
+        "name": "街巷对手",
+        "hp": 238,
+        "atk": 13,
+        "ambusher": false
+      },
+      {
+        "name": "街巷对手",
+        "hp": 238,
+        "atk": 13,
+        "ambusher": false
+      },
+      {
+        "name": "街巷对手",
+        "hp": 170,
+        "atk": 9,
+        "ambusher": false
+      }
+    ],
+    "runs": [
+      {
+        "seed": 527,
+        "result": "win",
+        "time": 74.4,
+        "enemyRemaining": 0,
+        "survivors": 2
+      },
+      {
+        "seed": 941,
+        "result": "win",
+        "time": 72.8,
+        "enemyRemaining": 0,
+        "survivors": 2
+      },
+      {
+        "seed": 2027,
+        "result": "win",
+        "time": 69.1,
+        "enemyRemaining": 0,
+        "survivors": 2
+      },
+      {
+        "seed": 4093,
+        "result": "win",
+        "time": 74.4,
+        "enemyRemaining": 0,
+        "survivors": 2
+      },
+      {
+        "seed": 8191,
+        "result": "win",
+        "time": 70.2,
+        "enemyRemaining": 0,
+        "survivors": 2
+      }
+    ]
+  },
+  {
+    "runeSearch": true,
+    "enemies": [
+      {
+        "name": "绕后追兵",
+        "hp": 714,
+        "atk": 26,
+        "ambusher": true
+      },
+      {
+        "name": "绕后追兵",
+        "hp": 714,
+        "atk": 26,
+        "ambusher": true
+      },
+      {
+        "name": "街巷对手",
+        "hp": 510,
+        "atk": 18,
+        "ambusher": false
+      }
+    ],
+    "runs": [
+      {
+        "seed": 527,
+        "result": "lose",
+        "time": 61.7,
+        "enemyRemaining": 0.834,
+        "survivors": 0
+      },
+      {
+        "seed": 941,
+        "result": "lose",
+        "time": 61.7,
+        "enemyRemaining": 0.842,
+        "survivors": 0
+      },
+      {
+        "seed": 2027,
+        "result": "lose",
+        "time": 61.7,
+        "enemyRemaining": 0.824,
+        "survivors": 0
+      },
+      {
+        "seed": 4093,
+        "result": "lose",
+        "time": 61.7,
+        "enemyRemaining": 0.834,
+        "survivors": 0
+      },
+      {
+        "seed": 8191,
+        "result": "lose",
+        "time": 61.7,
+        "enemyRemaining": 0.828,
+        "survivors": 0
+      }
+    ]
+  }
+]
