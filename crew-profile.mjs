@@ -1,3 +1,5 @@
+import {mulDiv} from './integer-math.mjs';
+import {trainingCount,nextTrainingMilestone,trainingPower} from './growth-curve.mjs';
 import {skillTuning,skillSummary,SKILL_STUDY} from './skill-training.mjs';
 import {badgeHTML} from './growth-visual.mjs';
 import {growthHTML} from './street-ui.mjs?v=0.25.0';
@@ -16,7 +18,7 @@ const number=n=>n>=1e8?Math.floor(n/1e8)+'亿':n>=1e4?Math.floor(n/1e4)+'万':Ma
 const effect=(value,type)=>'<strong class="skill-'+type+'">'+value+'</strong>';
 const scaling=text=>'<span class="skill-scaling">（'+text+'）</span>';
 export function crewSkill(id,level,stats){
- const sk=skillTuning(stats.skillRank),awake=level>=5,amount=(ratio,stat='atk')=>Math.round(stats[stat]*ratio).toLocaleString('zh-CN');
+ const sk=skillTuning(stats.skillRank),awake=level>=5,amount=(ratio,stat='atk')=>mulDiv(stats[stat],Math.round(ratio*100)).toLocaleString('zh-CN');
  const skills={
   orange:{description:'自身获得 '+effect(amount(sk.orangeSelf/100,'hp'),'shield')+scaling(''+sk.orangeSelf+'% 最大生命值')+' 护盾，其他队友获得各自 '+effect(''+sk.orangeTeam+'% 最大生命值','shield')+' 护盾。',passive:'受到的伤害降低 '+effect(sk.orangeGuard+'%','shield')+'。'},
   ink:{description:'三连击攻击生命值最低的敌人，合计造成 '+effect(sk.inkHit+'% 攻击力','damage')+' 物理伤害，获得 '+effect(''+sk.inkPen+' 点护甲穿透','armor')+'。'+(sk.inkRetarget?'目标死亡后，剩余攻击转向生命值最低的敌人。':''),passive:'暴击率提高 '+effect('15%','damage')+'。'},
@@ -34,8 +36,8 @@ export function crewPosition(state,id){
  return slot<0?'未出战':slot<2?'前排 '+(slot+1):'后排 '+(slot-1);
 }
 export function crewUpgradeHTML(state,id){
- const c=CATS.find(c=>c.id===id),level=state.levels[id],open=ownsCompanion(state,c.id),quote=upgradeQuote(level,10,levelCap(state,id));
- return '<button class="crew-quick-upgrade" data-upgrade="'+id+'" data-upgrade-count="10" '+(!open||!quote.levels||state.gold<quote.cost?'disabled':'')+' aria-label="'+c.name+'升'+quote.levels+'级，花费'+quote.cost+'鱼币"><small>'+ (quote.levels?'＋'+quote.levels+'级':'升级')+'</small><span>'+(!open?'未结识':!quote.levels?'已满级':number(quote.cost)+' 鱼币')+'</span></button>';
+ const c=CATS.find(c=>c.id===id),level=state.levels[id],open=ownsCompanion(state,c.id),quote=upgradeQuote(level,trainingCount(level),levelCap(state,id));
+ return '<button class="crew-quick-upgrade" data-upgrade="'+id+'" data-upgrade-count="'+trainingCount(level)+'" '+(!open||!quote.levels||state.gold<quote.cost?'disabled':'')+' aria-label="'+c.name+'升'+quote.levels+'级，花费'+quote.cost+'鱼币"><small>'+ (quote.levels?'＋'+quote.levels+'级':'升级')+'</small><span>'+(!open?'未结识':!quote.levels?'已满级':number(quote.cost)+' 鱼币')+'</span></button>';
 }
 export function crewRosterHTML(state,selected){
  return CATS.filter(c=>ownsCompanion(state,c.id)).map(c=>{
@@ -47,16 +49,17 @@ export function crewRosterHTML(state,selected){
 }
 export function crewProfileHTML(state,id,{modal=false}={}){
  const c=CATS.find(c=>c.id===id),open=ownsCompanion(state,c.id),level=state.levels[id],stats=catStats(state,id),cap=levelCap(state,id),bq=breakthroughQuote(state,id);
- const skill=crewSkill(id,level,stats),study=SKILL_STUDY[id],studyHTML='<details class="skill-level-list"><summary>技能升级</summary>'+[0,1,2,3].map(r=>'<div class="'+(r===stats.skillRank?'current':'')+'"><b>Lv.'+(r+1)+'</b> '+skillSummary(id,r)+'</div>').join('')+'</details>',awake=open&&level>=5,[wash,rim,accent]=palettes[id],quote=upgradeQuote(level,state.guideStep===3?1:10,cap),cost=quote.cost;
+ const skill=crewSkill(id,level,stats),study=SKILL_STUDY[id],studyHTML='<details class="skill-level-list"><summary>技能升级</summary>'+[0,1,2,3].map(r=>'<div class="'+(r===stats.skillRank?'current':'')+'"><b>Lv.'+(r+1)+'</b> '+skillSummary(id,r)+'</div>').join('')+'</details>',awake=open&&level>=5,[wash,rim,accent]=palettes[id],quote=upgradeQuote(level,state.guideStep===3?1:trainingCount(level),cap),cost=quote.cost;
  const heading=modal?'h2':'h3',canInherit=open&&unlocked(state).some(d=>state.levels[d.id]>level);
  const growthMarkup=open?'<section class="crew-growth" aria-label="伙伴养成">'+growthHTML(state,id)+'</section>':'';
- const upgradeMarkup=open?'<div class="crew-actions"><button class="primary crew-upgrade" data-upgrade="'+id+'" data-profile-upgrade data-upgrade-count="'+(state.guideStep===3?1:10)+'" '+(level>=cap||state.gold<cost?'disabled':'')+'>'+'<span>'+(level>=cap?'已满级':'升 '+quote.levels+' 级')+'</span></button><div class="upgrade-cost" data-upgrade-cost="'+id+'">'+(quote.levels?icon('coin',12)+'<span>消耗 '+cost.toLocaleString('zh-CN')+'</span>':'')+'</div>'+'<button class="secondary crew-inherit" data-inherit-open="'+id+'" '+(canInherit?'':'disabled')+'>培养继承</button>'+'</div>':'<div class="crew-locked-note">尚未结识</div>';
+ const next=nextTrainingMilestone(level),growthHint=open?'<p class="training-goal">'+(next?'下次跃升 <b>Lv.'+next+'</b> · 攻击 / 生命比现在提高 <b>'+Math.round((trainingPower(next)/trainingPower(level)-1)*100)+'%</b>':'装备是当前提升重点 · 挑选爪套 / 围巾并强化')+'</p>':'';
+ const upgradeMarkup=open?'<div class="crew-actions"><button class="primary crew-upgrade" data-upgrade="'+id+'" data-profile-upgrade data-upgrade-count="'+(state.guideStep===3?1:trainingCount(level))+'" '+(level>=cap||state.gold<cost?'disabled':'')+'>'+'<span>'+(level>=cap?'已满级':next===level+quote.levels&&state.guideStep!==3?'跃升至 Lv.'+next:'升 '+quote.levels+' 级')+'</span></button><div class="upgrade-cost" data-upgrade-cost="'+id+'">'+(quote.levels?icon('coin',12)+'<span>消耗 '+cost.toLocaleString('zh-CN')+'</span>':'')+'</div>'+'<button class="secondary crew-inherit" data-inherit-open="'+id+'" '+(canInherit?'':'disabled')+'>培养继承</button>'+'</div>':'<div class="crew-locked-note">尚未结识</div>';
  return '<article class="crew-profile'+(open?'':' is-locked')+'" data-profile-cat="'+id+'" style="--crew-wash:'+wash+';--crew-rim:'+rim+';--crew-accent:'+accent+'">'+
   '<div class="crew-hero-column"><div class="crew-hero"><div class="crew-identity"><span class="crew-role">'+c.job+'</span>'+
   '<'+heading+(modal?' id="modal-title"':'')+'>'+c.name+'</'+heading+'>'+
   '<span class="crew-level">'+(open?'Lv. <b>'+level+'</b>':'等待结识')+'</span>'+
   '<span class="crew-position">'+(open?crewPosition(state,id):'伙伴委托结识')+'</span></div>'+
-  '<div class="crew-portrait"><span class="crew-portrait-halo" aria-hidden="true"></span>'+catSVG(id)+'</div><div class="crew-tag-row"><button class="cat-tag-open" data-cat-tag="'+id+'" aria-label="查看'+c.name+'的猫牌">'+badgeHTML(state.roster?.stars?.[id]||0,state.roster?.tagSteps?.[id]||0)+'</button></div></div>'+upgradeMarkup+'</div>'+
+  '<div class="crew-portrait"><span class="crew-portrait-halo" aria-hidden="true"></span>'+catSVG(id)+'</div><div class="crew-tag-row"><button class="cat-tag-open" data-cat-tag="'+id+'" aria-label="查看'+c.name+'的猫牌">'+badgeHTML(state.roster?.stars?.[id]||0,state.roster?.tagSteps?.[id]||0)+'</button></div></div>'+growthHint+upgradeMarkup+'</div>'+
   '<section class="crew-attributes" aria-label="'+c.name+'的属性">'+
    '<div class="crew-section-label"><h4>人物属性</h4><span>'+(open?'普攻 · '+(stats.normalDamageType==='magic'?'法术':'物理'):'Lv.1 预览')+'</span></div>'+
    '<dl>'+[['生命',number(stats.hp)],['攻击',number(stats.atk)],['暴击',stats.crit+'<small>%</small>'],['护甲',stats.armor],['魔抗',stats.magicResist],['护甲穿透',stats.armorPen],['法术穿透',stats.magicPen]].map(([label,value])=>'<div><dt>'+label+'</dt><dd>'+value+'</dd></div>').join('')+'</dl></section>'+

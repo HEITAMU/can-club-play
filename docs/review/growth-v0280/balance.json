@@ -1,0 +1,344 @@
+{
+  "version": "0.28.0-preview",
+  "maxStage": 3500,
+  "assumptions": "Real Battle engine, 0.1s ticks, five fixed seeds offset by stage, no can support. Frontier is first failed consecutive stage, not best isolated win. Single-ink milestone tests keep orange/equipment/formation unchanged. Equipment tests hold level 40 and a fixed five-cat formation; all four ordinary pieces per wearer are enhanced, using real costs/procs. These are repeatable test scenarios, not measured player retention or universal guarantees.",
+  "early": [
+    {
+      "upgrade": "ink 9 -> 10",
+      "rows": [
+        {
+          "seed": 527,
+          "before": 280,
+          "after": 380,
+          "advance": 100
+        },
+        {
+          "seed": 941,
+          "before": 280,
+          "after": 380,
+          "advance": 100
+        },
+        {
+          "seed": 2027,
+          "before": 280,
+          "after": 400,
+          "advance": 120
+        },
+        {
+          "seed": 4093,
+          "before": 280,
+          "after": 380,
+          "advance": 100
+        },
+        {
+          "seed": 8191,
+          "before": 240,
+          "after": 380,
+          "advance": 140
+        }
+      ]
+    },
+    {
+      "upgrade": "ink 19 -> 20",
+      "rows": [
+        {
+          "seed": 527,
+          "before": 560,
+          "after": 640,
+          "advance": 80
+        },
+        {
+          "seed": 941,
+          "before": 540,
+          "after": 640,
+          "advance": 100
+        },
+        {
+          "seed": 2027,
+          "before": 540,
+          "after": 640,
+          "advance": 100
+        },
+        {
+          "seed": 4093,
+          "before": 520,
+          "after": 640,
+          "advance": 120
+        },
+        {
+          "seed": 8191,
+          "before": 520,
+          "after": 640,
+          "advance": 120
+        }
+      ]
+    },
+    {
+      "upgrade": "ink 29 -> 30",
+      "rows": [
+        {
+          "seed": 527,
+          "before": 820,
+          "after": 1000,
+          "advance": 180
+        },
+        {
+          "seed": 941,
+          "before": 820,
+          "after": 1040,
+          "advance": 220
+        },
+        {
+          "seed": 2027,
+          "before": 820,
+          "after": 1020,
+          "advance": 200
+        },
+        {
+          "seed": 4093,
+          "before": 820,
+          "after": 1000,
+          "advance": 180
+        },
+        {
+          "seed": 8191,
+          "before": 840,
+          "after": 1000,
+          "advance": 160
+        }
+      ]
+    },
+    {
+      "upgrade": "ink 39 -> 40",
+      "rows": [
+        {
+          "seed": 527,
+          "before": 1280,
+          "after": 1380,
+          "advance": 100
+        },
+        {
+          "seed": 941,
+          "before": 1240,
+          "after": 1380,
+          "advance": 140
+        },
+        {
+          "seed": 2027,
+          "before": 1240,
+          "after": 1360,
+          "advance": 120
+        },
+        {
+          "seed": 4093,
+          "before": 1240,
+          "after": 1380,
+          "advance": 140
+        },
+        {
+          "seed": 8191,
+          "before": 1240,
+          "after": 1360,
+          "advance": 120
+        }
+      ]
+    }
+  ],
+  "equipment": [
+    {
+      "enhance": 0,
+      "power": 92558,
+      "walls": [
+        1880,
+        1840,
+        1840,
+        1840,
+        1840
+      ]
+    },
+    {
+      "enhance": 3,
+      "power": 138082,
+      "walls": [
+        1945,
+        1955,
+        1960,
+        1960,
+        1960
+      ]
+    },
+    {
+      "enhance": 6,
+      "power": 217573,
+      "walls": [
+        2080,
+        2080,
+        2080,
+        2080,
+        2080
+      ]
+    },
+    {
+      "enhance": 9,
+      "power": 334296,
+      "walls": [
+        2190,
+        2200,
+        2200,
+        2195,
+        2190
+      ]
+    },
+    {
+      "enhance": 12,
+      "power": 492872,
+      "walls": [
+        2315,
+        2315,
+        2300,
+        2300,
+        2300
+      ]
+    },
+    {
+      "enhance": 15,
+      "power": 694117,
+      "walls": [
+        2420,
+        2420,
+        2420,
+        2420,
+        2420
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "rune": null,
+      "power": 704,
+      "wall": 260
+    },
+    {
+      "rune": "focus",
+      "power": 704,
+      "wall": 280
+    },
+    {
+      "rune": "followup",
+      "power": 704,
+      "wall": 280
+    },
+    {
+      "rune": "steadfast",
+      "power": 704,
+      "wall": 280
+    }
+  ],
+  "economy": {
+    "policy": "Two starters, tutorial orange +1, upgrade only after defeat; lowest-level starter to next milestone, ink breaks ties. Actual mainline/quest/idle earnings; no ads, commissions, journey prizes, rescue, or gifted currency.",
+    "jumps": [
+      {
+        "atStage": 100,
+        "id": "ink",
+        "from": 1,
+        "to": 10,
+        "cost": 2626,
+        "goldBefore": 17357,
+        "extraIdleMinutes": 0,
+        "nextWall": 340,
+        "advance": 240
+      },
+      {
+        "atStage": 340,
+        "id": "orange",
+        "from": 2,
+        "to": 10,
+        "cost": 2590,
+        "goldBefore": 63216,
+        "extraIdleMinutes": 0,
+        "nextWall": 480,
+        "advance": 140
+      },
+      {
+        "atStage": 480,
+        "id": "ink",
+        "from": 10,
+        "to": 20,
+        "cost": 15137,
+        "goldBefore": 95732,
+        "extraIdleMinutes": 0,
+        "nextWall": 660,
+        "advance": 180
+      },
+      {
+        "atStage": 660,
+        "id": "orange",
+        "from": 10,
+        "to": 20,
+        "cost": 15137,
+        "goldBefore": 143352,
+        "extraIdleMinutes": 0,
+        "nextWall": 760,
+        "advance": 100
+      },
+      {
+        "atStage": 760,
+        "id": "ink",
+        "from": 20,
+        "to": 30,
+        "cost": 48219,
+        "goldBefore": 175354,
+        "extraIdleMinutes": 0,
+        "nextWall": 1000,
+        "advance": 240
+      },
+      {
+        "atStage": 1000,
+        "id": "orange",
+        "from": 20,
+        "to": 30,
+        "cost": 48219,
+        "goldBefore": 260029,
+        "extraIdleMinutes": 0,
+        "nextWall": 1180,
+        "advance": 180
+      },
+      {
+        "atStage": 1180,
+        "id": "ink",
+        "from": 30,
+        "to": 40,
+        "cost": 119945,
+        "goldBefore": 336412,
+        "extraIdleMinutes": 0,
+        "nextWall": 1380,
+        "advance": 200
+      },
+      {
+        "atStage": 1380,
+        "id": "orange",
+        "from": 30,
+        "to": 40,
+        "cost": 119945,
+        "goldBefore": 372259,
+        "extraIdleMinutes": 0,
+        "nextWall": 1480,
+        "advance": 100
+      }
+    ],
+    "finalStage": 1480,
+    "finalLevels": [
+      [
+        "orange",
+        40
+      ],
+      [
+        "ink",
+        40
+      ]
+    ],
+    "extraIdleMinutes": 0,
+    "elapsedHours": 15,
+    "gold": 340611
+  }
+}

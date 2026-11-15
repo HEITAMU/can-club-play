@@ -7,7 +7,7 @@ import {
   decodeSave,
   accrueIdle,
 } from "../../core.mjs";
-const KEY = "can-club-wechat-v1",
+const KEY = "can-club-wechat-growth-preview-v1",
   BACKUP = KEY + "-backup";
 export function readSave(api, now = Date.now()) {
   for (const key of [KEY, BACKUP]) {

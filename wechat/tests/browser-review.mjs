@@ -134,7 +134,7 @@ try {
     await page.screenshot({ path: path.join(out, `relics-${width}.png`) });
     await tap("settings");
     await tap("export");
-    assert.ok(await page.evaluate(() => window.copied.includes("CAN-CLUB-1")));
+    assert.ok(await page.evaluate(() => window.copied.includes("CAN-CLUB-GROWTH-1")));
     assert.deepEqual(errors, []);
     report.push({
       width,

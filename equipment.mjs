@@ -6,12 +6,12 @@ export const GEAR_POWER_TIERS=Object.freeze([1,2,4,8,16,32]);
 export const enhancementPower=level=>100+40*level+8*level*level;
 export const GEAR_SLOTS=[{id:'claw',name:'爪套',main:'atk',icon:0},{id:'coat',name:'围巾',main:'hp',icon:1},{id:'collar',name:'项圈',main:'armor',icon:8},{id:'brace',name:'挂件',main:'magicResist',icon:9},{id:'rune',name:'妙招牌',main:null,icon:11}];
 export const RUNES=[
- {id:'followup',name:'补上一爪',desc:'每 4 次普攻，对原目标追加 40% 攻击力伤害；追加伤害不触发普攻效果。'},
- {id:'bulwark',name:'垫层软布',desc:'自身获得的护盾提高 8%。不额外触发一次加盾。'},
- {id:'focus',name:'留口气',desc:'释放主动技能后回复 6 能量，冷却 2 回合。'},
- {id:'warmth',name:'热乎一口',desc:'治疗生命比例低于 50% 的目标时，治疗量提高 10%。'},
- {id:'ember',name:'添把小火',desc:'对灼烧目标造成的直接伤害提高 8%，不加成持续伤害。'},
- {id:'steadfast',name:'缩成一团',desc:'生命首次降至 30% 以下且仍存活时，获得最大生命 8% 的护盾；每场一次。'}
+ {id:'followup',name:'补上一爪',desc:'每 2 次普攻，追加 100% 攻击力伤害；原目标倒下时追击下一名敌人，不触发普攻效果。'},
+ {id:'bulwark',name:'垫层软布',desc:'自身获得的护盾提高 35%。不额外触发一次加盾。'},
+ {id:'focus',name:'留口气',desc:'开场获得 40 能量；释放主动技能后回复 28 能量，冷却 2 回合。'},
+ {id:'warmth',name:'热乎一口',desc:'治疗生命比例低于 50% 的目标时，治疗量提高 35%，并清除其灼烧。'},
+ {id:'ember',name:'添把小火',desc:'普攻命中灼烧目标时，引爆剩余灼烧总伤害的 50%；不消耗灼烧，冷却 2 回合。'},
+ {id:'steadfast',name:'缩成一团',desc:'挡下首次致命伤，保留 1 点生命并获得最大生命 35% 的护盾；每场一次。'}
 ];
 export const QUALITIES=[{name:'普通',color:'#9dafa6',factor:100,subs:0},{name:'精良',color:'#8ebf9b',factor:120,subs:1},{name:'稀有',color:'#afa2d5',factor:145,subs:2},{name:'珍藏',color:'#e2bb75',factor:175,subs:3}];
 export const GEAR_SETS=[
@@ -36,7 +36,7 @@ const SET_STORIES={
  clock:['裹住爪子就听不见脚步了，可项圈上的铃铛还在响。','从旧礼盒上拆的。长的那截扎行李，短的这截总也扔不掉。','里面塞了纸，走路不响。摘下来一抖，纸又掉了。','螺丝拆完闹钟，桌上多出这一颗。钟照走，就是不再报时。'],
  thorn:['钉尖全朝外。第一次戴反以后，主人每回都要检查两遍。','边上抽出来的线绕了好几圈，洗的时候总和别的围巾缠在一起。','打结时戳了三次爪子。这回系紧了，就没打算再解。','原先拿来盛水，一碰就翻。现在钻了孔，挂起来倒挺合适。']
 };
-const RUNE_STORIES={followup:'牌背画了四道爪印，最后一道描得格外重。',bulwark:'盾牌边沿磨爪子，垫上这块布就好多了。',focus:'练完一套还喘得过气来，才算练熟。',warmth:'奶盖在牌角画了一只汤勺，提醒自己出门带上。',ember:'炉子快熄的时候添一点就够，多了反而呛。',steadfast:'橘座示范了一遍。阿墨照着缩，尾巴怎么也收不进去。'};
+const RUNE_STORIES={followup:'牌背画了两道爪印，第二道描得格外重。',bulwark:'盾牌边沿磨爪子，垫上这块布就好多了。',focus:'练完一套还喘得过气来，才算练熟。',warmth:'奶盖在牌角画了一只汤勺，提醒自己出门带上。',ember:'炉子快熄的时候添一点就够，多了反而呛。',steadfast:'橘座示范了一遍。阿墨照着缩，尾巴怎么也收不进去。'};
 export const gearStory=e=>e.slot==='rune'?RUNE_STORIES[e.rune]:SET_STORIES[e.set][GEAR_SLOTS.findIndex(x=>x.id===e.slot)];
 export const gearTier=stage=>Math.max(1,Math.min(6,1+Math.floor(Math.max(0,stage-1)/100)));
 export const attrText=(key,value)=>ATTRS[key].name+' +'+(ATTRS[key].percent?integer(value)+'%':integer(value));

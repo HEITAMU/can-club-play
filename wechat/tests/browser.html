@@ -114,7 +114,7 @@
         star: 1,
       },
     };
-    store.set("can-club-wechat-v1", encodeSave(state));
+    store.set("can-club-wechat-growth-preview-v1", encodeSave(state));
     window.fixture = await module.exports.boot(
       api,
       await (await fetch("/dist/wechat/asset-manifest.json")).json(),

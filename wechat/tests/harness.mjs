@@ -50,9 +50,9 @@ export async function harness({
     fail = failedPack;
   if (state)
     storage.set(
-      "can-club-wechat-v1",
+      "can-club-wechat-growth-preview-v1",
       JSON.stringify({
-        format: "CAN-CLUB-1",
+        format: "CAN-CLUB-GROWTH-1",
         checksum: checksum(JSON.stringify(state)),
         payload: JSON.stringify(state),
       }),

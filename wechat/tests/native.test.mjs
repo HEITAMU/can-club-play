@@ -89,7 +89,7 @@ test("background saves immediately, cancels input, resumes without combat catchu
   h.touch("TouchStart", 50, 50);
   h.callbacks.Hide();
   assert.equal(a.pointer, null);
-  assert.ok(h.storage.get("can-club-wechat-v1"));
+  assert.ok(h.storage.get("can-club-wechat-growth-preview-v1"));
   h.callbacks.Show();
   assert.equal(a.battle.time, time);
   assert.equal(h.raf.size, 1);
@@ -105,7 +105,7 @@ test("valid backup survives corrupt primary; primary write failures are reported
   assert.equal(runtime.writeSave(api, state), true);
   state.gold = 100;
   runtime.writeSave(api, state);
-  storage.set("can-club-wechat-v1", "corrupt");
+  storage.set("can-club-wechat-growth-preview-v1", "corrupt");
   const result = runtime.readSave(api);
   assert.equal(result.recovered, true);
   assert.equal(result.state.gold, 999999);
@@ -206,7 +206,7 @@ test('native companion contracts, star growth and breakthroughs save exact costs
  const h=await harness({state}),a=h.app;a.openStreet('recruit','milk');tapScrolled(h,'street-recruit');assert.ok(a.state.roster.owned.includes('milk'));assert.equal(a.state.roster.shards.milk,0);assert.equal(a.state.party.at(-1),'milk');
  a.change('cats');a.selected='orange';for(let i=0;i<6;i++){a.scroll=0;tapScrolled(h,'ascend-orange');}assert.equal(a.state.roster.stars.orange,1);assert.equal(a.state.roster.shards.orange,0);assert.equal(a.state.growth.notes,1970);
  tapScrolled(h,'breakthrough-orange');assert.equal(a.state.breakthroughs.orange,1);assert.equal(a.state.badges,92);assert.equal(a.state.growth.notes,1920);
- const restored=G.decodeSave(h.storage.get('can-club-wechat-v1'));assert.deepEqual(restored.roster,a.state.roster);assert.deepEqual(restored.growth,a.state.growth);h.stop();
+ const restored=G.decodeSave(h.storage.get('can-club-wechat-growth-preview-v1'));assert.deepEqual(restored.roster,a.state.roster);assert.deepEqual(restored.growth,a.state.growth);h.stop();
 });
 test('native material replay preserves selected job and main campaign progress',async()=>{
  const state=developed();for(const id of state.party)state.levels[id]=40;

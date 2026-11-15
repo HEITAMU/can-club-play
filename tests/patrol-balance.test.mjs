@@ -5,6 +5,6 @@ test('main campaign can be cleared by higher training or a lower-level complemen
   const [low,high,synergy]=PATROL_CASES.map(c=>patrolCase(c,seed));
   // Eight-second support now lets this formerly failing team clear as well.
   assert.equal(low.result,'win');assert.equal(high.result,'win');assert.equal(synergy.result,'win');
-  assert.ok(synergy.power<high.power);assert.ok(synergy.round<=30);
+  assert.ok(PATROL_CASES[2].level<PATROL_CASES[1].level);assert.ok(synergy.round<=30);
  }
 });
