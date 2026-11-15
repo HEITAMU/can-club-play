@@ -1,0 +1,23 @@
+import {FINISHED_ROSTER} from './finished-roster-data.mjs';
+import {FINISHED_SPARK} from './finished-spark-data.mjs';
+import {ICON_BOUNDS} from './icon-bounds.mjs';
+import {webAsset} from './web-assets.mjs';
+// Shared first-visit surfaces; never download unowned characters at startup.
+export const COMMON_UI_ASSETS=[
+ './assets/painted/items.webp',
+ './assets/scenes/neighborhood-v0220.webp',
+ './assets/scenes/formation-room-v02620.webp',
+ './assets/ui/paper-grain-v02642.webp',
+ './assets/ui/cat-tag-wide-v02679.webp',
+ './assets/materials/harbor-materials-v02641.webp',
+ './assets/materials/scrap-v02643.webp',
+ ...['equipment','runes'].map(key=>'./assets/ui/'+ICON_BOUNDS[key].file)
+];
+export function startupAssets(ownedIds){
+ const urls=[...COMMON_UI_ASSETS];
+ for(const id of ownedIds){
+  const art=id==='spark'?{...FINISHED_SPARK,portrait:'./assets/finished/spark-portrait-v0211.webp'}:FINISHED_ROSTER[id];
+  if(art)urls.push(webAsset(art.atlas),webAsset(art.portrait));
+ }
+ return [...new Set(urls)];
+}

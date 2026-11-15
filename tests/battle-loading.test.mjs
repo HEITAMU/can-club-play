@@ -22,3 +22,11 @@ test('a failed decode invalidates the cached image so retry can fetch again',asy
  const first=loadBattleAssets(['a'],{cache});images[0].onload();await assert.rejects(first,/decode/);assert.equal(cache.entries.get('a').ready,false);
  const retry=loadBattleAssets(['a'],{cache});assert.equal(images.length,2);images[1].onload();await retry;assert.equal(battleAssetsReady(['a'],cache),true);
 });
+test('successful progress extends the deadline for queued assets',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});
+ const callbacks={},cache={subscribe(u,fn){callbacks[u]=fn;return ()=>{};}};
+ const pending=loadBattleAssets(['a','b'],{cache,timeout:100});
+ t.mock.timers.tick(80);await callbacks.a({decode:async()=>{}});
+ t.mock.timers.tick(80);await callbacks.b({decode:async()=>{}});
+ assert.deepEqual(await pending,['a','b']);
+});

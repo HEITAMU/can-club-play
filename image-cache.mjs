@@ -51,7 +51,7 @@ export function watchImageAssets(root=document){
   },el.closest?.('#actors,#scene')?2:0));
  };
  const visible=typeof IntersectionObserver==='function'?new IntersectionObserver(entries=>{for(const e of entries)if(e.isIntersecting){visible.unobserve(e.target);load(e.target);}},{rootMargin:'60px'}):null;
- const scan=node=>{if(node.nodeType!==1&&node!==root)return;const elements=[...(node.matches?.('[data-asset]')?[node]:[]),...node.querySelectorAll('[data-asset]')];for(const el of elements)visible?visible.observe(el):load(el);};
+ const scan=node=>{if(node.nodeType!==1&&node!==root)return;const elements=[...(node.matches?.('[data-asset]')?[node]:[]),...node.querySelectorAll('[data-asset]')];for(const el of elements)imageCache.entries.get(el.dataset.asset)?.ready||!visible?load(el):visible.observe(el);};
  scan(root);
  const changes=new MutationObserver(records=>{for(const record of records)for(const n of record.addedNodes)scan(n);for(const [el,dispose] of subscriptions)if(!el.isConnected){dispose();subscriptions.delete(el);visible?.unobserve(el);}for(const record of records)for(const n of record.removedNodes){if(n.nodeType===1){visible?.unobserve(n);for(const el of n.querySelectorAll('[data-asset]'))visible?.unobserve(el);}}});
  changes.observe(root,{childList:true,subtree:true});
