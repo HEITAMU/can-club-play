@@ -16,13 +16,13 @@ export class HealthTrails{
 }
 
 export function rescueView(battle,running){
- const seconds=Math.max(0,battle.canCd),total=Math.max(.001,battle.buff.canCd);
+ const rounds=Math.max(0,battle.canCd),total=Math.max(.001,battle.buff.canCd);
  const charged=battle.enemies.some(a=>a.hp>0&&a.charge>0)&&!battle.result;
- return {ready:running&&!battle.result&&seconds===0,charged,seconds,progress:clamp(1-seconds/total),status:battle.result?'本场结束':seconds>0?'冷却 '+Math.ceil(seconds)+'秒':running?'可以使用':battle.time>0?'继续可用':'开战可用'};
+ return {ready:running&&!battle.result&&rounds===0,charged,rounds,progress:clamp(1-rounds/total),status:battle.result?'本场结束':rounds>0?'冷却 '+Math.ceil(rounds)+'回合':running?'可以使用':battle.time>0?'继续可用':'开战可用'};
 }
 
 export function bossView(battle){
  const boss=battle.enemies.find(a=>a.boss);if(!boss)return null;
  const charging=boss.hp>0&&boss.charge>0&&!battle.result;
- return {name:boss.name.split(' · ').at(-1),hp:Math.max(0,Math.ceil(boss.hp)),maxHp:boss.maxHp,ratio:clamp(boss.hp/boss.maxHp),charging,seconds:Math.max(0,boss.charge),charge:charging?clamp(1-boss.charge/2):0};
+ return {name:boss.name.split(' · ').at(-1),hp:Math.max(0,Math.ceil(boss.hp)),maxHp:boss.maxHp,ratio:clamp(boss.hp/boss.maxHp),charging,rounds:Math.max(0,boss.charge),charge:charging?clamp(.5):0};
 }

@@ -13,8 +13,8 @@ export const HUNTS=[
  {id:'station',name:'车站追猎',rule:'后排突袭、同频防御、补给阵轮换。',themes:['ambush','adaptive','healer']}
 ];
 export const HARD_JOBS=[
- {id:'coldstore',name:'冷库封锁',theme:'barrier',rule:'冷库每 8 秒补充护盾；被灼烧时停止补盾。持续火力与灼烧配合更有效，也可用炉边套补充灼烧。'},
- {id:'lifeline',name:'补给线争夺',theme:'healer',rule:'生命最多的后排补给员每 5 秒治疗前排。控制治疗者、减疗与集中伤害要配合。'},
+ {id:'coldstore',name:'冷库封锁',theme:'barrier',rule:'冷库每 3 回合补充护盾；被灼烧时停止补盾。持续火力与灼烧配合更有效，也可用炉边套补充灼烧。'},
+ {id:'lifeline',name:'补给线争夺',theme:'healer',rule:'生命最多的后排补给员每 2 回合治疗前排。控制治疗者、减疗与集中伤害要配合。'},
  {id:'ironwall',name:'铁壳拦路',theme:'armor',rule:'前排高护甲、后排高魔抗。破甲或混合输出能够拆开防线。'},
  {id:'alarm',name:'同频警报',theme:'adaptive',rule:'前排连续受到同类直接伤害，逐步获得该类型减伤，最高 60%。切换伤害类型会重置。'},
  {id:'blackout',name:'断电追兵',theme:'ambush',rule:'两名追兵绕过前排，攻击生命比例最低的后排；每第 3 次攻击削减 12 能量，护盾完全挡下可避免掉能量。'},

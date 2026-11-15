@@ -1,7 +1,7 @@
 import {groundFootY} from './battlefield-space.mjs';
 import {paintRain} from './scene-weather.mjs';
 import {battleReport} from './battle-flow.mjs';
-import {resultHTML} from './battle-result.mjs';
+import {resultHTML,resultGearHTML} from './battle-result.mjs';
 import {MATERIAL_INFO,materialHave} from './material-info.mjs';
 import {MATERIAL_NAMES,materialIcon} from './loot-icons.mjs';
 import {BADGE_NAMES} from './growth-visual.mjs';
@@ -86,8 +86,8 @@ function renderActors(){if(!battle)return;$('#battle-message').classList.remove(
 function renderVitals(){if(!battle)return;const formation=groundPositions(battle),front=battle.frontlines();for(const a of [...battle.heroes,...battle.enemies]){const el=$('#actor-'+a.id);if(!el)continue;el.classList.toggle('frontline',front.includes(a));const targetMark=el.querySelector('.target-mark');if(targetMark){targetMark.hidden=a.hp<=0||!!battle.result||!a.charge;targetMark.textContent='蓄力：攻击全队';targetMark.classList.toggle('charging',a.charge>0);}el.classList.toggle('dead',a.hp<=0);el.classList.toggle('downed',a.side==='p'&&a.hp<=0);el.classList.toggle('stunned',a.stun>0&&a.hp>0);el.querySelector('.hp-fill').style.width=Math.max(0,a.hp/a.maxHp*100)+'%';el.querySelector('.shield-fill').style.width=Math.min(100,a.shield/a.maxHp*100)+'%';el.setAttribute('aria-label',`${a.name}，生命${Math.ceil(a.hp)}/${a.maxHp}${a.shield>0?'，护盾'+Math.ceil(a.shield):''}`);const energy=el.querySelector('.energy-fill');if(energy)energy.style.width=a.energy+'%';const badge=el.querySelector('.actor-tag');const tag=a.hp<=0?(a.side==='p'?'无法战斗':'已击败'):a.stun>0?'眩晕':a.burnTime>0?'灼烧':a.side==='e'&&a.armor>=40?'高护甲':a.side==='e'&&a.magicResist>=40?'高魔抗':'';badge.hidden=!tag;badge.textContent=tag;if(a.boss){el.querySelector('.charge-track').hidden=!(a.charge>0&&a.hp>0);el.querySelector('.charge-fill').style.width=(1-a.charge/2)*100+'%';}}
  const can=rescueView(battle,running);
  $('#battle-time').textContent=battle.result?(battle.result==='win'?'本场胜利':'暂时退回'):!running?'准备出发':`第 ${battle.round||1} 回合`;
- const button=$('#open-can');button.disabled=!can.ready;button.classList.toggle('cooldown',can.seconds>0);button.classList.toggle('ready',can.ready);button.classList.toggle('interrupt-ready',can.ready&&can.charged);
- $('#can-label').textContent='罐头支援';$('#can-status').textContent=can.seconds>0?Math.ceil(can.seconds)+'秒':can.ready?'开罐':'补给中';$('#can-progress').style.width=can.progress*100+'%';
+ const button=$('#open-can');button.disabled=!can.ready;button.classList.toggle('cooldown',can.rounds>0);button.classList.toggle('ready',can.ready);button.classList.toggle('interrupt-ready',can.ready&&can.charged);
+ $('#can-label').textContent='罐头支援';$('#can-status').textContent=can.rounds>0?Math.ceil(can.rounds)+'回合':can.ready?'开罐':'补给中';$('#can-progress').style.width=can.progress*100+'%';
  $('#can-sub').textContent=can.charged?'打断':'回血';
  renderBossHUD();$('#rescue-tip').hidden=true;}
 function renderBossHUD(){
@@ -95,7 +95,7 @@ function renderBossHUD(){
  const interrupted=bossNotice&&battle.time<bossNotice.until&&info.hp>0&&!battle.result;
  hud.dataset.state=info.hp<=0?'defeated':info.charging?'charging':interrupted?'interrupted':'ready';
  $('#boss-name').textContent=info.name;$('#boss-health').textContent=`${info.hp} / ${Math.ceil(info.maxHp)}`;$('#boss-health-fill').style.width=info.ratio*100+'%';const track=$('.boss-health-track');track.setAttribute('aria-valuemax',info.maxHp);track.setAttribute('aria-valuenow',info.hp);track.setAttribute('aria-valuetext',`${info.hp} / ${info.maxHp}`);
- $('#boss-charge-fill').style.width=info.charge*100+'%';$('#boss-countdown').textContent=info.charging?Math.ceil(info.seconds)+'秒':'';
+ $('#boss-charge-fill').style.width=info.charge*100+'%';$('#boss-countdown').textContent=info.charging?Math.ceil(info.rounds)+'回合':'';
  const label=info.hp<=0?'首领已击败':info.charging?'全队攻击即将落下':interrupted?'打断成功 · 全队避开群攻':'蓄力';
  const warning=$('#boss-warning');if(warning.textContent!==label)warning.textContent=label;
 }
@@ -145,7 +145,7 @@ function onBattleEnd(){
  const report=battleReport(battle,result);report.rewards.scrap=state.inventory.materials.scrap-before.scrap;report.rewards.essence=state.inventory.materials.essence-before.essence;
  state.battleReport=report;persist();renderHeader();renderParty();renderVitals();sound(result.win?'win':'hit');showBattleReport();
 }
-function showBattleReport(){if(!state.battleReport)return;running=false;resultLayer.innerHTML=resultHTML(state.battleReport);resultLayer.hidden=false;resultLayer.querySelector('.battle-result').focus({preventScroll:true});}
+function showBattleReport(){if(!state.battleReport)return;running=false;resultLayer.innerHTML=resultHTML(state.battleReport,state.inventory.items);resultLayer.hidden=false;resultLayer.querySelector('.battle-result').focus({preventScroll:true});}
 function reportRequest(r){return r.mode==='activity'?{activity:{kind:r.route.group==='materials'?r.route.id:r.route.group,id:r.route.group==='materials'?'':r.route.id,tier:r.route.tier}}:r.mode==='patrol'?{entrance:true}:r.request||{};}
 function dismissReport(action){const r=state.battleReport;if(!r)return;state.battleReport=null;persist();resultLayer.hidden=true;resultLayer.innerHTML='';
  if(action==='retry'){forceClose();changeTab('battle');startBattle(reportRequest(r));return;}
@@ -158,7 +158,7 @@ function dismissReport(action){const r=state.battleReport;if(!r)return;state.bat
 resultLayer.addEventListener('click',e=>{
  const r=state.battleReport;if(!r)return;const material=e.target.closest('[data-result-material]'),gear=e.target.closest('[data-result-gear]'),card=resultLayer.querySelector('.result-item');
  if(material){const key=material.dataset.resultMaterial;card.hidden=false;card.innerHTML=materialIcon(key,62,r.companion)+'<h3>'+esc(key==='shards'&&cat(r.companion)?cat(r.companion).name+'的信物':MATERIAL_NAMES[key])+'</h3><p>'+esc(MATERIAL_INFO[key]?.description||'')+'</p>';return;}
- if(gear){const item=state.inventory.items.find(x=>x.id===r.gearUid);card.hidden=false;card.innerHTML=materialIcon('gear',62)+'<h3>'+esc(item?gearName(item):'装备')+'</h3><p>'+esc(item?GEAR_SLOTS.find(x=>x.id===item.slot)?.name||'':'已收入背包')+'</p>';return;}
+ if(gear){const item=state.inventory.items.find(x=>x.id===r.gearUid);card.hidden=false;card.innerHTML=resultGearHTML(item);return;}
  if(e.target.closest('[data-result-retry]')){dismissReport('retry');return;}
  if(e.target.closest('[data-result-crew]')){dismissReport('crew');return;}
  if(e.target.closest('.result-item,button,a,input,select,textarea'))return;

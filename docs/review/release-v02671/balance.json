@@ -1,0 +1,164 @@
+{
+  "description": "Deterministic stage 600 simulations; same tier 6 quality 3 +15 gear. Not player success rate.",
+  "cases": [
+    {
+      "name": "普通搭配，130 级",
+      "level": 130,
+      "party": [
+        "orange",
+        "bolt",
+        "ink",
+        "milk",
+        "mint"
+      ],
+      "runs": [
+        {
+          "seed": 527,
+          "result": "lose",
+          "time": 310.8,
+          "round": 28,
+          "power": 7484358,
+          "survivors": 0
+        },
+        {
+          "seed": 941,
+          "result": "lose",
+          "time": 312.2,
+          "round": 28,
+          "power": 7484358,
+          "survivors": 0
+        },
+        {
+          "seed": 2027,
+          "result": "lose",
+          "time": 309.9,
+          "round": 28,
+          "power": 7484358,
+          "survivors": 0
+        },
+        {
+          "seed": 4093,
+          "result": "lose",
+          "time": 309.7,
+          "round": 28,
+          "power": 7484358,
+          "survivors": 0
+        },
+        {
+          "seed": 8191,
+          "result": "lose",
+          "time": 310.8,
+          "round": 28,
+          "power": 7484358,
+          "survivors": 0
+        }
+      ]
+    },
+    {
+      "name": "相同搭配，160 级",
+      "level": 160,
+      "party": [
+        "orange",
+        "bolt",
+        "ink",
+        "milk",
+        "mint"
+      ],
+      "runs": [
+        {
+          "seed": 527,
+          "result": "win",
+          "time": 313.6,
+          "round": 27,
+          "power": 10518107,
+          "survivors": 5
+        },
+        {
+          "seed": 941,
+          "result": "win",
+          "time": 310.2,
+          "round": 27,
+          "power": 10518107,
+          "survivors": 5
+        },
+        {
+          "seed": 2027,
+          "result": "win",
+          "time": 305.7,
+          "round": 26,
+          "power": 10518107,
+          "survivors": 5
+        },
+        {
+          "seed": 4093,
+          "result": "win",
+          "time": 308.5,
+          "round": 26,
+          "power": 10518107,
+          "survivors": 5
+        },
+        {
+          "seed": 8191,
+          "result": "win",
+          "time": 308.9,
+          "round": 26,
+          "power": 10518107,
+          "survivors": 5
+        }
+      ]
+    },
+    {
+      "name": "护盾反击、破甲与灼烧，140 级",
+      "level": 140,
+      "party": [
+        "orange",
+        "pudding",
+        "bolt",
+        "ink",
+        "spark"
+      ],
+      "runs": [
+        {
+          "seed": 527,
+          "result": "win",
+          "time": 213.3,
+          "round": 22,
+          "power": 9194149,
+          "survivors": 5
+        },
+        {
+          "seed": 941,
+          "result": "win",
+          "time": 213.5,
+          "round": 22,
+          "power": 9194149,
+          "survivors": 5
+        },
+        {
+          "seed": 2027,
+          "result": "win",
+          "time": 213.5,
+          "round": 22,
+          "power": 9194149,
+          "survivors": 5
+        },
+        {
+          "seed": 4093,
+          "result": "win",
+          "time": 213.5,
+          "round": 22,
+          "power": 9194149,
+          "survivors": 5
+        },
+        {
+          "seed": 8191,
+          "result": "win",
+          "time": 213.5,
+          "round": 22,
+          "power": 9194149,
+          "survivors": 5
+        }
+      ]
+    }
+  ]
+}

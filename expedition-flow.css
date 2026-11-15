@@ -8,3 +8,15 @@
 .battle-result .result-rewards button,.battle-result .result-item{border:2px solid #80634b;border-radius:12px;background:#efdfbd;box-shadow:0 3px 0 #1d303744}
 .battle-result .result-actions button{border:2px solid #8f7885;border-bottom-width:4px}
 @media(max-height:650px){.battle-result .result-crest{width:120px;height:120px}.battle-result{padding-top:10px}.battle-result h2{margin:5px 0 12px}}
+
+/* Actual awarded item, shared with inventory artwork; details are read-only. */
+.battle-result .result-rewards .result-gear-reward{border-color:var(--rarity);box-shadow:0 0 0 1px var(--rarity),0 3px 0 #1d303744}
+.result-gear-reward>.centred-item{width:52px;height:52px}
+.result-gear-heading>.centred-item{width:76px;height:76px;margin:0 auto!important}
+.result-quality{display:inline-flex;align-items:center;gap:5px;font-weight:700}
+.result-quality:before{content:'';width:9px;height:9px;border-radius:50%;background:var(--rarity);border:1px solid #6a554555}
+.result-gear-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:12px 0}
+.result-gear-stats b{padding:8px 5px;background:#d9c49c66;border-radius:6px;font-size:13px}
+.result-gear-set{border-top:1px dashed #af906b;padding-top:10px;text-align:left}
+.result-gear-set h4{margin:0 0 6px;font-size:14px}.result-gear-set p{margin:4px 0}
+.result-missing-gear{height:52px;font-size:36px}

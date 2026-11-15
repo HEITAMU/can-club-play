@@ -17,7 +17,7 @@ test('recruited companions fill free places at level one without copying trainin
 test('five-cat ordinary hits follow the living front, with no position buff; boss burst hits all five',()=>{
  const b=new Battle(ready(),{stage:20}),enemy=b.enemies[0];enemy.atk=10;for(const h of b.heroes){h.armor=0;h.magicResist=0;}
  for(let i=0;i<5;i++){enemy.attacks=0;const h=b.heroes[i],hp=h.hp;b.normal(enemy);assert.equal(hp-h.hp,10);h.hp=0;}
- const full=new Battle(ready(),{stage:20});const before=full.heroes.map(h=>h.hp);full.enemies[0].charge=.01;const events=full.tick(.1);
+ const full=new Battle(ready(),{stage:20});const before=full.heroes.map(h=>h.hp);full.enemies[0].charge=1;full.turnActor=full.enemies[0].id;const events=full.tick(.1);
  assert.equal(events.filter(e=>e.type==='hit'&&e.from==='e0').length,5);full.heroes.forEach((h,i)=>assert.ok(h.hp<before[i]));
 });
 test('healing and shield skill events name all five actual recipients',()=>{

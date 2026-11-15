@@ -605,7 +605,7 @@ export class NativeGame {
       text(
         c,
         bv.charging
-          ? "蓄力 " + Math.ceil(bv.seconds) + "秒 · 开罐打断"
+          ? "蓄力 " + Math.ceil(bv.rounds) + "回合 · 开罐打断"
           : fmt(bv.hp) + " / " + fmt(bv.maxHp),
         376,
         this.top + 53,
@@ -636,7 +636,7 @@ export class NativeGame {
       "center",
     );
     box(c, 335, 10, 43, 23, "#29464bbd", null, 6);
-    text(c, Math.floor(b.time) + "秒", 356, 22, 10, C.ink, 600, "center");
+    text(c, "第 " + b.round + " 回合", 356, 22, 10, C.ink, 600, "center");
     const ground = formationPositions(b),
       actors = [...b.heroes, ...b.enemies],
       sizes = {},

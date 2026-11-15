@@ -54,5 +54,5 @@ test('boss cue and cooldown follow actual interrupt state without changing battl
 });
 test('ordinary fights have no boss panel and adjusted cooldown uses its real duration',()=>{
  const b=new Battle(initialState(),{stage:1});assert.equal(bossView(b),null);
- b.buff.canCd=8;b.canCd=2;const info=rescueView(b,true);assert.equal(info.progress,.75);assert.equal(info.status,'冷却 2秒');
+ b.buff.canCd=8;b.canCd=2;const info=rescueView(b,true);assert.equal(info.progress,.75);assert.equal(info.status,'冷却 2回合');
 });

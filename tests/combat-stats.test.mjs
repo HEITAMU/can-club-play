@@ -39,7 +39,7 @@ test('burn uses its real caster and magic penetration even when another cat is i
  const {b}=ready(),caster=b.heroes[1],weaker=b.heroes[2],e=b.enemies[0];
  caster.magicPen=50;weaker.magicPen=90;Object.assign(e,{armor:999,magicResist:100});
  b.applyBurn(e,100,1,caster);b.applyBurn(e,50,2,weaker);b.events=[];
- const events=b.tick(.25);near(e.maxHp-e.hp,20*100/150);assert.equal(e.burnStepMs,50);
+ b.startActorTurn(e);const events=b.events;near(e.maxHp-e.hp,100*100/150);assert.equal(e.burnTime,1);
  const event=events.find(x=>x.type==='burn');assert.equal(event.from,caster.id);assert.equal(event.damageType,'magic');
 });
 test('old saves and inheritance derive all four stats without changing stored investment',()=>{
@@ -59,7 +59,7 @@ test('damage skill tooltips show scaling percentages while support values and se
   const event=b.events.find(x=>x.type===type&&x.from===h.id);
   if(type==='hit')assert.equal(event.damageType,['spark','mint'].includes(c.id)?'magic':'physical');
   if(type==='hit'){
-   const percentage={ink:330,spark:160,mint:230,bolt:300}[c.id];
+   const percentage={ink:330,spark:160,mint:260,bolt:300}[c.id];
    assert.ok(description.description.includes('>'+percentage+'% 攻击力</strong>'),c.id);
    assert.ok(!/class="skill-damage">[\d,]+<\/strong>/.test(description.description));
   }else assert.ok(description.description.includes('>'+event.value.toLocaleString('zh-CN')+'</strong>'),c.id);

@@ -6,24 +6,25 @@ export function createShieldPunch({maxHp=1000,hp=maxHp,attack=100,energy=0,confi
  const cfg={...SHIELD_PUNCH_DEFAULTS,...config};
  return{maxHp,hp,attack,config:cfg,energy:Math.max(0,Math.min(cfg.energyCap,energy)),shield:0,state:'normal',firstAt:null,secondAt:null,addedDuringCharge:0,shieldAtSecond:null,releaseAt:Infinity,hitAt:Infinity,recoverAt:Infinity,controlledUntil:-Infinity,lockoutUntil:-Infinity,absorbEnergyAt:-Infinity,hitDelivered:false,cancelReason:null};
 }
+const balanceClock=(s,now)=>s.config.roundBased?(s.round||0):now;
 const charging=s=>s.state==='charging'||s.state==='primed';
 export function canNormalAttack(s,now){return s.hp>0&&s.state==='normal'&&now>=s.controlledUntil;}
 function clearCharge(s){s.firstAt=null;s.secondAt=null;s.addedDuringCharge=0;s.shieldAtSecond=null;s.releaseAt=Infinity;s.hitAt=Infinity;s.recoverAt=Infinity;s.hitDelivered=false;}
-function cancel(s,now,reason){clearCharge(s);s.cancelReason=reason;s.lockoutUntil=now+s.config.lockout;s.state=now<s.controlledUntil?'controlled':'normal';return{type:'cancel',at:now,reason};}
+function cancel(s,now,reason){clearCharge(s);s.cancelReason=reason;s.lockoutUntil=balanceClock(s,now)+s.config.lockout;s.state=now<s.controlledUntil?'controlled':'normal';return{type:'cancel',at:now,reason};}
 export function gainShield(s,amount,now,source='ally'){
  if(!Number.isFinite(amount)||amount<=0||s.hp<=0)return[];
  const events=[];
  const added=Math.max(0,Math.min(integer(amount),mulDiv(s.maxHp,s.config.shieldCapRatio)-s.shield));s.shield+=added;
  if(added)events.push({type:'shieldGain',at:now,amount:added,source});
  if(!added||now<s.controlledUntil)return events;
- if(s.state==='normal'&&now>=s.lockoutUntil&&s.shield>=mulDiv(s.maxHp,s.config.startRatio)){
-  clearCharge(s);s.state='charging';s.firstAt=now;s.chargeEnergyAt=now;s.cancelReason=null;
+ if(s.state==='normal'&&balanceClock(s,now)>=s.lockoutUntil&&s.shield>=mulDiv(s.maxHp,s.config.startRatio)){
+  clearCharge(s);s.state='charging';s.firstAt=now;s.firstRound=s.round||0;s.chargeEnergyAt=now;s.cancelReason=null;
   events.push({type:'chargeStart',at:now,shield:s.shield});
  }else if(s.state==='charging'){
   s.addedDuringCharge+=added;
   if(s.addedDuringCharge>=mulDiv(s.maxHp,s.config.secondGainRatio)){
    s.secondAt=now;s.shieldAtSecond=s.shield;s.state='primed';
-   s.releaseAt=Math.max(now,s.firstAt+s.config.minCharge);s.hitAt=s.releaseAt+s.config.punchTravel;s.recoverAt=s.hitAt+s.config.recovery;
+   s.releaseAt=s.config.roundBased?now:Math.max(now,s.firstAt+s.config.minCharge);s.hitAt=s.releaseAt+s.config.punchTravel;s.recoverAt=s.hitAt+s.config.recovery;
    events.push({type:'secondTrigger',at:now,shield:s.shieldAtSecond});
   }
  }
@@ -46,7 +47,7 @@ export function absorbShieldDamage(s,amount,now,{energy=true}={}){
  const absorbed=loseShield(s,amount),events=absorbed?[{type:'shieldAbsorb',at:now,amount:absorbed}]:[];
  // A shield-breaking hit cancels before its energy can grant a replacement shield.
  if(charging(s)&&s.shield<=0)events.push(cancel(s,now,'shieldBroken'));
- if(energy&&absorbed&&now>=s.absorbEnergyAt+s.config.absorbEnergyInterval){s.absorbEnergyAt=now;events.push(...gainEnergy(s,s.config.absorbEnergy,now,'absorb'));}
+ if(energy&&absorbed&&(s.config.roundBased||now>=s.absorbEnergyAt+s.config.absorbEnergyInterval)){s.absorbEnergyAt=now;events.push(...gainEnergy(s,s.config.absorbEnergy,now,'absorb'));}
  return events;
 }
 export function controlShieldPunch(s,now,duration=1){
@@ -58,25 +59,27 @@ export function controlShieldPunch(s,now,duration=1){
 }
 export function cleanseShieldPunch(s,now){s.controlledUntil=now;if(s.state==='controlled'){clearCharge(s);s.state='normal';}return[{type:'controlEnd',at:now}];}
 export function tickShieldPunch(s,now,enemies=[],{allowRelease=true}={}){
+ if(s.config.roundBased&&s.round<=s.firstRound)allowRelease=false;
  const events=[];
  if(s.hp<=0){if(s.state!=='down'){clearCharge(s);s.state='down';events.push({type:'cancel',at:now,reason:'down'});}return events;}
  if(now<s.controlledUntil){s.state='controlled';return events;}
  if(s.state==='controlled'){clearCharge(s);s.state='normal';events.push({type:'controlEnd',at:now});}
  if(charging(s)&&s.shield<=0){events.push(cancel(s,now,'shieldBroken'));return events;}
  // Integrate simulation time once; paused/repeated ticks never grant extra energy.
- if(s.state==='charging'){
+ if(s.state==='charging'&&!s.config.roundBased){
   const until=now;
   const elapsed=Math.max(0,integer(until*1000)-integer((s.chargeEnergyAt??s.firstAt)*1000));
   s.chargeEnergyAt=Math.max(s.chargeEnergyAt??s.firstAt,until);
   if(elapsed)events.push(...gainEnergy(s,accrueUnits(s,'chargeRemainder',s.config.chargeEnergyPerSecond,elapsed),until,'charge'));
  }
  events.push(...castSelfShield(s,now));
+ if(s.config.roundBased&&events.some(e=>e.type==='selfShield'))allowRelease=false;
  if(s.state==='primed'&&now>=s.releaseAt&&!allowRelease){const delay=now-s.releaseAt;s.releaseAt+=delay;s.hitAt+=delay;s.recoverAt+=delay;}
  if(s.state==='primed'&&now>=s.releaseAt&&allowRelease){s.state='punching';s.shieldAtSecond=s.shield;s.shield=0;events.push({type:'punchStart',at:s.releaseAt});}
  if(s.state==='punching'&&!s.hitDelivered&&now>=s.hitAt){
   s.hitDelivered=true;const raw=mulDiv(s.shieldAtSecond,s.config.shieldRatio);
   const hits=enemies.filter(e=>e.hp>0&&e.side!=='ally').map(e=>({targetId:e.id,rawDamage:raw,damage:mulDiv(raw,100,100+Math.max(0,(e.armor||0)-(e.armorPenTaken||0)))}));
-  events.push({type:'punchHit',at:s.hitAt,shieldAtSecond:s.shieldAtSecond,hits});s.lockoutUntil=s.hitAt+s.config.lockout;
+  events.push({type:'punchHit',at:s.hitAt,shieldAtSecond:s.shieldAtSecond,hits});s.lockoutUntil=balanceClock(s,s.hitAt)+s.config.lockout;
  }
  if(s.state==='punching'&&now>=s.recoverAt){s.state='normal';clearCharge(s);events.push({type:'normal',at:now});events.push(...castSelfShield(s,now));}
  return events;

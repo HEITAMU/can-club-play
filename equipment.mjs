@@ -8,7 +8,7 @@ export const GEAR_SLOTS=[{id:'claw',name:'爪套',main:'atk',icon:0},{id:'coat',
 export const RUNES=[
  {id:'followup',name:'补上一爪',desc:'每 4 次普攻，对原目标追加 40% 攻击力伤害；追加伤害不触发普攻效果。'},
  {id:'bulwark',name:'垫层软布',desc:'自身获得的护盾提高 8%。不额外触发一次加盾。'},
- {id:'focus',name:'留口气',desc:'释放主动技能后回复 6 能量，冷却 8 秒。'},
+ {id:'focus',name:'留口气',desc:'释放主动技能后回复 6 能量，冷却 2 回合。'},
  {id:'warmth',name:'热乎一口',desc:'治疗生命比例低于 50% 的目标时，治疗量提高 10%。'},
  {id:'ember',name:'添把小火',desc:'对灼烧目标造成的直接伤害提高 8%，不加成持续伤害。'},
  {id:'steadfast',name:'缩成一团',desc:'生命首次降至 30% 以下且仍存活时，获得最大生命 8% 的护盾；每场一次。'}
@@ -17,8 +17,8 @@ export const QUALITIES=[{name:'普通',color:'#9dafa6',factor:100,subs:0},{name:
 export const GEAR_SETS=[
  {id:'hunt',name:'夜巡',two:'攻击 +12%',four:'对生命低于一半的敌人，直接伤害 +30%。',bonus:{atk:12}},
  {id:'guard',name:'守摊',two:'生命 +18%',four:'开场获得自身生命 25% 护盾；自身获得的护盾 +20%。',bonus:{hp:18}},
- {id:'ember',name:'炉边',two:'法术穿透 +12',four:'对灼烧目标伤害 +25%；普攻暴击附加 2 秒灼烧，每秒 30% 攻击。',bonus:{magicPen:12}},
- {id:'spring',name:'暖窝',two:'生命 +12%',four:'治疗量 +25%；每 6 秒回复自身 5% 最大生命。',bonus:{hp:12}},
+ {id:'ember',name:'炉边',two:'法术穿透 +12',four:'对灼烧目标伤害 +25%；普攻暴击附加 2 回合灼烧，每回合 30% 攻击。',bonus:{magicPen:12}},
+ {id:'spring',name:'暖窝',two:'生命 +12%',four:'治疗量 +25%；每 2 回合回复自身 5% 最大生命。',bonus:{hp:12}},
  {id:'clock',name:'叮当',two:'暴击 +10%',four:'每次普攻额外回复 8 能量。',bonus:{crit:10}},
  {id:'thorn',name:'刺球',two:'护甲 +15',four:'反弹自身受到伤害的 15%，反伤不再触发反伤。',bonus:{armor:15}}
 ];
