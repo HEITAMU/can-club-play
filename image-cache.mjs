@@ -11,6 +11,10 @@ export class ImageCache {
   return r;
  }
  subscribe(url,callback,priority=0){const r=this.get(url,priority);r.listeners.add(callback);if(r.ready)callback(r.img);return ()=>r.listeners.delete(callback);}
+ invalidate(url,img){
+  const r=this.entries.get(url);
+  if(r?.img===img&&!r.loading){r.ready=false;r.retryAt=0;}
+ }
  pump(){
   this.queue.sort((a,b)=>b.priority-a.priority);
   while(this.active<this.concurrency&&this.queue.length)this.start(this.queue.shift());
