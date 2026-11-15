@@ -1,3 +1,4 @@
+import {styleValue,attributeValue} from './render-writes.mjs';
 import {CARRIER_ATLAS,CARRIER_ART,carrierId} from './carrier-art.mjs';
 import {layeredScene} from './battlefield-space.mjs';
 import {webAsset} from './web-assets.mjs?v=0.25.1';
@@ -34,11 +35,11 @@ export function paintedPose(root,frame,{actor,time=0,idleTime=time,outcome,previ
  if(id==='spark'){shape.sparkCel=next.sparkCel;shape.sparkRecovery=next.sparkRecovery;shape.sparkClock=clock;}
  shape.nock=bowNock(actor);poses.set(el,{clock,shape:{...shape},face});
  if(reduce){for(const k of ['lean','head','hand','tail','reach'])shape[k]*=.2;shape.breath*=.35;}
- el.style.transformOrigin=`50% ${foot*100}%`;
+ styleValue(el,'transform-origin',`50% ${foot*100}%`);
  const drawn=drawRig(el,id,shape,face,renderSize,typeof performance!=='undefined'?performance.now()/1000:clock);
- el.style.transform=drawn?`translateY(${groundShift}%)`:`translateY(${groundShift}%) rotate(${shape.lean*180/Math.PI}deg) scale(${1-shape.breath*.35},${1+shape.breath})`;
- if(el.dataset.hero==='false'&&!drawn)el.style.backgroundPositionX=shape.enemyHit>.5?'100%':'0%';
- el.dataset.pose=shape.enemyHit>.5?'3':'0';el.dataset.phase=phase;el.dataset.expression=face.to;
+ styleValue(el,'transform',drawn?`translateY(${groundShift}%)`:`translateY(${groundShift}%) rotate(${shape.lean*180/Math.PI}deg) scale(${1-shape.breath*.35},${1+shape.breath})`);
+ if(el.dataset.hero==='false'&&!drawn)styleValue(el,'background-position-x',shape.enemyHit>.5?'100%':'0%');
+ attributeValue(el,'data-pose',shape.enemyHit>.5?'3':'0');attributeValue(el,'data-phase',phase);attributeValue(el,'data-expression',face.to);
 }
 export function paintedItem(index,size){return `<span class="painted-item" data-asset="./assets/painted/items.webp" style="background-position:${index%4/3*100}% ${Math.floor(index/4)/3*100}%;${size?`width:${size}px;height:${size}px;`:''}" aria-hidden="true"></span>`;}
 // Portrait cells are 418 x 627. The SVG viewport crops uniformly on every screen.

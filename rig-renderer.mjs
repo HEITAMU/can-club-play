@@ -59,5 +59,5 @@ export function drawRig(el,id,pose,face,renderSize,frameTime){
  const img=source.img,rows=+el.dataset.rows,row=+el.dataset.row,enemySource=kit?null:[0,row*img.height/rows,img.width/4,img.height/rows];
  try{renderPuppetFrame(ctx,id,pose,img,width,height,enemySource,face);}catch{v.last='';el.classList.remove('rig-ready');return false;}
  v.last=signature;v.frameTime=frameTime;v.cel=cel;
- el.dataset.renderer=(id==='spark'||FINISHED_ROSTER[id])?'finished-full-body':kit?'painted-anatomy':'painted-object';if(!el.classList.contains('rig-ready'))el.classList.add('rig-ready');return true;
+ const renderer=(id==='spark'||FINISHED_ROSTER[id])?'finished-full-body':kit?'painted-anatomy':'painted-object';if(el.dataset.renderer!==renderer)el.dataset.renderer=renderer;if(!el.classList.contains('rig-ready'))el.classList.add('rig-ready');return true;
 }

@@ -1,8 +1,9 @@
 import {damageTextStyle} from './damage-text-style.mjs';
 // Explicit battle-clock animation works without Web Animations / CSS translate.
 export class CombatText {
- constructor(layer){this.layer=layer;this.items=[];this.anchors={};}
- clear(){for(const f of this.items)f.el.remove();this.items=[];this.anchors={};}
+ constructor(layer){this.layer=layer;this.items=[];this.anchors={};this.pool=[];}
+ recycle(el){el.remove();if(this.pool.length<48)this.pool.push(el);}
+ clear(){for(const f of this.items)this.recycle(f.el);this.items=[];this.anchors={};}
  setAnchors(positions){this.anchors=Object.fromEntries(Object.entries(positions).map(([id,p])=>[id,{...p}]));}
  consume(events,positions,time){
   for(const e of events){const p=this.anchors[e.to]||positions[e.to];if(!p)continue;
@@ -18,15 +19,15 @@ export class CombatText {
   }
  }
  spawn(text,x,y,className='float-text',time=0,duration=.95){
-  if(this.items.length>=48)this.items.shift().el.remove();
-  const el=this.layer.ownerDocument.createElement('div');el.className=className;el.textContent=String(text);
+  if(this.items.length>=48)this.recycle(this.items.shift().el);
+  const el=this.pool.pop()||this.layer.ownerDocument.createElement('div');el.style.cssText='';el.className=className;el.textContent=String(text);
   el.style.left=Math.max(9,Math.min(91,x))+'%';el.style.top=Math.max(12,Math.min(88,y))+'%';
   el.style.opacity='1';el.style.transform='translate(-50%, -50%)';this.layer.appendChild(el);
   this.items.push({el,born:time,duration});return el;
  }
  render(time){
   for(let i=this.items.length-1;i>=0;i--){const f=this.items[i],elapsed=Math.max(0,time-f.born),p=elapsed/f.duration;
-   if(p>=1){f.el.remove();this.items.splice(i,1);continue;}
+   if(p>=1){this.recycle(f.el);this.items.splice(i,1);continue;}
    f.el.style.opacity=String(p<.65?1:(1-p)/.35);
    f.el.style.transform=`translate(-50%, calc(-50% - ${Math.round((1-(1-p)**2)*38+(f.lift||0))}px))`;
   }

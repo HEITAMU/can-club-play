@@ -23,3 +23,18 @@ export function startupAssets(ownedIds){
  }
  return [...new Set(urls)];
 }
+
+export const BACKGROUND_UI_ASSETS=[
+ './assets/scenes/commissions-v02646.webp',
+ './assets/scenes/quest-locations-v02672.webp',
+ './assets/scenes/equipment-room-v02672.webp',
+ './assets/ui/battle-results-v02641.webp',
+ './assets/ui/journal-challenge-v02677.webp',
+ ...Array.from({length:6},(_,i)=>`./assets/mobile/street-${i}-v02684.webp`)
+];
+export async function warmInterfaceAssets(load,shouldStop=()=>false){
+ for(const url of BACKGROUND_UI_ASSETS){
+  if(shouldStop())return;
+  try{await load([url],{priority:0,timeout:12000});}catch{/* retry on actual entry */}
+ }
+}

@@ -70,8 +70,8 @@ export class CombatEffects{
    ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
    paintVFX(ctx,ready?img:null,this.particles.filter(p=>(p.layer===0)===behind),canImg?.complete&&canImg.naturalWidth?canImg:null,shidunImg?.complete&&shidunImg.naturalWidth?shidunImg:null);
   }
-  this.canvas.dataset.particles=String(this.particles.length);
-  this.canvas.dataset.ready=String(!!img?.naturalWidth);
+  if(this.canvas.dataset.particles!==String(this.particles.length))this.canvas.dataset.particles=String(this.particles.length);
+  if(this.canvas.dataset.ready!==String(!!img?.naturalWidth))this.canvas.dataset.ready=String(!!img?.naturalWidth);
   return this.particles;
  }
 }

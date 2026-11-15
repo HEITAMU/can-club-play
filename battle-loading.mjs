@@ -6,7 +6,7 @@ export const SHARED_BATTLE_ASSETS=[
 export function uniqueAssets(urls){return [...new Set(urls.filter(Boolean))];}
 const decodedImages=new WeakSet();
 export function battleAssetsReady(urls,cache=imageCache){return uniqueAssets(urls).every(url=>decodedImages.has(cache.entries.get(url)?.img));}
-export function loadBattleAssets(urls,{cache=imageCache,timeout=30000,onProgress=()=>{}}={}){
+export function loadBattleAssets(urls,{cache=imageCache,timeout=30000,priority=4,onProgress=()=>{}}={}){
  const all=uniqueAssets(urls);let completed=0;onProgress(0,all.length);
  if(!all.length)return Promise.resolve([]);
  return new Promise((resolve,reject)=>{
@@ -30,7 +30,7 @@ export function loadBattleAssets(urls,{cache=imageCache,timeout=30000,onProgress
      if(settled||stopped)return;
      cache.invalidate?.(url,img);settled=true;finish(new Error('asset decode: '+url));
     }
-   },4);
+   },priority);
    if(settled||stopped)dispose();else cleanups.add(dispose);
   }
  });

@@ -1,0 +1,22 @@
+{
+  "before": {
+    "kind": "fluidity-result",
+    "script": "growth-preview/previous.bundle.mjs?v=0.28.0-preview.10",
+    "frames": 132,
+    "mean": 3.273484847988143,
+    "p95": 5.200000002980232,
+    "over33": 130,
+    "mutations": 8219,
+    "errors": []
+  },
+  "after": {
+    "kind": "fluidity-result",
+    "script": "growth-preview/game.bundle.mjs?v=0.28.0-preview.10",
+    "frames": 134,
+    "mean": 3.175373135440385,
+    "p95": 5.100000008940697,
+    "over33": 124,
+    "mutations": 1095,
+    "errors": []
+  }
+}
