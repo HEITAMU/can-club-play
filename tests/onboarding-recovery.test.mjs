@@ -11,7 +11,7 @@ test('every unfinished guide restores an actionable page, reopening transient eq
 });
 test('closing equipment details through the close handler advances without a click event',()=>{
  const state={guideStep:6,runCleared:1},layer={hidden:false};let events=0;
- run('closeModal',{modalType:'equipment',state,$:()=>layer,gearAnchor:{},queue:[],MAX_STAGE:100,battle:{result:'win',mode:'patrol'},guideEvent:e=>{state.guideStep=nextGuide(state.guideStep,e);events++;},startBattle:()=>assert.fail('must wait for return-to-battle step')});
+ run('closeModal',{modalType:'equipment',state,$:()=>layer,gearAnchor:{},queue:[],MAX_STAGE:100,battle:{result:'win',mode:'patrol'},renderGuide(){},guideEvent:e=>{state.guideStep=nextGuide(state.guideStep,e);events++;},startBattle:()=>assert.fail('must wait for return-to-battle step')});
  assert.equal(state.guideStep,7);assert.equal(layer.hidden,true);assert.equal(events,1);
 });
 test('skipping any paused lesson closes its modal and starts the current campaign stage',()=>{
