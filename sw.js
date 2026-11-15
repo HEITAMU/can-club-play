@@ -1,8 +1,9 @@
-const CACHE='can-club-0.26.94',ART_CACHE='can-club-art-v1';
+const CACHE='can-club-0.26.95',ART_CACHE='can-club-art-v1';
 // Cache only the shell at install. Download artwork when the player needs it.
-const SHELL=['./index.html','./game.bundle.mjs?v=0.26.94','./game.bundle.css?v=0.26.94'];
+const RELEASE='0.26.95';
+const SHELL=['./index.html','./game.bundle.mjs?v=0.26.95','./game.bundle.css?v=0.26.95'];
 self.addEventListener('install',event=>event.waitUntil((async()=>{
- try{const cache=await caches.open(CACHE);await Promise.allSettled(SHELL.map(url=>cache.add(url)));}catch{}
+ try{const cache=await caches.open(CACHE);await Promise.allSettled(SHELL.map(async url=>{const response=await fetch(url,{cache:'no-store'});if(response.ok)await cache.put(url,response);}));}catch{}
  await self.skipWaiting();
 })()));
 self.addEventListener('activate',event=>event.waitUntil((async()=>{
@@ -18,6 +19,20 @@ self.addEventListener('activate',event=>event.waitUntil((async()=>{
   }
  }catch{}
  await self.clients.claim();
+ // An old QR tab does not contain the new app's update listener. Migrate it once
+ // after the complete current shell is cached; keep all localStorage saves.
+ try{
+  const cache=await caches.open(CACHE),shell=await cache.match('./index.html');
+  if(shell?.ok&&(await shell.clone().text()).includes('game.bundle.mjs?v='+RELEASE)&&(await Promise.all(SHELL.map(url=>cache.match(url)))).every(Boolean)){
+   const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});
+   const root=new URL('./',self.location.href);
+   for(const client of windows){const url=new URL(client.url);if(url.origin!==root.origin||![root.pathname,root.pathname+'index.html'].includes(url.pathname)||url.searchParams.get('v')===RELEASE)continue;
+    client.postMessage({type:'GAME_UPDATE_READY',version:RELEASE});
+    await new Promise(resolve=>setTimeout(resolve,300));
+    url.searchParams.set('v',RELEASE);await client.navigate(url.href);
+   }
+  }
+ }catch{}
 })()));
 async function remember(cache,key,response){if(cache&&response?.ok)await cache.put(key,response.clone()).catch(()=>{});return response;}
 async function resource(request){
@@ -30,13 +45,14 @@ async function page(request){
  const path=new URL(request.url).pathname;
  if(!path.endsWith('/')&&!path.endsWith('/index.html'))return fetch(request);
  const cache=await caches.open(CACHE).catch(()=>null),cached=await cache?.match('./index.html').catch(()=>null);
- const network=fetch(request).then(async response=>{
+ const fresh=new URL(request.url);fresh.searchParams.set('_shell',RELEASE);
+ const network=fetch(fresh.href,{cache:'no-store'}).then(async response=>{
   if(!response.ok&&cached)return cached;
   return remember(cache,'./index.html',response);
  }).catch(error=>{if(cached)return cached;throw error;});
  if(!cached)return network;
  let timer;
- try{return await Promise.race([network,new Promise(resolve=>{timer=setTimeout(()=>resolve(cached),2500);})]);}
+ try{return await Promise.race([network,new Promise(resolve=>{timer=setTimeout(()=>resolve(cached),10000);})]);}
  finally{clearTimeout(timer);}
 }
 self.addEventListener('fetch',event=>{

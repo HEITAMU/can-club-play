@@ -17,7 +17,7 @@ test('action steps reject outside clicks and pass target clicks to their real ac
 test('skip remains independently clickable in every visible step',()=>{
  for(let step=1;step<=8;step++){const r=click(step,{skip:true});assert.ok(!r.prevented&&!r.stopped&&!r.advanced);}
 });
-test('battle completion cannot dismiss an information card; acknowledged first battle can wait safely',()=>{
+test('battle completion cannot dismiss an information card; first acknowledgement always advances immediately',()=>{
  assert.equal(nextGuide(1,'win'),1);assert.equal(nextGuide(8,'win'),8);
- assert.equal(nextGuide(1,'continue',0),10);assert.equal(normalizeGuide(10,true),10);assert.equal(nextGuide(10,'win'),2);assert.equal(nextGuide(1,'continue',1),2);
+ assert.equal(nextGuide(1,'continue',0),2);assert.equal(normalizeGuide(10,true),2);assert.equal(nextGuide(10,'win'),2);assert.equal(nextGuide(1,'continue',1),2);
 });

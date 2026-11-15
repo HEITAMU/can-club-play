@@ -158,3 +158,14 @@
 .modal .restart-game-button{display:block;width:100%;min-height:44px;margin-top:16px;padding:11px 16px;border:2px solid #9f6858;border-radius:9px;background:#e5c2a7;color:#653c32;font-size:15px;font-weight:700}.modal[data-kind="reset"] .settings-actions{display:grid;grid-template-columns:1fr 1.6fr;gap:10px;margin-top:18px}.modal[data-kind="reset"] .settings-actions button{min-height:44px}
 
 .guide-continue{display:block;color:#80613d;font-size:11px;margin:8px 0 4px;text-align:center}
+
+/* High-contrast tutorial spotlight; skip keeps its existing styling. */
+#new-player-guide .guide-focus{border:4px solid #ffd13d;border-radius:11px;box-shadow:0 0 0 9999px #080e18c9,0 0 0 2px #fff4bd,0 0 25px 7px #ffbf3299}
+#new-player-guide .guide-focus:after{display:none}
+.guide-active-target{filter:brightness(1.2) saturate(1.3)!important;outline:2px solid #fff2a8!important;outline-offset:1px}
+.guide-target-label{position:absolute;left:50%;bottom:calc(100% + 9px);transform:translateX(-50%);white-space:nowrap;border:2px solid #fff1a6;border-radius:7px;padding:5px 12px;background:#ffd13d;color:#3c250b;font-size:14px;font-weight:900;box-shadow:0 3px 9px #0009}
+.guide-target-label:after{content:"";position:absolute;top:100%;left:calc(50% - 7px);border:7px solid transparent;border-top-color:#ffd13d}
+#new-player-guide[data-mode="info"] .guide-target-label{display:none}
+#new-player-guide .guide-card{background:#fff2cf;border:3px solid #e9b643;box-shadow:0 5px 22px #0008}
+#new-player-guide .guide-card b{font-size:17px;color:#4b2d0f}
+#new-player-guide .guide-card p{font-size:13px;color:#583c21}
