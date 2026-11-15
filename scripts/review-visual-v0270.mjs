@@ -1,0 +1,8 @@
+import fs from 'node:fs';import {createRequire} from 'node:module';import {rigPose} from '../rig-motion.mjs';import {renderPuppetFrame} from '../rig-renderer.mjs';
+const require=createRequire(new URL('../wechat/package.json',import.meta.url)),{createCanvas,loadImage}=require('@napi-rs/canvas'),sharp=require('sharp');
+const out='docs/review/release-v0270';fs.mkdirSync(out,{recursive:true});
+const ids=['dust','box','mop','battery','bag','drone','vacuum','fridge','sign','boxBoss','clock','vendor'];
+const sheet=createCanvas(960,780),ctx=sheet.getContext('2d');ctx.fillStyle='#e8ddc5';ctx.fillRect(0,0,960,780);ctx.font='15px sans-serif';
+for(let i=0;i<ids.length;i++){const img=await loadImage(await sharp('assets/painted/enemies-'+['a','b','c'][Math.floor(i/4)]+'.webp').png().toBuffer());const x=i%4*240,y=Math.floor(i/4)*260;ctx.fillStyle='#5b4130';ctx.fillText(ids[i]+' / idle → hit',x+12,y+24);for(let j=0;j<2;j++){const c=createCanvas(160,154),p=rigPose(ids[i],{hp:100,side:'e',hitUntil:j?2.22:0},2.1);renderPuppetFrame(c.getContext('2d'),ids[i],p,img,160,154,[0,(i%4)*img.height/4,img.width/4,img.height/4]);ctx.drawImage(c,x+j*110-8,y+55);}}
+fs.writeFileSync(out+'/enemy-hit-review.png',sheet.toBuffer('image/png'));
+const html=fs.readFileSync('index.html','utf8'),svg=html.match(/<svg class="income-stall"[\s\S]*?<\/svg>/)[0].replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" ');const icon=await loadImage(await sharp(Buffer.from(svg)).resize(216,216).png().toBuffer());const c=createCanvas(440,270),g=c.getContext('2d');g.fillStyle='#304354';g.fillRect(0,0,220,270);g.fillStyle='#d0b078';g.fillRect(220,0,220,270);g.drawImage(icon,2,5);g.drawImage(icon,222,5);fs.writeFileSync(out+'/income-icon-review.png',c.toBuffer('image/png'));

@@ -401,3 +401,12 @@ body{background:radial-gradient(ellipse at 22% 30%,#56404d,#292535 75%);color:#f
 .painted-item .gear-enhance-badge{position:absolute;right:-4px;top:-5px;z-index:2;color:#ffe5a0;font-family:Arial,sans-serif;font-size:14px;font-style:normal;font-weight:900;line-height:1;letter-spacing:-.3px;font-variant-numeric:tabular-nums;-webkit-text-stroke:2.4px #62402e!important;paint-order:stroke fill;text-shadow:0 2px 1px #39231e!important;pointer-events:none}
 .gear-enhance-badge.high{color:#ffd168}
 #arena #fx .float-text.critical-frame{line-height:10px;text-align:center;background:none;animation:none}
+
+/* Readable reward control on both dark and bright battlefield backgrounds. */
+#battle-income{width:58px;height:76px;left:8px;top:49px;gap:0;isolation:isolate}
+#battle-income .income-stall{width:54px;height:54px;filter:drop-shadow(0 2px 0 #fff3d6) drop-shadow(0 3px 3px #38202499)}
+#battle-income .income-label{display:block;min-width:43px;padding:1px 6px 2px;margin-top:-3px;border:1.5px solid #693b29;border-radius:6px;background:#fff0bd;color:#66351f;font-size:11px;font-weight:800;line-height:14px;box-shadow:0 2px 2px #38202466}
+#battle-income.has-income .income-label{background:#ffce4f;color:#532a1b}
+#battle-income .income-coin{right:-1px;top:-1px;background:#ffdf68;border:1.5px solid #704329;border-radius:50%;width:19px;height:19px;display:grid;place-items:center}
+#battle-income-progress{width:43px;height:5px;margin-top:2px;border-color:#fff0c5;background:#593e31}
+#battle-income:active{transform:translateY(1px) scale(.96)}

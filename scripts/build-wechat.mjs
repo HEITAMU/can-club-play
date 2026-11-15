@@ -59,15 +59,14 @@ let group = null;
 const prepared = [];
 for (const relative of list) {
   const source = "assets/" + relative,
-    pipeline = sharp(path.join(root, source));
+    original = sharp(path.join(root, source));
+  let pipeline=original;
   const meta = await pipeline.metadata();
-  if (relative.startsWith("painted/enemies-"))
-    pipeline.extract({
-      left: 0,
-      top: 0,
-      width: Math.floor(meta.width / 4),
-      height: meta.height,
-    });
+  if (relative.startsWith("painted/enemies-")) {
+    // Keep both authored idle and hit poses; 128px cels exceed native display size.
+    const columns=await Promise.all([0,3].map(col=>sharp(path.join(root,source)).extract({left:col*Math.floor(meta.width/4),top:0,width:Math.floor(meta.width/4),height:meta.height}).resize({width:128}).png().toBuffer()));
+    pipeline=sharp({create:{width:256,height:512,channels:4,background:{r:0,g:0,b:0,alpha:0}}}).composite(columns.map((input,i)=>({input,left:i*128,top:0})));
+  }
   if (relative==="painted/carriers-v02652.webp") pipeline.resize({width:640}).png({palette:true,quality:90,effort:10});
   if (relative.startsWith("finished/") && !relative.includes("portrait")) pipeline.resize({width:(relative.includes("v0213")||relative.includes("v0216"))?1024:1536});
   const jpg = (relative.startsWith("scenes/") && !relative.includes("district-"));
@@ -135,7 +134,7 @@ await esbuild.build({
   ],
 });
 const manifest = {
-  version: "0.26.99",
+  version: "0.27.0",
   rewardedAdUnitId,
   appid,
   packages: packages.map(({ name, root }) => ({ name, root })),

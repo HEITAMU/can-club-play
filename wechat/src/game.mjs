@@ -1,3 +1,4 @@
+import {battleUnitSize} from '../../companion-display.mjs';
 import {SKILL_STUDY,skillSummary} from '../../skill-training.mjs';
 import {damageTextStyle,criticalFrameSize,drawCriticalFrame} from '../../damage-text-style.mjs';
 import {groundFootY} from '../../battlefield-space.mjs';
@@ -642,7 +643,7 @@ export class NativeGame {
       sizes = {},
       centers = {},
       points = {},
-      base = Math.min(58, ah * 0.18, w * 0.145);
+      base = battleUnitSize(w, ah-76);
     for(const p of Object.values(ground))p.y=groundFootY(p.y,ah-76,base)*(ah-76)/ah;
     for (const a of actors) {
       const size = base * (a.boss ? 1.27 : a.catId === "pudding" ? 1.22 : 1);

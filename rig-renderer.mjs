@@ -18,7 +18,7 @@ if(typeof MutationObserver==='function'&&typeof document!=='undefined')new Mutat
   for(const el of sprites){resize?.unobserve(el);visibility?.unobserve(el);const v=instances.get(el);if(v)v.canvas.width=v.canvas.height=0;instances.delete(el);}
  }
 }).observe(document,{childList:true,subtree:true});
-export function renderPuppetFrame(ctx,id,pose,atlas,width,height,enemySource=null,face){
+export function renderPuppetFrame(ctx,id,pose,atlas,width,height,enemySource=null,face,enemyHitColumn=3){
  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,width,height);
  const sx=width/(1+PAD_X*2),sy=height/(1+PAD_TOP+PAD_BOTTOM),foot=rigFor(id).foot;
  ctx.setTransform(sx,0,0,sy,PAD_X*sx,PAD_TOP*sy);ctx.globalAlpha=pose.alpha;
@@ -28,7 +28,10 @@ export function renderPuppetFrame(ctx,id,pose,atlas,width,height,enemySource=nul
  if(CARRIER_ART[id])paintCarrier(ctx,atlas,id,pose);
  else if(ANATOMY[id])drawAnatomy(ctx,id,pose,atlas,face);
  else if(enemySource){ctx.translate(.5,foot);ctx.rotate(pose.head*.35);ctx.scale(1+pose.reach*.4,1-pose.breath*.25);ctx.translate(-.5,-foot);// The box source faces left; normalize it before the battlefield target flip.
- if(id==='box'){ctx.translate(1,0);ctx.scale(-1,1);}ctx.drawImage(atlas,...enemySource,0,0,1,1);}
+ if(id==='box'){ctx.translate(1,0);ctx.scale(-1,1);}const weight=Math.max(0,Math.min(1,pose.enemyHit||0)),alpha=ctx.globalAlpha;
+ if(weight<1){ctx.globalAlpha=alpha*(1-weight);ctx.drawImage(atlas,...enemySource,0,0,1,1);}
+ if(weight>0){const [x,y,w,h]=enemySource;ctx.globalAlpha=alpha*weight;ctx.drawImage(atlas,x+enemyHitColumn*w,y,w,h,0,0,1,1);}
+ ctx.globalAlpha=alpha;}
  ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;
 }
 export function drawRig(el,id,pose,face,renderSize,frameTime){
@@ -45,7 +48,7 @@ export function drawRig(el,id,pose,face,renderSize,frameTime){
  const {canvas,ctx}=v,dpr=Math.min(2,typeof devicePixelRatio==='number'?devicePixelRatio:1),width=Math.max(1,Math.round((battleSize?renderSize:v.width)*(1+PAD_X*2)*dpr)),height=Math.max(1,Math.round((battleSize?renderSize:v.height)*(1+PAD_TOP+PAD_BOTTOM)*dpr));
  if(width<3||height<3)return false;
  const source=getImage(webAsset(kit?.atlas||el.dataset.atlas),battleSize?3:1);if(!source.ready)return false;
- const cel=[pose.carrierCel,pose.carrierFrom,pose.boltCel,pose.shidunCel,Math.round(pose.rosterCel||0),Math.round(pose.sparkCel||0),face?.to].join(':');
+ const cel=[pose.enemyHit,pose.carrierCel,pose.carrierFrom,pose.boltCel,pose.shidunCel,Math.round(pose.rosterCel||0),Math.round(pose.sparkCel||0),face?.to].join(':');
  // Active actions paint at 60 Hz; quiet portraits and idle actors stay at 30 Hz.
  const active=Math.abs(pose.reach||0)>.004||Math.abs(pose.hand||0)>.09||(pose.rosterCel||0)>.01||(pose.sparkCel||0)>.01||(pose.shidunCel||0)>0||(pose.boltCel??-1)>=0;
  const interval=active?1/60:1/30;

@@ -37,7 +37,8 @@ export function paintedPose(root,frame,{actor,time=0,idleTime=time,outcome,previ
  el.style.transformOrigin=`50% ${foot*100}%`;
  const drawn=drawRig(el,id,shape,face,renderSize,typeof performance!=='undefined'?performance.now()/1000:clock);
  el.style.transform=drawn?`translateY(${groundShift}%)`:`translateY(${groundShift}%) rotate(${shape.lean*180/Math.PI}deg) scale(${1-shape.breath*.35},${1+shape.breath})`;
- el.dataset.pose='0';el.dataset.phase=phase;el.dataset.expression=face.to;
+ if(el.dataset.hero==='false'&&!drawn)el.style.backgroundPositionX=shape.enemyHit>.5?'100%':'0%';
+ el.dataset.pose=shape.enemyHit>.5?'3':'0';el.dataset.phase=phase;el.dataset.expression=face.to;
 }
 export function paintedItem(index,size){return `<span class="painted-item" data-asset="./assets/painted/items.webp" style="background-position:${index%4/3*100}% ${Math.floor(index/4)/3*100}%;${size?`width:${size}px;height:${size}px;`:''}" aria-hidden="true"></span>`;}
 // Portrait cells are 418 x 627. The SVG viewport crops uniformly on every screen.

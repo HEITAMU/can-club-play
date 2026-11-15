@@ -92,8 +92,9 @@ export class NativeArt {
       img,
       w,
       h,
-      kit ? null : [0, (foe[1] * img.height) / 4, img.width, img.height / 4],
+      kit ? null : [0, (foe[1] * img.height) / 4, img.width / 2, img.height / 4],
       face,
+      1, // native atlas packs idle and hit side by side
     );
     cache.pose = pose;
     cache.face = face;

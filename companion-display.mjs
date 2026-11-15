@@ -1,7 +1,7 @@
 // One physical scale for each companion, shared by every full-body appearance.
 export const companionScale=id=>id==='pudding'?1.22:1;
 export const companionSize=(unit,id)=>unit*companionScale(id);
-export const battleUnitSize=(width,height)=>Math.max(32,Math.min(58,height*.18,width*.145));
+export const battleUnitSize=(width,height)=>Math.max(36,Math.min(65,height*.202,width*.162));
 
 // Head crops in the original portrait coordinates; hats/ears stay inside the tile.
 export const HEAD_CROPS={

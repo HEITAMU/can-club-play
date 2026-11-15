@@ -77,6 +77,7 @@ export function rigPose(id,actor,time,idleTime=time){
  }
  if(id==='bolt'){const a=actor?.action;p.boltFrom=0;p.boltMix=1;p.boltCel=a?.kind==='normal'&&a.elapsed<a.duration?(a.elapsed<a.windup?12:a.elapsed<a.windup+.12?13:a.elapsed<a.duration-.18?14:15):-1;if(p.boltCel>=0){const edges=[0,a.windup,a.windup+.12,a.duration-.18],cels=[12,13,14,15],i=cels.indexOf(p.boltCel);p.boltFrom=i?cels[i-1]:0;p.boltMix=ease((a.elapsed-edges[i])/.075);}}
  if(id==='pudding')Object.assign(p,shidunPose(actor,time,idleTime));
+ if(!RIGS[id]&&!CARRIER_ART[id]){const age=.22-((actor?.hitUntil||0)-time);p.enemyHit=actor?.hp>0&&age>0&&age<.22?(age<.04?ease(age/.04):age>.14?1-ease((age-.14)/.08):1):0;}
  if(CARRIER_ART[id]){if(actor?.hp<=0)p={...neutral};Object.assign(p,carrierPose(actor,time));}
  return p;
 }

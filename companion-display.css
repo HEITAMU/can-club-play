@@ -135,3 +135,8 @@ html body,body button,body input,body select,body textarea,body h1,body h2,body 
 .crew-view[data-mode="profile"] .crew-hero .crew-actions{order:2}.crew-view[data-mode="profile"] .crew-hero .crew-actions button{flex:none}
 
 .crew-view[data-mode="profile"] .crew-profile>.crew-growth{grid-template-columns:minmax(0,1fr)}
+
+/* Give the larger shared figures room without stretching their anatomy. */
+.crew-view[data-mode="profile"] .crew-portrait{height:94px;flex-basis:94px}
+.crew-view[data-mode="profile"] .crew-hero,.crew-view[data-mode="profile"] .crew-attributes{height:276px}
+.crew-view[data-mode="equipment"] .equipment-character{height:160px;top:18px}
