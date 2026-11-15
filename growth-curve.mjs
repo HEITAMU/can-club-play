@@ -34,7 +34,7 @@ export function migrateGrowth(s,raw){
  if((raw.growthRevision||1)>=GROWTH_REVISION)return;
  let granted=false;
  for(const id of s.roster.owned){
-  const level=s.levels[id],rank=s.roster.stars[id]||0,step=rank>=5?0:s.roster.tagSteps[id]||0;
+  const level=s.levels[id],rank=Math.min(5,raw.roster?.stars?.[id]||0),step=rank>=5?0:raw.roster?.tagSteps?.[id]||0;
   const target=interpolate(legacyTraining,level)*(10000+rank*400+step*80)/trainingPower(level)/100;
   let r=rank,n=step,shards=0,notes=0;
   while(r<5&&tagPower(r,n)<target){shards+=tagPart(TAG_SHARDS,r,n);notes+=tagPart(TAG_NOTES,r,n);if(n===5){r++;n=0;}else n++;}
@@ -44,6 +44,6 @@ export function migrateGrowth(s,raw){
  }
  if(granted)s.growthRebalancePending=true;
 }
-const road=[[1,1],[3,3],[100,7],[400,17],[1000,33],[1500,52],[1900,70],[2400,120],[3500,600]];
+const road=[[1,1],[3500,600]];
 export const encounterProgress=stage=>interpolate(road,stage);
 export const campaignStage=progress=>Math.ceil(interpolate(road.map(([stage,value])=>[value,stage]),progress));

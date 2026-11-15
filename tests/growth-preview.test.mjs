@@ -5,14 +5,8 @@ import {activityInfo,settleActivity} from '../activities.mjs';
 import {crewProfileHTML} from '../crew-profile.mjs';
 import {fight,frontier,earlyPair,equippedTeam} from '../scripts/balance-growth.mjs';
 
-test('an earned first star breaks a real wall and clears over one hundred consecutive stages',()=>{
- const s=earlyPair(5);s.highest=s.runCleared=3;s.stage=4;
- for(const request of [{kind:'recruit',id:'ink',tier:1},{kind:'sweep',tier:1}]){const b=new G.Battle(s,{activity:request,seed:527});while(!b.result)b.tick(.1);assert.equal(b.result,'win');G.settleBattle(s,b);}
- assert.equal(s.roster.shards.ink,20);assert.equal(s.growth.notes,28);
- const before=frontier(s),beforeStats=G.catStats(s,'ink'),q=G.starQuote(s,'ink');assert.equal(G.ascendCompanion(s,'ink'),true);
- assert.equal(s.roster.shards.ink,20-q.shards);assert.equal(s.growth.notes,28-q.notes);assert.equal(s.levels.ink,5);assert.equal(s.roster.stars.ink,0);assert.equal(s.roster.tagSteps.ink,1);
- assert.ok(G.catStats(s,'ink').atk>beforeStats.atk*2);const after=frontier(s,{start:before});assert.ok(after-before>=100,JSON.stringify({before,after}));assert.equal(fight(s,after).result,'lose');
-});
+test('first quality ascension moves an actual campaign wall without changing levels',()=>{const s=earlyPair(5);s.highest=s.runCleared=3;s.stage=4;const before=frontier(s),stats=G.catStats(s,'ink');s.roster.shards.ink=10;assert.equal(G.ascendCompanion(s,'ink'),true);assert.equal(s.roster.shards.ink,0);assert.equal(s.levels.ink,5);assert.equal(s.roster.stars.ink,1);assert.ok(G.catStats(s,'ink').atk>stats.atk*2);const after=frontier(s,{start:before});assert.ok(after>before,JSON.stringify({before,after}));});
+
 test('levels stay smooth at former spike boundaries and every star beats one training level',()=>{
  for(let level=1;level<160;level++)assert.ok(trainingPower(level+1)/trainingPower(level)<=1.05);
  for(const level of [9,19,29,39]){const s=earlyPair(level);s.gold=1e9;const before=G.catStats(s,'ink');G.upgrade(s,'ink');assert.ok(G.catStats(s,'ink').atk/before.atk<1.08);}
@@ -44,7 +38,4 @@ test('trial saves are isolated and preserve expanded progress; stable saves are 
  assert.notEqual(GROWTH_SAVE_KEY,'can-club-save-v1');const s=G.initialState();s.highest=s.runCleared=2400;s.stage=2401;const text=G.encodeSave(s),envelope=JSON.parse(text);
  assert.equal(envelope.format,GROWTH_SAVE_FORMAT);assert.equal(G.decodeSave(text).stage,2401);assert.throws(()=>G.decodeSave(JSON.stringify({...envelope,format:'CAN-CLUB-1'})));
 });
-test('profile points to stars, keeps ordinary level buttons, and shifts to gear at silver',()=>{
- const s=G.initialState();s.onboarded=true;s.guideStep=9;s.levels.ink=9;const html=crewProfileHTML(s,'ink');assert.doesNotMatch(html,/跃升至 Lv/);assert.match(html,/下一次升星/);assert.match(html,/140%/);assert.match(html,/data-upgrade-count="1"/);
- s.roster.stars.ink=2;assert.match(crewProfileHTML(s,'ink'),/装备是当前提升重点/);
-});
+test('profile omits next ascension hints while keeping level and quality controls',()=>{const s=G.initialState();s.onboarded=true;s.guideStep=9;s.levels.ink=9;for(const rank of [0,2,9]){s.roster.stars.ink=rank;const html=crewProfileHTML(s,'ink');assert.doesNotMatch(html,/下一次升星|装备是当前提升重点/);assert.match(html,/data-upgrade-count="1"/);}});

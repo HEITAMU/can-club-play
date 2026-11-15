@@ -192,3 +192,18 @@
 .commission-board.equipment-series .street-groups{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:5px;padding:2px 0 7px}.commission-board.equipment-series .street-groups button{flex:0 0 73px;min-height:34px}
 .commission-board.equipment-series .equipment-drop-types small{color:#65482e}
 .unlock-message{text-shadow:-1.5px -1.5px 0 #3c271e,1.5px -1.5px 0 #3c271e,-1.5px 1.5px 0 #3c271e,1.5px 1.5px 0 #3c271e,0 3px 6px #1b1410!important;-webkit-text-stroke:.3px #60412a;font-size:22px;line-height:1.6}
+/* Shared hand-painted surfaces; make support reachable without hiding combat. */
+.arena #open-can.can-supply{left:50%;right:auto;bottom:9px;transform:translateX(-50%);width:104px;height:104px;min-height:104px}
+.arena #open-can #can-icon,.arena #open-can #can-icon .painted-item{width:78px!important;height:78px!important}
+.arena #open-can #can-label{font-size:15px;line-height:22px;padding:0 10px}
+.arena #open-can #can-status{top:5px;right:0;font-size:11px}
+.arena #boss-hud{position:absolute;top:45px;bottom:auto;left:20%;right:13%;width:auto;z-index:6;height:53px;min-height:53px}
+.arena .actor.boss .hp-track{display:block!important;visibility:visible!important;opacity:1!important;width:58px;height:5px}
+.keepsake-icon{display:inline-block;flex:none;background-repeat:no-repeat;vertical-align:middle}
+.keepsake-grid,.token-choice>div{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.keepsake-grid>button{padding:10px 3px;background:#f1dfb7;border:1px solid #a98150;border-radius:10px;color:#604936}
+.keepsake-grid b,.keepsake-grid span:not(.keepsake-icon){display:block;font-size:11px}
+.token-choice{margin-top:14px;padding:12px;background:#f0dfb9;border-radius:13px;color:#594832}.token-choice>div{margin:10px 0}
+.token-choice button[data-token-select]{padding:5px;background:#e3cfa3;border:2px solid transparent;border-radius:9px;color:#584333}.token-choice button[aria-pressed=true]{border-color:#8b572c;background:#ffe9ad}.token-choice small{display:block;font-size:11px}
+.team-plans{display:grid;gap:12px;margin-bottom:15px}.team-plan{padding:12px;background:#f0dfbc;color:#5a4634;border:2px solid #a68253;border-radius:14px}.team-plan h3{margin:0 0 7px}.team-plan>div{display:flex;justify-content:space-around}.team-plan .painted-thumbnail{width:46px;height:46px}.team-plan p{font-size:12px;line-height:1.7}.team-plan small{display:block}.team-plan button{width:100%;margin-top:10px}.bag-tabs{display:flex}.bag-tabs>button{flex:1}
+.material-stages{display:grid;gap:8px;margin:12px 0}.risk-stage{display:flex;align-items:center;justify-content:space-between;gap:5px;padding:12px;border:2px solid #aa8756;border-radius:10px;background:#eddfbd;color:#665138}.risk-stage .reward-icons{margin:0}.risk-stage>span{font-size:9px}.risk-2{background:#e4ce9f}.risk-3{background:#d9b582}.risk-4{background:#b77e58;color:#fff0cf}.risk-5{background:#854b3c;color:#ffe6bd}.risk-stage[aria-pressed=true]{outline:2px solid #eecf6d;outline-offset:2px}

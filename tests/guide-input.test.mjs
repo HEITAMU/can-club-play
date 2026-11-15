@@ -1,10 +1,10 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';
 import {GUIDE,nextGuide,normalizeGuide} from '../onboarding.mjs';
 const src=fs.readFileSync(new URL('../app.mjs',import.meta.url),'utf8');
-const start=src.indexOf("document.addEventListener('click',e=>{if(guideConsumedPointer"),end=src.indexOf('\n',start);
-function click(step,{inside=false,skip=false}={}){
+const start=src.indexOf("document.addEventListener('click',e=>{if(state.battleReport)return;if(guideConsumedPointer"),end=src.indexOf('\n',start);
+function click(step,{inside=false,skip=false,report=false}={}){
  let handler,prevented=false,stopped=false,closed=false,advanced=false;
- const context={guideConsumedPointer:false,GUIDE,state:{guideStep:step,onboarded:true},resourceLoading:false,modalType:step===6?'equipment':null,document:{addEventListener:(type,fn)=>handler=fn,querySelector:()=>({contains:()=>inside})},forceClose:()=>closed=true,guideEvent:e=>{assert.equal(e,'continue');advanced=true;}};
+ const context={guideConsumedPointer:false,GUIDE,state:{guideStep:step,onboarded:true,battleReport:report?{}:null},resourceLoading:false,modalType:step===6?'equipment':null,document:{addEventListener:(type,fn)=>handler=fn,querySelector:()=>({contains:()=>inside})},forceClose:()=>closed=true,guideEvent:e=>{assert.equal(e,'continue');advanced=true;}};
  vm.runInNewContext(src.slice(start,end),context);
  handler({target:{closest:()=>skip},preventDefault:()=>prevented=true,stopImmediatePropagation:()=>stopped=true});return {prevented,stopped,closed,advanced};
 }
@@ -21,3 +21,5 @@ test('battle completion cannot dismiss an information card; first acknowledgemen
  assert.equal(nextGuide(1,'win'),1);assert.equal(nextGuide(8,'win'),8);
  assert.equal(nextGuide(1,'continue',0),2);assert.equal(normalizeGuide(10,true),2);assert.equal(nextGuide(10,'win'),10);assert.equal(nextGuide(1,'continue',1),2);
 });
+
+test('pending settlement owns input even when a tutorial step was saved',()=>{for(const step of [1,2,14,15,21])assert.deepEqual(click(step,{report:true}),{prevented:false,stopped:false,closed:false,advanced:false});});

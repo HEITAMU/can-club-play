@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {initialState,recruitCompanion,normalizeState,CATS,RELICS,MAX_STAGE,Battle,settleBattle,upgrade,upgradeCost,chooseRelic,accrueIdle,claimIdle,idleRate,encodeSave,decodeSave,prestige,prestigeGain,claimQuests,setParty,enemiesFor,catStats} from '../core.mjs';
+import {activityInfo} from '../activities.mjs';
 const checks=[];function test(name,fn){fn();checks.push(name);}
 function run(s,farm=false){const b=new Battle(s,{stage:farm?Math.max(1,s.runCleared-1):s.stage,farm,seed:126+s.stage});for(let i=0;i<800&&!b.result;i++){b.tick(.1);if(b.canCd===0&&b.time>.3)b.openCan();}return {b,out:settleBattle(s,b)};}
 test('first encounter is winnable with untouched starter party',()=>{const s=initialState(1000),{b,out}=run(s);assert.equal(out.win,true);assert.ok(b.time<15);assert.equal(s.stage,2);const gold=s.gold;assert.equal(settleBattle(s,b),null);assert.equal(s.gold,gold);});
@@ -17,7 +18,7 @@ test('dead heroes cannot be healed or revived by active skill',()=>{const b=new 
 const sim=initialState(1000);sim.onboarded=true;const curve=[];let farmCount=0;
 for(let attempt=0;attempt<360&&sim.runCleared<120;attempt++){
  claimQuests(sim);
- if(sim.highest>=3&&sim.party.length<5){const id=['milk','spark','bolt'].find(id=>!sim.roster.owned.includes(id));if(id){const contract=new Battle(sim,{activity:{kind:'recruit',id,tier:1}});while(!contract.result){contract.tick(.1);if(contract.canCd===0)contract.openCan();}settleBattle(sim,contract);recruitCompanion(sim,id);}}
+ if(sim.highest>=3&&sim.party.length<5){const id=['milk','spark','bolt'].find(id=>!sim.roster.owned.includes(id));if(id&&activityInfo(sim,{kind:'recruit',id,tier:1}).open){const contract=new Battle(sim,{activity:{kind:'recruit',id,tier:1}});while(!contract.result){contract.tick(.1);if(contract.canCd===0)contract.openCan();}settleBattle(sim,contract);recruitCompanion(sim,id);}}
  for(let u=0;u<100;u++){const affordable=sim.party.filter(id=>upgradeCost(sim.levels[id])<=sim.gold&&sim.levels[id]<100).sort((a,b)=>sim.levels[a]-sim.levels[b]);if(!affordable.length)break;upgrade(sim,affordable[0]);}
  const {b,out}=run(sim);
  if(out?.win){if(sim.pending){const preference=['claw','coat','bell','bowl','badge','scope','charm','match','thorn','can','magnet','thermos'];const id=preference.find(id=>sim.pending.options.includes(id));chooseRelic(sim,id);}if(b.stage<=6||b.stage%10===0)curve.push({stage:b.stage,seconds:+b.time.toFixed(1),levels:sim.party.map(id=>sim.levels[id]),gold:sim.gold});}

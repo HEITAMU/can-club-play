@@ -1,3 +1,8 @@
+import {KEEPSAKES} from '../../keepsakes.mjs';
+import {ASCENSION_NAMES} from '../../ascension.mjs';
+import {TEAM_PLANS,applyTeamPlan} from '../../team-plans.mjs';
+import {grantChosenTokens} from '../../token-rewards.mjs';
+import {battleReport} from '../../battle-flow.mjs';
 import {battleUnitSize} from '../../companion-display.mjs';
 import {SKILL_STUDY,skillSummary} from '../../skill-training.mjs';
 import {damageTextStyle,criticalFrameSize,drawCriticalFrame} from '../../damage-text-style.mjs';
@@ -74,7 +79,7 @@ export class NativeGame {
     this.resize(env.width, env.height);
     this.start(false);
     if (!state.onboarded) this.modal = { type: "intro" };
-    else if (state.pending) this.modal = { type: "loot" };
+    else if (state.pending) this.modal = { type: "loot" };else if(state.battleReport?.tokenTicket)this.modal={type:"token-result",selected:"ink"};
   }
   resize(w, h) {
     this.width = w;
@@ -190,6 +195,7 @@ export class NativeGame {
       this.nextDelay = 2.2;
       b.reward=result;
       if(result.gearLoot?.item)this.toast(gearName(result.gearLoot.item)+" 已放入背包");else if(result.gearLoot?.scrap)this.toast("背包已满，掉落折算为零件 +"+result.gearLoot.scrap);
+      if(result.activity&&b.activity.kind==='recruit'&&result.win){this.running=false;this.activityReturn.cancel();this.state.battleReport=battleReport(b,result);this.modal={type:"token-result",selected:this.state.teamPlan||"ink"};this.save();return;}
       if(result.activity){this.running=false;this.activityReturn.finish(b.activity,this.time);this.toast(result.win?rewardText(result):"挑战结束");return;}
       if(result.arena){this.running=false;this.toast(result.win?(result.weekly?"徽章 +"+result.badges+" · 物资 +"+result.supplies+" · 鱼币 +"+result.gold:"擂台获胜，突破徽章 +"+result.badges):"挑战失败，没有损失");return;}
       if (result.win) {
@@ -264,7 +270,7 @@ export class NativeGame {
     );
   }
   close() {
-    if (this.modal?.type === "intro") return;
+    if (this.modal?.type === "intro"||this.adPending) return;if(this.modal?.type==="token-result"){this.state.battleReport=null;this.save();}
     this.modal = this.queue.shift() || null;
   }
   chooseRelic(id) {
@@ -433,7 +439,7 @@ export class NativeGame {
       return;
     }
     if (!d.moved && d.button && this.hit(d)?.id === d.button.id) {
-      this.env.sound?.("tap");
+      this.env.sound?.(d.button.id.startsWith("tab-")?"nav-"+d.button.id.slice(4):"tap");
       d.button.fn();
     }
   }
@@ -791,27 +797,27 @@ export class NativeGame {
       () => this.pause(),
       { size: 12 },
     );
-    this.button("can", "", 88, y, 222, 55, () => this.can(), {
+    this.button("can", "", 143, y-48, 104, 96, () => this.can(), {
       fill: rv.ready ? "#cda970" : "#657a70",
       stroke: rv.ready ? "#efdaa6" : C.rim,
       disabled: !rv.ready,
     });
-    this.art.item(c, 5, 113, y + 25, 34);
+    this.art.item(c, 5, 195, y-17, 62);
     text(
       c,
       "开罐啦",
-      204,
-      y + 20,
-      25,
+      195,
+      y + 24,
+      18,
       rv.ready ? "#3d5049" : C.ink,
       850,
       "center",
     );
     text(
       c,
-      rv.ready ? "回血20% · 伤敌 · 打断" : rv.status,
-      203,
-      y + 43,
+      rv.ready ? "回血40 · 伤敌50" : rv.status,
+      195,
+      y + 42,
       10,
       rv.ready ? "#4f5b4d" : C.muted,
       650,
@@ -1053,6 +1059,7 @@ export class NativeGame {
     return y;
   }
   drawFormation(y) {
+    for(const p of TEAM_PLANS){this.button("team-"+p.id,p.name+" · 主养"+cat(p.core).name,14,y,362,36,()=>{applyTeamPlan(this.state,p.id);this.save();this.start(false);});y+=46;}
     const c = this.ctx;
     box(c, 14, y, 362, 303, "#42615f", "#a4b7a1", 16);
     text(c, "拖动角色到位置上", 30, y + 24, 16, C.ink, 850);
@@ -1177,11 +1184,13 @@ export class NativeGame {
     if(rows.length>3){this.button('bag-prev','‹',240,y+291,38,27,()=>this.bagPage--,{disabled:this.bagPage===0});text(c,(this.bagPage+1)+' / '+Math.ceil(rows.length/3),308,y+305,11,C.muted,500,'center');this.button('bag-next','›',338,y+291,38,27,()=>this.bagPage++,{disabled:(this.bagPage+1)*3>=rows.length});}
     return y+338;
   }
+  drawKeepsake(id,x,y,size){const im=this.art.image('assets/ui/companion-keepsakes-v0282.webp'),i=Object.keys(KEEPSAKES).indexOf(id);if(im&&i>=0)this.ctx.drawImage(im,i%4*im.width/4,Math.floor(i/4)*im.height/2,im.width/4,im.height/2,x,y,size,size);}
   drawRelics(y) {
     const c=this.ctx,s=this.state;this.bagTab??='equipment';this.bagPage??=0;this.bagSlot??='';this.bagSet??='';
 
     text(c,'背包',16,y+20,24,C.ink,850);text(c,s.inventory.items.filter(e=>!gearOwner(s,e.id)).length,374,y+20,12,C.muted,500,'right');y+=44;
-    for(const [i,id]of ['equipment','materials'].entries())this.button('bag-tab-'+id,['装备','材料'][i],14+i*187,y,175,36,()=>{this.bagTab=id;this.scroll=0;},{fill:this.bagTab===id?C.gold:C.panel,color:this.bagTab===id?C.dark:C.ink});y+=53;
+    for(const [i,id]of ['equipment','materials','keepsakes'].entries())this.button('bag-tab-'+id,['装备','材料','信物'][i],14+i*124,y,114,36,()=>{this.bagTab=id;this.scroll=0;},{fill:this.bagTab===id?C.gold:C.panel,color:this.bagTab===id?C.dark:C.ink});y+=53;
+    if(this.bagTab==='keepsakes'){for(const [id,[owner,name]] of Object.entries(KEEPSAKES)){const n=s.roster.shards[id];if(!n)continue;this.button('keepsake-'+id,owner+' · '+name+' ×'+n,74,y,302,62,()=>this.modal={type:'keepsake',id},{size:12});this.drawKeepsake(id,18,y+7,48);y+=74;}return y;}
     if(this.bagTab==='materials'){for(const m of materialRows(s)){box(c,14,y,362,62,C.panel,C.rim,12);this.art.item(c,m.icon,46,y+31,34);text(c,m.name,72,y+30,17,C.ink,800);text(c,fmt(m.count),360,y+30,18,C.gold,800,'right');y+=74;}return y;}
     for(const [i,slot]of [{id:'',name:'全部'},...GEAR_SLOTS].entries())this.button('bag-filter-slot-'+(slot.id||'all'),slot.name,14+i%3*124,y+Math.floor(i/3)*37,114,29,()=>{this.bagSlot=slot.id;this.bagPage=0;},{fill:this.bagSlot===slot.id?C.gold:C.panel,color:this.bagSlot===slot.id?C.dark:C.ink,size:11});y+=86;
     this.button('bag-filter-set',this.bagSet?GEAR_SETS.find(x=>x.id===this.bagSet).name:'全部套装',14,y,175,32,()=>{const ids=['',...GEAR_SETS.map(x=>x.id)];this.bagSet=ids[(ids.indexOf(this.bagSet)+1)%ids.length];this.bagPage=0;},{size:11});
@@ -1208,25 +1217,26 @@ export class NativeGame {
     this.button('gear-dismantle','分解装备',14,y,362,34,async()=>{if(!await this.env.confirm('分解 '+gearName(e),'装备会消失，返还修补零件和部分打磨砂。'))return;const r=dismantleGear(s,e.id);if(r){this.bagDetail=null;this.scroll=0;this.bagChanged('零件 +'+r.scrap+' · 打磨砂 +'+r.essence);}},{disabled:!!owner||e.locked});y+=55;y+=rich(c,gearStory(e),20,y,350,{size:13,line:21});return y+28;
   }
 
-  openStreet(group='recruit',id){this.modal=null;this.change('map');this.mapPlace='street';this.streetView={group,id:id||(group==='recruit'?'milk':''),tier:1};}
+  openStreet(group='recruit',id){this.modal=null;this.change('map');this.mapPlace='street';this.streetView={group,id:id||(group==='recruit'?'all':''),tier:1};}
   drawDrops(reward,x,y,counts=true){const c=this.ctx,icons={gold:12,supplies:14,badges:9,notes:15,seals:11,essence:11,scrap:0,gear:4,shards:6};let dx=x;for(const [k,v]of Object.entries(reward)){if(!(v>0)||icons[k]===undefined)continue;this.art.item(c,icons[k],dx+12,y+12,24);if(counts){text(c,fmt(v),dx+28,y+12,11,C.ink,650);dx+=65;}else dx+=29;}return dx-x;}
   drawEquipmentDrops(q,x,y,size=28){const img=this.art.image('assets/ui/equipment-slots-v0281.webp'),cells={claw:0,brace:1,coat:2,collar:3};let dx=x;for(const slot of q.dropSlots){const cell=cells[slot];if(img)this.ctx.drawImage(img,cell%2*(img.width/2),Math.floor(cell/2)*(img.height/2),img.width/2,img.height/2,dx,y,size,size);dx+=size+12;}if(q.kind==='nightwatch'){this.art.item(this.ctx,11,dx+size/2,y+size/2,size);}}
-  drawStreet(y){const c=this.ctx,s=this.state,v=this.streetView??={group:'recruit',id:'milk',tier:1},q=streetSelection(s,v),choices=streetChoices(v.group);text(c,(STREET_GROUPS.find(g=>g.id===v.group)?.name||'委托'),16,y+22,24,C.gold,850);y+=46;
+  drawStreet(y){const c=this.ctx,s=this.state,v=this.streetView??={group:'recruit',id:'all',tier:1},q=streetSelection(s,v),choices=streetChoices(v.group);text(c,(STREET_GROUPS.find(g=>g.id===v.group)?.name||'委托'),16,y+22,24,C.gold,850);y+=46;
     for(const [i,g]of STREET_GROUPS.entries())this.button('street-group-'+g.id,g.name,14+i%2*187,y+Math.floor(i/2)*40,175,32,()=>this.openStreet(g.id),{fill:g.id===v.group?C.gold:C.panel,color:g.id===v.group?C.dark:C.ink,size:12});y+=Math.ceil(STREET_GROUPS.length/2)*40+11;
     for(const [i,item]of choices.entries()){const x=14+i%3*124,gy=y+Math.floor(i/3)*68,info=activityInfo(s,streetRequest(v.group,item.id));this.button('street-choice-'+item.id,'',x,gy,114,57,()=>{v.id=item.id;v.tier=1;},{fill:item.id===v.id?'#7d8f78':C.panel});text(c,item.name,x+57,gy+17,12,C.ink,750,'center');if(info.dropSlots)this.drawEquipmentDrops(info,x+12,gy+29,22);else this.drawDrops(activityDrops(info),x+12,gy+29,false);}y+=Math.ceil(choices.length/3)*68+18;
-    text(c,v.group==='recruit'?cat(v.id).name:q.name,16,y+20,19,C.ink,750);y+=41;
-    this.button('street-prev','‹',14,y,98,32,()=>v.tier--,{disabled:q.tier<=1});text(c,q.tier,195,y+17,17,C.gold,800,'center');this.button('street-next','›',278,y,98,32,()=>v.tier++,{disabled:q.tier>=q.max||q.tier>q.cleared});y+=48;
+    text(c,q.name,16,y+20,19,C.ink,750);y+=41;
+    if(q.kind==='recruit'){text(c,'今日剩余 '+q.quota.remaining+' / 3 · 每次随机 5 个信物',195,y+17,14,C.ink,650,'center');y+=48;}else{this.button('street-prev','‹',14,y,98,32,()=>v.tier--,{disabled:q.tier<=1});text(c,q.tier,195,y+17,17,C.gold,800,'center');this.button('street-next','›',278,y,98,32,()=>v.tier++,{disabled:q.tier>=q.max||q.tier>q.cleared});y+=48;}
     if(q.dropSlots)this.drawEquipmentDrops(q,20,y,32);else this.drawDrops(activityDrops(q),20,y);y+=43;
     if(q.kind==='nightwatch'){text(c,'每日 0 点轮换 · 北京时间',20,y+12,12,C.ink);y+=27;this.button('rune-search','寻觅妙招 · '+(q.runeSearch?'已开启':'未开启'),14,y,362,38,()=>{v.runeSearch=!v.runeSearch;},{fill:q.runeSearch?'#a95e3f':C.panel});y+=48;y+=rich(c,'妙招牌 '+(q.runeSearch?'3%':'0.1%')+' / 次领奖；开启后生命×3、攻击×2，追兵绕后。',20,y,345,{size:12,line:20})+16;}
     this.button('street-fight',q.open?(q.rewardable?'挑战':'练习 · 无奖励'):'未开启',14,y,362,38,()=>{if(q.open){this.change('battle');this.start(true,{activity:q.request});}},{disabled:!q.open,fill:C.gold,color:C.dark});y+=58;
-    if(q.kind==='recruit'){const owned=G.ownsCompanion(s,v.id),have=s.roster.shards[v.id]||0;this.button('street-recruit',owned?'已结识':'结识 · '+have+' / 20',14,y,362,36,()=>{if(G.recruitCompanion(s,v.id)){this.save();if(s.party.includes(v.id))this.start(true,{activity:this.battle?.activity?.request});this.toast(cat(v.id).name+'加入了远征队');}},{disabled:owned||have<20});y+=55;}return y;
+    if(q.kind==='recruit'){this.button('tokens-bag','背包 · 信物',14,y,362,36,()=>{this.change('relics');this.bagTab='keepsakes';});return y+55;}return y;
   }
   drawGrowth(y,id){const c=this.ctx,s=this.state,b=G.breakthroughQuote(s,id),a=G.starQuote(s,id);text(c,SKILL_STUDY[id].name+' · Lv.'+(b.rank+1),20,y+22,18,C.gold,800);y+=42;y+=rich(c,b.maxed?skillSummary(id,b.rank):'下一级：'+skillSummary(id,b.rank+1),20,y,350,{size:12,line:19})+20;
     y+=rich(c,'徽章 '+s.badges+'/'+b.cost+' · 训练笔记 '+s.growth.notes+'/'+b.notes+' · 历练印记 '+s.growth.seals+'/'+b.seals,20,y,350,{size:12,line:19})+20;
     this.button('breakthrough-'+id,b.maxed?'已满级':'研习',14,y,362,35,()=>{if(G.breakthrough(s,id)){this.battle?.syncStats(s,{preserveHealthRatio:true});this.save();this.toast('技能升级');}},{disabled:b.maxed||s.levels[id]<b.requiredLevel||!b.canAfford});y+=47;this.button('growth-materials','获取研习材料',14,y,362,32,()=>this.openStreet('materials','escort'));y+=58;
-    text(c,'猫牌 '+a.rank+'阶 · '+a.step+'/5',20,y+20,18,C.gold,800);y+=40;y+=rich(c,'生命、攻击 +'+a.bonus+'%'+(a.maxed?'':' · 下次提升 '+a.gain+'%'),20,y,350,{size:12,line:19})+20;
-    text(c,'信物 '+a.have+'/'+a.shards+' · 训练笔记 '+s.growth.notes+'/'+a.notes,20,y+15,12,C.ink);y+=36;this.button('ascend-'+id,a.maxed?'已满阶':a.ready?'进阶猫牌':'点亮爪印',14,y,362,35,()=>{const before=G.catStats(s,id);if(G.ascendCompanion(s,id)){s.growthRebalancePending=false;this.battle?.syncStats(s,{preserveHealthRatio:true});this.save();const after=G.catStats(s,id);this.toast('升星成功 · 攻击 '+fmt(before.atk)+' → '+fmt(after.atk)+' · 生命 '+fmt(before.hp)+' → '+fmt(after.hp));}},{disabled:a.maxed||a.have<a.shards||s.growth.notes<a.notes});y+=47;this.button('growth-shards','获取'+cat(id).name+'信物',14,y,362,32,()=>this.openStreet('recruit',id));return y+55;
+    text(c,ASCENSION_NAMES[a.rank],20,y+20,18,C.gold,800);y+=40;y+=rich(c,'生命、攻击 +'+a.bonus+'%'+'',20,y,350,{size:12,line:19})+20;
+    text(c,'信物 '+a.have+'/'+a.shards+' · 训练笔记 '+s.growth.notes+'/'+a.notes,20,y+15,12,C.ink);y+=36;this.button('ascend-'+id,a.maxed?'已满阶':'升阶',14,y,362,35,()=>{const before=G.catStats(s,id);if(G.ascendCompanion(s,id)){s.growthRebalancePending=false;this.battle?.syncStats(s,{preserveHealthRatio:true});this.save();const after=G.catStats(s,id);this.toast('升星成功 · 攻击 '+fmt(before.atk)+' → '+fmt(after.atk)+' · 生命 '+fmt(before.hp)+' → '+fmt(after.hp));}},{disabled:a.maxed||a.have<a.shards||s.growth.notes<a.notes});y+=47;this.button('growth-shards','获取'+cat(id).name+'信物',14,y,362,32,()=>this.openStreet('recruit',id));return y+55;
   }
+  async watchTokenReward(ticket,id){if(this.adPending||!this.env.rewardedAds?.available)return;const s=this.state;this.adPending=true;try{const result=await this.env.rewardedAds.watch();if(this.state===s&&grantChosenTokens(s,ticket,id,result.completed)){this.save();this.toast(cat(id).name+'信物 +5');}else this.toast('未完整看完广告，不领取自选奖励');}finally{this.adPending=false;}}
   async watchBusinessBoost() {
     if(this.adPending)return;
     const state=this.state,quote=businessBoostQuote(state,Date.now(),G.idleRate(state));
@@ -1295,6 +1305,8 @@ export class NativeGame {
     c.fillRect(0, 0, 390, this.H);
     const available = this.H - this.safeTop - 28,
       heights = {
+        "token-result":440,
+        keepsake:300,
         intro: 396,
         loot: 400,
         recruit: 380,
@@ -1316,6 +1328,8 @@ export class NativeGame {
         draw: false,
         size: 23,
       });
+    if(m.type==='keepsake'){const id=m.id,d=KEEPSAKES[id],have=this.state.roster.shards[id]||0,owned=G.ownsCompanion(this.state,id);this.drawKeepsake(id,167,y+18,56);text(c,d[0]+' · '+d[1],195,y+93,18,C.gold,800,'center');rich(c,d[2],40,y+116,310,{size:14,line:22});text(c,'持有 '+have+' / 20',40,y+160,16,C.ink);this.button('invite-token',owned?'查看升阶':'邀入远征队',40,y+195,310,40,()=>{if(owned){this.modal=null;this.change('cats');this.selected=id;this.mode='profile';return;}if(G.recruitCompanion(this.state,id)){this.save();this.modal={type:'recruit',id};}},{disabled:!owned&&have<20});return;}
+    if(m.type==='token-result'){const r=this.state.battleReport;if(!r)return;const who=cat(r.companion);text(c,'拿下了！',195,y+44,26,C.gold,800,'center');text(c,(who?.name||'伙伴')+'信物 ×5 已入包',195,y+78,16,C.ink,700,'center');text(c,r.tokenClaimed?'自选奖励已领取':'广告奖励 · 额外自选 5 个信物',195,y+116,13,C.ink,650,'center');if(!r.tokenClaimed){G.CATS.forEach((hero,i)=>this.button('token-pick-'+hero.id,hero.name,37+i%4*80,y+140+Math.floor(i/4)*49,74,40,()=>{m.selected=hero.id},{fill:m.selected===hero.id?C.gold:C.panel,color:m.selected===hero.id?C.dark:C.ink}));this.button('token-watch',this.env.rewardedAds?.available?'看广告领取 '+cat(m.selected||'ink').name+'信物 ×5':'微信广告尚未接入',37,y+255,316,42,()=>this.watchTokenReward(r.tokenTicket,m.selected||'ink'),{disabled:this.adPending||!this.env.rewardedAds?.available});}this.button('token-bag','查看背包信物',37,y+320,316,38,()=>{this.close();this.change('relics');this.bagTab='keepsakes';});return;}
     if (m.type === "intro") {
       text(c, "罐头远征队", 195, y + 36, 28, C.ink, 850, "center");
       this.art.actor(c, "orange", "intro-orange", 144, y + 170, 100, this.time);

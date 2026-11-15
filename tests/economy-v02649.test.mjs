@@ -28,12 +28,8 @@ test('hunt routes share repeat cap and capped practice gives no equipment or coi
  const before={gold:s.gold,items:s.inventory.items.length,scrap:s.inventory.materials.scrap};const r=win(s,{kind:'hunt',id:'depot',tier:1});
  assert.equal(r.gearLoot,null);assert.equal(r.gold,0);assert.deepEqual({gold:s.gold,items:s.inventory.items.length,scrap:s.inventory.materials.scrap},before);
 });
-test('partner rewards are one-time below final tier, each partner has independent final quota',()=>{
- const s=ready();for(const id of ['milk','spark'])for(let tier=1;tier<=6;tier++)assert.ok(win(s,{kind:'recruit',id,tier}).shards);
- assert.equal(win(s,{kind:'recruit',id:'milk',tier:1}),null);
- for(let i=0;i<3;i++)assert.equal(win(s,{kind:'recruit',id:'milk',tier:6}).shards,6);
- assert.equal(win(s,{kind:'recruit',id:'milk',tier:6}).shards,0);assert.equal(win(s,{kind:'recruit',id:'spark',tier:6}).shards,6);
-});
+test('all companion routes share three daily claims including the first clear',()=>{const s=ready();for(const id of ['milk','spark','all'])assert.equal(win(s,{kind:'recruit',id,tier:1}).shards,5);assert.equal(win(s,{kind:'recruit',id:'ink',tier:1}),null);assert.equal(win(s,{kind:'recruit',id:'all',tier:1},now+86400000).shards,5);});
+
 test('armor reduction never restores armor; mint targets charging enemies before healers',()=>{
  const s=ready();s.roster.owned=['bolt','mint'];s.party=['bolt','mint'];const b=new Battle(s),[bolt,mint]=b.heroes,e=b.enemies[0];Object.assign(e,{hp:1e6,maxHp:1e6,initialArmor:100,armor:5});b.skill(bolt);assert.equal(e.armor,5);
  b.enemies.push({...e,id:'healer',arenaHealer:true,charge:0},{...e,id:'charging',charge:1});assert.equal(b.targetFor(mint,'skill').id,'charging');b.skill(mint);assert.equal(b.enemies.at(-1).charge,0);assert.ok(b.enemies.at(-1).stun>0);

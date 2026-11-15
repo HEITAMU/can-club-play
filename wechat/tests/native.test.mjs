@@ -203,9 +203,9 @@ test('backpack lists only unequipped items; companion orbit supports equip, lock
 function tapScrolled(h,id){const a=h.app;a.render();for(let y=0;y<=a.scrollMax+180;y+=180){a.scroll=Math.min(y,a.scrollMax);a.render();if(a.buttons.some(b=>b.id===id)){h.tap(id);return;}}throw Error('No reachable enabled button: '+id);}
 test('native companion contracts, star growth and breakthroughs save exact costs',async()=>{
  const state=G.initialState();state.onboarded=true;state.highest=600;state.runCleared=3;state.stage=4;state.roster.shards.milk=20;state.roster.shards.orange=20;state.growth={notes:2000,seals:30};state.badges=100;state.levels.orange=40;
- const h=await harness({state}),a=h.app;a.openStreet('recruit','milk');tapScrolled(h,'street-recruit');assert.ok(a.state.roster.owned.includes('milk'));assert.equal(a.state.roster.shards.milk,0);assert.equal(a.state.party.at(-1),'milk');
- a.change('cats');a.selected='orange';for(let i=0;i<6;i++){a.scroll=0;tapScrolled(h,'ascend-orange');}assert.equal(a.state.roster.stars.orange,1);assert.equal(a.state.roster.shards.orange,0);assert.equal(a.state.growth.notes,1970);
- tapScrolled(h,'breakthrough-orange');assert.equal(a.state.breakthroughs.orange,1);assert.equal(a.state.badges,92);assert.equal(a.state.growth.notes,1920);
+ const h=await harness({state}),a=h.app;a.change('relics');a.bagTab='keepsakes';tapScrolled(h,'keepsake-milk');tapScrolled(h,'invite-token');a.close();assert.ok(a.state.roster.owned.includes('milk'));assert.equal(a.state.roster.shards.milk,0);assert.equal(a.state.party.at(-1),'milk');
+ a.change('cats');a.selected='orange';a.scroll=0;tapScrolled(h,'ascend-orange');assert.equal(a.state.roster.stars.orange,1);assert.equal(a.state.roster.shards.orange,10);assert.equal(a.state.growth.notes,2000);
+ tapScrolled(h,'breakthrough-orange');assert.equal(a.state.breakthroughs.orange,1);assert.equal(a.state.badges,92);assert.equal(a.state.growth.notes,1950);
  const restored=G.decodeSave(h.storage.get('can-club-wechat-growth-preview-v1'));assert.deepEqual(restored.roster,a.state.roster);assert.deepEqual(restored.growth,a.state.growth);h.stop();
 });
 test('native material replay preserves selected job and main campaign progress',async()=>{
@@ -224,3 +224,5 @@ test('contract auto-return cannot override a user navigation or rematch',async()
 });
 
 test('ordinary defeat immediately restarts same stage without modal or notice',async()=>{const s=G.initialState();s.onboarded=true;const h=await harness({state:s}),a=h.app;a.start(true);const old=a.battle,gold=a.state.gold;for(const hero of old.heroes)hero.hp=0;a.update(.1);assert.notEqual(a.battle,old);assert.equal(a.battle.stage,old.stage);assert.equal(a.battle.result,null);assert.ok(a.battle.heroes.every(x=>x.hp===x.maxHp));assert.equal(a.running,true);assert.equal(a.modal,null);assert.equal(a.state.battleReport,null);assert.equal(a.state.gold,gold);assert.equal(a.state.runCleared,0);h.stop();});
+
+test('native shared token dungeon and eight selectable keepsakes render without character-specific routes',async()=>{const s=developed();s.roster.shards.milk=20;const h=await harness({state:s}),a=h.app;a.openStreet('recruit','all');a.render();assert.equal(a.buttons.some(b=>b.id==='street-fight'),true);assert.equal(a.buttons.some(b=>b.id==='street-next'),false);tapScrolled(h,'street-fight');for(let i=0;i<500&&!a.modal;i++){a.update(.2);if(a.battle.canCd===0)a.can();}assert.equal(a.modal?.type,'token-result');a.render();assert.equal(a.buttons.filter(b=>b.id.startsWith('token-pick-')).length,8);assert.equal(a.state.battleReport.rewards.shards,5);assert.equal(a.state.activities.repeatClaims.recruit,1);h.stop();});

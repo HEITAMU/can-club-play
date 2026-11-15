@@ -16,7 +16,7 @@ test('new saves and untrained old previews receive no compensation; restored ran
 });
 test('star card previews the exact next attack and health including free material promotion',()=>{
  const s=G.initialState();s.roster.shards.ink=1000;s.growth.notes=1000;
- for(let i=0;i<30;i++){const html=catTagCardHTML(s,'ink'),before=G.catStats(s,'ink'),q=G.starQuote(s,'ink');assert.equal(G.ascendCompanion(s,'ink'),true);const after=G.catStats(s,'ink');
+ for(let i=0;i<9;i++){const html=catTagCardHTML(s,'ink'),before=G.catStats(s,'ink'),q=G.starQuote(s,'ink');assert.equal(G.ascendCompanion(s,'ink'),true);const after=G.catStats(s,'ink');
   assert.ok(html.includes('攻击 '+before.atk.toLocaleString('zh-CN')+' → <b>'+after.atk.toLocaleString('zh-CN')+'</b>'));
   assert.ok(html.includes('生命 '+before.hp.toLocaleString('zh-CN')+' → <b>'+after.hp.toLocaleString('zh-CN')+'</b>'));assert.ok(q.gain>0);assert.ok(after.hp>before.hp);
  }

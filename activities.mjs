@@ -8,7 +8,7 @@ export const MATERIAL_JOBS=[
  {id:'escort',name:'夜班护送',rule:'追兵蓄力重击，保留开罐啦或控制技能打断。',reward:'护送勋章',theme:'burst'},
  ...EQUIPMENT_ROUTES.map(x=>({...x,reward:'装备'})),
  {id:'parts',name:'旧件回收场',rule:'拆卸队占着废料堆，准备群体伤害。',reward:'零件',theme:'crowd'},
- {id:'polish',name:'磨砂作坊',rule:'铁壳守卫堵住作坊，混合伤害或破甲更有效。',reward:'打磨砂',theme:'armor'}
+ {id:'polish',name:'熄灯工坊',rule:'铁壳守卫堵住作坊，混合伤害或破甲更有效。',reward:'打磨砂',theme:'armor'}
 ];
 export const HUNTS=[
  {id:'market',name:'鱼市追猎',rule:'冷库护盾、后排补给、快速追兵轮换。',themes:['barrier','healer','ambush']},
@@ -45,22 +45,22 @@ const RECRUIT_STORIES={
 };
 const CLOCKWORK_STORY="钟楼上住着两个家伙，附近的人总说他们不和，隔着一条街都能听见争吵。\n\n上回有人趁他们吵架闯了进去，才发现不是那么回事。一个刚刚停手，另一个就已经准备好了，根本不给人喘气的工夫。\n\n逃回来的人说，早知道就不该同时招惹他们两个。";
 const ESCORT_STORY="车夫说，这条路上的追兵已经跟了他好几天。领头的每次都要先停一下，攒足了劲，才朝着车厢撞过来。\n\n昨天车上掉下一只空罐头，正好砸在他脑门上。他那一下没撞出来，车夫趁机赶着车跑了，直到过了桥才敢回头。";
-const KEYS=[...MATERIAL_JOBS.map(x=>x.id),...HUNTS.map(x=>'hunt:'+x.id),...HARD_JOBS.map(x=>'hard:'+x.id),...COMPANION_IDS.map(x=>'recruit:'+x)];
-export function normalizeActivities(raw){return {rewardVersion:1,rewardDay:safe(raw?.rewardDay,1e9),repeatClaims:Object.fromEntries(Object.entries(raw?.repeatClaims||{}).filter(([k])=>['sweep','escort','salvage','wardrobe','nightwatch','parts','polish','hunt','hard',...COMPANION_IDS.map(id=>'recruit:'+id)].includes(k)).map(([k,v])=>[k,safe(v,100)])),cleared:Object.fromEntries(KEYS.map(k=>[k,safe(raw?.cleared?.[k],k.startsWith('hunt:')?10000:k.startsWith('hard:')?3:k.startsWith('recruit:')?6:8)])),wins:safe(raw?.wins,1e9)};}
+const KEYS=['recruit',...MATERIAL_JOBS.map(x=>x.id),...HUNTS.map(x=>'hunt:'+x.id),...HARD_JOBS.map(x=>'hard:'+x.id),...COMPANION_IDS.map(x=>'recruit:'+x)];
+export function normalizeActivities(raw){return {rewardVersion:2,tokenSerial:Math.max(safe(raw?.tokenSerial,1e9),...(Array.isArray(raw?.tokenRewards)?raw.tokenRewards:[]).map(r=>safe(r?.serial,1e9))),tokenRewards:(Array.isArray(raw?.tokenRewards)?raw.tokenRewards:[]).filter(r=>Number.isSafeInteger(r.serial)&&r.serial>0).slice(-30).map(r=>({serial:r.serial,claimed:r.claimed===true})),rewardDay:safe(raw?.rewardDay,1e9),repeatClaims:Object.fromEntries(Object.entries(raw?.repeatClaims||{}).filter(([k])=>['recruit','sweep','escort','salvage','wardrobe','nightwatch','parts','polish','hunt','hard',...COMPANION_IDS.map(id=>'recruit:'+id)].includes(k)).map(([k,v])=>[k,safe(v,100)])),cleared:Object.fromEntries(KEYS.map(k=>[k,safe(raw?.cleared?.[k],k.startsWith('hunt:')?10000:k.startsWith('hard:')?3:k.startsWith('recruit:')?6:8)])),wins:safe(raw?.wins,1e9)};}
 export function activityInfo(s,request={},now=Date.now()){
- const kind=request.kind||'sweep',tier=request.tier===undefined?1:request.tier,id=request.id||'',recruit=kind==='recruit',hunt=kind==='hunt',hard=kind==='hard',job=recruit?{name:'伙伴委托',rule:'完成指定伙伴的委托，获得该伙伴信物。凑齐 20 份即可结识，之后可用于徽章晋升。',theme:'crowd'}:hunt?HUNTS.find(x=>x.id===id):hard?HARD_JOBS.find(x=>x.id===id):MATERIAL_JOBS.find(x=>x.id===kind);
- const key=recruit?'recruit:'+id:hunt?'hunt:'+id:hard?'hard:'+id:kind,cleared=s.activities?.cleared?.[key]||0,max=hunt?Math.min(10000,cleared+1):hard?3:recruit?6:8;
- const required=hard?[120,240,400][tier-1]:hunt?30:recruit?[3,10,30,60,120,220][tier-1]:[3,10,30,60,100,160,240,360][tier-1];
- const valid=Number.isInteger(tier)&&!!job&&(!recruit||COMPANION_IDS.includes(id))&&tier>=1&&tier<=max;
- const exhausted=recruit&&tier<=cleared&&tier<6;const open=valid&&s.highest>=required&&tier<=cleared+1&&!exhausted;
- const level=hard?[70,115,160][tier-1]:hunt?Math.min(160,35+tier*5):recruit?[5,20,40,70,100,130][tier-1]:[8,25,40,60,85,110,135,160][tier-1];
+ const kind=request.kind||'sweep',tier=request.tier===undefined?1:request.tier,id=kind==='recruit'?'all':request.id||'',recruit=kind==='recruit',hunt=kind==='hunt',hard=kind==='hard',job=recruit?{name:'失物追寻',rule:'每日 3 次，每次随机获得一位伙伴的 5 个信物。结算可看广告额外自选 5 个。',theme:'crowd'}:hunt?HUNTS.find(x=>x.id===id):hard?HARD_JOBS.find(x=>x.id===id):MATERIAL_JOBS.find(x=>x.id===kind);
+ const key=recruit?'recruit':hunt?'hunt:'+id:hard?'hard:'+id:kind,cleared=s.activities?.cleared?.[key]||0,max=hunt?Math.min(10000,cleared+1):hard?3:recruit?1:['sweep','escort','parts','polish'].includes(kind)?5:8;
+ const required=hard?[120,240,400][tier-1]:hunt?30:recruit?3:[3,10,30,60,100,160,240,360][tier-1];
+ const valid=Number.isInteger(tier)&&!!job&&(!recruit||!request.id||request.id==='all'||COMPANION_IDS.includes(request.id))&&tier>=1&&tier<=max;
+ const exhausted=recruit&&repeatQuota(s.activities,kind,id,now).remaining===0;const open=valid&&s.highest>=required&&tier<=cleared+1&&!exhausted;
+ const level=hard?[70,115,160][tier-1]:hunt?Math.min(160,35+tier*5):recruit?5:[8,25,40,60,85,110,135,160][tier-1];
  const gearRoute=equipmentRouteInfo(kind,now,request.runeSearch),theme=gearRoute?.runeSearch?'ambush':hunt?job.themes[(tier-1)%3]:job?.theme;
- const quota=repeatQuota(s.activities,kind,id,now),rewardable=tier>cleared||quota.remaining>0;
+ const quota=repeatQuota(s.activities,kind,id,now),rewardable=recruit?quota.remaining>0:tier>cleared||quota.remaining>0;
  return {valid,open,exhausted,quota,rewardable,...gearRoute,request:{kind,id,tier,...(kind==='nightwatch'?{runeSearch:gearRoute.runeSearch}:{})},kind,id,tier,key,cleared,max,required,level,theme,story:recruit?RECRUIT_STORIES[id]||ENCOUNTER_STORIES.crowd:hard&&theme==='burst'?CLOCKWORK_STORY:kind==='escort'?ESCORT_STORY:ENCOUNTER_STORIES[theme]||ENCOUNTER_STORIES.crowd,name:job?.name||'未知委托',rule:(hunt?([...HARD_JOBS].find(x=>x.theme===theme)?.rule):job?.rule)||'',first:tier>cleared,scene:hard?({coldstore:1,lifeline:3,ironwall:3,alarm:2,blackout:5,clockwork:4}[id]):hunt?({market:1,depot:3,station:5}[id]):equipmentRoute(kind)?3:0};
 }
 export function activityReward(info){const n=info.tier,first=info.first,mult=first?2:1,r={gold:0,supplies:0,badges:0,notes:0,seals:0,shards:0,essence:0,scrap:0};
  if(info.rewardable===false)return r;
- if(info.kind==='recruit'){if(!first&&n<6)return r;r.shards=first?[20,12,16,20,24,30][n-1]:6;}
+ if(info.kind==='recruit'){r.shards=5;}
  else if(info.kind==='sweep'){r.notes=(8+n*6)*mult;}
  else if(info.kind==='escort'){r.badges=(2+Math.ceil(n/2))*mult;}
  else if(info.kind==='parts'){r.scrap=24*n+12*Math.max(0,n-4)**2;}
@@ -69,7 +69,7 @@ export function activityReward(info){const n=info.tier,first=info.first,mult=fir
  else if(info.kind==='hard'){r.seals=n*2*mult;}
  return r;
 }
-export function settleActivity(s,info,now=Date.now(),random=Math.random){const current=activityInfo(s,info.request,now);if(!current.open)return null;const r=activityReward(current);s.activities.cleared[info.key]=Math.max(s.activities.cleared[info.key]||0,info.tier);s.activities.wins++;if(current.rewardable&&!current.first)consumeRepeat(s.activities,current.quota);s.gold+=r.gold;s.badges+=r.badges;s.growth.notes+=r.notes;s.growth.seals+=r.seals;s.inventory.materials.scrap+=r.scrap;s.inventory.materials.essence+=r.essence;if(r.shards)s.roster.shards[info.id]+=r.shards;
+export function settleActivity(s,info,now=Date.now(),random=Math.random){const current=activityInfo(s,info.request,now);if(!current.open)return null;const r=activityReward(current);s.activities.cleared[info.key]=Math.max(s.activities.cleared[info.key]||0,info.tier);s.activities.wins++;if(current.rewardable&&(!current.first||current.kind==='recruit'))consumeRepeat(s.activities,current.quota);s.gold+=r.gold;s.badges+=r.badges;s.growth.notes+=r.notes;s.growth.seals+=r.seals;s.inventory.materials.scrap+=r.scrap;s.inventory.materials.essence+=r.essence;if(r.shards){r.companion=COMPANION_IDS[Math.min(7,Math.max(0,Math.floor(random()*8)))];s.roster.shards[r.companion]+=r.shards;s.activities.tokenSerial=(s.activities.tokenSerial||0)+1;r.tokenTicket=s.activities.tokenSerial;s.activities.tokenRewards??=[];s.activities.tokenRewards.push({serial:r.tokenTicket,claimed:false});s.activities.tokenRewards=s.activities.tokenRewards.slice(-30);}
  let gearLoot=null;
  if(current.rewardable&&equipmentRoute(current.kind)){
   // Keep the entered rotation across midnight; reward quotas still use settlement time.
@@ -88,9 +88,9 @@ export function rewardText(r){return [['信物',r.shards],['训练笔记',r.note
 
 export function activityLockReason(s,info){
  if(!info.valid)return '该委托暂未开放';
- if(info.exhausted)return '该难度已完成';
+ if(info.exhausted)return '今日 3 次信物委托已完成，明日 0 点恢复';
  const conditions=[];
  if(s.highest<info.required)conditions.push('通关第 '+info.required+' 关');
- if(info.tier>info.cleared+1)conditions.push('完成难度 '+(info.tier-1));
+ if(info.tier>info.cleared+1)conditions.push((['sweep','escort','parts','polish'].includes(info.kind)?'完成阶段 ':'完成难度 ')+(info.tier-1));
  return conditions.length?conditions.join('，并')+'后解锁':'';
 }

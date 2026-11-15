@@ -1,3 +1,7 @@
+import {TEAM_PLANS,applyTeamPlan,teamPlan} from './team-plans.mjs';
+import {KEEPSAKES,keepsakeIcon} from './keepsakes.mjs';
+import {grantChosenTokens,tokenRewardReady} from './token-rewards.mjs';
+import {createRewardedService} from './wechat/src/rewarded-ad.mjs';
 import {styleValue,attributeValue,textValue,classValue,propertyValue} from './render-writes.mjs';
 import {GROWTH_SAVE_KEY} from './growth-curve.mjs';
 import {growthGuideHTML,nextGrowth} from './growth-guide.mjs';
@@ -66,7 +70,7 @@ function audioSettings(){gameAudio.configure({music:state.music,effects:state.so
 function sound(kind,details){audioSettings();gameAudio.play(kind,details);}
 document.addEventListener('pointerdown',()=>{audioSettings();gameAudio.unlock();},{passive:true});
 document.addEventListener('keydown',()=>{audioSettings();gameAudio.unlock();});
-document.addEventListener('click',e=>{if(e.target.closest('button'))sound('click');});
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.disabled)sound(b.dataset.tab?'nav-'+b.dataset.tab:'click');});
 const guideLayer=document.createElement('div');guideLayer.id='new-player-guide';document.body.append(guideLayer);
 let guideLast=-1,guideTarget=null;
 function guideActive(){return state.onboarded&&!!GUIDE[state.guideStep];}
@@ -99,7 +103,7 @@ function skipGuide(){
  if(waiting){changeTab('battle');startBattle();}
 }
 function renderGuide(){
- const step=state.guideStep,g=GUIDE[step];guideLayer.hidden=resourceLoading||!g||!state.onboarded||!!(modalType&&modalType!=='equipment'&&!(state.guideStep>=14&&['arena','street'].includes(modalType)));if(guideLayer.hidden){guideTarget?.classList.remove('guide-active-target');return;}guideLayer.dataset.mode=g.mode;
+ const step=state.guideStep,g=GUIDE[step];guideLayer.hidden=!!state.battleReport||resourceLoading||!g||!state.onboarded||!!(modalType&&modalType!=='equipment'&&!(state.guideStep>=14&&['arena','street'].includes(modalType)));if(guideLayer.hidden){guideTarget?.classList.remove('guide-active-target');return;}guideLayer.dataset.mode=g.mode;
  if(guideLast!==step){guideLast=step;guideTarget?.classList.remove('guide-active-target');guideTarget=null;guideLayer.innerHTML='<div class="guide-focus"><span class="guide-target-label">点击这里</span></div><section class="guide-card" role="status" aria-live="polite"><small>'+(step>=14?'装备引导 '+(step<=19?step-13:step-19)+' / '+(step<=19?6:4):'新手引导 '+guideNumber(step)+' / 11')+'</small><b>'+g.title+'</b><p>'+g.text+'</p>'+(g.mode==='info'?'<span class="guide-continue">点击任意位置继续</span>':'')+'<button id="guide-recover" hidden>返回当前引导</button><button id="guide-skip">跳过教学</button></section>';$('#guide-skip').onclick=skipGuide;$('#guide-recover').onclick=restoreGuide;}
  const target=document.querySelector(state.guideStep===21&&state.gearGuideItem?'.equipment-bag [data-gear="'+state.gearGuideItem+'"]':g.target),focus=guideLayer.querySelector('.guide-focus'),card=guideLayer.querySelector('.guide-card'),shell=$('.game-shell').getBoundingClientRect();
  const available=target&&target.getClientRects().length>0;
@@ -117,11 +121,11 @@ let guidePointerStep=null,guideConsumedPointer=false;
 document.addEventListener('pointerdown',()=>{guidePointerStep=state.guideStep;guideConsumedPointer=false;},true);
 document.addEventListener('pointerup',e=>{
  const g=GUIDE[state.guideStep];
- if(e.button!==0||guidePointerStep!==state.guideStep||resourceLoading||!state.onboarded||g?.mode!=='info'||e.target.closest('#guide-skip,#guide-recover')||modalType&&modalType!=='equipment'&&!(state.guideStep>=14&&['arena','street'].includes(modalType)))return;
+ if(state.battleReport||e.button!==0||guidePointerStep!==state.guideStep||resourceLoading||!state.onboarded||g?.mode!=='info'||e.target.closest('#guide-skip,#guide-recover')||modalType&&modalType!=='equipment'&&!(state.guideStep>=14&&['arena','street'].includes(modalType)))return;
  e.preventDefault();e.stopImmediatePropagation();guideConsumedPointer=true;
  if(state.guideStep===6)forceClose();guideEvent('continue');
 },true);
-document.addEventListener('click',e=>{if(guideConsumedPointer&&e.detail!==0){guideConsumedPointer=false;e.preventDefault();e.stopImmediatePropagation();return;}const g=GUIDE[state.guideStep];if(resourceLoading||!g||!state.onboarded)return;if(e.target.closest('#guide-skip,#guide-recover')||modalType&&modalType!=='equipment'&&!(state.guideStep>=14&&['arena','street'].includes(modalType)))return;if(g.mode==='info'){e.preventDefault();e.stopImmediatePropagation();if(state.guideStep===6)forceClose();guideEvent('continue');return;}const target=document.querySelector(state.guideStep===21&&state.gearGuideItem?'.equipment-bag [data-gear="'+state.gearGuideItem+'"]':g.target);if(!target?.contains(e.target)){e.preventDefault();e.stopImmediatePropagation();}},true);
+document.addEventListener('click',e=>{if(state.battleReport)return;if(guideConsumedPointer&&e.detail!==0){guideConsumedPointer=false;e.preventDefault();e.stopImmediatePropagation();return;}const g=GUIDE[state.guideStep];if(resourceLoading||!g||!state.onboarded)return;if(e.target.closest('#guide-skip,#guide-recover')||modalType&&modalType!=='equipment'&&!(state.guideStep>=14&&['arena','street'].includes(modalType)))return;if(g.mode==='info'){e.preventDefault();e.stopImmediatePropagation();if(state.guideStep===6)forceClose();guideEvent('continue');return;}const target=document.querySelector(state.guideStep===21&&state.gearGuideItem?'.equipment-bag [data-gear="'+state.gearGuideItem+'"]':g.target);if(!target?.contains(e.target)){e.preventDefault();e.stopImmediatePropagation();}},true);
 document.addEventListener('click',e=>{if(e.target.closest('[data-tab="cats"]'))guideEvent('companions');else if(e.target.closest('[data-crew-mode="equipment"]'))guideEvent('equipment');else if(e.target.closest('[data-tab="battle"]'))guideEvent('battle');else if(e.target.closest('[data-tab="map"]'))guideEvent('map');});
 function renderHeader(){ renderGrowthRun(); $$('[data-wallet-gold]').forEach(n=>n.textContent=Math.floor(state.gold).toLocaleString('zh-CN'));$$('[data-wallet-badges]').forEach(n=>n.textContent=fmt(state.badges));$('#cats-count').textContent=unlocked(state).length+'/8';const ready=QUESTS.filter(q=>!state.claimed.includes(q.id)&&questValue(state,q)>=q.goal);districtTools.querySelector('#quest-dot').hidden=!ready.length;$('#power').textContent=fmt(power(state));renderFishStall();$('#speed').textContent='×'+state.speed;
  const next=nextGrowth(state,battle);$('#objective-text').textContent=next.title+(ready.length?' · 成长奖励可领':'');
@@ -134,7 +138,7 @@ function train(id,count=1){const before=catStats(state,id),beforePower=power(sta
 function renderStageHeader(){
  const stage=battle?.stage||state.stage,q=battle?.activity,ci=Math.floor((stage-1)/20),c=CHAPTERS[ci%6];
  $('#scene-caption').textContent='';
- const sceneHTML=q?commissionScene(q):sceneSVG(ci%6),scene=$('#scene');if(scene._paintedHTML!==sceneHTML){scene.innerHTML=sceneHTML;scene._paintedHTML=sceneHTML;}$('#battle-label').textContent=q?q.name+' · '+'难度 '+q.tier:battle?.weekly?`${battle.weekly.name} · 难度 ${battle.weekly.tier}`:battle?.mode==='arena'?`第 ${battle.arenaTier} 擂 · ${battle.arenaRule.name}`:`第 ${stage} 关 · ${chapterOf(stage).name}${stage%5===0?' · 首领':''}`;
+ const sceneHTML=q?commissionScene(q):sceneSVG(ci%6),scene=$('#scene');if(scene._paintedHTML!==sceneHTML){scene.innerHTML=sceneHTML;scene._paintedHTML=sceneHTML;}$('#battle-label').textContent=q?q.name+(q.kind==='recruit'?'':' · '+(['sweep','escort','parts','polish'].includes(q.kind)?'阶段 ':'难度 ')+q.tier):battle?.weekly?`${battle.weekly.name} · 难度 ${battle.weekly.tier}`:battle?.mode==='arena'?`第 ${battle.arenaTier} 擂 · ${battle.arenaRule.name}`:`第 ${stage} 关 · ${chapterOf(stage).name}${stage%5===0?' · 首领':''}`;
 }
 // Flat side-on composition: the leading hero is nearest the enemy column.
 function sizeActors(){
@@ -242,7 +246,7 @@ function onBattleEnd(){
  state.battleReport=report;persist();renderHeader();renderParty();renderVitals();showBattleReport();
 }
 let resultItemTrigger=null;
-function showBattleReport(){if(!state.battleReport)return;running=false;resultItemTrigger=null;resultLayer.innerHTML=resultHTML(state.battleReport,state.inventory.items);resultLayer.hidden=false;resultLayer.querySelector('.battle-result').focus({preventScroll:true});}
+function showBattleReport(){if(!state.battleReport)return;tokenSelected='';running=false;resultItemTrigger=null;resultLayer.innerHTML=resultHTML(state.battleReport,state.inventory.items);resultLayer.hidden=false;resultLayer.querySelector('.battle-result').focus({preventScroll:true});}
 function openResultItem(html,trigger){
  const overlay=resultLayer.querySelector('.result-inspect'),card=overlay.querySelector('.result-item'),report=resultLayer.querySelector('.battle-result');
  resultItemTrigger=trigger;card.querySelector('.result-item-content').innerHTML=html;overlay.hidden=false;card.scrollTop=0;
@@ -254,7 +258,7 @@ function closeResultItem(){
  (resultItemTrigger?.isConnected?resultItemTrigger:report).focus({preventScroll:true});resultItemTrigger=null;
 }
 function reportRequest(r){return r.mode==='activity'?{activity:{kind:r.route.group==='materials'?r.route.id:r.route.group,id:r.route.group==='materials'?'':r.route.id,tier:r.route.tier,runeSearch:r.route.runeSearch===true}}:r.mode==='patrol'?{entrance:true}:r.request||{};}
-function dismissReport(action){const r=state.battleReport;if(!r)return;state.battleReport=null;persist();resultLayer.hidden=true;resultLayer.innerHTML='';resultItemTrigger=null;
+function dismissReport(action){const r=state.battleReport;if(!r||tokenAdPending)return;state.battleReport=null;persist();resultLayer.hidden=true;resultLayer.innerHTML='';resultItemTrigger=null;
  if(state.gearGuide===2&&r.win&&r.gearUid){state.gearGuideItem=r.gearUid;if(maybeGearGuide(true))return;}
  if(action==='retry'){forceClose();changeTab('battle');startBattle(reportRequest(r));return;}
  if(action==='crew'){forceClose();$('#battle-message').innerHTML='<button id="resume-challenge">再挑战</button>';$('#resume-challenge').onclick=()=>startBattle(reportRequest(r));crewMode='formation';changeTab('cats');return;}
@@ -266,6 +270,7 @@ function dismissReport(action){const r=state.battleReport;if(!r)return;state.bat
 resultLayer.addEventListener('click',e=>{
  const r=state.battleReport;if(!r)return;const overlay=resultLayer.querySelector('.result-inspect');
  if(!overlay.hidden){if(e.target===overlay||e.target.closest('[data-result-item-close]'))closeResultItem();return;}
+ const pick=e.target.closest('[data-token-select]');if(pick){tokenSelected=pick.dataset.tokenSelect;resultLayer.querySelectorAll('[data-token-select]').forEach(b=>b.setAttribute('aria-pressed',String(b===pick)));resultLayer.querySelector('[data-token-watch]').textContent='看广告 · 领取'+cat(tokenSelected).name+'信物 ×5';return;}if(e.target.closest('[data-token-watch]')){watchTokenReward();return;}
  const material=e.target.closest('[data-result-material]'),gear=e.target.closest('[data-result-gear]');
  if(material){const key=material.dataset.resultMaterial;openResultItem(materialIcon(key,62,r.companion)+'<h3>'+esc(key==='shards'&&cat(r.companion)?cat(r.companion).name+'的信物':MATERIAL_NAMES[key])+'</h3><p>'+esc(MATERIAL_INFO[key]?.description||'')+'</p>',material);return;}
  if(gear){const item=state.inventory.items.find(x=>x.id===r.gearUid);openResultItem(resultGearHTML(item),gear);return;}
@@ -282,6 +287,7 @@ function renderCats(){
  scroller.innerHTML='<div class="view-padding crew-view" data-mode="'+crewMode+'"><div class="crew-modes"><span class="club-can" aria-hidden="true">'+icon('can',23)+'</span>'+modes.map(([id,name])=>'<button data-crew-mode="'+id+'" aria-pressed="'+(crewMode===id)+'">'+name+'</button>').join('')+'</div>'+'<div class="crew-wallet" aria-label="持有鱼币">'+icon('coin',18)+'<b data-wallet-gold>'+Math.floor(state.gold).toLocaleString('zh-CN')+'</b><span>鱼币</span></div>'+(crewMode==='formation'?crewFormationHTML(state):'<div class="crew-avatar-rail" id="crew-roster" aria-label="选择伙伴">'+crewRosterHTML(state,selectedCrew)+'</div><div id="crew-detail">'+(crewMode==='equipment'?crewEquipmentHTML(state,selectedCrew,bagView):crewProfileHTML(state,selectedCrew))+'</div>')+'</div>';
 
  $$('[data-crew-mode]').forEach(b=>b.onclick=()=>{crewMode=b.dataset.crewMode;bagView.page=0;scroller.scrollTop=0;renderCats();});
+ $$('[data-team-plan]').forEach(b=>b.onclick=()=>{applyTeamPlan(state,b.dataset.teamPlan);persist();renderHeader();restartWithCrew();renderCats();toast('已上阵结识的伙伴，空位等待新伙伴加入');});
  if(crewMode==='formation')disposeFormation=bindFormationDrag($('.crew-formation'),{scrollElement:scroller,onDrop:equipCrew,onRemove:benchCrew,describe:(id,slot)=>formationDropText(state,id,slot)});
  else{
   $('#crew-roster').scrollLeft=railScroll;$('#crew-detail').scrollTop=detailScroll;if($('.equipment-bag .gear-list'))$('.equipment-bag .gear-list').scrollTop=bagScroll;
@@ -342,8 +348,12 @@ function bindEquipment(){
 }
 function renderRelics(){
  $('#other-view').innerHTML=inventoryHTML(state,bagView);
- $$('[data-bag-tab]').forEach(b=>b.onclick=()=>{bagView.tab=b.dataset.bagTab;bagView.page=0;renderRelics();});bindEquipment();
+ $$('[data-bag-tab]').forEach(b=>b.onclick=()=>{bagView.tab=b.dataset.bagTab;bagView.page=0;renderRelics();});$$('[data-keepsake]').forEach(b=>b.onclick=()=>showKeepsake(b.dataset.keepsake,b));bindEquipment();
 }
+function showKeepsake(id,anchor){const data=KEEPSAKES[id];if(!data)return;const have=state.roster.shards[id]||0,owned=ownsCompanion(state,id);gearAnchor=anchor?.getBoundingClientRect();openModal('keepsake',`${keepsakeIcon(id,64)}<h2 id="modal-title">${data[1]}</h2><p>${data[0]}的信物。${data[2]}</p><b>持有 ${have} / ${owned?'升阶所需信物':20}</b><button id="keepsake-invite" class="primary wide" ${!owned&&have<20?'disabled':''}>${owned?'查看伙伴升阶':'邀入远征队'}</button><button id="keepsake-source" class="secondary wide">前往失物追寻</button>`);positionGearCard();$('#keepsake-invite').onclick=()=>{if(owned){showCatTag(id);return;}if(recruitCompanion(state,id)){persist();renderHeader();renderRelics();showRecruit(cat(id));}};$('#keepsake-source').onclick=()=>{forceClose();streetView.detail=true;openStreet('recruit','all');};}
+const tokenAds=createRewardedService(globalThis.wx||{},globalThis.CAN_CLUB_REWARDED_AD_UNIT_ID||'');
+let tokenSelected='',tokenAdPending=false;
+async function watchTokenReward(){const report=state.battleReport,owner=state;if(tokenAdPending||!report||!KEEPSAKES[tokenSelected]||!tokenRewardReady(state,report.tokenTicket))return;const status=resultLayer.querySelector('[data-token-status]');if(!tokenAds.available){status.textContent='当前试玩未接入微信广告，随机信物已正常入包。';return;}tokenAdPending=true;const id=tokenSelected,ticket=report.tokenTicket;try{const result=await tokenAds.watch();if(state===owner&&grantChosenTokens(state,ticket,id,result.completed)){persist();if(state.battleReport===report)showBattleReport();}else if(status?.isConnected)status.textContent=result.completed?'该奖励已领取':'未完整看完视频，不发放自选奖励。';}finally{tokenAdPending=false;}}
 let gearAnchor=null;
 function showGear(uid,anchor=null){
  const e=state.inventory.items.find(e=>e.id===uid);if(!e)return;if(anchor)gearAnchor=anchor.getBoundingClientRect();openModal('equipment',gearDetailHTML(state,uid,bagView.cat));positionGearCard();guideEvent('gear');
@@ -480,4 +490,4 @@ if(false&&'serviceWorker' in navigator&&location.protocol==='https:'){
  navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>{reg.update().catch(()=>{});return navigator.serviceWorker.ready;}).then(()=>{swReady=true;}).catch(()=>{});
 }
 
-document.addEventListener('click',e=>{const button=e.target.closest('[data-material-info]');if(!button)return;const key=button.dataset.materialInfo,id=button.dataset.materialCompanion,info=MATERIAL_INFO[key];if(!info)return;gearAnchor=button.getBoundingClientRect();const name=key==='shards'?cat(id).name+'的信物':MATERIAL_NAMES[key];openModal('material',`<div class="material-info-card">${materialIcon(key,38,id)}<h2 id="modal-title">${name}</h2><p>${info.description}</p>${info.source?`<p>${info.source}</p>`:""}<small>当前持有：${materialHave(state,key,id)}</small>${info.group?`<button id="material-go" class="primary wide">前往获取</button>`:""}</div>`);positionGearCard();if($('#material-go'))$('#material-go').onclick=()=>{forceClose();streetView.detail=true;openStreet(info.group,key==='shards'?id:info.route);};});
+document.addEventListener('click',e=>{const button=e.target.closest('[data-material-info]');if(!button)return;const key=button.dataset.materialInfo,id=button.dataset.materialCompanion,info=MATERIAL_INFO[key];if(!info)return;if(key==='shards'&&KEEPSAKES[id]){showKeepsake(id,button);return;}gearAnchor=button.getBoundingClientRect();const name=key==='shards'?cat(id).name+'的信物':MATERIAL_NAMES[key];openModal('material',`<div class="material-info-card">${materialIcon(key,38,id)}<h2 id="modal-title">${name}</h2><p>${info.description}</p>${info.source?`<p>${info.source}</p>`:""}<small>当前持有：${materialHave(state,key,id)}</small>${info.group?`<button id="material-go" class="primary wide">前往获取</button>`:""}</div>`);positionGearCard();if($('#material-go'))$('#material-go').onclick=()=>{forceClose();streetView.detail=true;openStreet(info.group,key==='shards'?id:info.route);};});

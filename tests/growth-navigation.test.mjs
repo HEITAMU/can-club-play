@@ -47,12 +47,12 @@ test('every active special mode names the current challenge and finished or aban
  const weekly=new Battle(s,{weeklyTier:1});assert.equal(nextGrowth(s,weekly).title,'正在挑战'+weekly.weekly.name);
 });
 test('star suggestions disappear when materials are spent, cap is reached, or the battle takes priority',()=>{
- const s=initialState();s.highest=3;s.activities.cleared.salvage=1;s.guidance.equipmentWorn=true;s.roster.shards.ink=4;s.growth.notes=6;
+ const s=initialState();s.highest=3;s.activities.cleared.salvage=1;s.guidance.equipmentWorn=true;s.roster.shards.ink=10;s.growth.notes=6;
  assert.equal(nextGrowth(s).action,'cat-tag');assert.equal(nextGrowth(s).id,'ink');assert.match(growthGuideHTML(s),/data-growth-cat="ink"/);
  assert.equal(GrowthAscend(s,'ink'),true);assert.equal(nextGrowth(s).action,'battle');
- s.roster.stars.ink=5;s.roster.shards.ink=1000;s.growth.notes=1000;assert.equal(nextGrowth(s).action,'battle');
+ s.roster.stars.ink=9;s.roster.shards.ink=1000;s.growth.notes=1000;assert.equal(nextGrowth(s).action,'battle');
  const lost=new Battle(s);lost.result='lose';assert.equal(nextGrowth(s,lost).id,'orange');
- s.roster.stars.orange=5;assert.equal(nextGrowth(s,lost).action,'equipment');
+ s.roster.stars.orange=9;assert.equal(nextGrowth(s,lost).action,'equipment');
 });
 import {ascendCompanion as GrowthAscend} from '../core.mjs';
 test('completed legacy equipment teaching and learned actions do not start another equipment lesson',()=>{

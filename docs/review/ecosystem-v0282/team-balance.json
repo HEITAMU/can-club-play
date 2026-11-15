@@ -1,0 +1,125 @@
+{
+  "scope": "Comparison fixture: all eight owned, level five, initial gear, only carry quality changed. Mainline no can, commissions can on cooldown. Not an earned-save or retention forecast.",
+  "rows": [
+    {
+      "plan": "ink",
+      "carryQuality": 0,
+      "wall": 60,
+      "activities": {
+        "salvage": "win",
+        "wardrobe": "win",
+        "nightwatch": "win",
+        "sweep": "win",
+        "escort": "win",
+        "parts": "win",
+        "polish": "win",
+        "recruit": "win"
+      }
+    },
+    {
+      "plan": "ink",
+      "carryQuality": 1,
+      "wall": 100,
+      "activities": {
+        "salvage": "win",
+        "wardrobe": "win",
+        "nightwatch": "win",
+        "sweep": "win",
+        "escort": "win",
+        "parts": "win",
+        "polish": "win",
+        "recruit": "win"
+      }
+    },
+    {
+      "plan": "ink",
+      "carryQuality": 2,
+      "wall": 140,
+      "activities": {
+        "salvage": "win",
+        "wardrobe": "win",
+        "nightwatch": "win",
+        "sweep": "win",
+        "escort": "win",
+        "parts": "win",
+        "polish": "win",
+        "recruit": "win"
+      }
+    },
+    {
+      "plan": "ink",
+      "carryQuality": 3,
+      "wall": 220,
+      "activities": {
+        "salvage": "win",
+        "wardrobe": "win",
+        "nightwatch": "win",
+        "sweep": "win",
+        "escort": "win",
+        "parts": "win",
+        "polish": "win",
+        "recruit": "win"
+      }
+    },
+    {
+      "plan": "pudding",
+      "carryQuality": 0,
+      "wall": 80,
+      "activities": {
+        "salvage": "win",
+        "wardrobe": "win",
+        "nightwatch": "win",
+        "sweep": "win",
+        "escort": "win",
+        "parts": "win",
+        "polish": "win",
+        "recruit": "win"
+      }
+    },
+    {
+      "plan": "pudding",
+      "carryQuality": 1,
+      "wall": 120,
+      "activities": {
+        "salvage": "win",
+        "wardrobe": "win",
+        "nightwatch": "win",
+        "sweep": "win",
+        "escort": "win",
+        "parts": "win",
+        "polish": "win",
+        "recruit": "win"
+      }
+    },
+    {
+      "plan": "pudding",
+      "carryQuality": 2,
+      "wall": 160,
+      "activities": {
+        "salvage": "win",
+        "wardrobe": "win",
+        "nightwatch": "win",
+        "sweep": "win",
+        "escort": "win",
+        "parts": "win",
+        "polish": "win",
+        "recruit": "win"
+      }
+    },
+    {
+      "plan": "pudding",
+      "carryQuality": 3,
+      "wall": 300,
+      "activities": {
+        "salvage": "win",
+        "wardrobe": "win",
+        "nightwatch": "win",
+        "sweep": "win",
+        "escort": "win",
+        "parts": "win",
+        "polish": "win",
+        "recruit": "win"
+      }
+    }
+  ]
+}

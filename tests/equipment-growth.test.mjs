@@ -22,11 +22,11 @@ test('gear carries late attack and health growth while defense and crit stay bou
  for(let tier=1;tier<=6;tier++){const e=E.generateGear(tier,1,{slot:'claw',set:'hunt',quality:3});e.tier=tier;let last=0;for(let n=0;n<=15;n++){e.enhance=n;const attack=E.gearValues(e).atk;assert.ok(attack>last);last=attack;}}
 });
 test('actual endgame battle produces million-scale character damage without modifying combatant stats',()=>{
- const s=developed();s.party=['orange','pudding','bolt','ink','spark'];const b=new G.Battle(s,{stage:G.MAX_STAGE,seed:527});let maximum=0;
+ const s=developed();s.party=['orange','pudding','bolt','ink','spark'];for(const id of s.party)s.roster.stars[id]=9;const b=new G.Battle(s,{activity:{kind:'hard',id:'ironwall',tier:3},seed:527});let maximum=0;
  while(!b.result){for(const e of b.tick(.1))if(e.type==='hit'&&!e.rescue&&e.from?.startsWith('p'))maximum=Math.max(maximum,e.value);if(b.canCd===0)b.openCan();}
  assert.equal(b.result,'win');assert.ok(maximum>=1_000_000);assert.ok(maximum<100_000_000);
  const undergeared=structuredClone(s);for(const e of undergeared.inventory.items)if(e.slot!=='rune'){e.enhance=0;e.subs.forEach(a=>a.growth=0);}
- const weak=new G.Battle(undergeared,{stage:G.MAX_STAGE,seed:527});while(!weak.result){weak.tick(.1);if(weak.canCd===0)weak.openCan();}assert.equal(weak.result,'lose');
+ const weak=new G.Battle(undergeared,{activity:{kind:'hard',id:'ironwall',tier:3},seed:527});while(!weak.result){weak.tick(.1);if(weak.canCd===0)weak.openCan();}assert.equal(weak.result,'lose');
 });
 test('only enhanced ordinary equipment receives a shared +1 to +15 corner label',()=>{
  const e=E.generateGear(1,600,{slot:'claw',quality:3});assert.ok(!equipmentSVG(e).includes('gear-enhance-badge'));

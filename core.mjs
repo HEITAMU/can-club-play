@@ -67,7 +67,7 @@ export const QUESTS=[
  {id:'half',name:'走到霓虹尽头',desc:'通过第 60 关',key:'highest',goal:60,reward:6000},
  {id:'end',name:'月光罐头收藏家',desc:'通过第 120 关',key:'highest',goal:120,reward:16000}
 ];
-export function initialState(now=Date.now()){return {...normalizeProgression({},CATS.map(c=>c.id)),inventory:createInventory(CATS.map(c=>c.id)),roster:newRoster(),growth:normalizeGrowth(),activities:normalizeActivities(),campaign:normalizeCampaign(),adRewards:normalizeAdRewards(),version:VERSION,growthRevision:GROWTH_REVISION,growthRebalancePending:false,guidance:{equipmentWorn:false},gold:200,levels:Object.fromEntries(CATS.map(c=>[c.id,1])),party:['orange','ink'],stage:1,runCleared:0,highest:0,bones:0,prestiges:0,relics:{},pending:null,claimed:[],wins:0,bosses:0,kills:0,upgrades:0,relicCount:0,idle:0,idleRemainder:0,idleSupplies:0,supplyRemainder:0,supplyClock:2,battleReport:null,lastAccrued:now,onboarded:false,auto:true,speed:1,sound:true,music:true,gearGuide:0,gearGuideItem:'',guideStep:0,rescueSeen:false,created:now,seconds:0};}
+export function initialState(now=Date.now()){return {...normalizeProgression({},CATS.map(c=>c.id)),inventory:createInventory(CATS.map(c=>c.id)),roster:newRoster(),growth:normalizeGrowth(),activities:normalizeActivities(),campaign:normalizeCampaign(),adRewards:normalizeAdRewards(),version:VERSION,growthRevision:GROWTH_REVISION,growthRebalancePending:false,guidance:{equipmentWorn:false},gold:200,levels:Object.fromEntries(CATS.map(c=>[c.id,1])),party:['orange','ink'],stage:1,runCleared:0,highest:0,bones:0,prestiges:0,relics:{},pending:null,claimed:[],wins:0,bosses:0,kills:0,upgrades:0,relicCount:0,idle:0,idleRemainder:0,idleSupplies:0,supplyRemainder:0,supplyClock:2,battleReport:null,lastAccrued:now,onboarded:false,teamPlan:'ink',auto:true,speed:1,sound:true,music:true,gearGuide:0,gearGuideItem:'',guideStep:0,rescueSeen:false,created:now,seconds:0};}
 export const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const num=(v,d=0,a=0,b=1e12)=>typeof v==='number'&&Number.isFinite(v)?clamp(v,a,b):d;
 export function unlocked(s){return CATS.filter(c=>owns(s,c.id));}
@@ -82,7 +82,7 @@ export function normalizeState(raw,now=Date.now()){
  const s=initialState(now);s.adRewards=normalizeAdRewards(raw.adRewards);s.campaign=normalizeCampaign(raw.campaign);Object.assign(s,normalizeProgression(raw,CATS.map(c=>c.id)));
  for(const k of ['gold','bones','prestiges','wins','bosses','kills','upgrades','relicCount','seconds'])s[k]=Math.floor(num(raw[k]));
  s.highest=Math.floor(num(raw.highest,0,0,MAX_STAGE));s.runCleared=Math.floor(num(raw.runCleared,0,0,s.highest));s.stage=Math.min(MAX_STAGE,s.runCleared+1);
- s.roster=normalizeRoster(raw.roster,CATS,s.highest);s.growth=normalizeGrowth(raw.growth);s.activities=normalizeActivities(raw.activities);if(raw.activities&&raw.activities.rewardVersion!==1){for(const c of CATS){const cleared=s.activities.cleared["recruit:"+c.id]||0;for(let n=1;n<=cleared;n++)s.roster.shards[c.id]+=[20,12,16,20,24,30][n-1]-(2+Math.ceil(n/2))*2;}}
+ s.teamPlan=raw.teamPlan==='pudding'?'pudding':'ink';s.roster=normalizeRoster(raw.roster,CATS,s.highest);s.growth=normalizeGrowth(raw.growth);s.activities=normalizeActivities(raw.activities);if(raw.activities&&![1,2].includes(raw.activities.rewardVersion)){for(const c of CATS){const cleared=s.activities.cleared["recruit:"+c.id]||0;for(let n=1;n<=cleared;n++)s.roster.shards[c.id]+=[20,12,16,20,24,30][n-1]-(2+Math.ceil(n/2))*2;}}
  for(const c of CATS)s.levels[c.id]=Math.floor(num(raw.levels?.[c.id],1,1,levelCap(s,c.id)));
  s.rescueSeen=raw.rescueSeen===true;s.battleReport=normalizeReport(raw.battleReport);if(s.battleReport?.mode==='patrol')s.battleReport=null;s.idleSupplies=Math.floor(num(raw.idleSupplies,0,0,100000));s.supplyRemainder=Math.floor(num(raw.supplyRemainder,0,0,raw.supplyClock===2?599999:59999)*(raw.supplyClock===2?1:10));
  const available=unlocked(s).map(c=>c.id),seen=new Set();s.party=Array.isArray(raw.party)?raw.party.filter(id=>id===null||available.includes(id)&&!seen.has(id)&&seen.add(id)).slice(0,MAX_PARTY):s.party;while(s.party.length&&!s.party.at(-1))s.party.pop();if(!s.party.some(Boolean))s.party=['orange'];
@@ -105,7 +105,7 @@ export function removeParty(s,id){
  s.party=s.party.map(x=>x===id?null:x);while(s.party.length&&!s.party.at(-1))s.party.pop();return true;
 }
 // Old all-party relic stacks are retired; all combat equipment is character-owned.
-export function buffs(){return {atk:1,hp:1,crit:10,regen:0,canCd:8,gold:1,idle:1,reflect:0,shield:0,energy:0,burn:0,boss:1};}
+export function buffs(){return {atk:1,hp:1,crit:10,regen:0,canCd:5.6,gold:1,idle:1,reflect:0,shield:0,energy:0,burn:0,boss:1};}
 export function catStats(s,id,equipment=null){const c=CATS.find(c=>c.id===id),l=s.levels[id]||1,g=equipment||gearBonuses(s,id),stars=s.roster?.stars?.[id]||0,base=heroCombatStats(id,l);
  const grow=value=>[trainingPower(l),100,100+8*s.bones,10000+tagBonus(s,id)].reduce((n,p,i)=>mulDiv(n,p,i===3?10000:100),value);
  return {...base,armor:base.armor+g.armor,magicResist:base.magicResist+g.magicResist,armorPen:base.armorPen+g.armorPen,magicPen:base.magicPen+g.magicPen,hp:mulDiv(grow(c.hp),100+g.hp),atk:mulDiv(grow(c.atk),100+g.atk),crit:Math.min(80,10+g.crit+(id==='ink'&&l>=5?15:0)),level:l,stars,skillRank:s.breakthroughs?.[id]||0,gear:g};
@@ -129,23 +129,18 @@ export function prestige(){return 0;}
 export function chapterOf(stage){return CHAPTERS[Math.floor((stage-1)/20)%CHAPTERS.length];}
 // Fixed progression curve, independent of the player's level or chosen formation.
 // The first three encounters remain an entry path to companion contracts.
-export function patrolPressure(stage){
- const curve=[[3,1,1],[20,1.25,1.1],[60,1.35,1.3],[120,1.45,1.45],[300,1.5,1.6],[600,1.5,1.7]];
- if(stage<=3)return {hp:1,atk:1};
- for(let i=1;i<curve.length;i++){const [end,hp,atk]=curve[i],[start,prevHp,prevAtk]=curve[i-1];if(stage<=end){const t=(stage-start)/(end-start);return {hp:prevHp+(hp-prevHp)*t,atk:prevAtk+(atk-prevAtk)*t};}}
- return {hp:1.5,atk:1.7};
-}
-export function enemiesFor(stage){const progress=encounterProgress(stage),boss=stage%5===0,ch=chapterOf(stage),m=(1+.14*(Math.min(progress,120)-1)+.0046*(Math.min(progress,120)-1)**2)*(1+.007*Math.max(0,progress-120)+.00002*Math.max(0,progress-120)**2),ci=Math.floor((stage-1)/20);const list=[];
+export function patrolPressure(){return {hp:1,atk:1};}
+export function enemiesFor(stage){const progress=encounterProgress(stage),boss=stage%5===0,ch=chapterOf(stage),m=1+.1*(stage-1),ci=Math.floor((stage-1)/20);const list=[];
  const mob=(type,index)=>({id:'e'+index,type,name:names[type],maxHp:Math.round((type==='box'?115:type==='bag'?78:90)*m),atk:Math.round((type==='battery'?13:9)*m),boss:false});
  if(boss){const chapterBoss=stage%20===0;list.push({id:'e0',type:ch.type,name:chapterBoss?ch.boss:['扫街队长','捣蛋头目','罐头大盗'][Math.floor((stage%20)/5)-1]+' · '+ch.boss,maxHp:Math.round((chapterBoss?345:275)*m),atk:Math.round((chapterBoss?16:13)*m),boss:true});if(stage>=15){const count=chapterBoss?4:1;for(let i=1;i<=count;i++){const escort=mob(MOB_TYPES[(ci+i)%6],i);if(count===4){escort.maxHp=Math.round(escort.maxHp*.38);escort.atk=Math.max(1,Math.round(escort.atk*.38));}list.push(escort);}}}
  else {const count=stage===1?1:stage>=16&&stage%4===0?5:stage>=12&&stage%3===0?3:2;for(let i=0;i<count;i++){const e=mob(MOB_TYPES[(stage+ci-1+i)%6],i);if(count===5){e.maxHp=Math.round(mulDiv(e.maxHp,48));e.atk=Math.max(1,Math.round(mulDiv(e.atk,48)));}list.push(e);}}
- const pressure=patrolPressure(progress),equipment=equipmentEncounterScale(progress);
- return list.map(e=>({...e,maxHp:Math.round(Math.round(e.maxHp*(1+(Math.max(0,progress-120)/200)**2)*pressure.hp)*equipment.hp),atk:Math.round(Math.round(e.atk*pressure.atk)*equipment.atk),...enemyCombatStats(e.type,Math.ceil(progress),e.boss)}));
+ const pressure=patrolPressure(progress),equipment={hp:1,atk:1};
+ return list.map(e=>({...e,maxHp:Math.round(Math.round(e.maxHp*pressure.hp)*equipment.hp),atk:Math.round(Math.round(e.atk/m*(1+.035*(stage-1))*pressure.atk)*equipment.atk),...enemyCombatStats(e.type,Math.ceil(progress),e.boss)}));
 }
 export function arenaEnemies(tier){const info=arenaInfo(tier),level=8+(tier-1)*7,m=(1+.18*(level-1))*(1+.08*Math.floor(level/10)),types=['box','mop','bag','battery','drone'];return types.map((type,i)=>{const boss=info.type==='burst'&&i===0;return {id:'e'+i,type,name:(boss?'擂台蓄力王':names[type]),maxHp:Math.round((i<2?180:105)*m*(boss?1.4:1)),atk:Math.round((i<2?13:10)*m),boss,...enemyCombatStats(type,15+tier*4,boss),...(info.type==='iron'&&i<2?{armor:110+tier*4,magicResist:12}:{}),arenaHealer:info.type==='recovery'&&i===2,nextHeal:2};});}
 export class Battle {
  constructor(s,{stage=s.stage,farm=false,arenaTier=0,weeklyTier=0,activity=null,now=Date.now(),seed=stage*173+s.wins*29+37}={}){
-  this.activity=activity?activityInfo(s,activity):null;if(this.activity&&!this.activity.open)throw Error('此委托暂不可挑战');if(this.activity){arenaTier=0;weeklyTier=0;stage=Math.max(1,this.activity.level);farm=false;}
+  this.activity=activity?activityInfo(s,activity,now):null;if(this.activity&&!this.activity.open)throw Error('此委托暂不可挑战');if(this.activity){arenaTier=0;weeklyTier=0;stage=Math.max(1,this.activity.level);farm=false;}
   const weekly=weeklyTier?weeklyInfo(s,weeklyTier,now):null;if(weekly&&!weekly.open)throw Error('每周挑战尚未解锁');if(weekly)arenaTier=weekly.arenaTier;
   if(!weekly&&arenaTier&&!arenaOpen(s,arenaTier))throw Error('擂台尚未解锁');
   this.weekly=weekly;
@@ -194,7 +189,7 @@ export class Battle {
  frontlines(){const alive=this.alive('p'),front=alive.filter(h=>h.formationSlot<2);return front.length?front:alive.slice(0,2);}
  frontline(){return this.frontlines()[0]||null;}
  emit(type,from,to,value=0,extra={}){this.events.push({type,at:this.eventAt??this.time,from:from?.id,to:to?.id,value:Math.round(value),serial:++this.fxSerial,...extra,...(this.canEvent?{rescue:true}: {})});}
- harm(target,raw,source,{crit=false,type=source?.normalDamageType||'physical',bonusPen=0,reflect=true,dot=false,element}={}){
+ harm(target,raw,source,{crit=false,type=source?.normalDamageType||'physical',bonusPen=0,reflect=true,dot=false,element,fixed=false}={}){
   if(!target||target.hp<=0)return 0;const ramp=1000000+Math.max(0,this.round-10)*250000;target.hp=integer(target.hp);target.shield=integer(target.shield);
   let amount=mulDiv(mitigatedDamage(integer(raw),target,source,type,bonusPen),ramp,1000000);
   if(target.catId==='orange'&&target.level>=5)amount=mulDiv(amount,100-skillTuning(target.skillRank).orangeGuard);
@@ -206,6 +201,7 @@ export class Battle {
   if(target.adaptive&&!dot){target.sameHit=target.lastHitType===type?Math.min(60,(target.sameHit||0)+12):0;target.lastHitType=type;amount=mulDiv(amount,100-target.sameHit);}
   if(!dot&&source?.gearSets?.includes('hunt')&&target.hp<mulDiv(target.maxHp,50))amount=mulDiv(amount,130);
   if(source?.gearSets?.includes('ember')&&target.burnTime>0)amount=mulDiv(amount,125);
+  if(fixed)amount=integer(raw);
   const shield=Math.min(target.shield,amount);target.shield-=shield;amount-=shield;const savedByRune=target.rune==='steadfast'&&!target.runeUsed&&amount>=target.hp;if(savedByRune){target.runeUsed=true;amount=Math.max(0,target.hp-1);}const hit=Math.min(target.hp,amount);target.hp=Math.max(0,target.hp-amount);
   this.emit(dot?'burn':'hit',source,target,hit+shield,{crit,shield:shield>0,damageType:type,damageElement:element||(dot?'fire':type==='magic'?(source?.catId==='spark'?'fire':source?.catId==='mint'?'ice':'magic'):'physical'),dot,cause:dot?'burn':!reflect?'reflect':source?.action?.kind||'normal'});
   if(!dot)target.hitUntil=(this.eventAt??this.time)+.22;
@@ -216,7 +212,7 @@ export class Battle {
   if(savedByRune){this.shield(target,mulDiv(target.maxHp,35),target);this.emit('status',target,target,0,{text:'缩成一团 · 挡下致命伤'});}
   if(reflect&&target.side==='p'&&source?.side==='e'&&source.hp>0&&(target.gearSets?.includes('thorn')||this.buff.reflect>0))this.harm(source,mulDiv(hit+shield,target.gearSets?.includes('thorn')?15:this.buff.reflect),target,{reflect:false,type});return hit;
  }
- heal(target,amount,source){if(target.hp<=0)return;amount=integer(amount);target.hp=integer(target.hp);if(source?.gearSets?.includes('spring'))amount=mulDiv(amount,125);if(source?.rune==='warmth'&&target.hp<mulDiv(target.maxHp,50)){amount=mulDiv(amount,135);target.burn=0;target.burnTime=0;target.burnSource=null;}if(target.scorchedUntil>=this.round)amount=mulDiv(amount,50);const overflow=Math.max(0,amount-(target.maxHp-target.hp));const n=Math.min(target.maxHp-target.hp,amount);target.hp+=n;if(n>1)this.emit('heal',source,target,n);if(source?.catId==='milk'&&source.level>=40&&overflow>0)this.shield(target,Math.min(mulDiv(target.maxHp,skillTuning(source.skillRank).milkOverflowCap),mulDiv(overflow,skillTuning(source.skillRank).milkOverflow)),source);}
+ heal(target,amount,source,{fixed=false}={}){if(target.hp<=0)return;amount=integer(amount);target.hp=integer(target.hp);if(!fixed&&source?.gearSets?.includes('spring'))amount=mulDiv(amount,125);if(!fixed&&source?.rune==='warmth'&&target.hp<mulDiv(target.maxHp,50)){amount=mulDiv(amount,135);target.burn=0;target.burnTime=0;target.burnSource=null;}if(!fixed&&target.scorchedUntil>=this.round)amount=mulDiv(amount,50);const overflow=Math.max(0,amount-(target.maxHp-target.hp));const n=Math.min(target.maxHp-target.hp,amount);target.hp+=n;if(n>1)this.emit('heal',source,target,n);if(source?.catId==='milk'&&source.level>=40&&overflow>0)this.shield(target,Math.min(mulDiv(target.maxHp,skillTuning(source.skillRank).milkOverflowCap),mulDiv(overflow,skillTuning(source.skillRank).milkOverflow)),source);}
  shieldFactor(target){return mulDiv(mulDiv(target.gearSets?.includes('guard')?120:100,target.rune==='bulwark'?135:100),target.catId==='pudding'&&target.level>=80?120:100);}
  shield(target,amount,source){if(target.hp<=0)return;amount=mulDiv(integer(amount),this.shieldFactor(target));if(target.shieldPunch){const sp=target.shieldPunch;sp.round=this.round;sp.maxHp=target.maxHp;sp.deferSelfShield=true;sp.hp=target.hp;sp.energy=target.energy;sp.shield=target.shield;this.shieldEvents(target,gainShield(sp,amount,this.eventAt??this.time,source?.id||'ally'));return;}const added=Math.min(amount,target.maxHp-target.shield);target.shield+=added;this.emit('shield',source,target,added);}
  shieldEvents(h,events){
@@ -286,7 +282,7 @@ export class Battle {
   if(this.result||this.canCd>0||this.canSequence)return false;
   const ps=this.alive('p'),es=this.alive('e');if(!ps.length||!es.length)return false;
   this.canCd=this.buff.canCd;const targets=canTargetOrder(es),duration=canDuration(targets.length);
-  this.canSequence={born:this.time,until:this.time+duration,source:ps[0],friends:ps.map(p=>p.id),targets,attack:mulDiv(ps.reduce((n,p)=>n+p.atk,0),80),healed:false,next:0};
+  this.canSequence={born:this.time,until:this.time+duration,source:ps[0],friends:ps.map(p=>p.id),targets,attack:50,healed:false,next:0};
   // Emergency interrupt remains immediate; damage and healing follow the artwork.
   for(const e of es)if(e.charge>0){e.charge=0;e.skillWait=3;e.stun=1;this.emit('interrupt',ps[0],e,0,{text:'打断蓄力'});}
   this.emit('can',ps[0],es[0],0,{targets,friends:this.canSequence.friends,duration});return true;
@@ -294,8 +290,8 @@ export class Battle {
  advanceCan(){
   const c=this.canSequence;if(!c)return;
   const age=this.time-c.born;this.canEvent=true;
-  if(!c.healed&&age+1e-9>=CAN_TIMING.heal){c.healed=true;this.eventAt=c.born+CAN_TIMING.heal;for(const id of c.friends){const p=this.heroes.find(p=>p.id===id);if(p?.hp>0){this.heal(p,mulDiv(p.maxHp,20),c.source);p.energy=Math.min(100,p.energy+18);}}}
-  while(c.next<c.targets.length&&age+1e-9>=canHitAt(c.next)){this.eventAt=c.born+canHitAt(c.next);const id=c.targets[c.next++],e=this.enemies.find(e=>e.id===id);if(e?.hp>0)this.harm(e,c.attack,c.source,{type:'physical'});}
+  if(!c.healed&&age+1e-9>=CAN_TIMING.heal){c.healed=true;this.eventAt=c.born+CAN_TIMING.heal;for(const id of c.friends){const p=this.heroes.find(p=>p.id===id);if(p?.hp>0){this.heal(p,40,c.source,{fixed:true});p.energy=Math.min(100,p.energy+18);}}}
+  while(c.next<c.targets.length&&age+1e-9>=canHitAt(c.next)){this.eventAt=c.born+canHitAt(c.next);const id=c.targets[c.next++],e=this.enemies.find(e=>e.id===id);if(e?.hp>0)this.harm(e,c.attack,c.source,{type:'true',fixed:true});}
   this.eventAt=null;this.canEvent=false;if(this.time+1e-9>=c.until)this.canSequence=null;
  }
  syncStats(s,{preserveHealthRatio=false,refreshEquipment=false}={}){this.buff=buffs(s);for(const h of this.heroes){if(refreshEquipment){h.gear=gearBonuses(s,h.catId);h.gearSets=h.gear.sets;h.rune=h.gear.rune;}const n=catStats(s,h.catId,h.gear),oldMax=h.maxHp,ratio=h.hp/oldMax,add=n.hp-oldMax;h.maxHp=n.hp;if(h.hp>0)h.hp=preserveHealthRatio?resizeAmount(h,'hp',oldMax,n.hp):clamp(h.hp+Math.max(0,add),1,h.maxHp);h.shield=Math.min(n.hp,preserveHealthRatio?resizeAmount(h,'shield',oldMax,n.hp):h.shield);if(h.shieldPunch)h.shieldPunch.config.selfShieldRatio=mulDiv(skillTuning(n.skillRank).puddingSelf,this.shieldFactor({...h,level:n.level}));for(const key of ['atk','crit','level','stars','skillRank','armor','magicResist','armorPen','magicPen','normalDamageType','skillDamageType'])h[key]=n[key];}}

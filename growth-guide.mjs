@@ -1,3 +1,4 @@
+import {teamPlan} from './team-plans.mjs';
 import {QUESTS,questValue,CATS,starQuote,MAX_STAGE} from './core.mjs';
 import {gearOwner} from './equipment.mjs';
 import {materialIcon} from './loot-icons.mjs';
@@ -9,10 +10,10 @@ export function nextGrowth(s,battle=null){
  if(s.highest<3)return {title:'先通关第 3 关',text:'主线会自动推进。打不过时，先用鱼币给上阵伙伴升级。',action:'battle',label:'继续主线'};
  if(!s.activities.cleared.salvage)return {title:'去废件仓库拿装备',text:'街区 → 委托板 → 装备 → 废件仓库。完成挑战，装备会进入背包。',action:'salvage',label:'前往废件仓库'};
  if(!s.guidance?.equipmentWorn&&s.inventory.items.some(e=>!gearOwner(s,e.id)))return {title:'给伙伴穿上新装备',text:'选中一位伙伴，点背包中的装备，再点“穿戴”。穿戴一次就会完成这一步。',action:'equipment',label:'前往穿戴'};
- const ready=s.party.filter(Boolean).find(id=>{const q=starQuote(s,id);return !q.maxed&&q.have>=q.shards&&s.growth.notes>=q.notes;});
- if(ready){const q=starQuote(s,ready),name=CATS.find(c=>c.id===ready).name;return {title:name+(q.ready?'可以进阶猫牌':'可以升星'),text:(s.growthRebalancePending?'此前培养已补回升星材料。':'')+'这次生命和攻击提升 '+q.gain+'%，升星后继续推进主线。',action:'cat-tag',id:ready,label:q.ready?'前往进阶':'前往升星'};}
+ const ready=teamPlan(s).order.filter(id=>s.party.includes(id)).find(id=>{const q=starQuote(s,id);return !q.maxed&&q.have>=q.shards&&s.growth.notes>=q.notes;});
+ if(ready){const q=starQuote(s,ready),name=CATS.find(c=>c.id===ready).name;return {title:name+'可以升阶',text:(s.growthRebalancePending?'此前培养已补回升星材料。':'')+'这次生命和攻击提升 '+q.gain+'%，升星后继续推进主线。',action:'cat-tag',id:ready,label:q.ready?'前往进阶':'前往升星'};}
  if(s.runCleared>=MAX_STAGE)return {title:'主线已通关，挑战街区硬仗',text:'继续挑战街区硬仗、街头擂台与每周委托，完善装备和妙招牌搭配。',action:'hard',label:'前往街区硬仗'};
- if(battle?.result==='lose'&&battle.mode==='patrol'&&!battle.weekly){const id=s.party.filter(Boolean).find(id=>!starQuote(s,id).maxed);if(id)return {title:'积攒材料，给伙伴升星',text:'伙伴信物来自伙伴委托，训练笔记来自后巷清扫。升星是前期的大幅提升来源。',action:'cat-tag',id,label:'查看升星'};return {title:'强化装备后再挑战',text:'升级装备、调整套装和妙招牌，再继续推进主线。',action:'equipment',label:'前往装备'};}
+ if(battle?.result==='lose'&&battle.mode==='patrol'&&!battle.weekly){const id=teamPlan(s).order.filter(id=>s.party.includes(id)).find(id=>!starQuote(s,id).maxed);if(id)return {title:'积攒材料，给伙伴升星',text:'伙伴信物来自失物追寻，训练笔记来自后巷清扫。升星是前期的大幅提升来源。',action:'cat-tag',id,label:'查看升星'};return {title:'强化装备后再挑战',text:'升级装备、调整套装和妙招牌，再继续推进主线。',action:'equipment',label:'前往装备'};}
  return {title:'继续推进主线',text:'升星带来前期的明显提升；之后逐渐以装备、套装和妙招牌为主。',action:'battle',label:'回到战场'};
 }
 export function questDestination(q){return q.key==='upgrades'?'train':q.key==='relicCount'?'salvage':q.key==='cats'?'recruit':q.key==='arenaCleared'?'arena':'battle';}

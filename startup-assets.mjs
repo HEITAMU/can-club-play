@@ -11,6 +11,7 @@ export const COMMON_UI_ASSETS=[
  './assets/ui/paper-grain-v02642.webp',
  './assets/ui/cat-tag-wide-v02679.webp',
  './assets/ui/equipment-slots-v0281.webp',
+ './assets/ui/companion-keepsakes-v0282.webp',
  './assets/materials/harbor-materials-v02641.webp',
  './assets/materials/scrap-v02643.webp',
  ...['equipment','runes'].map(key=>'./assets/ui/'+ICON_BOUNDS[key].file)

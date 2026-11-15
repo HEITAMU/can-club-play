@@ -36,7 +36,7 @@ test('heal and each damage event resolve exactly on the matching animation beat,
  const {b,cues,positions,route}=fixture();assert.ok(b.heroes.every(h=>h.hp===5000));assert.ok(b.enemies.every(e=>e.hp===10000));
  const events=[];for(let i=0;i<160;i++){const e=b.tick(.02);events.push(...e);cues.consume(e,b,positions);}
  const heals=events.filter(e=>e.type==='heal'&&e.rescue),hits=events.filter(e=>e.type==='hit'&&e.rescue);
- assert.equal(heals.length,5);assert.ok(heals.every(e=>e.at===CAN_TIMING.heal&&e.value===2000));
+ assert.equal(heals.length,5);assert.ok(heals.every(e=>e.at===CAN_TIMING.heal&&e.value===40));
  assert.deepEqual(hits.map(e=>e.to),route.targets);hits.forEach((e,i)=>assert.equal(e.at,canHitAt(i)));
  assert.equal(b.canSequence,null);assert.equal(cues.active(b.time).length,0);assert.equal(cues.entries.length,1,'no phantom basic attacks or leech cues');
 });

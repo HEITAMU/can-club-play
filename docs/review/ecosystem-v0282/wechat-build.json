@@ -1,0 +1,181 @@
+{
+  "version": "0.28.0-preview",
+  "releaseReady": false,
+  "networkMode": "local-development",
+  "rewardedAdConfigured": false,
+  "appid": "wx43da24c6ac1e5a12",
+  "mainBytes": 292164,
+  "totalBytes": 20690615,
+  "packages": [
+    {
+      "name": "art1",
+      "root": "packs/art1/",
+      "bytes": 3980285
+    },
+    {
+      "name": "art2",
+      "root": "packs/art2/",
+      "bytes": 3920103
+    },
+    {
+      "name": "art3",
+      "root": "packs/art3/",
+      "bytes": 3981422
+    },
+    {
+      "name": "art4",
+      "root": "packs/art4/",
+      "bytes": 3980866
+    },
+    {
+      "name": "art5",
+      "root": "packs/art5/",
+      "bytes": 3929220
+    },
+    {
+      "name": "art6",
+      "root": "packs/art6/",
+      "bytes": 606411
+    }
+  ],
+  "assets": [
+    {
+      "source": "assets/finished/spark-v0211.webp",
+      "path": "packs/art1/spark-v0211.png",
+      "bytes": 2534934,
+      "sha256": "8e3068bc48c748022ab63640adb234ea6510549e356f04011548d2415dbf32be"
+    },
+    {
+      "source": "assets/vfx/shidun-impact-v0211.webp",
+      "path": "packs/art2/shidun-impact-v0211.png",
+      "bytes": 2372749,
+      "sha256": "82f02a7b7cb0c43531407d0c24ca67325c0062b086333be78a4ad5ef44d001f2"
+    },
+    {
+      "source": "assets/painted/items.webp",
+      "path": "packs/art3/items.png",
+      "bytes": 2142328,
+      "sha256": "0c56d2ef547ac4fdb22957d04ed6bc89a6b290d804fa44e14cdf0af46a62d858"
+    },
+    {
+      "source": "assets/vfx/effects-v0216.webp",
+      "path": "packs/art4/effects-v0216.png",
+      "bytes": 1988266,
+      "sha256": "ae6f105ab6ddb0a635594f516acbd177421d823351654c35651db953f6c726af"
+    },
+    {
+      "source": "assets/finished/bolt-v0216.webp",
+      "path": "packs/art2/bolt-v0216.png",
+      "bytes": 1463620,
+      "sha256": "838d0acb13dd56f662a72e72a232fdcc963bac0a7eb2e4679a216865c68b1629"
+    },
+    {
+      "source": "assets/finished/star-v0213.webp",
+      "path": "packs/art1/star-v0213.png",
+      "bytes": 1257079,
+      "sha256": "4948b7ed4ef9d5173ff4d7a9b10099597bbba826e93420cf2320eace02de87bf"
+    },
+    {
+      "source": "assets/finished/orange-v0213.webp",
+      "path": "packs/art3/orange-v0213.png",
+      "bytes": 1236901,
+      "sha256": "e43556feaf97aad12423948e50db452df50bd5ae5d66d2699fa8ce095305412d"
+    },
+    {
+      "source": "assets/finished/ink-v0213.webp",
+      "path": "packs/art4/ink-v0213.png",
+      "bytes": 1139875,
+      "sha256": "edf84e7c4cdc6983ed2b3fc0b0b285cf70683f40c937391cc5a2c14a2018ca4e"
+    },
+    {
+      "source": "assets/finished/mint-v0213.webp",
+      "path": "packs/art5/mint-v0213.png",
+      "bytes": 1017241,
+      "sha256": "16bd362cf7a3c9e3ccbfa7bfdb9a71448906d1bdebf8fc9a158115fe0fc4bf7c"
+    },
+    {
+      "source": "assets/finished/milk-v0213.webp",
+      "path": "packs/art5/milk-v0213.png",
+      "bytes": 973153,
+      "sha256": "182616c6e39993a2ad95598ded24e895d8e20e635415bdf1a4bd3c0e12ffbca1"
+    },
+    {
+      "source": "assets/finished/pudding-v0216.webp",
+      "path": "packs/art5/pudding-v0216.png",
+      "bytes": 939740,
+      "sha256": "e261a7be114da0f6f4bdeb54acdd61eaa9bd8d9d75efde2d70cd19a89b615277"
+    },
+    {
+      "source": "assets/scenes/commissions-v02646.webp",
+      "path": "packs/art4/commissions-v02646.jpg",
+      "bytes": 645594,
+      "sha256": "50bca3a5cccab7bfb5a6a9b1765a945f47d274b24c399affe1af2a9987c3d4a9"
+    },
+    {
+      "source": "assets/scenes/streets-v019.webp",
+      "path": "packs/art5/streets-v019.jpg",
+      "bytes": 618950,
+      "sha256": "d44d2f515ca0aa5f8c3ff3f3edd6f287dfd98bf4a5785c2af1b6d0c0dae22853"
+    },
+    {
+      "source": "assets/vfx/can-rescue-v0192.webp",
+      "path": "packs/art3/can-rescue-v0192.png",
+      "bytes": 405716,
+      "sha256": "024ed6c01fd68fa1f7f9b553ad0a54af31c01116edc4506e54525315120c78ec"
+    },
+    {
+      "source": "assets/ui/equipment-slots-v0281.webp",
+      "path": "packs/art5/equipment-slots-v0281.png",
+      "bytes": 380136,
+      "sha256": "e5f9f5a0286e99dc555900ab9ed18db598f99be626d70b3c34a72daba17a3741"
+    },
+    {
+      "source": "assets/scenes/neighborhood-v0220.webp",
+      "path": "packs/art6/neighborhood-v0220.jpg",
+      "bytes": 371575,
+      "sha256": "efdc9be291f90fa2226b999372513d264dbd0cf4975efd154579f83a8a853bf6"
+    },
+    {
+      "source": "assets/painted/enemies-c.webp",
+      "path": "packs/art6/enemies-c.png",
+      "bytes": 234836,
+      "sha256": "d6cc5363b05adf9336dab8efe0957b9b86f0a8bb30f3c909abc99b28f6c0308e"
+    },
+    {
+      "source": "assets/ui/companion-keepsakes-v0282.webp",
+      "path": "packs/art4/companion-keepsakes-v0282.png",
+      "bytes": 207131,
+      "sha256": "ce99c69bbd68220c845809190037b58c9ce1aee033f9c319e763ae3a92c96f03"
+    },
+    {
+      "source": "assets/painted/enemies-b.webp",
+      "path": "packs/art3/enemies-b.png",
+      "bytes": 196477,
+      "sha256": "cf5e393791f622a8ef9a7c6755e4548c20cb0792659a71d7c85627c918b3512a"
+    },
+    {
+      "source": "assets/painted/enemies-a.webp",
+      "path": "packs/art1/enemies-a.png",
+      "bytes": 172177,
+      "sha256": "fc11855cad964789b478e2cf5438398e2116aa4b9ec457e75799b096029e2ad2"
+    },
+    {
+      "source": "assets/painted/carriers-v02652.webp",
+      "path": "packs/art2/carriers-v02652.png",
+      "bytes": 67679,
+      "sha256": "dcb6b63a6128f15c9b8a5c871dc8517dbd39c22087b65c4b2c2d8c840132c6ec"
+    },
+    {
+      "source": "assets/ui/critical-physical-v02658.webp",
+      "path": "packs/art1/critical-physical-v02658.png",
+      "bytes": 16095,
+      "sha256": "55087640e3b8d3692475404599a6af6b266d00cc993d0200855f546b0a4d0f27"
+    },
+    {
+      "source": "assets/ui/critical-magic-v02658.webp",
+      "path": "packs/art2/critical-magic-v02658.png",
+      "bytes": 16055,
+      "sha256": "6670cb90f5f5bc8a910ba77850ff7a42cea3ab201d6ffe52991d8cb8b805d3be"
+    }
+  ]
+}

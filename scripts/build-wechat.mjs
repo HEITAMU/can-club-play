@@ -39,6 +39,7 @@ const list = [
   "painted/enemies-c.webp",
   "painted/items.webp",
   "ui/equipment-slots-v0281.webp",
+  "ui/companion-keepsakes-v0282.webp",
   "scenes/streets-v019.webp",
   "scenes/commissions-v02646.webp",
   "vfx/effects-v0216.webp",
@@ -70,6 +71,7 @@ for (const relative of list) {
   }
   if (relative==="painted/carriers-v02652.webp") pipeline.resize({width:640}).png({palette:true,quality:90,effort:10});
   if (relative.startsWith("finished/") && !relative.includes("portrait")) pipeline.resize({width:(relative.includes("v0213")||relative.includes("v0216"))?1024:1536});
+  if(relative==="ui/companion-keepsakes-v0282.webp")pipeline.resize({width:480});
   const jpg = (relative.startsWith("scenes/") && !relative.includes("district-"));
   const data = await (
     jpg
@@ -217,7 +219,11 @@ function wav(notes) {
   return buf;
 }
 for (const [name, notes] of Object.entries({
-  tap: [[660, 0.09]],
+  tap: [[300, 0.055]],
+  'nav-battle':[[180,.045],[140,.04]],
+  'nav-cats':[[340,.06],[450,.05]],
+  'nav-relics':[[190,.06],[150,.035]],
+  'nav-map':[[270,.07],[310,.05]],
   hit: [[180, 0.08]],
   reward: [
     [523, 0.09],
