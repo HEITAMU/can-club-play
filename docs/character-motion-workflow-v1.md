@@ -19,7 +19,7 @@
 4. 不用整体横向压扁、纵向拉长或大幅缩放伪造动作；待机主要是胸腔轻呼吸、尾巴小幅滞后，脚底固定。
 5. 保留角色专用动作：火花提灯、扳手投掷、石墩攒盾重拳。不要统一成同一种出手姿势。
 
-正式角色 ID：orange 橘座，ink 阿墨，milk 奶糖，spark 火花，mint 薄荷，bolt 扳手，pudding 石墩，star 星斑。`pudding` 是存档兼容 ID，不应因中文名变化而重命名。
+正式角色 ID：orange 橘座，ink 阿墨，milk 奶盖，spark 火花，mint 薄荷，bolt 扳手，pudding 石墩，star 星斑。`pudding` 是存档兼容 ID，不应因中文名变化而重命名。
 
 ## 3. 本次接入的核心算法
 
