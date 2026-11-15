@@ -120,4 +120,4 @@
 .star-shine{fill:#fffbe6;opacity:.95;}
 .cat-paw-detail{display:block;width:88px;height:94px;}.cat-paw-detail svg{width:100%;height:100%;overflow:visible;}.cat-paw-detail .toe.lit{filter:drop-shadow(0 0 3px var(--tag-glow));}
 
-.painted-cat-tag .tag-pendant-light{position:absolute;inset:0;width:100%;height:100%;overflow:visible;}.pendant-glow{filter:brightness(1.3) drop-shadow(0 0 2px var(--tag-glow)) drop-shadow(0 0 4px var(--tag-glow));}
+.painted-cat-tag .tag-pendant-light{position:absolute;inset:0;width:100%;height:100%;overflow:visible;}.pendant-light-rim{fill:none;stroke:var(--tag-glow);stroke-width:3.3;stroke-linecap:round;stroke-linejoin:round;}
