@@ -22,13 +22,13 @@ export const HARD_JOBS=[
 ];
 // Flavor hints follow the actual encounter theme, including rotating hunts.
 export const ENCOUNTER_STORIES={
- crowd:'后巷的杂物怪总爱挤作一团，谁也不肯给旁边的家伙让半步。',
- barrier:'冷库那家伙最怕身上着火，一烫起来，连给自己裹冰壳都顾不上。',
- healer:'前头的家伙怎么也打不倒，原来是后面那个补给员一直偷偷递吃的。',
- armor:'铁壳兄弟见了提灯的就绕路，躲在后面的电池却只怕亮爪子的。',
- adaptive:'守门的家伙记性好，同一招见得越多越不怕，换个花样它就得重新学。',
- ambush:'两个追兵专挑后排最虚弱的下手，碰上护盾挡路才没法顺手偷走力气。',
- burst:'领头的家伙出狠招前总要先憋一口气，半路被打岔就得重新来。'
+ crowd:'后巷那堆破烂又堵一块儿了。',
+ barrier:'冷库老板从不让人带火进去。',
+ healer:'那个送饭的还在，前面几个就饿不着。',
+ armor:'铁壳不怕挠，挨了法术却喊得最响。',
+ adaptive:'上次那招，他已经见过了。',
+ ambush:'这帮追兵净挑落在后头的伤员下手。',
+ burst:'他动手前，总要停下来喘口气。'
 };
 const KEYS=[...MATERIAL_JOBS.map(x=>x.id),...HUNTS.map(x=>'hunt:'+x.id),...HARD_JOBS.map(x=>'hard:'+x.id),...COMPANION_IDS.map(x=>'recruit:'+x)];
 export function normalizeActivities(raw){return {rewardVersion:1,rewardDay:safe(raw?.rewardDay,1e9),repeatClaims:Object.fromEntries(Object.entries(raw?.repeatClaims||{}).filter(([k])=>['sweep','escort','salvage','hunt','hard',...COMPANION_IDS.map(id=>'recruit:'+id)].includes(k)).map(([k,v])=>[k,safe(v,100)])),cleared:Object.fromEntries(KEYS.map(k=>[k,safe(raw?.cleared?.[k],k.startsWith('hunt:')?10000:k.startsWith('hard:')?3:k.startsWith('recruit:')?6:8)])),wins:safe(raw?.wins,1e9)};}
@@ -41,7 +41,7 @@ export function activityInfo(s,request={},now=Date.now()){
  const level=hard?[70,115,160][tier-1]:hunt?Math.min(160,35+tier*5):recruit?[5,20,40,70,100,130][tier-1]:[8,25,40,60,85,110,135,160][tier-1];
  const theme=hunt?job.themes[(tier-1)%3]:job?.theme;
  const quota=repeatQuota(s.activities,kind,id,now),rewardable=tier>cleared||quota.remaining>0;
- return {valid,open,exhausted,quota,rewardable,request:{kind,id,tier},kind,id,tier,key,cleared,max,required,level,theme,story:hard&&theme==='burst'?'钟楼那两个家伙总要先憋一口气才出狠招，而且从不同时吸气。':kind==='escort'?'护送路上的追兵每次出狠招都要先憋气，半路被打岔就得从头再来。':ENCOUNTER_STORIES[theme]||ENCOUNTER_STORIES.crowd,name:job?.name||'未知委托',rule:(hunt?([...HARD_JOBS].find(x=>x.theme===theme)?.rule):job?.rule)||'',first:tier>cleared,scene:hard?({coldstore:1,lifeline:3,ironwall:3,alarm:2,blackout:5,clockwork:4}[id]):hunt?({market:1,depot:3,station:5}[id]):kind==='salvage'?3:0};
+ return {valid,open,exhausted,quota,rewardable,request:{kind,id,tier},kind,id,tier,key,cleared,max,required,level,theme,story:hard&&theme==='burst'?'钟楼那俩轮着来，一个歇了，另一个就上。':kind==='escort'?'领头的动手前，总要停下来喘口气。':ENCOUNTER_STORIES[theme]||ENCOUNTER_STORIES.crowd,name:job?.name||'未知委托',rule:(hunt?([...HARD_JOBS].find(x=>x.theme===theme)?.rule):job?.rule)||'',first:tier>cleared,scene:hard?({coldstore:1,lifeline:3,ironwall:3,alarm:2,blackout:5,clockwork:4}[id]):hunt?({market:1,depot:3,station:5}[id]):kind==='salvage'?3:0};
 }
 export function activityReward(info){const n=info.tier,first=info.first,mult=first?2:1,r={gold:0,supplies:0,badges:0,notes:0,seals:0,shards:0,essence:0,scrap:0};
  if(info.rewardable===false)return r;
