@@ -104,7 +104,7 @@ export function removeParty(s,id){
  s.party=s.party.map(x=>x===id?null:x);while(s.party.length&&!s.party.at(-1))s.party.pop();return true;
 }
 // Old all-party relic stacks are retired; all combat equipment is character-owned.
-export function buffs(){return {atk:1,hp:1,crit:10,regen:0,canCd:3,gold:1,idle:1,reflect:0,shield:0,energy:0,burn:0,boss:1};}
+export function buffs(){return {atk:1,hp:1,crit:10,regen:0,canCd:8,gold:1,idle:1,reflect:0,shield:0,energy:0,burn:0,boss:1};}
 export function catStats(s,id,equipment=null){const c=CATS.find(c=>c.id===id),l=s.levels[id]||1,g=equipment||gearBonuses(s,id),stars=s.roster?.stars?.[id]||0,base=heroCombatStats(id,l);
  const grow=value=>[100+18*(l-1),100+8*Math.floor(l/10),100+8*s.bones,10000+tagBonus(s,id)].reduce((n,p,i)=>mulDiv(n,p,i===3?10000:100),value);
  return {...base,armor:base.armor+g.armor,magicResist:base.magicResist+g.magicResist,armorPen:base.armorPen+g.armorPen,magicPen:base.magicPen+g.magicPen,hp:mulDiv(grow(c.hp),100+g.hp),atk:mulDiv(grow(c.atk),100+g.atk),crit:Math.min(80,10+g.crit+(id==='ink'&&l>=5?15:0)),level:l,stars,skillRank:s.breakthroughs?.[id]||0,gear:g};
@@ -168,7 +168,7 @@ export class Battle {
   if(this.canSequence||this.time<this.turnGapUntil)return;
   const existing=all.find(a=>a.hp>0&&(a.action||a.shieldPunch?.state==='punching'));
   if(existing){this.turnActor=existing.id;this.turnStarted=true;return;}
-  if(!this.turnQueue.length){if(this.round>=30){this.result='lose';return;}this.round++;if(this.round>1)this.canCd=Math.max(0,this.canCd-1);this.turnQueue=Array.from({length:Math.max(this.heroes.length,this.enemies.length)},(_,i)=>[this.heroes[i],this.enemies[i]]).flat().filter(a=>a&&a.hp>0).map(a=>a.id);}
+  if(!this.turnQueue.length){if(this.round>=30){this.result='lose';return;}this.round++;this.turnQueue=Array.from({length:Math.max(this.heroes.length,this.enemies.length)},(_,i)=>[this.heroes[i],this.enemies[i]]).flat().filter(a=>a&&a.hp>0).map(a=>a.id);}
   this.turnQueue=this.turnQueue.filter(id=>all.some(a=>a.id===id&&a.hp>0));
   const index=this.turnQueue.findIndex(id=>{const a=all.find(x=>x.id===id);return a.wait<=0||a.shieldPunch?.state==='primed'&&a.shieldPunch.releaseAt<=this.time;});
   if(index<0)return;
@@ -300,7 +300,9 @@ export class Battle {
  }
  syncStats(s,{preserveHealthRatio=false}={}){this.buff=buffs(s);for(const h of this.heroes){const n=catStats(s,h.catId,h.gear),oldMax=h.maxHp,ratio=h.hp/oldMax,add=n.hp-oldMax;h.maxHp=n.hp;if(h.hp>0)h.hp=preserveHealthRatio?resizeAmount(h,'hp',oldMax,n.hp):clamp(h.hp+Math.max(0,add),1,h.maxHp);h.shield=Math.min(n.hp,preserveHealthRatio?resizeAmount(h,'shield',oldMax,n.hp):h.shield);if(h.shieldPunch)h.shieldPunch.config.selfShieldRatio=mulDiv(skillTuning(n.skillRank).puddingSelf,this.shieldFactor({...h,level:n.level}));for(const key of ['atk','crit','level','stars','skillRank','armor','magicResist','armorPen','magicPen','normalDamageType','skillDamageType'])h[key]=n[key];}}
  checkEnd(){if(!this.alive('e').length){if(!this.canSequence)this.result='win';}else if(!this.alive('p').length||this.round>30)this.result='lose';return this.result;}
- tick(dt){if(this.result||dt<=0)return this.events.splice(0);dt=clamp(dt,0,.25);this.stepStart=this.time;this.time+=dt;
+ // Tutorial animates only the manually triggered support; no actor turns or auto advance.
+ tickCanDemo(dt){if(dt<=0)return this.events.splice(0);dt=clamp(dt,0,.25);this.time+=dt;this.canCd=this.canCd-dt<1e-6?0:this.canCd-dt;this.advanceCan();return this.events.splice(0);}
+ tick(dt){if(this.result||dt<=0)return this.events.splice(0);dt=clamp(dt,0,.25);this.stepStart=this.time;this.time+=dt;this.canCd=this.canCd-dt<1e-6?0:this.canCd-dt;
   this.advanceCan();
   for(const a of [...this.heroes,...this.enemies]){if(!a.action){const old=a.wait;a.wait=Math.max(0,a.wait-dt);if(old>0&&a.wait===0)a.readyAt=this.time-dt+old;}}
   this.selectTurn();

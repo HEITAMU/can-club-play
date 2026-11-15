@@ -16,9 +16,9 @@ export class HealthTrails{
 }
 
 export function rescueView(battle,running){
- const rounds=Math.max(0,battle.canCd),total=Math.max(.001,battle.buff.canCd);
+ const seconds=Math.max(0,battle.canCd),total=Math.max(.001,battle.buff.canCd);
  const charged=battle.enemies.some(a=>a.hp>0&&a.charge>0)&&!battle.result;
- return {ready:running&&!battle.result&&rounds===0,charged,rounds,progress:clamp(1-rounds/total),status:battle.result?'本场结束':rounds>0?'冷却 '+Math.ceil(rounds)+'回合':running?'可以使用':battle.time>0?'继续可用':'开战可用'};
+ return {ready:running&&!battle.result&&!battle.canSequence&&seconds===0,charged,seconds,progress:clamp(1-seconds/total),status:battle.result?'本场结束':seconds>0?'冷却 '+Math.ceil(seconds)+'秒':running?'可以使用':battle.time>0?'继续可用':'开战可用'};
 }
 
 export function bossView(battle){

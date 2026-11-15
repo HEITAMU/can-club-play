@@ -2,13 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import {GUIDE,GUIDE_DONE,nextGuide} from '../onboarding.mjs';
+import {GUIDE,GUIDE_DONE,GUIDE_CAN,nextGuide} from '../onboarding.mjs';
 import {initialState,upgrade} from '../core.mjs';
 const source=fs.readFileSync(new URL('../app.mjs',import.meta.url),'utf8');
 function setup(step){
  const handlers={},shown=[];
  const state={guideStep:step,onboarded:true};
- const context={state,GUIDE,GUIDE_DONE,nextGuide,running:false,nextDelay:5,tab:'battle',battle:null,resourceLoading:false,modalType:null,renderGuide:()=>shown.push(state.guideStep),persist(){},toast(){},startBattle(){},forceClose(){context.modalType=null;},document:{addEventListener:(type,fn)=>handlers[type]=fn,querySelector:()=>({contains:()=>false})}};
+ const context={state,GUIDE,GUIDE_DONE,GUIDE_CAN,nextGuide,running:false,nextDelay:5,tab:'battle',battle:null,resourceLoading:false,modalType:null,renderVitals(){},renderGuide:()=>shown.push(state.guideStep),persist(){},toast(){},startBattle(){},forceClose(){context.modalType=null;},document:{addEventListener:(type,fn)=>handlers[type]=fn,querySelector:()=>({contains:()=>false})}};
  const eventStart=source.indexOf('function guideEvent('),eventEnd=source.indexOf('\nfunction restoreGuide',eventStart);
  vm.runInNewContext(source.slice(eventStart,eventEnd),context);
  const start=source.indexOf('let guidePointerStep='),end=source.indexOf("\ndocument.addEventListener('click',e=>{if(e.target.closest('[data-tab",start);
@@ -17,7 +17,7 @@ function setup(step){
  return {context,state,shown,handlers,event};
 }
 test('pointer release synchronously paints next lesson with no battle or timer prerequisite',()=>{
- for(const [step,next] of [[1,2],[6,7],[8,9]]){
+ for(const [step,next] of [[1,2],[6,7],[8,11],[11,12],[13,9]]){
   const t=setup(step);t.handlers.pointerdown();t.handlers.pointerup(t.event());
   assert.equal(t.state.guideStep,next);assert.deepEqual(t.shown,[next]);
   if(next<9)assert.equal(t.context.nextDelay,0);
