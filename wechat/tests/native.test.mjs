@@ -204,18 +204,18 @@ function tapScrolled(h,id){const a=h.app;a.render();for(let y=0;y<=a.scrollMax+1
 test('native companion contracts, star growth and breakthroughs save exact costs',async()=>{
  const state=G.initialState();state.onboarded=true;state.highest=600;state.runCleared=3;state.stage=4;state.roster.shards.milk=20;state.roster.shards.orange=20;state.growth={notes:2000,seals:30};state.badges=100;state.levels.orange=40;
  const h=await harness({state}),a=h.app;a.openStreet('recruit','milk');tapScrolled(h,'street-recruit');assert.ok(a.state.roster.owned.includes('milk'));assert.equal(a.state.roster.shards.milk,0);assert.equal(a.state.party.at(-1),'milk');
- a.change('cats');a.selected='orange';a.scroll=0;tapScrolled(h,'ascend-orange');assert.equal(a.state.roster.stars.orange,1);assert.equal(a.state.roster.shards.orange,0);assert.equal(a.state.growth.notes,3100);
- tapScrolled(h,'breakthrough-orange');assert.equal(a.state.breakthroughs.orange,1);assert.equal(a.state.badges,0);assert.equal(a.state.growth.notes,2980);
+ a.change('cats');a.selected='orange';for(let i=0;i<6;i++){a.scroll=0;tapScrolled(h,'ascend-orange');}assert.equal(a.state.roster.stars.orange,1);assert.equal(a.state.roster.shards.orange,0);assert.equal(a.state.growth.notes,1970);
+ tapScrolled(h,'breakthrough-orange');assert.equal(a.state.breakthroughs.orange,1);assert.equal(a.state.badges,92);assert.equal(a.state.growth.notes,1920);
  const restored=G.decodeSave(h.storage.get('can-club-wechat-v1'));assert.deepEqual(restored.roster,a.state.roster);assert.deepEqual(restored.growth,a.state.growth);h.stop();
 });
 test('native material replay preserves selected job and main campaign progress',async()=>{
  const state=developed();for(const id of state.party)state.levels[id]=40;
  const h=await harness({state}),a=h.app,before=[a.state.stage,a.state.highest];a.openStreet('materials','escort');tapScrolled(h,'street-fight');
  for(let i=0;i<400&&!a.battle.result;i++){a.update(.25);if(a.battle.canCd===0)a.can();}
- assert.equal(a.battle.result,'win');assert.equal(a.state.activities.cleared.escort,1);const notes=a.state.growth.notes;
+ assert.equal(a.battle.result,'win');assert.equal(a.state.activities.cleared.escort,1);const badges=a.state.badges;
  a.pause();assert.equal(a.battle.activity.kind,'escort');assert.equal(a.battle.activity.tier,1);
  for(let i=0;i<400&&!a.battle.result;i++){a.update(.25);if(a.battle.canCd===0)a.can();}
- assert.equal(a.battle.result,'win');assert.equal(a.state.growth.notes-notes,15);assert.deepEqual([a.state.stage,a.state.highest],before);a.update(1.5);assert.equal(a.tab,'map');assert.equal(a.mapPlace,'street');assert.deepEqual(a.streetView,{group:'materials',id:'escort',tier:1});a.render();h.stop();
+ assert.equal(a.battle.result,'win');assert.equal(a.state.badges-badges,3);assert.deepEqual([a.state.stage,a.state.highest],before);a.update(1.5);assert.equal(a.tab,'map');assert.equal(a.mapPlace,'street');assert.deepEqual(a.streetView,{group:'materials',id:'escort',tier:1});a.render();h.stop();
 });
 
 test('contract auto-return cannot override a user navigation or rematch',async()=>{
