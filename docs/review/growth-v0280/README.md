@@ -9,7 +9,7 @@
 - 原版保持根路径 `/?v=0.27.6`；本版只发布到 `/growth-preview/play.html`。
 - 网页使用 `can-club-growth-preview-v1` 保存，原版 `can-club-save-v1` 不读取、不写入。
 - 存档封装为 `CAN-CLUB-GROWTH-1`，防止把实验数值误导回原版。新版本从新进度开始。
-- 试玩不注册 Service Worker。`play.html` 文件名避开原版 Service Worker 对目录/index.html 的通用缓存回退；共享现有美术资源。
+- 试玩不注册 Service Worker。`play.html` 文件名避开原版 Service Worker 对目录/index.html 的通用缓存回退；共享现有美术资源。外部 CSS 的 32 个美术 URL 独立改为 `../assets/`，不依赖 HTML base。
 - 返回原版可以直接使用旧链接或试玩设置中的“返回原版”。撤掉 main 上的 growth-preview 目录即可取消试玩，原版源码和资源无须恢复。
 
 ## 本版规则
@@ -25,7 +25,7 @@
 
 ## 验证
 
-- `node --test --test-reporter=tap tests/*.test.mjs wechat/tests/*.test.mjs`：352 项通过。
+- `node --test --test-reporter=tap tests/*.test.mjs wechat/tests/*.test.mjs`：352 项通过；随后新增的 2 项打包回归也通过，共 354 项。最终成长和打包专项 9 项通过。
 - `node scripts/build-web.mjs --code-only`：通过；原美术文件无差异。
 - `node scripts/build-wechat.mjs`：通过；主包 262882 字节，总计 20074066 字节，6 个资源分包。此处不是微信真机验收。
 - `node scripts/balance-growth.mjs`：真实 Battle 引擎、0.1 秒步进、五组固定种子，无罐头支援。
@@ -36,3 +36,13 @@
 - 完整数据见 `balance.json`，构建见 `build.json`。
 
 后续需要根据实际试玩反馈再校准卡点密度、实际游戏时长和装备获取节奏；本版是可回退的成长试验，不替代原版。
+
+## 在线页面复核
+
+- 公开地址： https://heitamu.github.io/can-club-play/growth-preview/play.html?v=0.28.0-preview.2
+- 已在浏览器验证完整加载至新手入口，角色与界面资源到齐；修正了独立目录下 CSS 相对 URL 导致停在 95% 的问题，并补入打包回归测试。
+- 使用可恢复的测试存档验证阿墨 Lv.9 → Lv.10：鱼币 100000 → 98200，攻击 71 → 176，生命 303 → 745，战力 704 → 1196。战场实际从第 280 关推进至第 281 关，计数显示 1。
+- 验证“返回原版”跳到 v0.27.6，并读取原来的第 20 关，而非试玩的第 280 关。
+- 试玩测试完已导回浏览器测试前的新档（第 2 关），未改变原版存档。
+- 截图 `upgrade-preview.jpg` 是测试存档的培养界面，不代表新玩家初始等级；已检查成长目标文字与深色背景的对比度。
+- 此处是浏览器检查，不是手机真机或微信真机验收。

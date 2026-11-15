@@ -117,4 +117,4 @@
 @media(max-width:350px){.crew-portrait{--portrait-size:196px}}
 
 /* Growth trial uses the existing paper, ink and amber palette. */
-.training-goal{margin:6px 4px;text-align:center;font-size:12px;line-height:1.5;color:#654b32}.training-goal b{color:#9d4e2e}.toast{white-space:pre-line;text-align:center;line-height:1.6}.growth-run{margin:0 10px 5px;text-align:center;color:#654b32;font-size:12px;font-weight:800}
+.training-goal{margin:6px 4px;text-align:center;font-size:12px;line-height:1.5;color:#f3dfb4;font-weight:600;text-shadow:0 1px 1px #382818}.training-goal b{color:#ffd183}.toast{white-space:pre-line;text-align:center;line-height:1.6}.growth-run{margin:0 10px 5px;text-align:center;color:#f3dfb4;font-size:12px;font-weight:800}
