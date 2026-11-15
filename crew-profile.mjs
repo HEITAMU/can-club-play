@@ -1,7 +1,8 @@
 import {mulDiv} from './integer-math.mjs';
-import {trainingCount,nextTrainingMilestone,trainingPower} from './growth-curve.mjs';
+import {trainingCount} from './growth-curve.mjs';
 import {skillTuning,skillSummary,SKILL_STUDY} from './skill-training.mjs';
 import {badgeHTML} from './growth-visual.mjs';
+import {starQuote} from './companions.mjs';
 import {growthHTML} from './street-ui.mjs?v=0.25.0';
 import {talentCards} from './talents.mjs?v=0.25.0';
 import {CATS,MAX_LEVEL,catStats,upgradeCost,upgradeQuote,unlocked,ownsCompanion,levelCap,breakthroughQuote} from './core.mjs?v=0.25.0';
@@ -52,8 +53,8 @@ export function crewProfileHTML(state,id,{modal=false}={}){
  const skill=crewSkill(id,level,stats),study=SKILL_STUDY[id],studyHTML='<details class="skill-level-list"><summary>技能升级</summary>'+[0,1,2,3].map(r=>'<div class="'+(r===stats.skillRank?'current':'')+'"><b>Lv.'+(r+1)+'</b> '+skillSummary(id,r)+'</div>').join('')+'</details>',awake=open&&level>=5,[wash,rim,accent]=palettes[id],quote=upgradeQuote(level,state.guideStep===3?1:trainingCount(level),cap),cost=quote.cost;
  const heading=modal?'h2':'h3',canInherit=open&&unlocked(state).some(d=>state.levels[d.id]>level);
  const growthMarkup=open?'<section class="crew-growth" aria-label="伙伴养成">'+growthHTML(state,id)+'</section>':'';
- const next=nextTrainingMilestone(level),growthHint=open?'<p class="training-goal">'+(next?'下次跃升 <b>Lv.'+next+'</b> · 攻击 / 生命比现在提高 <b>'+Math.round((trainingPower(next)/trainingPower(level)-1)*100)+'%</b>':'装备是当前提升重点 · 挑选爪套 / 围巾并强化')+'</p>':'';
- const upgradeMarkup=open?'<div class="crew-actions"><button class="primary crew-upgrade" data-upgrade="'+id+'" data-profile-upgrade data-upgrade-count="'+(state.guideStep===3?1:trainingCount(level))+'" '+(level>=cap||state.gold<cost?'disabled':'')+'>'+'<span>'+(level>=cap?'已满级':next===level+quote.levels&&state.guideStep!==3?'跃升至 Lv.'+next:'升 '+quote.levels+' 级')+'</span></button><div class="upgrade-cost" data-upgrade-cost="'+id+'">'+(quote.levels?icon('coin',12)+'<span>消耗 '+cost.toLocaleString('zh-CN')+'</span>':'')+'</div>'+'<button class="secondary crew-inherit" data-inherit-open="'+id+'" '+(canInherit?'':'disabled')+'>培养继承</button>'+'</div>':'<div class="crew-locked-note">尚未结识</div>';
+ const star=starQuote(state,id),growthHint=open?'<p class="training-goal">'+(star.maxed?'猫牌已满阶 · 继续提升装备与妙招牌':(star.rank>=2?'装备是当前提升重点 · ':'')+(star.ready?'猫牌进阶':'下一次升星')+' · 攻击 / 生命提升 <b>'+star.gain+'%</b>')+'</p>':'';
+ const upgradeMarkup=open?'<div class="crew-actions"><button class="primary crew-upgrade" data-upgrade="'+id+'" data-profile-upgrade data-upgrade-count="'+(state.guideStep===3?1:trainingCount(level))+'" '+(level>=cap||state.gold<cost?'disabled':'')+'>'+'<span>'+(level>=cap?'已满级':'升 '+quote.levels+' 级')+'</span></button><div class="upgrade-cost" data-upgrade-cost="'+id+'">'+(quote.levels?icon('coin',12)+'<span>消耗 '+cost.toLocaleString('zh-CN')+'</span>':'')+'</div>'+'<button class="secondary crew-inherit" data-inherit-open="'+id+'" '+(canInherit?'':'disabled')+'>培养继承</button>'+'</div>':'<div class="crew-locked-note">尚未结识</div>';
  return '<article class="crew-profile'+(open?'':' is-locked')+'" data-profile-cat="'+id+'" style="--crew-wash:'+wash+';--crew-rim:'+rim+';--crew-accent:'+accent+'">'+
   '<div class="crew-hero-column"><div class="crew-hero"><div class="crew-identity"><span class="crew-role">'+c.job+'</span>'+
   '<'+heading+(modal?' id="modal-title"':'')+'>'+c.name+'</'+heading+'>'+

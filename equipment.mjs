@@ -68,7 +68,7 @@ export function createInventory(ids,legacy={},stage=1,party=ids.slice(0,2)){
  return inv;
 }
 export const gearOwner=(s,uid)=>Object.entries(s.inventory.equipped).find(([,slots])=>Object.values(slots).includes(uid))?.[0]||null;
-export function equipGear(s,uid,id,allowed){const e=s.inventory.items.find(e=>e.id===uid);if(!e||!allowed.includes(id))return false;for(const slots of Object.values(s.inventory.equipped))for(const k of Object.keys(slots))if(slots[k]===uid)delete slots[k];(s.inventory.equipped[id]??={})[e.slot]=uid;return true;}
+export function equipGear(s,uid,id,allowed){const e=s.inventory.items.find(e=>e.id===uid);if(!e||!allowed.includes(id))return false;for(const slots of Object.values(s.inventory.equipped))for(const k of Object.keys(slots))if(slots[k]===uid)delete slots[k];(s.inventory.equipped[id]??={})[e.slot]=uid;(s.guidance??={}).equipmentWorn=true;return true;}
 export function unequipGear(s,id,slot){const slots=s.inventory.equipped[id];if(!slots?.[slot])return false;delete slots[slot];return true;}
 export function gearValues(e){if(e.slot==='rune')return {};const slot=GEAR_SLOTS.find(x=>x.id===e.slot),power=key=>key==='atk'||key==='hp',factor=key=>(power(key)?GEAR_POWER_TIERS[e.tier-1]:e.tier)*QUALITIES[e.quality].factor;
  const values={[slot.main]:mulDiv(ATTRS[slot.main].base*factor(slot.main),power(slot.main)?enhancementPower(e.enhance):100+8*e.enhance,1000000)};

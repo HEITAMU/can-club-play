@@ -1,0 +1,17 @@
+{
+  "fixture": "ink level 9, original equipment, 1000 coins, 4 ink shards, 6 notes",
+  "before": {
+    "attack": 40,
+    "hp": 169
+  },
+  "afterLevel": {
+    "attack": 41,
+    "hp": 173
+  },
+  "afterStar": {
+    "attack": 98,
+    "hp": 416
+  },
+  "rank": 0,
+  "step": 1
+}

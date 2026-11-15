@@ -172,3 +172,4 @@
 
 /* A real touch surface also makes blank-area taps reliable on mobile Safari. */
 #new-player-guide[data-mode="info"]{pointer-events:auto;cursor:pointer;touch-action:manipulation}
+.cat-tag-card .tag-comparison p{white-space:normal;line-height:1.4}.cat-tag-gain{display:grid;gap:6px;margin:0 0 14px;padding:12px;background:#e4cda5;border:1px solid #b99a70;border-radius:8px;color:#65492f;font-size:13px}.cat-tag-gain>strong{font-size:14px;color:#63482d;margin-bottom:3px}.cat-tag-gain b{color:#45675a}.cat-tag-sources{display:flex;justify-content:center;gap:10px;margin-top:12px}.cat-tag-sources button{padding:7px 10px;background:#f3e4c4;border:1px solid #b99a70;border-radius:7px;color:#65492f;font-size:12px}

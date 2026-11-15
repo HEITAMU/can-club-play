@@ -31,22 +31,22 @@ test("native boot, input, all tabs and all profiles render without DOM", async (
   }
   assert.ok(h.app.buttons.length);
 });
-test("ten-level cost is atomic and capped, single upgrade stays available", async () => {
+test("single-level button and explicit ten-level training charge exact costs and respect cap", async () => {
   const state = developed(),
     h = await harness({ state }),
     a = h.app;
   a.change("cats");
-  const quote = G.upgradeQuote(1);
+  const quote = G.upgradeQuote(1,1);
   const before = a.state.gold;
   h.tap("train-orange");
-  assert.equal(a.state.levels.orange, 11);
+  assert.equal(a.state.levels.orange, 2);
   assert.equal(a.state.gold, before - quote.cost);
   a.state.gold = 1;
   a.train("orange");
-  assert.equal(a.state.levels.orange, 11);
+  assert.equal(a.state.levels.orange, 2);
   a.state.gold = 1e9;
   a.state.levels.orange = 157;
-  a.train("orange");
+  a.train("orange",10);
   assert.equal(a.state.levels.orange, 160);
 });
 test("touch drag swaps occupied slots; bench replacement inherits training", async () => {

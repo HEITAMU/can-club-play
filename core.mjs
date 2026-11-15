@@ -1,4 +1,4 @@
-import {trainingPower,encounterProgress,trainingMilestoneCost,GROWTH_SAVE_FORMAT} from './growth-curve.mjs';
+import {trainingPower,encounterProgress,GROWTH_SAVE_FORMAT,GROWTH_REVISION,migrateGrowth} from './growth-curve.mjs';
 import {normalizeGuide} from './onboarding.mjs';
 import {patrolDrop,grantPatrolDrop} from './patrol-drops.mjs';
 import {equipmentEncounterScale} from './equipment-progression.mjs';
@@ -9,7 +9,7 @@ import {newRoster,normalizeRoster,normalizeGrowth,owns,recruit,starQuote,ascend,
 export {owns as ownsCompanion,recruit as recruitCompanion,starQuote,ascend as ascendCompanion} from './companions.mjs?v=0.25.0';
 import {normalizeActivities,activityInfo,settleActivity} from './activities.mjs?v=0.25.0';
 import {streetEnemies} from './street-combat.mjs?v=0.25.0';
-import {createInventory,normalizeInventory,gearBonuses,gearDrop} from './equipment.mjs?v=0.25.0';
+import {createInventory,normalizeInventory,gearBonuses,gearDrop,gearOwner} from './equipment.mjs?v=0.25.0';
 import {normalizeCampaign,recordActivity,weeklyInfo,settleWeekly} from './campaign.mjs?v=0.25.0';
 import {normalizeAdRewards} from './rewarded-economy.mjs?v=0.25.0';
 import {normalizeProgression,stallLevel,stallQuote,idleMinutes,suppliesFor,levelCap,breakthroughQuote,arenaInfo,arenaOpen} from './progression.mjs?v=0.25.0';
@@ -67,7 +67,7 @@ export const QUESTS=[
  {id:'half',name:'走到霓虹尽头',desc:'通过第 60 关',key:'highest',goal:60,reward:6000},
  {id:'end',name:'月光罐头收藏家',desc:'通过第 120 关',key:'highest',goal:120,reward:16000}
 ];
-export function initialState(now=Date.now()){return {...normalizeProgression({},CATS.map(c=>c.id)),inventory:createInventory(CATS.map(c=>c.id)),roster:newRoster(),growth:normalizeGrowth(),activities:normalizeActivities(),campaign:normalizeCampaign(),adRewards:normalizeAdRewards(),version:VERSION,gold:200,levels:Object.fromEntries(CATS.map(c=>[c.id,1])),party:['orange','ink'],stage:1,runCleared:0,highest:0,bones:0,prestiges:0,relics:{},pending:null,claimed:[],wins:0,bosses:0,kills:0,upgrades:0,relicCount:0,idle:0,idleRemainder:0,idleSupplies:0,supplyRemainder:0,supplyClock:2,battleReport:null,lastAccrued:now,onboarded:false,auto:true,speed:1,sound:true,music:true,gearGuide:0,gearGuideItem:'',guideStep:0,rescueSeen:false,created:now,seconds:0};}
+export function initialState(now=Date.now()){return {...normalizeProgression({},CATS.map(c=>c.id)),inventory:createInventory(CATS.map(c=>c.id)),roster:newRoster(),growth:normalizeGrowth(),activities:normalizeActivities(),campaign:normalizeCampaign(),adRewards:normalizeAdRewards(),version:VERSION,growthRevision:GROWTH_REVISION,growthRebalancePending:false,guidance:{equipmentWorn:false},gold:200,levels:Object.fromEntries(CATS.map(c=>[c.id,1])),party:['orange','ink'],stage:1,runCleared:0,highest:0,bones:0,prestiges:0,relics:{},pending:null,claimed:[],wins:0,bosses:0,kills:0,upgrades:0,relicCount:0,idle:0,idleRemainder:0,idleSupplies:0,supplyRemainder:0,supplyClock:2,battleReport:null,lastAccrued:now,onboarded:false,auto:true,speed:1,sound:true,music:true,gearGuide:0,gearGuideItem:'',guideStep:0,rescueSeen:false,created:now,seconds:0};}
 export const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const num=(v,d=0,a=0,b=1e12)=>typeof v==='number'&&Number.isFinite(v)?clamp(v,a,b):d;
 export function unlocked(s){return CATS.filter(c=>owns(s,c.id));}
@@ -88,9 +88,9 @@ export function normalizeState(raw,now=Date.now()){
  const available=unlocked(s).map(c=>c.id),seen=new Set();s.party=Array.isArray(raw.party)?raw.party.filter(id=>id===null||available.includes(id)&&!seen.has(id)&&seen.add(id)).slice(0,MAX_PARTY):s.party;while(s.party.length&&!s.party.at(-1))s.party.pop();if(!s.party.some(Boolean))s.party=['orange'];
  s.inventory=[1,2].includes(raw.inventory?.version)?normalizeInventory(raw.inventory,CATS.map(c=>c.id)):createInventory(CATS.map(c=>c.id),raw.relics,s.highest,s.party.filter(Boolean));s.relics={};s.pending=null;
  s.claimed=[...new Set(Array.isArray(raw.claimed)?raw.claimed:[])].filter(id=>QUESTS.some(q=>q.id===id));
- s.lastAccrued=num(raw.lastAccrued,now,0,now);s.idle=num(raw.idle,0,0,idleRate(s)*idleMinutes(s));s.idleRemainder=Math.min(59999,Math.max(0,integer(raw.idleRemainder??((s.idle-Math.floor(s.idle))*60000))));s.idle=Math.floor(s.idle);s.created=num(raw.created,now,0,now);s.onboarded=!!raw.onboarded;s.auto=raw.auto!==false;s.speed=raw.speed===2?2:1;s.sound=raw.sound!==false;s.music=raw.music!==false;s.gearGuide=Math.floor(num(raw.gearGuide,0,0,4));s.gearGuideItem=s.inventory.items.some(e=>e.id===raw.gearGuideItem)?raw.gearGuideItem:'';s.guideStep=normalizeGuide(raw.guideStep,s.onboarded);return s;
+ s.lastAccrued=num(raw.lastAccrued,now,0,now);s.idle=num(raw.idle,0,0,idleRate(s)*idleMinutes(s));s.idleRemainder=Math.min(59999,Math.max(0,integer(raw.idleRemainder??((s.idle-Math.floor(s.idle))*60000))));s.idle=Math.floor(s.idle);s.created=num(raw.created,now,0,now);s.onboarded=!!raw.onboarded;s.auto=raw.auto!==false;s.speed=raw.speed===2?2:1;s.sound=raw.sound!==false;s.music=raw.music!==false;s.gearGuide=Math.floor(num(raw.gearGuide,0,0,4));s.gearGuideItem=s.inventory.items.some(e=>e.id===raw.gearGuideItem)?raw.gearGuideItem:'';s.guideStep=normalizeGuide(raw.guideStep,s.onboarded);s.guidance={equipmentWorn:raw.guidance?.equipmentWorn===true||s.gearGuide===4||!!(s.gearGuideItem&&gearOwner(s,s.gearGuideItem))||s.inventory.items.some(e=>e.slot!=='rune'&&(e.quality>0||e.tier>1)&&gearOwner(s,e.id))};migrateGrowth(s,raw);return s;
 }
-export function upgradeCost(level){return trainingMilestoneCost(level)||Math.round((22+level*12+Math.pow(level,1.65)*2)*(1+Math.max(0,level-40)**2/150));}
+export function upgradeCost(level){return Math.round((22+level*12+Math.pow(level,1.65)*2)*(1+Math.max(0,level-40)**2/150));}
 export function upgradeQuote(level,count=10,cap=MAX_LEVEL){const levels=Math.max(0,Math.min(cap-level,Math.floor(count),10));let cost=0;for(let i=0;i<levels;i++)cost+=upgradeCost(level+i);return {levels,cost};}
 export function upgrade(s,id,count=1,now=Date.now()){const c=CATS.find(c=>c.id===id);if(!c||!owns(s,id))return 0;let done=0;for(let i=0;i<clamp(count,1,10);i++){const l=s.levels[id],cost=upgradeCost(l);if(l>=levelCap(s,id)||s.gold<cost)break;s.gold-=cost;s.levels[id]++;s.upgrades++;done++;}if(done)recordActivity(s,'train',done,now);return done;}
 export function setParty(s,slot,id){
