@@ -1,0 +1,1 @@
+const kind=document.body.dataset.kind;const body=await(await fetch('qa/tag-'+kind+'-body.json')).json();document.body.insertAdjacentHTML('beforeend',body);

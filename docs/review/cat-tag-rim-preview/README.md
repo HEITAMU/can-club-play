@@ -1,0 +1,2 @@
+# Cat tag rim review candidate
+Preview only; not integrated into production. Six minor-step states and six rank colors shown separately. Revised fifth-stage rim uses colored core, cream highlights, bevel gradient, dark edge and restrained halo matching star treatment. Existing painted asset and four-star sequence retained. Browser-rendered previews saved alongside candidate module. HTML preview files expect qa/ base paths in the existing review server.
