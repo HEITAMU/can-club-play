@@ -9,15 +9,15 @@ test('every unfinished guide restores an actionable page, reopening transient eq
  for(let step=2;step<=7;step++){const plan=guideResume(step);assert.ok(plan.waiting);assert.equal(plan.tab,step===2?'battle':'cats');assert.equal(plan.step,step===6?5:step);}
  assert.equal(guideResume(7).mode,'equipment');for(const step of [0,1,8,9])assert.equal(guideResume(step).waiting,false);
 });
-test('closing equipment details through the close handler advances without a click event',()=>{
+test('closing equipment details outside acknowledgement returns to the actionable equipment step',()=>{
  const state={guideStep:6,runCleared:1},layer={hidden:false};let events=0;
- run('closeModal',{modalType:'equipment',state,$:()=>layer,gearAnchor:{},queue:[],MAX_STAGE:100,battle:{result:'win',mode:'patrol'},renderGuide(){},guideEvent:e=>{state.guideStep=nextGuide(state.guideStep,e);events++;},startBattle:()=>assert.fail('must wait for return-to-battle step')});
- assert.equal(state.guideStep,7);assert.equal(layer.hidden,true);assert.equal(events,1);
+ run('closeModal',{modalType:'equipment',state,$:()=>layer,gearAnchor:{},queue:[],MAX_STAGE:100,battle:{result:'win',mode:'patrol'},persist(){},renderGuide(){},guideEvent:e=>{state.guideStep=nextGuide(state.guideStep,e);events++;},startBattle:()=>assert.fail('must wait for return-to-battle step')});
+ assert.equal(state.guideStep,5);assert.equal(layer.hidden,true);assert.equal(events,0);
 });
 test('skipping any paused lesson closes its modal and starts the current campaign stage',()=>{
  for(let step=2;step<=7;step++){
   const state={guideStep:step};let closed=0,started=0,tab='cats';
-  run('skipGuide',{state,guideResume,GUIDE_DONE,persist(){},forceClose(){closed++;},renderGuide(){},changeTab:t=>tab=t,startBattle:()=>started++});
+  run('skipGuide',{state,running:false,guideResume,GUIDE_DONE,persist(){},forceClose(){closed++;},renderGuide(){},changeTab:t=>tab=t,startBattle:()=>started++});
   assert.equal(state.guideStep,9);assert.equal(closed,1);assert.equal(tab,'battle');assert.equal(started,1);
  }
 });

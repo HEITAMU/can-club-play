@@ -1,3 +1,4 @@
+import {soundRecipe} from './sound-effects.mjs';
 import {SCORE,musicEvents,instrumentPCM} from './music-score.mjs';
 export {SCORE};
 export class GameAudio{
@@ -31,5 +32,16 @@ export class GameAudio{
    this.step=(this.step+1)%128;this.next+=unit;
   }
  }
- play(kind){if(!this.ctx||!this.effects||this.hidden||this.ctx.state!=='running')return;const t=this.ctx.currentTime,min=kind==='hit'?.11:kind==='click'?.07:.25;if(t-(this.cooldowns.get(kind)??-100)<min)return;this.cooldowns.set(kind,t);if(kind==='click'){this.noise(t,.035,.065,1100);return;}const notes={click:[79],coin:[84,88,91],win:[72,76,79,84],lose:[67,64,60],can:[67,74,79],skill:[72,79,84],heal:[76,81,88],shield:[60,67,72]};if(kind==='hit'){this.noise(t,.09,.17,1800);this.note(43,t,.08,.35,this.fxBus,'bass');return;}if(kind==='can')this.noise(t,.13,.12,5500);(notes[kind]||notes.click).forEach((n,i)=>this.note(n,t+i*.075,kind==='click'?.05:.23,kind==='click'?.2:.48,this.fxBus));}
+ sweep(t,{from,to,duration,gain,wave}){
+  const o=this.ctx.createOscillator(),g=this.ctx.createGain();o.type=wave;o.frequency.setValueAtTime(from,t);o.frequency.exponentialRampToValueAtTime(to,t+duration);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(gain,t+.006);g.gain.exponentialRampToValueAtTime(.0001,t+duration);
+  o.connect(g);g.connect(this.fxBus);o.start(t);o.stop(t+duration+.01);o.onended=()=>{o.disconnect();g.disconnect();};
+ }
+ play(kind,details={}){
+  if(!this.ctx||!this.effects||this.hidden||this.ctx.state!=='running')return;
+  const layers=soundRecipe(kind,details);if(!layers.length)return;
+  const t=this.ctx.currentTime,key=kind==='skill'?kind+':'+details.catId+':'+!!details.shieldPunch:kind,min=kind==='hit'?.11:kind==='click'?.07:.25;
+  if(t-(this.cooldowns.get(key)??-100)<min)return;this.cooldowns.set(key,t);
+  for(const layer of layers){if(layer.type==='tone')this.sweep(t,layer);else this.noise(t,layer.duration,layer.gain,layer.frequency,this.fxBus,layer.filter);}
+ }
 }
