@@ -10,7 +10,7 @@ CI 的 `cocos-creator-project-*` 产物内提供 **CanClub-Creator-3.8.8.zip**�
 
 入口场景为 `assets/scenes/Main.scene`，启动组件为 `assets/scripts/CanClubGame.ts`。设计宽度 390、高度 844，按宽适配并根据可视区域计算高度。`package.json` 锁定 Creator 版本，场景与脚本的 UUID 由构建脚本稳定生成。
 
-用户确认的原画与设定页对应见 [美术基线](docs/art-baseline.md)。实际 Cocos Web 试玩可[直接打开](https://heitamu.github.io/can-club-play/cocos-preview/play.html?v=2d9092b1b4e67195f216)，对应仓库的 [`cocos-preview/play.html`](../cocos-preview/play.html)，由下面的同一份源引擎构建生成；它不是 Creator 编辑器正式导出。
+用户确认的原画与设定页对应见 [美术基线](docs/art-baseline.md)。实际 Cocos Web 试玩可[直接打开](https://heitamu.github.io/can-club-play/cocos-preview/play.html?v=4ffa71a495488351c621)，对应仓库的 [`cocos-preview/play.html`](../cocos-preview/play.html)，由下面的同一份源引擎构建生成；它不是 Creator 编辑器正式导出。
 
 `assets/scripts/domain/` 存放迁移的纯逻辑；`game/` 管理会话；`render/` 与 `ui/` 负责原生显示和输入；`platform/` 处理存档、音频、广告和平台生命周期。Web 与微信都调用同一份 `bootGame`。
 

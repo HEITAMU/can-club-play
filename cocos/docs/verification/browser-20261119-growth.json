@@ -1,0 +1,2885 @@
+{
+  "startedAt": "2026-11-19T09:58:12.535Z",
+  "url": "http://127.0.0.1:8765/cocos-preview/play.html?smoke=1",
+  "status": "passed",
+  "scope": "Real Cocos 3.8.8 engine, native scene nodes, browser touch, asset loading and application flow",
+  "isolation": "New nonpersistent browser context per viewport; development fixtures only; no player profile, cookies or save imported",
+  "limitations": [
+    "Not a Creator editor import/build test",
+    "Not WeChat DevTools or phone-device validation",
+    "Screenshots require visual review"
+  ],
+  "viewports": [
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": "passed",
+      "checks": [
+        "Cocos 3.8.8 real scene/canvas; fresh first battle has two Lv.1 starters",
+        "Entire initial tutorial through real native buttons; training, equipment inspection, can practice and growth-goals modal",
+        "Switching to bag keeps the same logical patrol moving",
+        "Native street/salvage flow; real combat reward; settlement persists, survives reload and blocks tutorial interception",
+        "Settlement reward details preserve the report; inside/outside swipe, touch cancellation and cross-surface multitouch do not dismiss it; real crest tap closes it and resumes equipment teaching",
+        "Closing the first salvage report resumes equipment teaching; item inspect/equip completes the original guide",
+        "Native navigation and in-page controls stay pressed across real patrol settlement and next-battle preparation; each release delivers exactly one click",
+        "An actual delayed background resource request cannot intercept other-page navigation; original network response and encounter restored afterwards",
+        "A second real salvage settles normally; a genuine outside tap closes its report and restores the original commission route",
+        "Native equipment enhancement, material bag and companion-keepsake bag",
+        "Native keepsake recruitment; remove auto-placement and drag milk outside the source node into the third formation position",
+        "Actual milk skill emits healing; after two Cocos draw events each visible HealingRibbon submitted vertex alpha matches geometry times explicit ancestor opacity, with pooled parent sprite alpha reset",
+        "Native level-cap rejection, ascension without instant stats, ten purchased levels, both study controls gated at Lv.39/40, one paid skill rank and persistent reload"
+      ],
+      "captures": [
+        "390x844-01-fresh-intro.png",
+        "390x844-02-equipment-tutorial.png",
+        "390x844-growth-notebook.png",
+        "390x844-03-street.png",
+        "390x844-04-salvage.png",
+        "390x844-05-settlement.png",
+        "390x844-06-equipment-enhanced.png",
+        "390x844-07-materials.png",
+        "390x844-08-keepsakes.png",
+        "390x844-commission-board.png",
+        "390x844-equipment-list.png",
+        "390x844-09-battle.png",
+        "390x844-10-formation-drag.png",
+        "390x844-11-healing-ribbon.png",
+        "390x844-12-growth-ascension.png",
+        "390x844-13-growth-study-locked.png",
+        "390x844-14-growth-skill-requirements.png",
+        "390x844-15-growth-skill-learned.png"
+      ],
+      "errors": [],
+      "expectedEngineDiagnostics": [
+        {
+          "message": "Ignored attempt to cancel a touchcancel event with cancelable=false, for example because scrolling is in progress and cannot be interrupted.",
+          "location": {
+            "url": "http://127.0.0.1:8765/cocos-preview/r/4ffa71a495488351c621/cc.js",
+            "lineNumber": 43701,
+            "columnNumber": 0
+          },
+          "trigger": "Explicit native touchCancel; Cocos 3.8.8 preventDefault on a noncancelable event"
+        }
+      ],
+      "fixture": "Fresh account initially; isolated unlocked stage 3, rank-5 Lv.80 starters and resources for equipment/recruitment; temporary stage 101 with one original network response delayed to verify navigation, then prior encounter restored; isolated Lv.1 injured team and full milk energy for healing render capture; isolated rank-2 Lv.30 orange for native ascension, training and level-gated study",
+      "lastAction": {
+        "kind": "tap",
+        "name": "study-skill",
+        "x": 195,
+        "y": 602.4,
+        "button": {
+          "name": "study-skill",
+          "x": 24,
+          "y": 583.4,
+          "width": 342,
+          "height": 38
+        },
+        "clips": [
+          {
+            "name": "scroll-view",
+            "x": 24,
+            "y": 220,
+            "width": 342,
+            "height": 445
+          }
+        ],
+        "visible": {
+          "left": 24,
+          "top": 583.4,
+          "right": 366,
+          "bottom": 621.4
+        }
+      },
+      "cancelReceipt": {
+        "native": {
+          "cancelable": false,
+          "target": "GameCanvas"
+        },
+        "cocos": true
+      },
+      "inputContinuity": {
+        "navigation": {
+          "name": "tab-bag",
+          "uuid": "Node.1312",
+          "starts": 1,
+          "ends": 1,
+          "cancels": 0,
+          "clicks": 1,
+          "transition": {
+            "before": 4,
+            "after": 5,
+            "sameTarget": true
+          }
+        },
+        "pageButton": {
+          "name": "bag-tab-materials",
+          "uuid": "Node.3874",
+          "starts": 1,
+          "ends": 1,
+          "cancels": 0,
+          "clicks": 1,
+          "transition": {
+            "before": 5,
+            "after": 6,
+            "sameTarget": true
+          }
+        },
+        "coldLoad": {
+          "name": "tab-map",
+          "uuid": "Node.4111",
+          "starts": 1,
+          "ends": 1,
+          "cancels": 0,
+          "clicks": 1,
+          "navigatedWhileLoading": true
+        }
+      },
+      "lastHealingAudit": {
+        "paused": true,
+        "battleTime": 5.738129999999977,
+        "ribbons": [
+          {
+            "name": "healing-stream",
+            "vertexCount": 138,
+            "geometryAlpha": 0.2028599977493286,
+            "bufferAlpha": 0.2028599977493286,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 354.04658181818183,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 354.04658181818183,
+              "bottom": 388.16378181818186
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 87,
+            "geometryAlpha": 0.2028599977493286,
+            "bufferAlpha": 0.2028599977493286,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 354.04658181818183,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 354.04658181818183,
+              "bottom": 388.16378181818186
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 93,
+            "geometryAlpha": 0.2028599977493286,
+            "bufferAlpha": 0.2028599977493286,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 570.4972636363636,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 570.4972636363636,
+              "bottom": 604.6144636363637
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 132,
+            "geometryAlpha": 0.2028599977493286,
+            "bufferAlpha": 0.2028599977493286,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 570.4972636363636,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 570.4972636363636,
+              "bottom": 604.6144636363637
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 126,
+            "geometryAlpha": 0.2028599977493286,
+            "bufferAlpha": 0.2028599977493286,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 33.0213,
+              "y": 296.32640000000004,
+              "width": 58.757400000000004,
+              "height": 34.11719999999991,
+              "top": 296.32640000000004,
+              "bottom": 330.44359999999995
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 99,
+            "geometryAlpha": 0.2028599977493286,
+            "bufferAlpha": 0.2028599977493286,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 33.0213,
+              "y": 296.32640000000004,
+              "width": 58.757400000000004,
+              "height": 34.11719999999991,
+              "top": 296.32640000000004,
+              "bottom": 330.44359999999995
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 87,
+            "geometryAlpha": 0.3042899966239929,
+            "bufferAlpha": 0.3042899966239929,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 354.04658181818183,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 354.04658181818183,
+              "bottom": 388.16378181818186
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 132,
+            "geometryAlpha": 0.3042899966239929,
+            "bufferAlpha": 0.3042899966239929,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 354.04658181818183,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 354.04658181818183,
+              "bottom": 388.16378181818186
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 132,
+            "geometryAlpha": 0.3042899966239929,
+            "bufferAlpha": 0.3042899966239929,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 570.4972636363636,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 570.4972636363636,
+              "bottom": 604.6144636363637
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 93,
+            "geometryAlpha": 0.3042899966239929,
+            "bufferAlpha": 0.3042899966239929,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 570.4972636363636,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 570.4972636363636,
+              "bottom": 604.6144636363637
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 99,
+            "geometryAlpha": 0.3042899966239929,
+            "bufferAlpha": 0.3042899966239929,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 33.0213,
+              "y": 296.32640000000004,
+              "width": 58.757400000000004,
+              "height": 34.11719999999991,
+              "top": 296.32640000000004,
+              "bottom": 330.44359999999995
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 132,
+            "geometryAlpha": 0.3042899966239929,
+            "bufferAlpha": 0.3042899966239929,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 33.0213,
+              "y": 296.32640000000004,
+              "width": 58.757400000000004,
+              "height": 34.11719999999991,
+              "top": 296.32640000000004,
+              "bottom": 330.44359999999995
+            },
+            "onScreen": true
+          }
+        ],
+        "healEvents": [
+          {
+            "type": "heal",
+            "at": 5.694659999999987,
+            "from": "p2",
+            "to": "p0",
+            "value": 41,
+            "serial": 21
+          },
+          {
+            "type": "heal",
+            "at": 5.694659999999987,
+            "from": "p2",
+            "to": "p1",
+            "value": 41,
+            "serial": 22
+          },
+          {
+            "type": "heal",
+            "at": 5.694659999999987,
+            "from": "p2",
+            "to": "p2",
+            "value": 41,
+            "serial": 23
+          }
+        ]
+      },
+      "healing": {
+        "paused": true,
+        "battleTime": 5.738129999999977,
+        "ribbons": [
+          {
+            "name": "healing-stream",
+            "vertexCount": 138,
+            "geometryAlpha": 0.2028599977493286,
+            "bufferAlpha": 0.2028599977493286,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 354.04658181818183,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 354.04658181818183,
+              "bottom": 388.16378181818186
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 87,
+            "geometryAlpha": 0.2028599977493286,
+            "bufferAlpha": 0.2028599977493286,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 354.04658181818183,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 354.04658181818183,
+              "bottom": 388.16378181818186
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 93,
+            "geometryAlpha": 0.2028599977493286,
+            "bufferAlpha": 0.2028599977493286,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 570.4972636363636,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 570.4972636363636,
+              "bottom": 604.6144636363637
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 132,
+            "geometryAlpha": 0.2028599977493286,
+            "bufferAlpha": 0.2028599977493286,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 570.4972636363636,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 570.4972636363636,
+              "bottom": 604.6144636363637
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 126,
+            "geometryAlpha": 0.2028599977493286,
+            "bufferAlpha": 0.2028599977493286,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 33.0213,
+              "y": 296.32640000000004,
+              "width": 58.757400000000004,
+              "height": 34.11719999999991,
+              "top": 296.32640000000004,
+              "bottom": 330.44359999999995
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 99,
+            "geometryAlpha": 0.2028599977493286,
+            "bufferAlpha": 0.2028599977493286,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 33.0213,
+              "y": 296.32640000000004,
+              "width": 58.757400000000004,
+              "height": 34.11719999999991,
+              "top": 296.32640000000004,
+              "bottom": 330.44359999999995
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 87,
+            "geometryAlpha": 0.3042899966239929,
+            "bufferAlpha": 0.3042899966239929,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 354.04658181818183,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 354.04658181818183,
+              "bottom": 388.16378181818186
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 132,
+            "geometryAlpha": 0.3042899966239929,
+            "bufferAlpha": 0.3042899966239929,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 354.04658181818183,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 354.04658181818183,
+              "bottom": 388.16378181818186
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 132,
+            "geometryAlpha": 0.3042899966239929,
+            "bufferAlpha": 0.3042899966239929,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 570.4972636363636,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 570.4972636363636,
+              "bottom": 604.6144636363637
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 93,
+            "geometryAlpha": 0.3042899966239929,
+            "bufferAlpha": 0.3042899966239929,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 570.4972636363636,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 570.4972636363636,
+              "bottom": 604.6144636363637
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 99,
+            "geometryAlpha": 0.3042899966239929,
+            "bufferAlpha": 0.3042899966239929,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 33.0213,
+              "y": 296.32640000000004,
+              "width": 58.757400000000004,
+              "height": 34.11719999999991,
+              "top": 296.32640000000004,
+              "bottom": 330.44359999999995
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 132,
+            "geometryAlpha": 0.3042899966239929,
+            "bufferAlpha": 0.3042899966239929,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 33.0213,
+              "y": 296.32640000000004,
+              "width": 58.757400000000004,
+              "height": 34.11719999999991,
+              "top": 296.32640000000004,
+              "bottom": 330.44359999999995
+            },
+            "onScreen": true
+          }
+        ],
+        "healEvents": [
+          {
+            "type": "heal",
+            "at": 5.694659999999987,
+            "from": "p2",
+            "to": "p0",
+            "value": 41,
+            "serial": 21
+          },
+          {
+            "type": "heal",
+            "at": 5.694659999999987,
+            "from": "p2",
+            "to": "p1",
+            "value": 41,
+            "serial": 22
+          },
+          {
+            "type": "heal",
+            "at": 5.694659999999987,
+            "from": "p2",
+            "to": "p2",
+            "value": 41,
+            "serial": 23
+          }
+        ]
+      },
+      "growthRules": {
+        "atCap": {
+          "level": 30,
+          "rank": 2,
+          "study": 0,
+          "gold": 100000000,
+          "shards": 1000,
+          "notes": 10000,
+          "badges": 1000,
+          "seals": 1000,
+          "legacyCap": 0,
+          "hp": 2768,
+          "atk": 204
+        },
+        "capLabels": [
+          "等级上限 Lv.30",
+          "等级上限 Lv.40"
+        ],
+        "promoted": {
+          "level": 30,
+          "rank": 3,
+          "study": 0,
+          "gold": 100000000,
+          "shards": 980,
+          "notes": 10000,
+          "badges": 1000,
+          "seals": 1000,
+          "legacyCap": 0,
+          "hp": 2768,
+          "atk": 204
+        },
+        "belowStudy": {
+          "level": 39,
+          "rank": 3,
+          "study": 0,
+          "gold": 99990055,
+          "shards": 980,
+          "notes": 10000,
+          "badges": 1000,
+          "seals": 1000,
+          "legacyCap": 0,
+          "hp": 6478,
+          "atk": 478
+        },
+        "learned": {
+          "level": 40,
+          "rank": 3,
+          "study": 1,
+          "gold": 99988721,
+          "shards": 980,
+          "notes": 9950,
+          "badges": 992,
+          "seals": 1000,
+          "legacyCap": 0,
+          "hp": 6915,
+          "atk": 506
+        },
+        "persistedGrowth": {
+          "level": 40,
+          "rank": 3,
+          "study": 1,
+          "gold": 99988721,
+          "shards": 980,
+          "notes": 9950,
+          "badges": 992,
+          "seals": 1000,
+          "legacyCap": 0
+        },
+        "reloaded": {
+          "level": 40,
+          "rank": 3,
+          "study": 1,
+          "gold": 99988721,
+          "shards": 980,
+          "notes": 9950,
+          "badges": 992,
+          "seals": 1000,
+          "legacyCap": 0,
+          "hp": 6915,
+          "atk": 506
+        }
+      },
+      "final": {
+        "engineVersion": "3.8.8",
+        "tab": "battle",
+        "running": true,
+        "guideStep": 9,
+        "nativeNodeCount": 129,
+        "pendingRequests": 0
+      }
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 740
+      },
+      "status": "passed",
+      "checks": [
+        "Cocos 3.8.8 real scene/canvas; fresh first battle has two Lv.1 starters",
+        "Entire initial tutorial through real native buttons; training, equipment inspection, can practice and growth-goals modal",
+        "Switching to bag keeps the same logical patrol moving",
+        "Native street/salvage flow; real combat reward; settlement persists, survives reload and blocks tutorial interception",
+        "Settlement reward details preserve the report; inside/outside swipe, touch cancellation and cross-surface multitouch do not dismiss it; real crest tap closes it and resumes equipment teaching",
+        "Closing the first salvage report resumes equipment teaching; item inspect/equip completes the original guide",
+        "Native navigation and in-page controls stay pressed across real patrol settlement and next-battle preparation; each release delivers exactly one click",
+        "An actual delayed background resource request cannot intercept other-page navigation; original network response and encounter restored afterwards",
+        "A second real salvage settles normally; a genuine outside tap closes its report and restores the original commission route",
+        "Native equipment enhancement, material bag and companion-keepsake bag",
+        "Native keepsake recruitment; remove auto-placement and drag milk outside the source node into the third formation position",
+        "Actual milk skill emits healing; after two Cocos draw events each visible HealingRibbon submitted vertex alpha matches geometry times explicit ancestor opacity, with pooled parent sprite alpha reset",
+        "Native level-cap rejection, ascension without instant stats, ten purchased levels, both study controls gated at Lv.39/40, one paid skill rank and persistent reload"
+      ],
+      "captures": [
+        "320x740-01-fresh-intro.png",
+        "320x740-02-equipment-tutorial.png",
+        "320x740-growth-notebook.png",
+        "320x740-03-street.png",
+        "320x740-04-salvage.png",
+        "320x740-05-settlement.png",
+        "320x740-06-equipment-enhanced.png",
+        "320x740-07-materials.png",
+        "320x740-08-keepsakes.png",
+        "320x740-commission-board.png",
+        "320x740-equipment-list.png",
+        "320x740-09-battle.png",
+        "320x740-10-formation-drag.png",
+        "320x740-11-healing-ribbon.png",
+        "320x740-12-growth-ascension.png",
+        "320x740-13-growth-study-locked.png",
+        "320x740-14-growth-skill-requirements.png",
+        "320x740-15-growth-skill-learned.png"
+      ],
+      "errors": [],
+      "expectedEngineDiagnostics": [
+        {
+          "message": "Ignored attempt to cancel a touchcancel event with cancelable=false, for example because scrolling is in progress and cannot be interrupted.",
+          "location": {
+            "url": "http://127.0.0.1:8765/cocos-preview/r/4ffa71a495488351c621/cc.js",
+            "lineNumber": 43701,
+            "columnNumber": 0
+          },
+          "trigger": "Explicit native touchCancel; Cocos 3.8.8 preventDefault on a noncancelable event"
+        }
+      ],
+      "fixture": "Fresh account initially; isolated unlocked stage 3, rank-5 Lv.80 starters and resources for equipment/recruitment; temporary stage 101 with one original network response delayed to verify navigation, then prior encounter restored; isolated Lv.1 injured team and full milk energy for healing render capture; isolated rank-2 Lv.30 orange for native ascension, training and level-gated study",
+      "lastAction": {
+        "kind": "tap",
+        "name": "study-skill",
+        "x": 159.99999999999997,
+        "y": 518.0205128205127,
+        "button": {
+          "name": "study-skill",
+          "x": 19.692307692307693,
+          "y": 502.4307692307692,
+          "width": 280.6153846153846,
+          "height": 31.17948717948718
+        },
+        "clips": [
+          {
+            "name": "scroll-view",
+            "x": 19.692307692307693,
+            "y": 204.25641025641025,
+            "width": 280.6153846153846,
+            "height": 365.12820512820514
+          }
+        ],
+        "visible": {
+          "left": 19.692307692307693,
+          "top": 502.4307692307692,
+          "right": 300.30769230769226,
+          "bottom": 533.6102564102564
+        }
+      },
+      "cancelReceipt": {
+        "native": {
+          "cancelable": false,
+          "target": "GameCanvas"
+        },
+        "cocos": true
+      },
+      "inputContinuity": {
+        "navigation": {
+          "name": "tab-bag",
+          "uuid": "Node.1414",
+          "starts": 1,
+          "ends": 1,
+          "cancels": 0,
+          "clicks": 1,
+          "transition": {
+            "before": 4,
+            "after": 5,
+            "sameTarget": true
+          }
+        },
+        "pageButton": {
+          "name": "bag-tab-materials",
+          "uuid": "Node.3624",
+          "starts": 1,
+          "ends": 1,
+          "cancels": 0,
+          "clicks": 1,
+          "transition": {
+            "before": 5,
+            "after": 6,
+            "sameTarget": true
+          }
+        },
+        "coldLoad": {
+          "name": "tab-map",
+          "uuid": "Node.3861",
+          "starts": 1,
+          "ends": 1,
+          "cancels": 0,
+          "clicks": 1,
+          "navigatedWhileLoading": true
+        }
+      },
+      "lastHealingAudit": {
+        "paused": true,
+        "battleTime": 5.777999999999988,
+        "ribbons": [
+          {
+            "name": "healing-stream",
+            "vertexCount": 132,
+            "geometryAlpha": 0.41999998688697815,
+            "bufferAlpha": 0.41999998688697815,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 380.61646818181816,
+              "width": 58.75740000000002,
+              "height": 34.11719999999997,
+              "top": 380.61646818181816,
+              "bottom": 414.73366818181813
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 93,
+            "geometryAlpha": 0.41999998688697815,
+            "bufferAlpha": 0.41999998688697815,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 380.61646818181816,
+              "width": 58.75740000000002,
+              "height": 34.11719999999997,
+              "top": 380.61646818181816,
+              "bottom": 414.73366818181813
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 99,
+            "geometryAlpha": 0.41999998688697815,
+            "bufferAlpha": 0.41999998688697815,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 620.7432863636363,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 620.7432863636363,
+              "bottom": 654.8604863636364
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 132,
+            "geometryAlpha": 0.41999998688697815,
+            "bufferAlpha": 0.41999998688697815,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 620.7432863636363,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 620.7432863636363,
+              "bottom": 654.8604863636364
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 126,
+            "geometryAlpha": 0.41999998688697815,
+            "bufferAlpha": 0.41999998688697815,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 33.0213,
+              "y": 316.58264999999994,
+              "width": 58.757400000000004,
+              "height": 34.11719999999991,
+              "top": 316.58264999999994,
+              "bottom": 350.69984999999986
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 99,
+            "geometryAlpha": 0.41999998688697815,
+            "bufferAlpha": 0.41999998688697815,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 33.0213,
+              "y": 316.58264999999994,
+              "width": 58.757400000000004,
+              "height": 34.11719999999991,
+              "top": 316.58264999999994,
+              "bottom": 350.69984999999986
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 93,
+            "geometryAlpha": 0.6299999952316284,
+            "bufferAlpha": 0.6299999952316284,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 380.61646818181816,
+              "width": 58.75740000000002,
+              "height": 34.11719999999997,
+              "top": 380.61646818181816,
+              "bottom": 414.73366818181813
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 126,
+            "geometryAlpha": 0.6299999952316284,
+            "bufferAlpha": 0.6299999952316284,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 380.61646818181816,
+              "width": 58.75740000000002,
+              "height": 34.11719999999997,
+              "top": 380.61646818181816,
+              "bottom": 414.73366818181813
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 138,
+            "geometryAlpha": 0.6299999952316284,
+            "bufferAlpha": 0.6299999952316284,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 620.7432863636363,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 620.7432863636363,
+              "bottom": 654.8604863636364
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 93,
+            "geometryAlpha": 0.6299999952316284,
+            "bufferAlpha": 0.6299999952316284,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 620.7432863636363,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 620.7432863636363,
+              "bottom": 654.8604863636364
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 105,
+            "geometryAlpha": 0.6299999952316284,
+            "bufferAlpha": 0.6299999952316284,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 33.0213,
+              "y": 316.58264999999994,
+              "width": 58.757400000000004,
+              "height": 34.11719999999991,
+              "top": 316.58264999999994,
+              "bottom": 350.69984999999986
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 132,
+            "geometryAlpha": 0.6299999952316284,
+            "bufferAlpha": 0.6299999952316284,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 33.0213,
+              "y": 316.58264999999994,
+              "width": 58.757400000000004,
+              "height": 34.11719999999991,
+              "top": 316.58264999999994,
+              "bottom": 350.69984999999986
+            },
+            "onScreen": true
+          }
+        ],
+        "healEvents": [
+          {
+            "type": "heal",
+            "at": 5.620769999999979,
+            "from": "p2",
+            "to": "p0",
+            "value": 41,
+            "serial": 21
+          },
+          {
+            "type": "heal",
+            "at": 5.620769999999979,
+            "from": "p2",
+            "to": "p1",
+            "value": 41,
+            "serial": 22
+          },
+          {
+            "type": "heal",
+            "at": 5.620769999999979,
+            "from": "p2",
+            "to": "p2",
+            "value": 41,
+            "serial": 23
+          }
+        ]
+      },
+      "healing": {
+        "paused": true,
+        "battleTime": 5.777999999999988,
+        "ribbons": [
+          {
+            "name": "healing-stream",
+            "vertexCount": 132,
+            "geometryAlpha": 0.41999998688697815,
+            "bufferAlpha": 0.41999998688697815,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 380.61646818181816,
+              "width": 58.75740000000002,
+              "height": 34.11719999999997,
+              "top": 380.61646818181816,
+              "bottom": 414.73366818181813
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 93,
+            "geometryAlpha": 0.41999998688697815,
+            "bufferAlpha": 0.41999998688697815,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 380.61646818181816,
+              "width": 58.75740000000002,
+              "height": 34.11719999999997,
+              "top": 380.61646818181816,
+              "bottom": 414.73366818181813
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 99,
+            "geometryAlpha": 0.41999998688697815,
+            "bufferAlpha": 0.41999998688697815,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 620.7432863636363,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 620.7432863636363,
+              "bottom": 654.8604863636364
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 132,
+            "geometryAlpha": 0.41999998688697815,
+            "bufferAlpha": 0.41999998688697815,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 620.7432863636363,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 620.7432863636363,
+              "bottom": 654.8604863636364
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 126,
+            "geometryAlpha": 0.41999998688697815,
+            "bufferAlpha": 0.41999998688697815,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 33.0213,
+              "y": 316.58264999999994,
+              "width": 58.757400000000004,
+              "height": 34.11719999999991,
+              "top": 316.58264999999994,
+              "bottom": 350.69984999999986
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 99,
+            "geometryAlpha": 0.41999998688697815,
+            "bufferAlpha": 0.41999998688697815,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 33.0213,
+              "y": 316.58264999999994,
+              "width": 58.757400000000004,
+              "height": 34.11719999999991,
+              "top": 316.58264999999994,
+              "bottom": 350.69984999999986
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 93,
+            "geometryAlpha": 0.6299999952316284,
+            "bufferAlpha": 0.6299999952316284,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 380.61646818181816,
+              "width": 58.75740000000002,
+              "height": 34.11719999999997,
+              "top": 380.61646818181816,
+              "bottom": 414.73366818181813
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 126,
+            "geometryAlpha": 0.6299999952316284,
+            "bufferAlpha": 0.6299999952316284,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 380.61646818181816,
+              "width": 58.75740000000002,
+              "height": 34.11719999999997,
+              "top": 380.61646818181816,
+              "bottom": 414.73366818181813
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 138,
+            "geometryAlpha": 0.6299999952316284,
+            "bufferAlpha": 0.6299999952316284,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 620.7432863636363,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 620.7432863636363,
+              "bottom": 654.8604863636364
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 93,
+            "geometryAlpha": 0.6299999952316284,
+            "bufferAlpha": 0.6299999952316284,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 111.0213,
+              "y": 620.7432863636363,
+              "width": 58.75740000000002,
+              "height": 34.117200000000025,
+              "top": 620.7432863636363,
+              "bottom": 654.8604863636364
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 105,
+            "geometryAlpha": 0.6299999952316284,
+            "bufferAlpha": 0.6299999952316284,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 33.0213,
+              "y": 316.58264999999994,
+              "width": 58.757400000000004,
+              "height": 34.11719999999991,
+              "top": 316.58264999999994,
+              "bottom": 350.69984999999986
+            },
+            "onScreen": true
+          },
+          {
+            "name": "healing-stream",
+            "vertexCount": 132,
+            "geometryAlpha": 0.6299999952316284,
+            "bufferAlpha": 0.6299999952316284,
+            "bufferLength": 5508,
+            "expectedOpacity": 1,
+            "appliedOpacity": 1,
+            "selfColorAlpha": 255,
+            "parentSpriteAlpha": 255,
+            "parentSpriteEnabled": false,
+            "maxAlphaError": 0,
+            "alphaMismatchCount": 0,
+            "alphaMismatchSamples": [],
+            "opacityChain": [],
+            "ancestorRenderers": [
+              {
+                "name": "healing-stream",
+                "renderer": "Kt",
+                "enabled": true,
+                "alpha": 255
+              },
+              {
+                "name": "effect",
+                "renderer": "Sprite",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "ancestorSprites": [
+              {
+                "name": "effect",
+                "enabled": false,
+                "alpha": 255
+              }
+            ],
+            "texture": true,
+            "material": true,
+            "bounds": {
+              "x": 33.0213,
+              "y": 316.58264999999994,
+              "width": 58.757400000000004,
+              "height": 34.11719999999991,
+              "top": 316.58264999999994,
+              "bottom": 350.69984999999986
+            },
+            "onScreen": true
+          }
+        ],
+        "healEvents": [
+          {
+            "type": "heal",
+            "at": 5.620769999999979,
+            "from": "p2",
+            "to": "p0",
+            "value": 41,
+            "serial": 21
+          },
+          {
+            "type": "heal",
+            "at": 5.620769999999979,
+            "from": "p2",
+            "to": "p1",
+            "value": 41,
+            "serial": 22
+          },
+          {
+            "type": "heal",
+            "at": 5.620769999999979,
+            "from": "p2",
+            "to": "p2",
+            "value": 41,
+            "serial": 23
+          }
+        ]
+      },
+      "growthRules": {
+        "atCap": {
+          "level": 30,
+          "rank": 2,
+          "study": 0,
+          "gold": 100000000,
+          "shards": 1000,
+          "notes": 10000,
+          "badges": 1000,
+          "seals": 1000,
+          "legacyCap": 0,
+          "hp": 2768,
+          "atk": 204
+        },
+        "capLabels": [
+          "等级上限 Lv.30",
+          "等级上限 Lv.40"
+        ],
+        "promoted": {
+          "level": 30,
+          "rank": 3,
+          "study": 0,
+          "gold": 100000000,
+          "shards": 980,
+          "notes": 10000,
+          "badges": 1000,
+          "seals": 1000,
+          "legacyCap": 0,
+          "hp": 2768,
+          "atk": 204
+        },
+        "belowStudy": {
+          "level": 39,
+          "rank": 3,
+          "study": 0,
+          "gold": 99990055,
+          "shards": 980,
+          "notes": 10000,
+          "badges": 1000,
+          "seals": 1000,
+          "legacyCap": 0,
+          "hp": 6478,
+          "atk": 478
+        },
+        "learned": {
+          "level": 40,
+          "rank": 3,
+          "study": 1,
+          "gold": 99988721,
+          "shards": 980,
+          "notes": 9950,
+          "badges": 992,
+          "seals": 1000,
+          "legacyCap": 0,
+          "hp": 6915,
+          "atk": 506
+        },
+        "persistedGrowth": {
+          "level": 40,
+          "rank": 3,
+          "study": 1,
+          "gold": 99988721,
+          "shards": 980,
+          "notes": 9950,
+          "badges": 992,
+          "seals": 1000,
+          "legacyCap": 0
+        },
+        "reloaded": {
+          "level": 40,
+          "rank": 3,
+          "study": 1,
+          "gold": 99988721,
+          "shards": 980,
+          "notes": 9950,
+          "badges": 992,
+          "seals": 1000,
+          "legacyCap": 0,
+          "hp": 6915,
+          "atk": 506
+        }
+      },
+      "final": {
+        "engineVersion": "3.8.8",
+        "tab": "battle",
+        "running": true,
+        "guideStep": 9,
+        "nativeNodeCount": 129,
+        "pendingRequests": 0
+      }
+    }
+  ],
+  "browser": {
+    "version": "157.0.8103.50",
+    "channel": "chrome"
+  },
+  "finishedAt": "2026-11-19T10:02:16.435Z"
+}
