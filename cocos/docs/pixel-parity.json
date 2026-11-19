@@ -1,0 +1,325 @@
+{
+  "sourceCommit": "28eb867",
+  "verified": 53,
+  "method": "Compare decoded RGBA bytes at unchanged original dimensions",
+  "assets": [
+    {
+      "key": "assets/finished/bolt-portrait-v0213.webp",
+      "width": 512,
+      "height": 544,
+      "rgbaSha256": "e7f2aee8cb6071107a8c7887c62db93db2de5fe164e53f01a544cb19ec29223c"
+    },
+    {
+      "key": "assets/finished/bolt-v0216.webp",
+      "width": 2048,
+      "height": 2176,
+      "rgbaSha256": "5f08ac69b310ea7b7d1f839b9a28da03ba0748f89542e437d5eb23ffb66c9185"
+    },
+    {
+      "key": "assets/finished/ink-portrait-v0213.webp",
+      "width": 512,
+      "height": 544,
+      "rgbaSha256": "8ce4c45e5e22c83fe52c6f8b0c8db50e9b247d3f0f454f77e141f92a99b9736a"
+    },
+    {
+      "key": "assets/finished/ink-v0213.webp",
+      "width": 2048,
+      "height": 1632,
+      "rgbaSha256": "c1d7e987de412c86b3fc8e5d6692691ff65992db3ef9981d17513ddca960d423"
+    },
+    {
+      "key": "assets/finished/milk-portrait-v0213.webp",
+      "width": 512,
+      "height": 544,
+      "rgbaSha256": "8271cd4ef534c071f488b0e99c9cbafc584c8e5adb194ebe119a8740a828e171"
+    },
+    {
+      "key": "assets/finished/milk-v0213.webp",
+      "width": 2048,
+      "height": 1632,
+      "rgbaSha256": "121381ec856cdf1486112107707bf6dabf12d63e59f98f8548c684cbc651ac10"
+    },
+    {
+      "key": "assets/finished/mint-portrait-v0213.webp",
+      "width": 512,
+      "height": 544,
+      "rgbaSha256": "e2802a6da28024ecfa635b3ef362366aa5ca7ce389046a9e8ad4a9d0391a39da"
+    },
+    {
+      "key": "assets/finished/mint-v0213.webp",
+      "width": 2048,
+      "height": 1632,
+      "rgbaSha256": "e207d4d25816251ebff198127071118853dfd095cbc21b16b3d19ca9e64ec467"
+    },
+    {
+      "key": "assets/finished/orange-portrait-v0213.webp",
+      "width": 512,
+      "height": 544,
+      "rgbaSha256": "1f629a02d835e2a15d773103effe8528f0cb1a2ee06c3a5399d0ef0f74c34f2e"
+    },
+    {
+      "key": "assets/finished/orange-v0213.webp",
+      "width": 2048,
+      "height": 1632,
+      "rgbaSha256": "52d18be621cf669d8e6523c43fead9a4dfa9825185f7db1336399c7e868882db"
+    },
+    {
+      "key": "assets/finished/pudding-portrait-v0216.webp",
+      "width": 512,
+      "height": 544,
+      "rgbaSha256": "753678daebce6e61ee6a3990eed9ed346bcc496f0d1f02c02104a0629ae4382d"
+    },
+    {
+      "key": "assets/finished/pudding-v0216.webp",
+      "width": 2048,
+      "height": 1632,
+      "rgbaSha256": "30573959016b0c48b808432e4bca58b9227281bca39aaec98b4f5bb0a056697e"
+    },
+    {
+      "key": "assets/finished/spark-portrait-v0211.webp",
+      "width": 576,
+      "height": 552,
+      "rgbaSha256": "ed555804079bb6a001f5244d37fae28d3a6fc4eb895ef28938af3c31dae65383"
+    },
+    {
+      "key": "assets/finished/spark-v0211.webp",
+      "width": 2048,
+      "height": 1900,
+      "rgbaSha256": "3bbc9c2fd21bc1715a41afb1d4b40538d0e8b6cf356f30f78def9764cd89e3f4"
+    },
+    {
+      "key": "assets/finished/star-portrait-v0213.webp",
+      "width": 512,
+      "height": 544,
+      "rgbaSha256": "320cb502cb2039f052a8357b0068775e4adb8973dbee4a3b64984fdd2cacc4e7"
+    },
+    {
+      "key": "assets/finished/star-v0213.webp",
+      "width": 2048,
+      "height": 1632,
+      "rgbaSha256": "3a6b3e09da0ecaae371c61ea21c4c89c28dc2d4bcd9a3cdf96c43e7de7d3e841"
+    },
+    {
+      "key": "assets/materials/harbor-materials-v02641.webp",
+      "width": 1254,
+      "height": 1254,
+      "rgbaSha256": "d56c27952ec8d4c112c7b422dcb8c9b0703c82c0be5d4f3c7f6f5d224f57e01d"
+    },
+    {
+      "key": "assets/materials/scrap-v02643.webp",
+      "width": 256,
+      "height": 256,
+      "rgbaSha256": "fed03419c385a4d04d22ab0f5f0c2d6be2ad5b2bc21b6aa9166f9fcc20d7315e"
+    },
+    {
+      "key": "assets/mobile/street-0-v02684.webp",
+      "width": 418,
+      "height": 627,
+      "rgbaSha256": "2445c8c02f5cd0d98da6a5edd0dfaedae12e34968875dff1c222361254d26bf5"
+    },
+    {
+      "key": "assets/mobile/street-1-v02684.webp",
+      "width": 418,
+      "height": 627,
+      "rgbaSha256": "faf7b248b080796fbc084ad87ed2bd93b9c6d0f879d21886253f0cd30821fe19"
+    },
+    {
+      "key": "assets/mobile/street-2-v02684.webp",
+      "width": 418,
+      "height": 627,
+      "rgbaSha256": "3ded222a2a9429f3ae079ce32c7c29c2a0a03fe5c48370a85776d2273ca0af3b"
+    },
+    {
+      "key": "assets/mobile/street-3-v02684.webp",
+      "width": 418,
+      "height": 627,
+      "rgbaSha256": "6e58d13e90098ffec29692203c10b37f3732efbd74c8a6eab2d865a0d75da65a"
+    },
+    {
+      "key": "assets/mobile/street-4-v02684.webp",
+      "width": 418,
+      "height": 627,
+      "rgbaSha256": "0be8e45c2b18e56db0111a09eff83834007afe04fd130b18957b68783a6b31b5"
+    },
+    {
+      "key": "assets/mobile/street-5-v02684.webp",
+      "width": 418,
+      "height": 627,
+      "rgbaSha256": "08d2daffb194223cb83b144e20bf03775dfd408c84913f23df0bec1d0414dbe6"
+    },
+    {
+      "key": "assets/painted/carriers-v02652.webp",
+      "width": 1600,
+      "height": 640,
+      "rgbaSha256": "29773eaf8e0b934926f6b1798a4314ec79ddb8a45d51c6deb6fb8e1b432bdf50"
+    },
+    {
+      "key": "assets/painted/enemies-a.webp",
+      "width": 1024,
+      "height": 1024,
+      "rgbaSha256": "ab4e5c60b622a27e3ea18a474df2eeb571c224e219777f193b38df39c127ee2b"
+    },
+    {
+      "key": "assets/painted/enemies-b.webp",
+      "width": 1024,
+      "height": 1024,
+      "rgbaSha256": "8ebdca775ae7591b622b15c81f0089ad1788c7c6cf55ddbb8726f962ead6e8d3"
+    },
+    {
+      "key": "assets/painted/enemies-c.webp",
+      "width": 1024,
+      "height": 1024,
+      "rgbaSha256": "9644c06542ba52086b0eebab8ae77ecf47a8b4cc4bffa537ce97eb156eaf1ae8"
+    },
+    {
+      "key": "assets/painted/items.webp",
+      "width": 1024,
+      "height": 1024,
+      "rgbaSha256": "2689f5853eb2360b47d5002b63f8d4739cb7260e4bd7a168617021a4067ceaf1"
+    },
+    {
+      "key": "assets/scenes/commissions-v02646.webp",
+      "width": 1536,
+      "height": 1024,
+      "rgbaSha256": "069e3f31e786df70838949ae84cf9651dc62c7b9f6fcb0abe6a18fa827ef92ba"
+    },
+    {
+      "key": "assets/scenes/equipment-room-v02672.webp",
+      "width": 640,
+      "height": 960,
+      "rgbaSha256": "33ed549f4327fee3c556cb556faeeb6b7282336bd4d82a64987dfad0d0177648"
+    },
+    {
+      "key": "assets/scenes/formation-ground-v02646.webp",
+      "width": 900,
+      "height": 600,
+      "rgbaSha256": "6a95d00973e5d8bf4e262e188528472423c31cabea1ea8f1d8b4d4b6c414dbde"
+    },
+    {
+      "key": "assets/scenes/formation-room-v02620.webp",
+      "width": 640,
+      "height": 800,
+      "rgbaSha256": "2be5bd2c13ccde92532b2d053d8c3a8940234ea3ac8afc21fd4f7d8820bfb318"
+    },
+    {
+      "key": "assets/scenes/neighborhood-v0220.webp",
+      "width": 1024,
+      "height": 1536,
+      "rgbaSha256": "9767f794a93956e96e8691d78762f24a205c9603fe86e4086da6816bb1ee6130"
+    },
+    {
+      "key": "assets/scenes/quest-locations-v02672.webp",
+      "width": 1152,
+      "height": 768,
+      "rgbaSha256": "f8c397309f15c478a10bdb52c1e6ff6f04f721b92f2e0591661280ee6d34fceb"
+    },
+    {
+      "key": "assets/scenes/streets-v019.webp",
+      "width": 1254,
+      "height": 1254,
+      "rgbaSha256": "8972d21f1e3589d5468af88944d3377e6b9e25e6a0890d3ae4ed8771314d2e26"
+    },
+    {
+      "key": "assets/ui/battle-results-v02641.webp",
+      "width": 1024,
+      "height": 512,
+      "rgbaSha256": "97cda8ec315b3ad8b0687df2adb369665fb4cff5086c8ff2af4e2bd99c02a53e"
+    },
+    {
+      "key": "assets/ui/cat-tag-wide-v02679.webp",
+      "width": 640,
+      "height": 320,
+      "rgbaSha256": "fbc9411d46fa7f37ddd3961d2e9eebc15b84414709e29ac2d1d9169f68af0770"
+    },
+    {
+      "key": "assets/ui/commission-board-v02641.webp",
+      "width": 1080,
+      "height": 360,
+      "rgbaSha256": "59e6ad5b598a3cb9319a812ceef8fc6205e9f1eddfcf2ff0eaed1b3d2142bb7b"
+    },
+    {
+      "key": "assets/ui/companion-keepsakes-v0282.webp",
+      "width": 960,
+      "height": 480,
+      "rgbaSha256": "763f006a12fdeea0f057247725453bcb640b883aa520eb88a7b69c3fcb9969bb"
+    },
+    {
+      "key": "assets/ui/crew-props-v02642.webp",
+      "width": 1200,
+      "height": 900,
+      "rgbaSha256": "d6382fd3d6b85f4d67cea2e81b4a741c76a394add0bccdd9c1fed47d42ea5c25"
+    },
+    {
+      "key": "assets/ui/critical-magic-v02658.webp",
+      "width": 128,
+      "height": 64,
+      "rgbaSha256": "534041145104bf67c2f1c8ab0508e40596e39591f82aaf23db43de8d18113ed3"
+    },
+    {
+      "key": "assets/ui/critical-physical-v02658.webp",
+      "width": 128,
+      "height": 64,
+      "rgbaSha256": "3943d1df97a1dd1b7325a0e04e7d6e5bbd72069071720984523cbdce309ae4f8"
+    },
+    {
+      "key": "assets/ui/equipment-slots-v0281.webp",
+      "width": 512,
+      "height": 512,
+      "rgbaSha256": "3b667ff33e4ec42c89c945da8f6dc3c93857ad93cb526421bba0e81fe332a7a2"
+    },
+    {
+      "key": "assets/ui/equipment-v02643.webp",
+      "width": 1024,
+      "height": 1536,
+      "rgbaSha256": "6cc04f40d8fdce8bdb4e56b039ffe0e89fb8341301a64ab5f68e5098ea24769b"
+    },
+    {
+      "key": "assets/ui/income-stall-v0272.webp",
+      "width": 192,
+      "height": 192,
+      "rgbaSha256": "37c7906f544681bb0c982623d1bc19ee157e775046aa7894cfcf5ac5829e845e"
+    },
+    {
+      "key": "assets/ui/journal-challenge-v02677.webp",
+      "width": 1152,
+      "height": 768,
+      "rgbaSha256": "3e71caabcb07fbf8d494c2b270b0ab7edbba0140ba3429b7437f88f5e1e31184"
+    },
+    {
+      "key": "assets/ui/paper-grain-v02642.webp",
+      "width": 384,
+      "height": 384,
+      "rgbaSha256": "82c52eb9b8df2fc72cc2f5f4b3b43a755af3db462182fbfb309f5f55d826eb6a"
+    },
+    {
+      "key": "assets/ui/runes-v02643.webp",
+      "width": 960,
+      "height": 640,
+      "rgbaSha256": "0518fb79f93e42daeff8f6b031c70382aa816b9846f8792a04b285caa236238f"
+    },
+    {
+      "key": "assets/ui/skills-v02644.webp",
+      "width": 1200,
+      "height": 600,
+      "rgbaSha256": "91d39284a784a112d679689c26f60e774577078115c1355ea7655bd417a58c65"
+    },
+    {
+      "key": "assets/vfx/can-rescue-v0192.webp",
+      "width": 768,
+      "height": 512,
+      "rgbaSha256": "3230882552b84a627aca3cce2690d467e9c3ea4ba47930ca85d646277d923410"
+    },
+    {
+      "key": "assets/vfx/effects-v0216.webp",
+      "width": 1254,
+      "height": 1510,
+      "rgbaSha256": "c0494f021275c53718e719ffe16527342c805f6cc60617b4afeb43fc3222e9e0"
+    },
+    {
+      "key": "assets/vfx/shidun-impact-v0211.webp",
+      "width": 1536,
+      "height": 1024,
+      "rgbaSha256": "224cad4c79e843d67b4c6d58b47e262eb7ca548ddc495ddd14ef6ab153dea296"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+/// <reference types="./@types/globals" />
+import { Color } from '../../../core';
+import { TextOutputLayoutData, TextOutputRenderData } from './text-output-data';
+import { TextStyle } from './text-style';
+import { TextLayout } from './text-layout';
+export interface IRenderData {
+    x: number;
+    y: number;
+    z: number;
+    u: number;
+    v: number;
+    color: Color;
+}
+export declare class TextProcessing {
+    static instance: TextProcessing;
+    constructor();
+    destroy(): void;
+    processingString(isBmFont: boolean, style: TextStyle, layout: TextLayout, outputLayoutData: TextOutputLayoutData, inputString: string, out?: string[]): void;
+    generateRenderInfo(isBmFont: boolean, style: TextStyle, layout: TextLayout, outputLayoutData: TextOutputLayoutData, outputRenderData: TextOutputRenderData, inputString: string, callback: AnyFunction): void;
+    setCanvasUsed(canvas: HTMLCanvasElement, content: CanvasRenderingContext2D | null): void;
+    private _context;
+    private _canvas;
+    private _canvasData;
+    private _lettersInfo;
+    private _tmpRect;
+    private _maxFontSize;
+    private _fontScale;
+    private _getStyleFontScale;
+    private _calculateLabelFont;
+    private _getFontDesc;
+    private _getLineHeight;
+    private _calculateShrinkFont;
+    private _calculateWrapText;
+    private _measureText;
+    private _calculateParagraphLength;
+    private _updatePaddingRect;
+    private _updateLabelDimensions;
+    private _calculateFillTextStartPosition;
+    private _updateTexture;
+    private _uploadTexture;
+    private _drawTextEffect;
+    private _setupOutline;
+    private _setupShadow;
+    private generateVertexData;
+    private updateQuatCount;
+    private _setupBMFontOverflowMetrics;
+    private _updateFontScale;
+    private _computeHorizontalKerningForText;
+    private _alignText;
+    private _parsedString;
+    private _multilineTextWrap;
+    private _recordPlaceholderInfo;
+    private _recordLetterInfo;
+    private _getFirstWordLen;
+    private _computeAlignmentOffset;
+    private _getFontScale;
+    private _isVerticalClamp;
+    private _isHorizontalClamp;
+    private _isHorizontalNeedShrink;
+    private _shrinkLabelToContentSize;
+    private _scaleFontSizeDown;
+    private _updateQuads;
+    private _isHorizontalClamped;
+    private _determineRect;
+}

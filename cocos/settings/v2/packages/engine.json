@@ -1,0 +1,34 @@
+{
+  "__version__": "1.0.12",
+  "modules": {
+    "graphics": {
+      "pipeline": "legacy-pipeline"
+    },
+    "configs": {
+      "canClub2D": {
+        "name": "罐头远征队 2D",
+        "includeModules": [
+          "base",
+          "2d",
+          "graphics",
+          "mask",
+          "ui",
+          "tween",
+          "audio",
+          "legacy-pipeline",
+          "gfx-webgl",
+          "gfx-webgl2"
+        ],
+        "flags": {},
+        "noDeprecatedFeatures": {
+          "value": false,
+          "version": ""
+        }
+      }
+    },
+    "globalConfigKey": "canClub2D"
+  },
+  "macroConfig": {
+    "ENABLE_TRANSPARENT_CANVAS": false
+  }
+}

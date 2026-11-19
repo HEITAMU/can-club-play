@@ -1,0 +1,42 @@
+{
+  "ver": "1.0.27",
+  "importer": "image",
+  "imported": true,
+  "uuid": "7746ffd7-5ad7-5b30-9bbb-a0f9350d7e40",
+  "files": [
+    ".json",
+    ".png"
+  ],
+  "subMetas": {
+    "6c48a": {
+      "ver": "1.0.22",
+      "importer": "texture",
+      "imported": true,
+      "uuid": "7746ffd7-5ad7-5b30-9bbb-a0f9350d7e40@6c48a",
+      "displayName": "star-0-victory",
+      "id": "6c48a",
+      "name": "texture",
+      "files": [
+        ".json"
+      ],
+      "subMetas": {},
+      "userData": {
+        "wrapModeS": "clamp-to-edge",
+        "wrapModeT": "clamp-to-edge",
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0,
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "7746ffd7-5ad7-5b30-9bbb-a0f9350d7e40",
+        "visible": false
+      }
+    }
+  },
+  "userData": {
+    "type": "texture",
+    "hasAlpha": true,
+    "redirect": "7746ffd7-5ad7-5b30-9bbb-a0f9350d7e40@6c48a",
+    "fixAlphaTransparencyArtifacts": false
+  }
+}

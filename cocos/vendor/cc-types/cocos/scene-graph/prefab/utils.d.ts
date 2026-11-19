@@ -1,0 +1,15 @@
+import { Node } from '../node';
+import { Component } from '../component';
+import { MountedChildrenInfo, PropertyOverrideInfo, MountedComponentsInfo, TargetInfo, TargetMap } from './prefab-info';
+export * from './prefab-info';
+export declare function createNodeWithPrefab(node: Node): void;
+export declare function generateTargetMap(node: Node, targetMap: TargetMap, isRoot: boolean): void;
+export declare function getTarget(localID: string[], targetMap: any): Node | Component | null;
+export declare function applyMountedChildren(node: Node, mountedChildren: MountedChildrenInfo[], targetMap: TargetMap): void;
+export declare function applyMountedComponents(node: Node, mountedComponents: MountedComponentsInfo[], targetMap: TargetMap): void;
+export declare function applyRemovedComponents(node: Node, removedComponents: TargetInfo[], targetMap: TargetMap): void;
+export declare function applyPropertyOverrides(node: Node, propertyOverrides: PropertyOverrideInfo[], targetMap: TargetMap): void;
+export declare function applyTargetOverrides(node: Node): void;
+export declare function expandPrefabInstanceNode(node: Node, recursively?: boolean): void;
+export declare function expandNestedPrefabInstanceNode(node: Node): void;
+export declare function applyNodeAndComponentId(prefabInstanceNode: Node, rootId: string): void;

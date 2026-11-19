@@ -1,0 +1,100 @@
+name: Cocos 3.8.8 migration
+
+on:
+  push:
+    branches: [migration/cocos-3.8.8]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cocos-migration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-runtime:
+    name: Types, parity and real-engine browser flow
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: cocos
+    steps:
+      - name: Check out migration and frozen baseline history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: cocos/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Check official Cocos 3.8.8 declarations
+        run: npm run typecheck
+      - name: Compare business rules and geometry with Preview11
+        run: npm run test:domain
+      - name: Compare painted texture composition with the original Canvas
+        run: npm run test:painted
+      - name: Build shared Web entry and full-resolution resources
+        run: node scripts/build.mjs --web --debug --faces
+      - name: Build shared WeChat entry
+        run: node scripts/build.mjs --wechat --code-only
+      - name: Package complete Creator project with prepared PNG imports
+        run: python3 scripts/package-creator.py
+      - name: Install Chromium and CJK fonts
+        run: |
+          npx playwright install --with-deps chromium
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-cjk
+      - name: Exercise native scene, touch, save and page flows
+        env:
+          CAN_CLUB_URL: http://127.0.0.1:8765/cocos/build/web-mobile/
+          CAN_CLUB_SMOKE_TIMEOUT: '90000'
+        run: |
+          mkdir -p qa/browser-smoke
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory .. > qa/browser-smoke/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent "$CAN_CLUB_URL" > /dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent "$CAN_CLUB_URL" > /dev/null
+          npm run test:browser
+      - name: Upload browser screenshots and verification report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cocos-browser-qa-${{ github.run_number }}
+          path: |
+            cocos/qa/browser-smoke/
+            cocos/docs/asset-audit.json
+            cocos/docs/pixel-parity.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Upload reviewable Web build and build reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cocos-web-build-${{ github.run_number }}
+          path: |
+            cocos/build/web-mobile/
+            cocos/build/wechatgame/BUILD-REPORT.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Upload complete Creator project
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cocos-creator-project-${{ github.run_number }}
+          path: |
+            cocos/build/CanClub-Creator-3.8.8.zip
+            cocos/build/Creator-ZIP-REPORT.json
+          if-no-files-found: warn
+          compression-level: 0
+          retention-days: 14

@@ -1,0 +1,52 @@
+/**
+ * @engineInternal
+ */
+export declare enum EasingMethod {
+    LINEAR = 0,
+    CONSTANT = 1,
+    QUAD_IN = 2,
+    QUAD_OUT = 3,
+    QUAD_IN_OUT = 4,
+    QUAD_OUT_IN = 5,
+    CUBIC_IN = 6,
+    CUBIC_OUT = 7,
+    CUBIC_IN_OUT = 8,
+    CUBIC_OUT_IN = 9,
+    QUART_IN = 10,
+    QUART_OUT = 11,
+    QUART_IN_OUT = 12,
+    QUART_OUT_IN = 13,
+    QUINT_IN = 14,
+    QUINT_OUT = 15,
+    QUINT_IN_OUT = 16,
+    QUINT_OUT_IN = 17,
+    SINE_IN = 18,
+    SINE_OUT = 19,
+    SINE_IN_OUT = 20,
+    SINE_OUT_IN = 21,
+    EXPO_IN = 22,
+    EXPO_OUT = 23,
+    EXPO_IN_OUT = 24,
+    EXPO_OUT_IN = 25,
+    CIRC_IN = 26,
+    CIRC_OUT = 27,
+    CIRC_IN_OUT = 28,
+    CIRC_OUT_IN = 29,
+    ELASTIC_IN = 30,
+    ELASTIC_OUT = 31,
+    ELASTIC_IN_OUT = 32,
+    ELASTIC_OUT_IN = 33,
+    BACK_IN = 34,
+    BACK_OUT = 35,
+    BACK_IN_OUT = 36,
+    BACK_OUT_IN = 37,
+    BOUNCE_IN = 38,
+    BOUNCE_OUT = 39,
+    BOUNCE_IN_OUT = 40,
+    BOUNCE_OUT_IN = 41,
+    SMOOTH = 42,
+    FADE = 43
+}
+type EasingMethodFn = (k: number) => number;
+export declare function getEasingFn(easingMethod: EasingMethod): EasingMethodFn;
+export {};

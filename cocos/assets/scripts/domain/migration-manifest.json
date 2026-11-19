@@ -1,0 +1,294 @@
+{
+  "sourceRef": "28eb867",
+  "sourceCommit": "28eb8674f4b35a381ca37363d29189a9b4911da7",
+  "modules": [
+    {
+      "source": "action-profiles.mjs",
+      "target": "action-profiles.ts",
+      "sourceSha256": "70862ae1f7b655e1fccaf818f846b724e2f5cc1ecab57c305fc12b95641cbebf"
+    },
+    {
+      "source": "activities.mjs",
+      "target": "activities.ts",
+      "sourceSha256": "875a9e7ced922052216a3144668e0007117e54149b39914771381eae74db524b"
+    },
+    {
+      "source": "activity-navigation.mjs",
+      "target": "activity-navigation.ts",
+      "sourceSha256": "50f503d777d918aad17d3c5465f6dd04e87256a5fa842252d078797246d76885"
+    },
+    {
+      "source": "anatomy-data.mjs",
+      "target": "anatomy-data.ts",
+      "sourceSha256": "2d4a83fddc72f938cb086e6e12079696dfd27bb582b14d6b45eabd62b6ecfd08"
+    },
+    {
+      "source": "ascension.mjs",
+      "target": "ascension.ts",
+      "sourceSha256": "f9dbc0e10e8e814c753bb36bf409a14ab31b01f538c26056863cd3fac6f68c73"
+    },
+    {
+      "source": "battle-cues.mjs",
+      "target": "battle-cues.ts",
+      "sourceSha256": "b8248388195ed990c264d461f1236d2bd930c56923408869abbb3fa6461aa3d3"
+    },
+    {
+      "source": "battle-flow.mjs",
+      "target": "battle-flow.ts",
+      "sourceSha256": "87386e23581e1dc84cf74c8b7aa9226e3b87e0588bbf81768a15ba7239ee324b"
+    },
+    {
+      "source": "battle-ui.mjs",
+      "target": "battle-ui.ts",
+      "sourceSha256": "7fec7d04f3d3c277256130cd68e87bca74184538ea98cb307243e4010af2a222"
+    },
+    {
+      "source": "battlefield-space.mjs",
+      "target": "battlefield-space.ts",
+      "sourceSha256": "9270b98a48fa7143146e50efe8fdc47008f068d03dbad0c30c3acccccff0f4b0"
+    },
+    {
+      "source": "campaign.mjs",
+      "target": "campaign.ts",
+      "sourceSha256": "3e58438708168e9b1d4af1f0622defdc827bcfb86c484aa8bf49bfccf0c54ae2"
+    },
+    {
+      "source": "can-fx.mjs",
+      "target": "can-fx.ts",
+      "sourceSha256": "454cecaf91931d14caffe7c12ddb61555c31eb2f1dccde1fc2a0408e9961b6b6"
+    },
+    {
+      "source": "can-timing.mjs",
+      "target": "can-timing.ts",
+      "sourceSha256": "b99d08f64d24c32e131108e25c9d0e7f7123fd74e9ff87554eb158cbd00e4aa8"
+    },
+    {
+      "source": "carrier-art.mjs",
+      "target": "carrier-art.ts",
+      "sourceSha256": "33df52ac47ab11b9ac5f33f9ab5bbd3a0ebe320cd3dbd6c7dab416e0e57a5810"
+    },
+    {
+      "source": "combat-stats.mjs",
+      "target": "combat-stats.ts",
+      "sourceSha256": "c0c52918762d4b9781804a12ff00f6b8e983b91ad4941fd68637611b30676c6a"
+    },
+    {
+      "source": "companion-display.mjs",
+      "target": "companion-display.ts",
+      "sourceSha256": "8f5cd69802f76106ff7681bca24c39554b25e08806e37b4247c3450f1f4ce8ea"
+    },
+    {
+      "source": "companions.mjs",
+      "target": "companions.ts",
+      "sourceSha256": "d05e14ece85398606b439415896f953b7940abc2cc93fb8bd3245ae8af521f06"
+    },
+    {
+      "source": "core.mjs",
+      "target": "core.ts",
+      "sourceSha256": "217ecfc98621dceca7416222fcecddbed7a0f0e47a5db6ffd2bbd255eb57d138"
+    },
+    {
+      "source": "damage-text-style.mjs",
+      "target": "damage-text-style.ts",
+      "sourceSha256": "e09151fd76ae92ca2cc42c5ca6bcf3025bad44f849bf6c623d1cab1cd1d33a42"
+    },
+    {
+      "source": "economy-limits.mjs",
+      "target": "economy-limits.ts",
+      "sourceSha256": "c020ba57b69802451d1f358fa5795d6dc346ea5abbc0591d6f37ea8aa208a68e"
+    },
+    {
+      "source": "equipment-progression.mjs",
+      "target": "equipment-progression.ts",
+      "sourceSha256": "eb915de97c262037dc13f27784b71c140d15de7c040107f968ea8734d18703fc"
+    },
+    {
+      "source": "equipment-routes.mjs",
+      "target": "equipment-routes.ts",
+      "sourceSha256": "ddf3d1df48499b066409a196eb5bdc858a0d441cef5fef6b4f87941e253b196a"
+    },
+    {
+      "source": "equipment.mjs",
+      "target": "equipment.ts",
+      "sourceSha256": "a34063592b8c6c7900c1a2d6bd7f9b718964ae6fd29a8934a3e7e5a55a35837f"
+    },
+    {
+      "source": "expressions.mjs",
+      "target": "expressions.ts",
+      "sourceSha256": "401985cb7815da17a9c515c48a8afa7eced0f2f8d9015971dc8a3f3023b27ed1"
+    },
+    {
+      "source": "finished-roster-data.mjs",
+      "target": "finished-roster-data.ts",
+      "sourceSha256": "0bf534cc9c2ff9ec92a5ea093cb0e904dc05613a9df84dc30e33fb27af762711"
+    },
+    {
+      "source": "finished-roster-renderer.mjs",
+      "target": "finished-roster-renderer.ts",
+      "sourceSha256": "54d4d7efecaed1b74eb009cd882e4d5da95cada9f2a507b03c2b487c39dbd066"
+    },
+    {
+      "source": "finished-spark-data.mjs",
+      "target": "finished-spark-data.ts",
+      "sourceSha256": "c456f3bc815e4fafab1efbbb55f317a05e6cda6b85d9b563fee665555c051693"
+    },
+    {
+      "source": "finished-spark-renderer.mjs",
+      "target": "finished-spark-renderer.ts",
+      "sourceSha256": "dd142e01a971cf6bbf5fba061a16416a1bddd81aa2982a5820c75a3b67a810d0"
+    },
+    {
+      "source": "formation-motion.mjs",
+      "target": "formation-motion.ts",
+      "sourceSha256": "b67669bdc2a556ea3523d9b8b5e232e717b67a88596a2089bf29b7ed62db1534"
+    },
+    {
+      "source": "growth-curve.mjs",
+      "target": "growth-curve.ts",
+      "sourceSha256": "11a6c20668e906260b2e39e87935bd3d701b030e8918d01801c12b7e49335209"
+    },
+    {
+      "source": "growth-visual.mjs",
+      "target": "growth-visual.ts",
+      "sourceSha256": "c42ec7b41705e5add79a8543de5b1661211d810fa51d04a14960760c1577ceda"
+    },
+    {
+      "source": "healing-fx.mjs",
+      "target": "healing-fx.ts",
+      "sourceSha256": "9bc960ebf7c17af93c5051a1674c8c0ae5c864b0b08c27001517c031cd0dbf18"
+    },
+    {
+      "source": "icon-bounds.mjs",
+      "target": "icon-bounds.ts",
+      "sourceSha256": "a584cfb2e996964d1fb715de00dddc9d76b0b599a067d8dcc53201b03b33eb82"
+    },
+    {
+      "source": "idle-motion.mjs",
+      "target": "idle-motion.ts",
+      "sourceSha256": "9420215b57fbe8a2722067d3f53147a6953f09e16eaed8b9bfabb612fa3440fd"
+    },
+    {
+      "source": "integer-math.mjs",
+      "target": "integer-math.ts",
+      "sourceSha256": "d69e1918371bffe5111f1cbc970102bc948437e7f492e3423bd4dc2beb2a481e"
+    },
+    {
+      "source": "keepsakes.mjs",
+      "target": "keepsakes.ts",
+      "sourceSha256": "eb121024c852f39560ecde04c0b450524fb1df23d026a1b7a8385bbbc905df48"
+    },
+    {
+      "source": "motion.mjs",
+      "target": "motion.ts",
+      "sourceSha256": "995199aa1d9860c2fe2c77613fc11bcb8bc9a2a8d11e55439b85c16ffd67f42c"
+    },
+    {
+      "source": "music-score.mjs",
+      "target": "music-score.ts",
+      "sourceSha256": "9630cb163163fd89a6a9dd5c5a34e5bff524c8dbd992d54248f9f64906f870d6"
+    },
+    {
+      "source": "onboarding.mjs",
+      "target": "onboarding.ts",
+      "sourceSha256": "0a7f8ff7eb89752210fd7012e59da4828a2cf5085d2372f53a2e6780d4f52b7a"
+    },
+    {
+      "source": "painted-transition.mjs",
+      "target": "painted-transition.ts",
+      "sourceSha256": "5e671d15e5f7c192c2cc1e8fba21824152691af57159232cbc1c26764bdc0580"
+    },
+    {
+      "source": "patrol-drops.mjs",
+      "target": "patrol-drops.ts",
+      "sourceSha256": "d7adc2923421bcdabb04ddb94b0c52da73042bc924919a5b9c569768c546c979"
+    },
+    {
+      "source": "progression.mjs",
+      "target": "progression.ts",
+      "sourceSha256": "cfe24a69127571252b3c96b6ed730a61807be0e37b69a97bde25399eacb941c9"
+    },
+    {
+      "source": "rewarded-economy.mjs",
+      "target": "rewarded-economy.ts",
+      "sourceSha256": "40686129c99ed992f760be5d666da290b7dc3773601a33be8d54ab5c70fb63c2"
+    },
+    {
+      "source": "rig-motion.mjs",
+      "target": "rig-motion.ts",
+      "sourceSha256": "e78c5e8a4efab56047aa02859ced553879913bcba82f0102369d808a26004062"
+    },
+    {
+      "source": "scene-weather.mjs",
+      "target": "scene-weather.ts",
+      "sourceSha256": "cbe7ecabdc125ac93601871a14d845b46b17f98b0fd7d3251755df8de6c2db48"
+    },
+    {
+      "source": "shidun-fx.mjs",
+      "target": "shidun-fx.ts",
+      "sourceSha256": "5e0dcc9ae82d7ade49ced5d8582afad6b51587b11b2160888b05b9aa8445ed41"
+    },
+    {
+      "source": "shidun-motion.mjs",
+      "target": "shidun-motion.ts",
+      "sourceSha256": "054e923b108cd1e4c684a332056b321aabbaee51fc4d1e68189d30f6885fa0cb"
+    },
+    {
+      "source": "shield-punch.mjs",
+      "target": "shield-punch.ts",
+      "sourceSha256": "b06674f4bd9cc98ee3a29fb6219fb32abe76fed8afdc39b8d8554efe2bc4fe02"
+    },
+    {
+      "source": "skill-training.mjs",
+      "target": "skill-training.ts",
+      "sourceSha256": "15cc735904a7d7785f8065550043863e5d2f9e19366f8f374e693ef179059cb1"
+    },
+    {
+      "source": "sound-effects.mjs",
+      "target": "sound-effects.ts",
+      "sourceSha256": "e5db0c89a1dda0b7602b6da8acaa9c2e55a919f066abe9144143c56aecbfb950"
+    },
+    {
+      "source": "talents.mjs",
+      "target": "talents.ts",
+      "sourceSha256": "2616daf8a31548d3442459e0040f9685b0e0ade271fdfb2c868cd6f8bd3021a8"
+    },
+    {
+      "source": "team-plans.mjs",
+      "target": "team-plans.ts",
+      "sourceSha256": "b9c0729e884dfc8f2327434e5a66a8f11e04370e8d89f609d38f3a0264b46291"
+    },
+    {
+      "source": "token-rewards.mjs",
+      "target": "token-rewards.ts",
+      "sourceSha256": "da0b02f8b1b65c0cca1efad2931d50f6cddf330cabc01caa5b931534eb5951d3"
+    },
+    {
+      "source": "vfx-atlas.mjs",
+      "target": "vfx-atlas.ts",
+      "sourceSha256": "ad5576db26ce27bcf02e42ede3987f9297799a5aa95573b1f6277c6938a33454"
+    },
+    {
+      "source": "vfx-motion.mjs",
+      "target": "vfx-motion.ts",
+      "sourceSha256": "3c1328cedae6d91b2d76eaa3bba623a75648f7183b05d50daf1a8e525aab093c"
+    },
+    {
+      "source": "street-combat.mjs",
+      "target": "street-combat.ts",
+      "sourceSha256": "adfe58525ddf61b4c3e5d1c5d3d1cf738ad8f17ef34ba5d11c2af4ec03241587"
+    }
+  ],
+  "extracted": [
+    "crew-skill.ts",
+    "material-info.ts",
+    "loot-data.ts"
+  ],
+  "displayCorrections": [
+    {
+      "target": "battle-cues.ts",
+      "find": "回血20%",
+      "replace": "回复40生命值",
+      "reason": "Preview11 changed support healing to fixed 40 but retained obsolete 20% combat-log copy; display only, no rule change."
+    }
+  ]
+}

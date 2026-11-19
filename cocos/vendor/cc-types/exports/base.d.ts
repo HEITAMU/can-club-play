@@ -1,0 +1,22 @@
+/// <reference types="./@types/globals" />
+import '../predefine';
+import '../cocos/core/legacy';
+import * as renderer from '../cocos/render-scene';
+import * as gfx from '../cocos/gfx';
+export * from '../cocos/core';
+export * from '../cocos/rendering';
+export * from '../cocos/scene-graph';
+export * from '../cocos/misc';
+export * from '../cocos/game';
+export { Root } from '../cocos/root';
+export * from '../cocos/serialization';
+export { gfx };
+export * from '../cocos/asset/assets';
+export * from '../cocos/asset/asset-manager';
+export { renderer };
+export * from '../extensions/ccpool/node-pool';
+export * from '../cocos/input/types';
+export * from '../cocos/input';
+export * from '../cocos/native-binding/index';
+type Constructor_<T = unknown> = Constructor<T>;
+export type { Constructor_ as Constructor };

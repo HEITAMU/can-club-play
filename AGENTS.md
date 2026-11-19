@@ -1,5 +1,18 @@
 # 罐头远征队：续接工作入口
 
+## 当前开发引擎：Cocos Creator 3.8.8
+
+自 2026-11-19 起，后续功能、数据与界面修改以 `cocos/` 为主工程，固定使用 Creator 3.8.8。
+先读 `cocos/README.md`、`cocos/docs/domain-migration.md`、`cocos/docs/ui-parity.md`。
+根目录旧 H5/微信打包脚本为迁移前保留版本，不再作为新增玩法的主线。
+
+迁移规则源为成长试玩 Preview11 的 `28eb8674f4b35a381ca37363d29189a9b4911da7`，另包含主线结算与资源预载修复。不要误以根目录旧版规则覆盖它。
+迁移前完整备份：`backup/pre-cocos-3.8.8-20261119`；成长源码完整备份：`backup/preview11-source-before-cocos-20261119`。
+
+保留八名伙伴、3500 关、十档品质、两套推荐阵容、每日信物额度、装备和存档行为。改规则需要明确任务依据；换引擎不构成改数值的理由。
+`cocos/assets/resources/art/` 中 PNG 与表情贴片由已保留的原画及确定性脚本生成；不得缩图、重画或把废弃试作混入正式资源。
+提交前运行 Cocos 类型检查和与冻结版对照测试。真实引擎浏览器、Creator 编辑器、微信开发工具、微信真机分别记录验证，不能互相替代。
+
 涉及角色动作、美术或跨窗口接续时，先阅读 `docs/character-motion-workflow-v1.md`。
 
 用户已认可完整原画短过渡方法，否定橘座分层拼接试作。石墩重设计已停止。`assets/concepts/`、`orange-puppet*` 都是候选/废弃试作，不是正式角色资源。

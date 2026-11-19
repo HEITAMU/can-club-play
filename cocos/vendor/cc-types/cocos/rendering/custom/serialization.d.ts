@@ -1,0 +1,12 @@
+import { OutputArchive, InputArchive } from './archive';
+import { Color, DescriptorSetLayoutBinding, DescriptorSetLayoutInfo, Uniform, UniformBlock } from '../../gfx';
+export declare function saveColor(ar: OutputArchive, v: Color): void;
+export declare function loadColor(ar: InputArchive, v: Color): void;
+export declare function saveUniform(ar: OutputArchive, v: Uniform): void;
+export declare function loadUniform(ar: InputArchive, v: Uniform): void;
+export declare function saveUniformBlock(ar: OutputArchive, v: UniformBlock): void;
+export declare function loadUniformBlock(ar: InputArchive, v: UniformBlock): void;
+export declare function saveDescriptorSetLayoutBinding(ar: OutputArchive, v: DescriptorSetLayoutBinding): void;
+export declare function loadDescriptorSetLayoutBinding(ar: InputArchive, v: DescriptorSetLayoutBinding): void;
+export declare function saveDescriptorSetLayoutInfo(ar: OutputArchive, v: DescriptorSetLayoutInfo): void;
+export declare function loadDescriptorSetLayoutInfo(ar: InputArchive, v: DescriptorSetLayoutInfo): void;

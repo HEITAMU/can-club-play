@@ -1,0 +1,461 @@
+{
+  "method": "Original Preview11 facialLayer/layer; native canvas only at build time; original 512x544 size",
+  "frames": [
+    {
+      "id": "orange",
+      "cel": 0,
+      "face": "blink",
+      "path": "assets/cocos/expressions/orange-0-blink.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "orange",
+      "cel": 0,
+      "face": "hurt",
+      "path": "assets/cocos/expressions/orange-0-hurt.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "orange",
+      "cel": 0,
+      "face": "victory",
+      "path": "assets/cocos/expressions/orange-0-victory.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "ink",
+      "cel": 0,
+      "face": "blink",
+      "path": "assets/cocos/expressions/ink-0-blink.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "ink",
+      "cel": 0,
+      "face": "hurt",
+      "path": "assets/cocos/expressions/ink-0-hurt.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "ink",
+      "cel": 0,
+      "face": "victory",
+      "path": "assets/cocos/expressions/ink-0-victory.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "milk",
+      "cel": 0,
+      "face": "blink",
+      "path": "assets/cocos/expressions/milk-0-blink.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "milk",
+      "cel": 0,
+      "face": "hurt",
+      "path": "assets/cocos/expressions/milk-0-hurt.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "milk",
+      "cel": 0,
+      "face": "victory",
+      "path": "assets/cocos/expressions/milk-0-victory.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "mint",
+      "cel": 0,
+      "face": "blink",
+      "path": "assets/cocos/expressions/mint-0-blink.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "mint",
+      "cel": 0,
+      "face": "hurt",
+      "path": "assets/cocos/expressions/mint-0-hurt.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "mint",
+      "cel": 0,
+      "face": "victory",
+      "path": "assets/cocos/expressions/mint-0-victory.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "bolt",
+      "cel": 0,
+      "face": "blink",
+      "path": "assets/cocos/expressions/bolt-0-blink.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "bolt",
+      "cel": 0,
+      "face": "hurt",
+      "path": "assets/cocos/expressions/bolt-0-hurt.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "bolt",
+      "cel": 0,
+      "face": "victory",
+      "path": "assets/cocos/expressions/bolt-0-victory.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "star",
+      "cel": 0,
+      "face": "blink",
+      "path": "assets/cocos/expressions/star-0-blink.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "star",
+      "cel": 0,
+      "face": "hurt",
+      "path": "assets/cocos/expressions/star-0-hurt.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "star",
+      "cel": 0,
+      "face": "victory",
+      "path": "assets/cocos/expressions/star-0-victory.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "pudding",
+      "cel": 0,
+      "face": "blink",
+      "path": "assets/cocos/expressions/pudding-0-blink.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "pudding",
+      "cel": 0,
+      "face": "hurt",
+      "path": "assets/cocos/expressions/pudding-0-hurt.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "pudding",
+      "cel": 0,
+      "face": "victory",
+      "path": "assets/cocos/expressions/pudding-0-victory.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 0,
+      "face": "blink",
+      "path": "assets/cocos/expressions/spark-0-blink.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 0,
+      "face": "attack",
+      "path": "assets/cocos/expressions/spark-0-attack.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 0,
+      "face": "hurt",
+      "path": "assets/cocos/expressions/spark-0-hurt.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 0,
+      "face": "victory",
+      "path": "assets/cocos/expressions/spark-0-victory.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 1,
+      "face": "blink",
+      "path": "assets/cocos/expressions/spark-1-blink.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 1,
+      "face": "attack",
+      "path": "assets/cocos/expressions/spark-1-attack.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 1,
+      "face": "hurt",
+      "path": "assets/cocos/expressions/spark-1-hurt.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 1,
+      "face": "victory",
+      "path": "assets/cocos/expressions/spark-1-victory.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 2,
+      "face": "blink",
+      "path": "assets/cocos/expressions/spark-2-blink.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 2,
+      "face": "attack",
+      "path": "assets/cocos/expressions/spark-2-attack.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 2,
+      "face": "hurt",
+      "path": "assets/cocos/expressions/spark-2-hurt.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 2,
+      "face": "victory",
+      "path": "assets/cocos/expressions/spark-2-victory.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 3,
+      "face": "blink",
+      "path": "assets/cocos/expressions/spark-3-blink.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 3,
+      "face": "attack",
+      "path": "assets/cocos/expressions/spark-3-attack.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 3,
+      "face": "hurt",
+      "path": "assets/cocos/expressions/spark-3-hurt.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 3,
+      "face": "victory",
+      "path": "assets/cocos/expressions/spark-3-victory.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 4,
+      "face": "blink",
+      "path": "assets/cocos/expressions/spark-4-blink.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 4,
+      "face": "attack",
+      "path": "assets/cocos/expressions/spark-4-attack.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 4,
+      "face": "hurt",
+      "path": "assets/cocos/expressions/spark-4-hurt.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 4,
+      "face": "victory",
+      "path": "assets/cocos/expressions/spark-4-victory.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 5,
+      "face": "blink",
+      "path": "assets/cocos/expressions/spark-5-blink.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 5,
+      "face": "attack",
+      "path": "assets/cocos/expressions/spark-5-attack.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 5,
+      "face": "hurt",
+      "path": "assets/cocos/expressions/spark-5-hurt.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 5,
+      "face": "victory",
+      "path": "assets/cocos/expressions/spark-5-victory.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 6,
+      "face": "blink",
+      "path": "assets/cocos/expressions/spark-6-blink.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 6,
+      "face": "attack",
+      "path": "assets/cocos/expressions/spark-6-attack.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 6,
+      "face": "hurt",
+      "path": "assets/cocos/expressions/spark-6-hurt.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 6,
+      "face": "victory",
+      "path": "assets/cocos/expressions/spark-6-victory.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 7,
+      "face": "blink",
+      "path": "assets/cocos/expressions/spark-7-blink.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 7,
+      "face": "attack",
+      "path": "assets/cocos/expressions/spark-7-attack.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 7,
+      "face": "hurt",
+      "path": "assets/cocos/expressions/spark-7-hurt.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 7,
+      "face": "victory",
+      "path": "assets/cocos/expressions/spark-7-victory.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 8,
+      "face": "blink",
+      "path": "assets/cocos/expressions/spark-8-blink.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 8,
+      "face": "attack",
+      "path": "assets/cocos/expressions/spark-8-attack.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 8,
+      "face": "hurt",
+      "path": "assets/cocos/expressions/spark-8-hurt.png",
+      "width": 512,
+      "height": 544
+    },
+    {
+      "id": "spark",
+      "cel": 8,
+      "face": "victory",
+      "path": "assets/cocos/expressions/spark-8-victory.png",
+      "width": 512,
+      "height": 544
+    }
+  ]
+}

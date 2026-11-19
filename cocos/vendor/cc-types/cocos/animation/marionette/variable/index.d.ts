@@ -1,0 +1,11 @@
+import { VariableType, VariableTypeValueTypeMap, VarInstanceBase } from './basic';
+import { PlainVariable } from './primitive-variable';
+import { TriggerVariable } from './trigger-variable';
+import { Vec3Variable } from './vec3-variable';
+import { QuatVariable } from './quat-variable';
+export type VariableDescription = PlainVariable | Vec3Variable | QuatVariable | TriggerVariable;
+export type VarInstance = VarInstanceBase;
+export { VariableType, createInstanceTag } from './basic';
+export type { PrimitiveValue, Value, VariableTypeValueTypeMap } from './basic';
+export { VarInstanceTrigger, TriggerResetMode } from './trigger-variable';
+export declare function createVariable<TVariableType extends VariableType>(type: TVariableType, initialValue?: VariableTypeValueTypeMap[TVariableType]): VariableDescription;

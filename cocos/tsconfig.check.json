@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "strict": false,
+    "skipLibCheck": true,
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "noEmit": true,
+    "lib": [
+      "ES2020",
+      "DOM"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "cc": [
+        "vendor/cc-types/index.d.ts"
+      ],
+      "internal:constants": [
+        "vendor/cc-types/consts.d.ts"
+      ]
+    }
+  },
+  "include": [
+    "assets/scripts/**/*.ts",
+    "vendor/cc-types/globals.d.ts"
+  ]
+}

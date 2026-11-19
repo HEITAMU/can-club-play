@@ -1,0 +1,14 @@
+# Creator regenerates these folders from assets, metadata and settings.
+/build/
+/node_modules/
+/temp/
+/library/
+/local/
+/profiles/
+/logs/
+/qa/
+*.log
+.DS_Store
+# Generated lossless imports and expressions; original art and all generators are tracked.
+/assets/resources/art/**/*.png
+/source-art/**/*.png

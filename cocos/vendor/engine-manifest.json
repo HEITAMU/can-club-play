@@ -1,0 +1,60 @@
+{
+  "version": "3.8.8",
+  "gitCommit": "411f98df047c25902f93440d4b22925c2fb65461",
+  "tag": "3.8.8",
+  "compilerTargets": {
+    "chrome": "80",
+    "ios": "14"
+  },
+  "features": [
+    "base",
+    "2d",
+    "graphics",
+    "mask",
+    "ui",
+    "tween",
+    "audio",
+    "legacy-pipeline",
+    "gfx-webgl",
+    "gfx-webgl2"
+  ],
+  "note": "Source-runtime development build. Creator importer/build has not run in this environment.",
+  "files": {
+    "cc-web-3.8.8.js": {
+      "bytes": 4074615,
+      "sha256": "8742f8327b4d2ca10584f9c26052326d36f7766f28a005166a5645ac6a6a2044"
+    },
+    "cc-wechat-3.8.8.js": {
+      "bytes": 1357841,
+      "sha256": "b238fa68099f14c99316e4a3b807e99eccd08a5e81975e90c5f6c0baf3e6663d"
+    },
+    "web-adapter.js": {
+      "bytes": 145573,
+      "sha256": "8dace7cdf923b2a1589d7f966a9aebd17662b55868efa8f3b4a900999607c560"
+    },
+    "system.min.js": {
+      "bytes": 7976,
+      "sha256": "f7329532908ed479640b262c69116bfb7019718600aefed12b59e61da3d7df2a"
+    },
+    "engine-adapter.js": {
+      "bytes": 39691,
+      "sha256": "6a6a3323fd538063dabf56fc7ebcbce2bced0c7d33a0a14048d98c368c6bdca7"
+    },
+    "builtin-effects.mjs": {
+      "bytes": 5742,
+      "sha256": "a9e295c1305d4b48cf50287e63df14e80d14c5a37d4ccf1253f726b40611e19b"
+    },
+    "COCOS-LICENSE.md": {
+      "bytes": 1164,
+      "sha256": "e8799a9198184e8cc31e45e66521b1cca52f9099a932de7a56abb9d212311318"
+    },
+    "uniform-chunks.json": {
+      "bytes": 3050,
+      "sha256": "c1f9e5b74909d91b1f8c2cd4bb199cccb2b06e8ef358150bcf99843d27166b15"
+    },
+    "painted-blend-shader.mjs": {
+      "bytes": 6121,
+      "sha256": "679264d0f3a66f3ff281b4632a29479784800b8505ea1adbdf8187b162122b54"
+    }
+  }
+}
