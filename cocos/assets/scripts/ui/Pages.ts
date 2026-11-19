@@ -1,6 +1,7 @@
 // @ts-nocheck
 // Native Cocos UI. All prices, growth and combat data come from the migrated domain.
 import { Node, UITransform, Vec3, Vec2, Button, Graphics, Color, UIOpacity } from 'cc';
+import { worldRect } from '../render/UI';
 import * as G from '../domain/core';
 import * as E from '../domain/equipment';
 import { crewSkill } from '../domain/crew-skill';
@@ -56,7 +57,7 @@ export function gearTile(ui,parent,e,x,y,size,onClick,name?) {
   return tile;
 }
 export function anchorRect(node,root){
-  if(!node||!root)return null;const rect=node.getComponent(UITransform)?.getBoundingBoxToWorld(),tr=root.getComponent(UITransform);if(!rect||!tr)return null;
+  if(!node||!root)return null;const rect=worldRect(node),tr=root.getComponent(UITransform);if(!rect||!tr)return null;
   const tl=tr.convertToNodeSpaceAR(new Vec3(rect.x,rect.y+rect.height,0)),br=tr.convertToNodeSpaceAR(new Vec3(rect.x+rect.width,rect.y,0));return {x:tl.x,y:-tl.y,w:br.x-tl.x,h:tl.y-br.y};
 }
 export function rewardRow(ui,parent,reward,x,y,w,{companion,onMaterial,onGear}={}) {
@@ -252,18 +253,18 @@ export class Pages {
     let drag=null,ghost=null;const {ui,session:s}=this,scroll=parent.__scrollView;
     if(!this.formationNodes.has(id))this.formationNodes.set(id,[]);this.formationNodes.get(id).push(node);
     const targetAt=p=>{
-      const br=bench.getComponent(UITransform).getBoundingBoxToWorld();
+      const br=worldRect(bench);
       if(fromBoard&&p.y<=br.y+br.height+6&&p.x>=br.x-20&&p.x<=br.x+br.width+20)return 'bench';
-      const r=slots[0].parent.getComponent(UITransform).getBoundingBoxToWorld();
+      const r=worldRect(slots[0].parent);
       if(p.x<r.x-18||p.x>r.x+r.width+18||p.y<r.y-8||p.y>r.y+r.height+16)return null;
-      let target=null,distance=Infinity;slots.forEach((n,i)=>{const r=n.getComponent(UITransform).getBoundingBoxToWorld(),cx=r.x+r.width/2,cy=r.y+r.height/2,d=(cx-p.x)**2+(cy-p.y)**2;if(d<distance){target=i;distance=d;}});return target;
+      let target=null,distance=Infinity;slots.forEach((n,i)=>{const r=worldRect(n),cx=r.x+r.width/2,cy=r.y+r.height/2,d=(cx-p.x)**2+(cy-p.y)**2;if(d<distance){target=i;distance=d;}});return target;
     };
     // A formation touch belongs to the piece. Empty board space still scrolls.
     node.on(Node.EventType.TOUCH_START,e=>{const p=e.getUILocation();drag={x:p.x,y:p.y,active:false,scrollEnabled:scroll?.enabled,hidden:[]};if(scroll){scroll.stopAutoScroll();scroll.enabled=false;}});
     node.on(Node.EventType.TOUCH_MOVE,e=>{
       if(!drag)return;const p=e.getUILocation();if(!drag.active&&Math.hypot(p.x-drag.x,p.y-drag.y)<5)return;drag.active=true;this.draggingId=id;this.lastDrag=Date.now();
       if(!ghost){ghost=ui.group(parent,0,0,80,90,'formation-drag-ghost');ui.character(ghost,id,40,80,this.ui.fullBodyUnit||62);for(const source of this.formationNodes.get(id)||[]){const opacity=source.getComponent(UIOpacity)||source.addComponent(UIOpacity);drag.hidden.push([opacity,opacity.opacity]);opacity.opacity=0;}}
-      if(scroll){const bounds=scroll.node.getComponent(UITransform).getBoundingBoxToWorld(),offset=scroll.getScrollOffset(),max=scroll.getMaxScrollOffset(),dy=p.y>bounds.y+bounds.height-24?-6:p.y<bounds.y+20?6:0;if(dy)scroll.scrollToOffset(new Vec2(offset.x,Math.max(0,Math.min(max.y,offset.y+dy))),0);}
+      if(scroll){const bounds=worldRect(scroll.node),offset=scroll.getScrollOffset(),max=scroll.getMaxScrollOffset(),dy=p.y>bounds.y+bounds.height-24?-6:p.y<bounds.y+20?6:0;if(dy)scroll.scrollToOffset(new Vec2(-offset.x,Math.max(0,Math.min(max.y,offset.y+dy))),0);}
       const local=parent.getComponent(UITransform).convertToNodeSpaceAR(new Vec3(p.x,p.y,0));ghost.setPosition(local.x-40,local.y+55);e.propagationStopped=true;
       const target=targetAt(p);if(this.formationHint)this.formationHint.string=target==='bench'?'松手下场':target===null?'拖动换位 · 下拖下场':cat(id).name+' → '+(target<2?'前排 '+(target+1):'后排 '+(target-1));
     });

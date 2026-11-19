@@ -41,8 +41,8 @@
       "sha256": "6a6a3323fd538063dabf56fc7ebcbce2bced0c7d33a0a14048d98c368c6bdca7"
     },
     "builtin-effects.mjs": {
-      "bytes": 5742,
-      "sha256": "a9e295c1305d4b48cf50287e63df14e80d14c5a37d4ccf1253f726b40611e19b"
+      "bytes": 7023,
+      "sha256": "d93848db8b751617dcdc9b5be608a14829084c287f654503036b5e6d32dc2b5d"
     },
     "COCOS-LICENSE.md": {
       "bytes": 1164,

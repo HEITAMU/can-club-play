@@ -77,7 +77,7 @@ export class UI {
     const n=this.group(parent,x,y,size,size,'icon:'+key);this.label(n,({settings:'⚙',close:'×',plus:'+',quest:'!'} as any)[key]||'◆',0,0,size,size,{size:size*.7,align:'center',bold:true});return n;
   }
   bar(parent:Node,x:number,y:number,w:number,h:number,ratio:number,fill='#80b68d',back='#493b35'):Node{
-    const n=this.group(parent,x,y,w,h,'bar');const g=n.addComponent(Graphics);const paint=(r:number)=>{g.clear();g.fillColor=color(back);g.roundRect(0,-h,w,h,h/2);g.fill();if(r>0){g.fillColor=color(fill);g.roundRect(0,-h,w*Math.max(0,Math.min(1,r)),h,Math.min(h/2,w*r/2));g.fill();}};paint(ratio);(n as any).setRatio=paint;return n;
+    const n=this.group(parent,x,y,w,h,'bar');const g=n.addComponent(Graphics);let lastRatio=NaN;const paint=(r:number)=>{r=Math.max(0,Math.min(1,r));if(r===lastRatio)return;lastRatio=r;g.clear();g.fillColor=color(back);g.roundRect(0,-h,w,h,h/2);g.fill();if(r>0){g.fillColor=color(fill);g.roundRect(0,-h,w*r,h,Math.min(h/2,w*r/2));g.fill();}};paint(ratio);(n as any).setRatio=paint;return n;
   }
   scroll(parent:Node,x:number,y:number,w:number,h:number,contentHeight:number):Node{
     const host=this.group(parent,x,y,w,h,'scroll-view');const mask=host.addComponent(Mask);mask.type=Mask.Type.GRAPHICS_RECT;

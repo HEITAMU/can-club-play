@@ -7,7 +7,7 @@ import { platform } from './platform/Platform';
 import { readClipboard, importSaveFile, exportSaveFile } from './platform/SaveTransfer';
 import { audio } from './platform/Audio';
 import { assets } from './render/Assets';
-import { UI, color, worldRect } from './render/UI';
+import { UI, color, worldRect, fmt } from './render/UI';
 import { BattleView } from './render/BattleView';
 import { Pages } from './ui/Pages';
 import { Dialogs, groupFor } from './ui/Dialogs';
@@ -103,7 +103,7 @@ class CanClubRuntime extends Component {
     if(this.navDirty){this.ui.clear(this.navRoot);this.ui.panel(this.navRoot,0,0,this.w,this.navH+this.safeBottom,{fill:'#29414b',stroke:'#a48b62',radius:0});[['battle','出战'],['cats','伙伴'],['bag','背包'],['map','街区']].forEach(([id,title],i)=>{const active=this.session.tab===id||(id==='cats'&&this.session.tab==='formation'),w=this.w/4,n=this.ui.button(this.navRoot,'',i*w,0,w,this.navH,()=>{if(this.session.report)return;this.close();this.session.changeTab(id);},{fill:active?'#c4a26e':'#29414b',stroke:'#00000000',name:'tab-'+id});this.ui.icon(n,id,w/2-11,2,23);this.ui.label(n,title,0,27,w,18,{size:15,bold:true,color:active?'#47372b':'#e1cead',align:'center'});if(id==='cats')this.ui.label(n,unlocked(this.session.state).length+'/8',w/2+16,3,26,16,{size:8,color:active?'#49382c':'#d8c59f'});});this.navDirty=false;}
     if(this.guideDirty)this.renderGuide();this.updateWallets();
   }
-  updateWallets(){for(const n of allNodes(this.pageRoot)){const l=n.getComponent(Label);if(l&&n.name==='wallet-gold')l.string=Math.floor(this.session.state.gold).toLocaleString('zh-CN');}}
+  updateWallets(){for(const n of allNodes(this.pageRoot)){const l=n.getComponent(Label);if(l&&n.name==='wallet-gold')l.string=fmt(this.session.state.gold);}}
   find(name){return allNodes(this.root).find(n=>n.name===name&&n.activeInHierarchy);}
   targetName(){const s=this.session.state.guideStep;return ({1:'battle-label',2:'tab-cats',3:'upgrade-orange',4:'crew-mode-equipment',5:'equipped-claw',6:'dialog-content',7:'tab-battle',8:'battle-label',11:'open-can',12:'open-can',13:'open-can',14:'battle-label',15:'tab-map',16:'district-board',17:'street-group-equipment',18:'street-choice-salvage',19:'street-fight',20:'equipment-bag',21:'gear-'+this.session.state.gearGuideItem,22:'gear-equip',23:'crew-equipment'})[s];}
   bounds(node:Node){const box=worldRect(node),p=this.root.getComponent(UITransform).convertToNodeSpaceAR(new Vec3(box.x,box.y+box.height,0));return {x:p.x,y:-p.y,width:box.width,height:box.height,top:-p.y,bottom:-p.y+box.height};}

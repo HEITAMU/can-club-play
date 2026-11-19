@@ -2,8 +2,8 @@
 // Shader math and blend modes follow official builtin-sprite/builtin-graphics effects.
 // Creator normally generates these descriptors through its effect importer.
 import {registerPaintedBlend} from './painted-blend-shader.mjs';
-export async function registerBuiltinEffects(cc, chunks) {
-  const { gfx, EffectAsset, Material, builtinResMgr } = cc;
+export function registerBuiltinEffects(cc, chunks) {
+  const { gfx, EffectAsset } = cc;
   const clean = (s) => s.replace(/\/\/[^\n]*/g, '').replace(/#pragma[^\n]*/g, '').replace(/layout\([^)]*\)\s*/g, '');
   const globalBlock = clean(chunks['cc-global']);
   const localBlock = clean(chunks['cc-local']);
@@ -51,7 +51,14 @@ export async function registerBuiltinEffects(cc, chunks) {
   // The forward pipeline creates these unused 3D materials during initialization.
   effect('internal/builtin-geometry-renderer','clear',6);
   effect('internal/builtin-occlusion-query','clear');
-  function material(key,e,defines={}){const m=new Material();m.name=key;m.initialize({effectAsset:e,defines});builtinResMgr.addAsset(key,m);}
+  registerPaintedBlend(cc,chunks);
+  return {sprite, graphics, stencil};
+}
+
+export function createBuiltinMaterials(cc, {sprite, graphics, stencil}) {
+  if (!cc.director.root) throw Error('Source-runtime materials require the initialized Cocos director root');
+  const {Material, builtinResMgr}=cc, materials=[];
+  function material(key,e,defines={}){const m=new Material();m.name=key;m.initialize({effectAsset:e,defines});builtinResMgr.addAsset(key,m);materials.push(m);}
   material('ui-sprite-material',sprite,{USE_TEXTURE:true,USE_LOCAL:false});
   material('ui-sprite-gray-material',sprite,{USE_TEXTURE:true,USE_LOCAL:false,USE_GRAY:true});
   material('ui-sprite-alpha-sep-material',sprite,{USE_TEXTURE:true,USE_LOCAL:false});
@@ -59,5 +66,22 @@ export async function registerBuiltinEffects(cc, chunks) {
   material('ui-base-material',sprite,{USE_TEXTURE:false,USE_LOCAL:false});
   material('ui-graphics-material',graphics,{USE_LOCAL:true});
   material('default-clear-stencil',stencil);
-  registerPaintedBlend(cc,chunks);
+  return materials;
+}
+
+// Match Creator 3.8.8 game.ts: descriptors after gfx/builtin texture setup,
+// material assets after director.init(), compilation after pipeline activation.
+// Material.initialize captures director.root in each Pass; creating it during
+// infrastructure initialization permanently captures null and cannot be fixed
+// by merely retrying shader compilation later.
+export function installRuntimeMaterials(cc, chunks) {
+  let effects, materials;
+  cc.game.onPostInfrastructureInitDelegate.add(()=>{effects=registerBuiltinEffects(cc,chunks);});
+  cc.game.onPostSubsystemInitDelegate.add(()=>{materials=createBuiltinMaterials(cc,effects);});
+  cc.game.onPostProjectInitDelegate.add(()=>{
+    if (!cc.director.root?.pipeline) throw Error('Source-runtime materials require the initialized Cocos pipeline');
+    for (const material of materials) for (const pass of material.passes) {
+      if (!pass.tryCompile()) throw Error('Source-runtime material compilation failed: '+material.name);
+    }
+  });
 }

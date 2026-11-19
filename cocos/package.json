@@ -15,7 +15,7 @@
     "prepare:project": "node scripts/prepare-project.mjs",
     "typecheck": "tsc --project tsconfig.check.json --noEmit",
     "test:domain": "node --test tests/domain-parity.test.mjs",
-    "test:painted": "node --test tests/painted-blend.test.mjs",
+    "test:painted": "node --test tests/painted-blend.test.mjs tests/healing-ribbon.test.mjs",
     "test:browser": "node tests/browser-smoke.mjs"
   },
   "devDependencies": {

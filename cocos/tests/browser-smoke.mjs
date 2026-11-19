@@ -55,6 +55,10 @@ try {
     page.setDefaultNavigationTimeout(timeout);
     const requests = new Set();
     let intentionalReload = false;
+    let resolveBootFailure;
+    // Resolve with an Error (rather than reject before ready installs a handler)
+    // so an exception during the earliest script evaluation cannot be lost.
+    const bootFailure = new Promise(resolve => { resolveBootFailure = resolve; });
     page.on('request', request => requests.add(request));
     page.on('requestfinished', request => requests.delete(request));
     page.on('requestfailed', request => {
@@ -66,9 +70,19 @@ try {
     page.on('response', response => {
       if (response.status() >= 400 && !/\/favicon\.ico(?:\?|$)/.test(response.url())) result.errors.push(`HTTP ${response.status()}: ${response.url()}`);
     });
-    page.on('pageerror', error => result.errors.push(`pageerror: ${error.message}`));
+    page.on('pageerror', error => {
+      result.errors.push(`pageerror: ${error.message}`);
+      resolveBootFailure(new Error(`Browser startup exception: ${error.stack || error.message}`));
+    });
     page.on('console', message => {
-      if (message.type() === 'error' && !/\/favicon\.ico(?:\?|$)/.test(message.location().url || '')) result.errors.push(`console: ${message.text()}`);
+      if (message.type() === 'error' && !/\/favicon\.ico(?:\?|$)/.test(message.location().url || '')) {
+        const text = message.text();
+        result.errors.push(`console: ${text}`);
+        // Cocos catches some boot exceptions and reports their error objects to
+        // the console. Warnings and ordinary log messages are not boot failures.
+        if (/\b(?:TypeError|ReferenceError|SyntaxError|RangeError|EvalError|URIError|Error):\s/.test(text))
+          resolveBootFailure(new Error(`Browser startup exception: ${text}`));
+      }
     });
     await page.addInitScript(() => { globalThis.__CAN_CLUB_BROWSER_SMOKE__ = { isolated: true, developmentFixtures: true }; });
 
@@ -93,6 +107,8 @@ try {
     });
     const waitState = async expected => {
       await page.waitForFunction(expected => {
+        const failure = globalThis.__CAN_CLUB_BOOT_ERROR__;
+        if (failure) throw new Error(`Cocos boot failed: ${failure.stack || failure.message}`);
         const app = globalThis.__CAN_CLUB_APP__;
         if (!app) return false;
         const actual = { ...app.inspect(), mode: app.session.mode, report: !!app.session.report, guideActive: !!app.session.guideActive };
@@ -101,9 +117,19 @@ try {
       await frames();
     };
     const ready = async () => {
-      await page.waitForFunction(() => globalThis.__CAN_CLUB_APP__?.inspect && globalThis.__CAN_CLUB_ENGINE__?.director);
-      await page.evaluate(async () => { await globalThis.__CAN_CLUB_APP__.ready; });
-      await waitState({ loading: false });
+      await Promise.race([
+        (async () => {
+          await page.waitForFunction(() => {
+            const failure = globalThis.__CAN_CLUB_BOOT_ERROR__;
+            if (failure) throw new Error(`Cocos boot failed: ${failure.stack || failure.message}`);
+            return globalThis.__CAN_CLUB_APP__?.inspect && globalThis.__CAN_CLUB_ENGINE__?.director;
+          });
+          // The app exposes a boolean, not a startup Promise. Readiness includes
+          // its asset preload and two completed Cocos draw frames.
+          await waitState({ ready: true, loading: false });
+        })(),
+        bootFailure.then(error => { throw error; }),
+      ]);
     };
     const healthy = async () => {
       const current = await state();
@@ -167,13 +193,48 @@ try {
         app.revealTarget(target);
       }, name);
       await frames();
-      const buttons = await page.evaluate(() => globalThis.__CAN_CLUB_APP__.inspect().buttons);
-      assert.ok(Array.isArray(buttons), 'inspect().buttons must expose native CSS screen rectangles');
-      const button = [...buttons].reverse().find(button => button.name === name);
+      const hit = await page.evaluate(name => {
+        const app = globalThis.__CAN_CLUB_APP__, cc = globalThis.__CAN_CLUB_ENGINE__;
+        const inspected = app.inspect();
+        if (!Array.isArray(inspected.buttons)) throw new Error('inspect().buttons must expose native CSS screen rectangles');
+        const button = [...inspected.buttons].reverse().find(button => button.name === name);
+        let target;
+        const walk = node => {
+          if (!node.activeInHierarchy) return;
+          if (node.name === name) target = node;
+          for (const child of node.children) walk(child);
+        };
+        walk(cc.director.getScene());
+        if (!target || !button) return { button: null, clips: [] };
+        const frame = cc.view.getFrameSize(), size = inspected.size;
+        const scale = Math.min(frame.width / size.width, frame.height / size.height);
+        const dx = (frame.width - size.width * scale) / 2, dy = (frame.height - size.height * scale) / 2;
+        const rootTransform = app.root.getComponent(cc.UITransform);
+        // A button can lie inside the browser viewport but outside a Cocos mask.
+        // Measure each mask's own four corners, excluding its content children.
+        const ownRect = node => {
+          const t = node.getComponent(cc.UITransform), a = t.anchorPoint, w = t.width, h = t.height;
+          const points = [[-a.x * w, -a.y * h], [(1 - a.x) * w, -a.y * h], [-a.x * w, (1 - a.y) * h], [(1 - a.x) * w, (1 - a.y) * h]]
+            .map(([x, y]) => rootTransform.convertToNodeSpaceAR(t.convertToWorldSpaceAR(new cc.Vec3(x, y, 0))));
+          const left = Math.min(...points.map(p => p.x)), right = Math.max(...points.map(p => p.x));
+          const top = Math.min(...points.map(p => -p.y)), bottom = Math.max(...points.map(p => -p.y));
+          return { name: node.name, x: dx + left * scale, y: dy + top * scale, width: (right - left) * scale, height: (bottom - top) * scale };
+        };
+        const clips = [];
+        for (let p = target.parent; p; p = p.parent) if (p.getComponent(cc.Mask)?.enabledInHierarchy) clips.push(ownRect(p));
+        return { button, clips };
+      }, name);
+      const { button, clips } = hit;
       assert.ok(button, `${label}: missing native button ${name}`);
       assert.notEqual(button.interactable, false, `${label}: disabled native button ${name}`);
-      const x = button.x + button.width / 2, y = button.y + button.height / 2;
-      assert.ok(button.width > 0 && button.height > 0 && x > 0 && x < viewport.width && y > 0 && y < viewport.height, `${label}: button ${name} is outside the viewport: ${JSON.stringify(button)}`);
+      const visible = { left: Math.max(0, button.x), top: Math.max(0, button.y), right: Math.min(viewport.width, button.x + button.width), bottom: Math.min(viewport.height, button.y + button.height) };
+      for (const clip of clips) {
+        visible.left = Math.max(visible.left, clip.x); visible.top = Math.max(visible.top, clip.y);
+        visible.right = Math.min(visible.right, clip.x + clip.width); visible.bottom = Math.min(visible.bottom, clip.y + clip.height);
+      }
+      assert.ok(button.width > 0 && button.height > 0 && visible.right - visible.left > 1 && visible.bottom - visible.top > 1, `${label}: button ${name} is clipped outside its visible viewport: ${JSON.stringify(hit)}`);
+      const x = (visible.left + visible.right) / 2, y = (visible.top + visible.bottom) / 2;
+      result.lastAction = { name, x, y, button, clips, visible };
       await page.touchscreen.tap(x, y);
       await frames();
     };
@@ -255,7 +316,7 @@ try {
       await click('street-group-equipment'); await waitState({ modal: 'street', guideStep: 18 });
       await click('street-choice-salvage'); await waitState({ guideStep: 19 });
       await capture('04-salvage');
-      await click('street-fight'); await waitState({ tab: 'battle', guideStep: 9 });
+      await click('street-fight'); await waitState({ tab: 'battle', guideStep: 9, loading: false });
       await page.evaluate(async () => {
         const app = globalThis.__CAN_CLUB_APP__;
         for (let i = 0; i < 3000 && !app.session.report; i++) {
