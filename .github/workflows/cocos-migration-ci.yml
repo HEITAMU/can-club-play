@@ -64,8 +64,7 @@ jobs:
           else
             npx playwright install --with-deps --only-shell chromium
           fi
-          sudo apt-get update
-          sudo apt-get install -y fonts-noto-cjk
+          bash scripts/prepare-browser-fonts.sh
       - name: Exercise native scene, touch, save and page flows
         env:
           CAN_CLUB_URL: http://127.0.0.1:8765/cocos-preview/play.html
