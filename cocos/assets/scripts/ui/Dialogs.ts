@@ -44,7 +44,7 @@ export class Dialogs {
     if(type==='report'){const touches=new Map();this.bindReportTap(backdrop,touches);return this.report(parent,touches);}
     if(!blocked)backdrop.on(Node.EventType.TOUCH_END,outside);
     if(type==='intro')return this.intro(parent);
-    const titles={equipment:'装备',inherit:'培养继承','cat-tag':'猫牌升星',skill:'技能升级',set:'套装属性',keepsake:'伙伴信物',material:'材料',arena:'猫巷委托板',street:'委托',stall:'鱼摊',journal:'猫巷手账',challenges:'街头挑战',quests:'接下来做什么',settings:'猫猫休息室',export:'把猫猫存档带走',import:'导入一份存档','confirm-import':'这份存档可以读取',reset:'从头开始？',pause:'歇一会儿',victory:'这条街，已经走遍。',routes:'街区开拓',recruit:'新队员加入'};
+    const titles={equipment:'装备',inherit:'培养继承','cat-tag':'猫牌升星',skill:'技能详情',set:'套装属性',keepsake:'伙伴信物',material:'材料',arena:'猫巷委托板',street:'委托',stall:'鱼摊',journal:'猫巷手账',challenges:'街头挑战',quests:'接下来做什么',settings:'猫猫休息室',export:'把猫猫存档带走',import:'导入一份存档','confirm-import':'这份存档可以读取',reset:'从头开始？',pause:'歇一会儿',victory:'这条街，已经走遍。',routes:'街区开拓',recruit:'新队员加入'};
     const method={'cat-tag':'ascension','confirm-import':'confirmImport',arena:'hub',set:'gearSet',export:'exportSave',import:'importSave'}[type]||type;
     const defaultH={equipment:570,inherit:400,'cat-tag':410,skill:510,set:350,keepsake:380,material:310,stall:630,settings:430,export:480,import:490,'confirm-import':340,reset:280,pause:310,victory:200,recruit:480}[type];
     const popover=['equipment','material','keepsake','set'].includes(type),boxH=Math.min(popover?height*.7:height-36,defaultH||height-50),boxW=Math.min(width-24,popover?270:368),a=this.data.anchor;
