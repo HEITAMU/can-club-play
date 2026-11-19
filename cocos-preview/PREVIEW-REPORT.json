@@ -1,8 +1,8 @@
 {
   "engineVersion": "3.8.8",
-  "runtimeRevision": "5e0cfba8f77492db3374",
+  "runtimeRevision": "2d9092b1b4e67195f216",
   "entry": "play.html",
-  "runtimeDirectory": "r/5e0cfba8f77492db3374",
+  "runtimeDirectory": "r/2d9092b1b4e67195f216",
   "sourceRuntime": true,
   "creatorEditorBuild": false,
   "reusedOriginalImages": 53,

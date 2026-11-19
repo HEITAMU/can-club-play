@@ -15,6 +15,14 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const temporary=await fs.mkdtemp(path.join(os.tmpdir(),'can-club-build-gates-'));
 test.after(()=>fs.rm(temporary,{recursive:true,force:true}));
 const write=async(file,data)=>{await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file,typeof data==='object'?JSON.stringify(data):data);};
+async function assetReadinessFixture(){
+ const cc=`export const requests=[];export const assetManager={loadRemote:(url,options,done)=>requests.push({url,done})};export const resources={};export class ImageAsset{};export class Rect{};export class Size{};export class Vec2{};export class SpriteFrame{};export class Texture2D{addRef(){return this;}decRef(){}};`;
+ const compiled=await build({stdin:{contents:"export {Assets} from './assets/scripts/render/Assets';export {requests} from 'cc';",resolveDir:root,loader:'ts'},bundle:true,format:'cjs',platform:'node',write:false,tsconfigRaw:{},plugins:[{name:'controlled-resource-completion',setup(api){api.onResolve({filter:/^cc$/},()=>({path:'cc',namespace:'fixture'}));api.onLoad({filter:/.*/,namespace:'fixture'},()=>({contents:cc}));}}]});
+ const context=vm.createContext({module:{exports:{}}});vm.runInContext(compiled.outputFiles[0].text,context);
+ const {Assets,requests}=context.module.exports,assets=new Assets();
+ assets.configure({assets:{'assets/a.webp':{path:'art/a.png',resource:'art/a',width:4,height:4}}});
+ return {assets,requests};
+}
 async function sized(file,size){await write(file,'');await fs.truncate(file,size);}
 async function fixture(name,game={}){const dir=path.join(temporary,name);await write(path.join(dir,'game.json'),game);return dir;}
 
@@ -24,6 +32,33 @@ test('recursive main-package gate catches nested files and exits nonzero',async(
  assert.equal(report.passed,false);assert.throws(()=>assertWechatPackageBudget(report),{code:'CAN_CLUB_WECHAT_PACKAGE_TOO_LARGE'});
  const cli=spawnSync(process.execPath,[path.join(root,'scripts/check-wechat-package.mjs'),dir],{encoding:'utf8'});
  assert.notEqual(cli.status,0);assert.match(cli.stdout,/"passed": false/);
+});
+test('only resolved current textures may suppress a subsequent loading presentation',async()=>{
+ const {assets,requests}=await assetReadinessFixture(),key='assets/a.webp';
+ assert.equal(assets.areReady([key]),false);
+ const old=assets.load(key);assert.strictEqual(assets.load('./'+key+'?v=1'),old);
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(requests.length,1);
+ assert.equal(assets.areReady([key]),false,'a cached Promise is not a ready texture');
+ assets.clear();const current=assets.load(key);await new Promise(resolve=>setImmediate(resolve));
+ requests[0].done(null,{});await old;
+ assert.equal(assets.areReady([key]),false,'a completion invalidated by clear cannot mark a newer request ready');
+ requests[1].done(null,{});await current;
+ assert.equal(assets.areReady(['./'+key+'?v=2']),true);
+ assets.clear();assert.equal(assets.areReady([key]),false);
+});
+test('failed texture loads stay retryable and stale failures cannot evict a newer request',async()=>{
+ const {assets,requests}=await assetReadinessFixture(),key='assets/a.webp';
+ const old=assets.load(key),oldFailure=assert.rejects(old,/old request failed/);
+ await new Promise(resolve=>setImmediate(resolve));assets.clear();
+ const current=assets.load(key);await new Promise(resolve=>setImmediate(resolve));
+ requests[0].done(new Error('old request failed'));await oldFailure;
+ assert.strictEqual(assets.load(key),current);assert.equal(assets.areReady([key]),false);
+ const currentFailure=assert.rejects(current,/current request failed/);
+ requests[1].done(new Error('current request failed'));await currentFailure;
+ assert.equal(assets.areReady([key]),false);
+ const retry=assets.load(key);assert.notStrictEqual(retry,current);await new Promise(resolve=>setImmediate(resolve));
+ requests[2].done(null,{});await retry;assert.equal(assets.areReady([key]),true);
+ assets.clear();
 });
 test('one subpackage can exceed 4 MiB while main+subpackages remain below the conservative 30 MiB budget',async()=>{
  const dir=await fixture('subpackages',{subpackages:[{name:'a',root:'packages/a'},{name:'b',root:'packages/b'}]});
@@ -52,7 +87,7 @@ test('Creator 3.8.8 bundle binding and server configuration preserve local Web r
 });
 test('Creator output check requires real remote export metadata and removes remote art from upload root',async()=>{
  const dir=await fixture('creator-output'),server='https://assets.example.test/game/';
- await write(path.join(dir,'src/settings.123abc.json'),{assets:{server,remoteBundles:['resources']}});
+ await write(path.join(dir,'src/settings.123abc.json'),{assets:{server,remoteBundles:['resources'],bundleVers:{resources:'123abc'}}});
  await write(path.join(dir,'remote/resources/config.123abc.json'),{name:'resources'});
  await sized(path.join(dir,'remote/resources/native/full-size.png'),6*1024*1024);
  await write(path.join(dir,'src/bundle-scripts/resources/index.123abc.js'),'/* original hashed bundle */');
@@ -63,6 +98,7 @@ test('Creator output check requires real remote export metadata and removes remo
  const remoteOutput=path.join(temporary,'creator-deploy');
  const report=await finalizeCreatorWechat({output:dir,remoteOutput,server,rewardedAdUnitId:'adunit-creator-fixture'});
  assert.equal(report.packageBudget.passed,true);assert.equal(report.releaseReady,false);
+ assert.equal(report.bundleVersion,'123abc');assert.equal(report.bundleConfigFile,'remote/resources/config.123abc.json');assert.equal(report.localBundleScript,'src/bundle-scripts/resources/index.123abc.js');
  assert.equal(report.adConfigured,true);
  const configured=await fs.readFile(path.join(dir,'game.js'),'utf8');
  const context={CAN_CLUB_CONFIG:{sourceRuntime:true,rewardedAdUnitId:'adunit-stale'}};
@@ -80,6 +116,32 @@ test('Creator output check requires real remote export metadata and removes remo
  await fs.access(path.join(dir,'src/bundle-scripts/resources/index.123abc.js'));
  const missing=await fixture('creator-missing-metadata');
  await assert.rejects(finalizeCreatorWechat({output:missing,remoteOutput,server}),/no verifiable settings/);
+});
+test('Creator unversioned bundles retain the adapter exact config.json and index.js contract',async()=>{
+ const dir=await fixture('creator-unversioned'),server='https://assets.example.test/plain/';
+ await write(path.join(dir,'src/settings.json'),{assets:{server,remoteBundles:['resources'],bundleVers:{}}});
+ await write(path.join(dir,'remote/resources/config.json'),{name:'resources'});
+ await write(path.join(dir,'src/bundle-scripts/resources/index.js'),'/* plain bundle */');
+ await write(path.join(dir,'game.js'),"'use strict';\n");
+ const report=await finalizeCreatorWechat({output:dir,remoteOutput:path.join(temporary,'creator-unversioned-deploy'),server});
+ assert.equal(report.bundleVersion,'');assert.equal(report.bundleConfigFile,'remote/resources/config.json');
+ assert.equal(report.localBundleScript,'src/bundle-scripts/resources/index.js');
+});
+test('Creator refuses mismatched resource versions, missing local scripts and wrong names before altering either output',async()=>{
+ const server='https://assets.example.test/game/';
+ for(const fault of ['config-version','script-version','missing-script','bundle-name']){
+  const dir=await fixture('creator-'+fault),remoteOutput=path.join(temporary,'deploy-'+fault),entry="'use strict';\nglobalThis.original=true;\n";
+  await write(path.join(dir,'game.js'),entry);
+  await write(path.join(dir,'src/settings.json'),{assets:{server,remoteBundles:['resources'],bundleVers:{resources:'expected'}}});
+  const configName=fault==='config-version'?'config.wrong.json':'config.expected.json';
+  await write(path.join(dir,'remote/resources',configName),{name:fault==='bundle-name'?'not-resources':'resources'});
+  if(fault!=='missing-script')await write(path.join(dir,'src/bundle-scripts/resources',fault==='script-version'?'index.wrong.js':'index.expected.js'),'/* preserved bundle */');
+  await write(path.join(remoteOutput,'remote/previous.txt'),'preserve existing deployment');
+  await assert.rejects(finalizeCreatorWechat({output:dir,remoteOutput,server}),/exact config|local bundle script|wrong bundle name/,fault);
+  assert.equal(await fs.readFile(path.join(dir,'game.js'),'utf8'),entry,fault+': entry must remain untouched');
+  await fs.access(path.join(dir,'remote/resources',configName));
+  assert.equal(await fs.readFile(path.join(remoteOutput,'remote/previous.txt'),'utf8'),'preserve existing deployment');
+ }
 });
 test('Creator configuration rejects invalid IDs and missing entry before mutating output',async()=>{
  const dir=await fixture('creator-config-errors'),entry='globalThis.started=true;';

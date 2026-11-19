@@ -8,11 +8,13 @@ const root = globalThis as any;
 /** Original authored resolutions. No mobile character atlases or HTML raster capture. */
 export class Assets {
   private textures = new Map<string, Promise<Texture2D>>();
+  private loadedTextures = new Set<string>();
   private frames = new Map<string, Promise<SpriteFrame>>();
   private packages = new Map<string, Promise<void>>();
   private creatorResources: Promise<void> | null = null;
   private runtime: RuntimeManifest | null = null;
   configure(manifest: RuntimeManifest) { this.runtime = manifest; }
+  areReady(paths: string[]) { return paths.every(path=>this.loadedTextures.has(clean(path))); }
   private manifest(): RuntimeManifest | null { return this.runtime || root.CAN_CLUB_ASSET_MANIFEST || null; }
   /** Loads bundle metadata only; its full-resolution textures remain on demand. */
   ensureCreatorResources(): Promise<void> {
@@ -39,7 +41,7 @@ export class Assets {
     if (!this.textures.has(key)) {
       const task = this.loadTexture(key);
       this.textures.set(key, task);
-      task.catch(() => this.textures.delete(key));
+      task.then(()=>{if(this.textures.get(key)===task)this.loadedTextures.add(key);},()=>{if(this.textures.get(key)===task){this.textures.delete(key);this.loadedTextures.delete(key);}});
     }
     return this.textures.get(key)!;
   }
@@ -108,7 +110,7 @@ export class Assets {
   clear() {
     this.frames.forEach(p=>p.then(f=>f.decRef()).catch(()=>{}));
     this.textures.forEach(p=>p.then(t=>t.decRef()).catch(()=>{}));
-    this.frames.clear();this.textures.clear();
+    this.frames.clear();this.textures.clear();this.loadedTextures.clear();
   }
 }
 export const assets = new Assets();

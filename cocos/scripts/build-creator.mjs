@@ -82,8 +82,14 @@ export async function finalizeCreatorWechat({output,remoteOutput,server,rewarded
  const remote=path.join(output,'remote'),resources=path.join(remote,'resources');
  if(!await exists(resources))throw Error('Creator output is missing remote/resources.');
  const remoteFiles=await allFiles(remote);
- if(!remoteFiles.some(file=>path.dirname(file)===resources&&/^config(?:\.[\w-]+)?\.json$/.test(path.basename(file))))
-  throw Error('Creator resources bundle has no generated config JSON.');
+ const bundleVersion=emittedSettings.assets.bundleVers?.resources??'';
+ if(typeof bundleVersion!=='string'||!/^[\w-]*$/.test(bundleVersion))throw Error('Creator resources bundle version is invalid.');
+ const suffix=bundleVersion?'.'+bundleVersion:'';
+ const bundleConfig=path.join(resources,'config'+suffix+'.json');
+ const bundleScript=path.join(output,'src/bundle-scripts/resources','index'+suffix+'.js');
+ if(!remoteFiles.includes(bundleConfig))throw Error('Creator resources is missing the exact config'+suffix+'.json requested by settings.assets.bundleVers.');
+ if(!files.includes(bundleScript))throw Error('Creator resources is missing the local bundle script index'+suffix+'.js required by the WeChat adapter.');
+ if(JSON.parse(await fs.readFile(bundleConfig,'utf8')).name!=='resources')throw Error('Creator resources config has the wrong bundle name.');
  if(files.some(file=>file.startsWith(path.join(output,'assets/resources')+path.sep)))
   throw Error('Creator left a local resources bundle in the WeChat package; inspect the platform bundle settings.');
  const remoteAssetBytes=(await Promise.all(remoteFiles.map(file=>fs.stat(file)))).reduce((sum,file)=>sum+file.size,0);
@@ -95,7 +101,8 @@ export async function finalizeCreatorWechat({output,remoteOutput,server,rewarded
  await fs.rm(path.join(remoteOutput,'remote'),{recursive:true,force:true});
  await fs.rename(remote,path.join(remoteOutput,'remote'));
  const packageBudget=await measureWechatPackage(output);
- const report={creatorVersion:'3.8.8',sourceRuntime:false,creatorEditorBuild:true,remoteBundle:'resources',
+ const report={creatorVersion:'3.8.8',sourceRuntime:false,creatorEditorBuild:true,remoteBundle:'resources',bundleVersion,
+  bundleConfigFile:path.relative(output,bundleConfig),localBundleScript:path.relative(output,bundleScript),
   server:expectedServer,settingsFile:path.relative(output,settingsFile),mainDirectory:output,runtimeEntry,adConfigured:!!runtimeConfig.rewardedAdUnitId,
   deploymentDirectory:remoteOutput,remoteAssetBytes,packageBudget,
   publicationVerified:false,releaseReady:false,

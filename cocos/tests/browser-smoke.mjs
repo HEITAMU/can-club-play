@@ -47,7 +47,7 @@ try {
   report.browser = {version: browser.version(), channel: process.env.CAN_CLUB_BROWSER_CHANNEL || 'playwright-chromium'};
   for (const viewport of [{ width: 390, height: 844 }, { width: 320, height: 740 }]) {
     const label = `${viewport.width}x${viewport.height}`;
-    const result = { viewport, status: 'running', checks: [], captures: [], errors: [], expectedEngineDiagnostics: [], fixture: 'Fresh account initially; isolated unlocked stage 3, Lv.80 starters and resources for equipment/recruitment; isolated Lv.1 injured team and full milk energy for healing render capture' };
+    const result = { viewport, status: 'running', checks: [], captures: [], errors: [], expectedEngineDiagnostics: [], fixture: 'Fresh account initially; isolated unlocked stage 3, Lv.80 starters and resources for equipment/recruitment; temporary stage 101 with one original network response delayed to verify navigation, then prior encounter restored; isolated Lv.1 injured team and full milk energy for healing render capture' };
     report.viewports.push(result);
     const context = await browser.newContext({ viewport, deviceScaleFactor: 1, isMobile: true, hasTouch: true, locale: 'zh-CN', timezoneId: 'Asia/Shanghai' });
     const initialStorage = await context.storageState();
@@ -114,6 +114,7 @@ try {
         party: [...s.state.party], heroIds: s.battle?.heroes.map(h => h.catId), heroLevels: s.battle?.heroes.map(h => h.level),
         battleTime: s.battle?.time || 0, battleRevision: s.battleRevision,
         mode: s.mode, paused: s.paused, guideActive: s.guideActive, gearGuide: s.state.gearGuide,
+        activeTouches: [...(app.activeTouches || [])], loadingVisible: app.loadingRoot?.activeInHierarchy,
         report: s.report ? JSON.parse(JSON.stringify(s.report)) : null,
         inventory: JSON.parse(JSON.stringify(s.state.inventory)),
         canvasSize: canvas ? { width: canvas.width, height: canvas.height } : null,
@@ -531,8 +532,114 @@ try {
       assert.equal(newLevel, oldLevel + 1);
       await capture('06-equipment-enhanced');
       await click('modal-close');
+      // Hold real native controls across actual patrol settlement and the next
+      // battle. No click retries: destroying/replacing a pressed Button loses END.
+      const armPress = async (name, tag) => page.evaluate(({ name, tag }) => {
+        const app = globalThis.__CAN_CLUB_APP__, cc = globalThis.__CAN_CLUB_ENGINE__, probe = globalThis.__CAN_CLUB_BROWSER_SMOKE__;
+        const node = app.find(name);
+        if (!node) throw new Error('Missing press target ' + name);
+        probe.pressTargets ||= {}; probe.presses ||= {};
+        probe.pressTargets[tag] = node;
+        const trace = probe.presses[tag] = { name, uuid: node.uuid, starts: 0, ends: 0, cancels: 0, clicks: 0 };
+        node.on(cc.Node.EventType.TOUCH_START, () => trace.starts++, undefined, true);
+        node.on(cc.Node.EventType.TOUCH_END, () => trace.ends++, undefined, true);
+        node.on(cc.Node.EventType.TOUCH_CANCEL, () => trace.cancels++, undefined, true);
+        node.on(cc.Button.EventType.CLICK, () => trace.clicks++);
+      }, { name, tag });
+      const readPress = tag => page.evaluate(tag => globalThis.__CAN_CLUB_BROWSER_SMOKE__.presses[tag], tag);
+      const pressAcrossPatrol = async (name, tag) => {
+        const point = await nativePoint(name);
+        await armPress(name, tag);
+        result.lastAction = { kind: 'hold-through-patrol', name, ...point };
+        const cdp = await context.newCDPSession(page);
+        let held = false;
+        try {
+          await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: point.x, y: point.y, id: 1 }] }); held = true;
+          await frames();
+          assert.equal((await readPress(tag)).starts, 1, name + ': native START must reach the target before advancing combat');
+          const transition = await page.evaluate(async ({ name, tag }) => {
+            const app = globalThis.__CAN_CLUB_APP__, s = app.session, probe = globalThis.__CAN_CLUB_BROWSER_SMOKE__;
+            const before = s.battleRevision;
+            for (let i = 0; i < 600 && s.battleRevision === before; i++) {
+              app.advance(.1);
+              if (i % 8 === 0) await new Promise(resolve => requestAnimationFrame(resolve));
+            }
+            if (s.battleRevision <= before) throw new Error('Patrol did not naturally settle and start the next battle while pressed');
+            return { before, after: s.battleRevision, sameTarget: probe.pressTargets[tag] === app.find(name) };
+          }, { name, tag });
+          await waitState({ loading: false });
+          assert.equal(transition.sameTarget, true, name + ': background settlement must retain the pressed node');
+          assert.equal(await page.evaluate(({ name, tag }) => {
+            const app = globalThis.__CAN_CLUB_APP__, cc = globalThis.__CAN_CLUB_ENGINE__, node = globalThis.__CAN_CLUB_BROWSER_SMOKE__.pressTargets[tag];
+            return cc.isValid(node, true) && node === app.find(name) && node.getComponent(cc.Button)._pressed;
+          }, { name, tag }), true, name + ': control must remain enabled and pressed after background loading');
+          await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); held = false;
+          await frames();
+          const trace = await readPress(tag);
+          assert.deepEqual([trace.starts, trace.ends, trace.cancels, trace.clicks], [1, 1, 0, 1], name + ': one real press must produce one click');
+          assert.deepEqual((await state()).activeTouches, [], 'physical release must flush deferred UI work');
+          return { ...trace, transition };
+        } finally {
+          if (held) await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+          await cdp.detach();
+        }
+      };
+      result.inputContinuity = {};
+      result.inputContinuity.navigation = await pressAcrossPatrol('tab-bag', 'navigation');
+      await waitState({ tab: 'bag' });
+      result.inputContinuity.pageButton = await pressAcrossPatrol('bag-tab-materials', 'page-button');
+      await page.waitForFunction(() => globalThis.__CAN_CLUB_APP__.pages.bagTab === 'materials');
+      result.checks.push('Native navigation and in-page controls stay pressed across real patrol settlement and next-battle preparation; each release delivers exactly one click');
+
+      // Isolated resource-delay fixture: hold an actual, previously unrequested
+      // stage-101 background request, then navigate while it is still loading.
+      // The original response is released unchanged; no fake image or game state
+      // handler replaces the production loader. Restore the fixture stage after.
+      const coldPattern = '**/assets/mobile/street-5-v02684.webp*';
+      let releaseCold;
+      const coldGate = new Promise(resolve => { releaseCold = resolve; });
+      const coldRoute = async route => { await coldGate; await route.continue(); };
+      await page.route(coldPattern, coldRoute);
+      const coldPoint = await nativePoint('tab-map');
+      await armPress('tab-map', 'cold-load');
+      const coldRequest = page.waitForRequest(request => request.url().includes('/assets/mobile/street-5-v02684.webp'));
+      const restoreStage = await page.evaluate(() => {
+        const s = globalThis.__CAN_CLUB_APP__.session, stage = s.state.stage;
+        s.state.stage = 101;
+        if (!s.startBattle({ seed: 8388 }) || s.battle.stage !== 101) throw new Error('Could not start isolated cold-resource encounter');
+        return stage;
+      });
+      const coldTouch = await context.newCDPSession(page);
+      let coldHeld = false;
+      try {
+        await coldRequest; await frames();
+        const pending = await state();
+        assert.equal(pending.loading, true, 'the real background request must still be pending');
+        assert.equal(pending.loadingVisible, false, 'background loading must not obscure the active bag page');
+        result.lastAction = { kind: 'tap-during-background-load', name: 'tab-map', ...coldPoint };
+        await coldTouch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: coldPoint.x, y: coldPoint.y, id: 1 }] }); coldHeld = true;
+        await frames();
+        assert.equal((await readPress('cold-load')).starts, 1, 'loading must not intercept the real navigation START');
+        await coldTouch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); coldHeld = false;
+        await waitState({ tab: 'map', loading: true });
+        const trace = await readPress('cold-load');
+        assert.deepEqual([trace.starts, trace.ends, trace.cancels, trace.clicks], [1, 1, 0, 1]);
+        result.inputContinuity.coldLoad = { ...trace, navigatedWhileLoading: true };
+      } finally {
+        releaseCold();
+        if (coldHeld) await coldTouch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+        await coldTouch.detach();
+        await page.unroute(coldPattern, coldRoute);
+      }
+      await waitState({ loading: false });
+      await page.evaluate(stage => {
+        const s = globalThis.__CAN_CLUB_APP__.session; s.state.stage = stage;
+        if (!s.startBattle({ seed: 7388 })) throw new Error('Could not restore the original test encounter');
+      }, restoreStage);
+      await waitState({ loading: false });
       await click('tab-bag'); await waitState({ tab: 'bag' });
       await click('bag-tab-materials');
+      result.checks.push('An actual delayed background resource request cannot intercept other-page navigation; original network response and encounter restored afterwards');
       await capture('07-materials');
       await click('bag-tab-keepsakes');
       await capture('08-keepsakes');

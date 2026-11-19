@@ -31,7 +31,8 @@ class CanClubRuntime extends Component {
   w=390;h=844;safeTop=0;safeBottom=0;pageH=793;navH=51;ready=false;destroyed=false;
   canvasNode:Node;canvas:Canvas;camera:Camera;root:Node;battleRoot:Node;pageRoot:Node;navRoot:Node;modalRoot:Node;guideRoot:Node;toastRoot:Node;loadingRoot:Node;entranceRoot:Node;
   modal:any=null;dirty=true;guideDirty=true;navDirty=true;resizePending=false;loadSerial=0;loadMessage:Label;loadProgress:Label;loadingRetry:Node;
-  toastUntil=0;toastText='';lastPage='';lastModal='';guideTarget='';guideTouchAt=-10;lastEntrance=false;lastIssueCount=0;retryRequest:any=null;
+  toastUntil=0;toastText='';lastPage='';lastModal='';lastNav='';guideTarget='';guideTouchAt=-10;lastEntrance=false;lastIssueCount=0;retryRequest:any=null;
+  activeTouches=new Set<number>();loadingVisual=false;
   private disposers:Function[]=[];
   initialize(scene:Scene){
     this.services=createSessionServices();this.session=new GameSession(this.services);this.session.setLoading(true);
@@ -42,15 +43,18 @@ class CanClubRuntime extends Component {
     this.pages=new Pages(this.ui,this.session,cb);this.dialogs=new Dialogs(this.ui,this.session,cb);this.cb=cb;
     this.ui.onSound=kind=>{this.configureAudio();audio.unlock();audio.play(kind);};
     this.ui.onAction=name=>{if(name.startsWith('tab-'))audio.play('nav-'+(name.slice(4)==='bag'?'relics':name.slice(4)));};
-    this.disposers.push(this.session.subscribe(e=>this.sessionEvent(e)),platform.onHide(()=>{this.session.setHidden(true);this.configureAudio();}),platform.onShow(()=>{this.session.setHidden(false);this.configureAudio();}));
+    this.disposers.push(this.session.subscribe(e=>this.sessionEvent(e)),platform.onHide(()=>{this.activeTouches.clear();this.session.setHidden(true);this.configureAudio();}),platform.onShow(()=>{this.session.setHidden(false);this.configureAudio();}));
     input.on(Input.EventType.TOUCH_START,this.unlock,this);input.on(Input.EventType.KEY_DOWN,this.key,this);view.on('canvas-resize',this.resize,this);
     this.buildLayout();if(this.session.navigation)this.navigate(this.session.navigation);if(this.session.notice)this.toast(this.session.notice);this.render();
   }
   unlock(){this.configureAudio();audio.unlock();}
   key(e){this.unlock();if(e.keyCode===KeyCode.ESCAPE&&!this.session.guideActive){if(this.modal)this.dialogs.dismiss();else if(this.session.report)this.closeReport();}}
   resize(){this.resizePending=true;}
+  touchStart(e){for(let n=e.target;n;n=n.parent)if(n===this.loadingRoot||n===this.entranceRoot)return;this.activeTouches.add(e.getID?.()??e.touch?.getID?.()??0);}
+  touchFinish(e){if(!e.simulate)this.activeTouches.delete(e.getID?.()??e.touch?.getID?.()??0);}
   configureAudio(){audio.configure({music:this.session.state.music,effects:this.session.state.sound,hidden:this.session.hidden,scene:this.session.tab==='battle'&&!this.visibleModal()?'battle':'alley'});}
   buildLayout(){
+    this.activeTouches.clear();this.lastNav='';
     const frame=view.getFrameSize(),ratio=frame.height/Math.max(1,frame.width),portrait=ratio>1.2;
     this.h=portrait?Math.max(620,Math.min(1020,Math.round(390*ratio))):844;
     view.setDesignResolutionSize(this.w,this.h,portrait&&ratio<2.62?ResolutionPolicy.FIXED_WIDTH:ResolutionPolicy.SHOW_ALL);
@@ -58,7 +62,14 @@ class CanClubRuntime extends Component {
     const wx=(globalThis as any).wx;if(wx){const win=wx.getWindowInfo?.()||wx.getSystemInfoSync?.(),safe=platform.safeArea(),scale=this.w/Math.max(1,win?.windowWidth||this.w);if(safe){this.safeTop=Math.max(0,safe.top*scale);this.safeBottom=Math.max(0,((win?.windowHeight||0)-safe.bottom)*scale);}const capsule=wx.getMenuButtonBoundingClientRect?.();if(capsule)this.safeTop=Math.max(this.safeTop,(capsule.bottom+5)*scale);}
     this.navH=this.h<=740?46:51;this.pageH=this.h-this.navH-this.safeBottom-this.safeTop;this.camera.orthoHeight=this.h/2;
     this.canvasNode.getComponent(UITransform).setContentSize(this.w,this.h);this.canvasNode.setPosition(this.w/2,this.h/2,0);
-    if(this.root)this.ui.clear(this.root);else this.root=this.ui.group(this.canvasNode,-this.w/2,-this.h/2,this.w,this.h,'can-club');
+    if(this.root)this.ui.clear(this.root);else{
+      this.root=this.ui.group(this.canvasNode,-this.w/2,-this.h/2,this.w,this.h,'can-club');
+      // Capture only observes gestures. A ScrollView's simulated child cancel
+      // does not end the physical touch; defer destructive UI work until release.
+      this.root.on(Node.EventType.TOUCH_START,this.touchStart,this,true);
+      this.root.on(Node.EventType.TOUCH_END,this.touchFinish,this,true);
+      this.root.on(Node.EventType.TOUCH_CANCEL,this.touchFinish,this,true);
+    }
     this.root.setPosition(-this.w/2,this.h/2);this.root.getComponent(UITransform).setContentSize(this.w,this.h);
     this.ui.panel(this.root,0,0,this.w,this.h,{fill:'#293f51',stroke:'#00000000',radius:0});
     this.battleRoot=this.ui.group(this.root,0,this.safeTop,this.w,this.pageH,'battle-page');this.pageRoot=this.ui.group(this.root,0,this.safeTop,this.w,this.pageH,'other-page');
@@ -93,6 +104,8 @@ class CanClubRuntime extends Component {
   scrollState(parent){return allNodes(parent).filter(n=>n.getComponent(ScrollView)).map(n=>{const offset=n.getComponent(ScrollView).getScrollOffset();return new Vec2(-offset.x,offset.y);});}
   restoreScroll(parent,offsets){const views=allNodes(parent).filter(n=>n.getComponent(ScrollView));views.forEach((n,i)=>{if(offsets[i])n.getComponent(ScrollView).scrollToOffset(offsets[i],0);});}
   render(){
+    this.updateLoadingVisibility();
+    if(this.activeTouches.size)return;
     const pageKey=this.session.tab+':'+this.session.mode+':'+this.session.selected,modalKey=this.visibleModal();
     this.battleRoot.active=this.session.tab==='battle';this.pageRoot.active=!this.battleRoot.active;
     if(this.dirty){
@@ -102,7 +115,9 @@ class CanClubRuntime extends Component {
       if(modalKey)this.dialogs.render(this.modalRoot,this.w,this.h-this.safeTop-this.safeBottom,modalKey,this.modal?.data||{});
       this.restoreScroll(this.modalRoot,offsets);this.lastModal=modalKey;this.dirty=false;this.guideDirty=true;
     }
-    if(this.navDirty){this.ui.clear(this.navRoot);this.ui.panel(this.navRoot,0,0,this.w,this.navH+this.safeBottom,{fill:'#29414b',stroke:'#a48b62',radius:0});[['battle','出战'],['cats','伙伴'],['bag','背包'],['map','街区']].forEach(([id,title],i)=>{const active=this.session.tab===id||(id==='cats'&&this.session.tab==='formation'),w=this.w/4,n=this.ui.button(this.navRoot,'',i*w,0,w,this.navH,()=>{if(this.session.report)return;this.close();this.session.changeTab(id);},{fill:active?'#c4a26e':'#29414b',stroke:'#00000000',name:'tab-'+id});this.ui.icon(n,id,w/2-11,2,23);this.ui.label(n,title,0,27,w,18,{size:15,bold:true,color:active?'#47372b':'#e1cead',align:'center'});if(id==='cats')this.ui.label(n,unlocked(this.session.state).length+'/8',w/2+16,3,26,16,{size:8,color:active?'#49382c':'#d8c59f'});});this.navDirty=false;}
+    const navKey=(this.session.tab==='formation'?'cats':this.session.tab)+':'+unlocked(this.session.state).length;
+    if(this.navDirty&&navKey!==this.lastNav){this.ui.clear(this.navRoot);this.ui.panel(this.navRoot,0,0,this.w,this.navH+this.safeBottom,{fill:'#29414b',stroke:'#a48b62',radius:0});[['battle','出战'],['cats','伙伴'],['bag','背包'],['map','街区']].forEach(([id,title],i)=>{const active=this.session.tab===id||(id==='cats'&&this.session.tab==='formation'),w=this.w/4,n=this.ui.button(this.navRoot,'',i*w,0,w,this.navH,()=>{if(this.session.report)return;this.close();this.session.changeTab(id);},{fill:active?'#c4a26e':'#29414b',stroke:'#00000000',name:'tab-'+id});this.ui.icon(n,id,w/2-11,2,23);this.ui.label(n,title,0,27,w,18,{size:15,bold:true,color:active?'#47372b':'#e1cead',align:'center'});if(id==='cats')this.ui.label(n,unlocked(this.session.state).length+'/8',w/2+16,3,26,16,{size:8,color:active?'#49382c':'#d8c59f'});});this.lastNav=navKey;}
+    this.navDirty=false;
     if(this.guideDirty)this.renderGuide();this.updateWallets();
   }
   updateWallets(){for(const n of allNodes(this.pageRoot)){const l=n.getComponent(Label);if(l&&n.name==='wallet-gold')l.string=fmt(this.session.state.gold);}}
@@ -134,13 +149,14 @@ class CanClubRuntime extends Component {
     for(const id of new Set(battle.heroes.map(a=>a.catId).filter(Boolean))){if(id==='spark'){for(let cel=0;cel<9;cel++)for(const face of ['blink','hurt','victory','attack'])paths.push(`assets/cocos/expressions/spark-${cel}-${face}.png`);}else for(const face of ['blink','hurt','victory'])paths.push(`assets/cocos/expressions/${id}-0-${face}.png`);}
     paths.push(battle.activity?'assets/scenes/commissions-v02646.webp':`assets/mobile/street-${Math.floor((battle.stage-1)/20)%6}-v02684.webp`);return [...new Set(paths.filter(Boolean).map(p=>p.replace(/^\.\//,'')))];
   }
-  renderLoading(){this.ui.clear(this.loadingRoot);this.loadingRoot.active=this.session.loading;if(!this.session.loading)return;this.ui.blocker(this.loadingRoot,this.w,this.h);this.ui.panel(this.loadingRoot,0,0,this.w,this.h,{fill:'#293f51',stroke:'#00000000',radius:0});const y=this.h*.4;this.ui.icon(this.loadingRoot,'can',this.w/2-23,y-55,46);this.ui.label(this.loadingRoot,'罐头远征队',20,y+4,this.w-40,40,{size:26,bold:true,color:'#f1deb8',align:'center'});this.loadMessage=this.ui.label(this.loadingRoot,'正在准备本场冒险',20,y+59,this.w-40,28,{size:13,color:'#e3cc9f',align:'center'});this.loadProgress=this.ui.label(this.loadingRoot,'0%',20,y+98,this.w-40,26,{size:16,bold:true,color:'#f4d69a',align:'center'});this.loadingRetry=this.ui.button(this.loadingRoot,'重新加载',60,y+145,this.w-120,38,()=>{void this.prepareBattle(!this.ready);},{name:'loading-retry',primary:true});this.loadingRetry.active=false;}
+  updateLoadingVisibility(){if(this.loadingRoot)this.loadingRoot.active=this.session.loading&&this.loadingVisual&&(!this.ready||(this.session.tab==='battle'&&!this.visibleModal()));}
+  renderLoading(){this.ui.clear(this.loadingRoot);this.updateLoadingVisibility();if(!this.session.loading||!this.loadingVisual)return;const height=this.ready?this.safeTop+this.pageH:this.h;this.ui.blocker(this.loadingRoot,this.w,height);this.ui.panel(this.loadingRoot,0,0,this.w,height,{fill:'#293f51',stroke:'#00000000',radius:0});const y=height*.4;this.ui.icon(this.loadingRoot,'can',this.w/2-23,y-55,46);this.ui.label(this.loadingRoot,'罐头远征队',20,y+4,this.w-40,40,{size:26,bold:true,color:'#f1deb8',align:'center'});this.loadMessage=this.ui.label(this.loadingRoot,'正在准备本场冒险',20,y+59,this.w-40,28,{size:13,color:'#e3cc9f',align:'center'});this.loadProgress=this.ui.label(this.loadingRoot,'0%',20,y+98,this.w-40,26,{size:16,bold:true,color:'#f4d69a',align:'center'});this.loadingRetry=this.ui.button(this.loadingRoot,'重新加载',60,y+145,this.w-120,38,()=>{void this.prepareBattle(!this.ready);},{name:'loading-retry',primary:true});this.loadingRetry.active=false;}
   async prepareBattle(startup=false){
-    const serial=++this.loadSerial;this.session.setLoading(true);this.renderLoading();this.guideDirty=true;
-    try{await assets.preload(this.battleArt(startup),(n,total)=>{if(serial===this.loadSerial)this.loadProgress.string=Math.round(n/total*100)+'% · '+n+'/'+total;});if(serial!==this.loadSerial)return false;
+    const serial=++this.loadSerial,paths=this.battleArt(startup);this.loadingVisual=!this.ready||!assets.areReady(paths);this.session.setLoading(true);this.renderLoading();this.guideDirty=true;
+    try{await assets.preload(paths,(n,total)=>{if(serial===this.loadSerial&&this.loadingVisual)this.loadProgress.string=Math.round(n/total*100)+'% · '+n+'/'+total;});if(serial!==this.loadSerial)return false;
       this.battleView.bindBattle();this.battleView.update(0);this.ui.update(this.session.time,0);await this.ui.settleImages();await afterDraw();await afterDraw();if(serial!==this.loadSerial)return false;
       this.session.setLoading(false);this.ready=true;this.loadingRoot.active=false;this.refresh();return true;
-    }catch(error){if(serial!==this.loadSerial)return false;const message=String(error.message||error);if(!this.ui.errors.includes(message))this.ui.errors.push(message);this.loadMessage.string='部分资源加载失败，请检查网络后重试';this.loadProgress.string='';this.loadingRetry.active=true;return false;}
+    }catch(error){if(serial!==this.loadSerial)return false;const message=String(error.message||error);if(!this.ui.errors.includes(message))this.ui.errors.push(message);if(!this.loadingVisual){this.loadingVisual=true;this.renderLoading();}this.loadMessage.string='部分资源加载失败，请检查网络后重试';this.loadProgress.string='';this.loadingRetry.active=true;return false;}
   }
   paintEntrance(){const show=!this.session.loading&&this.session.entranceRemaining>0&&!this.session.guideActive&&!this.session.report&&this.session.tab==='battle';if(show===this.lastEntrance)return;this.lastEntrance=show;this.ui.clear(this.entranceRoot);if(!show)return;this.ui.blocker(this.entranceRoot,this.w,this.pageH);const b=this.session.battle,y=this.pageH/2-80;this.ui.label(this.entranceRoot,b.activity?'猫巷委托':'街区开拓',20,y,this.w-40,24,{size:12,color:'#f4dfb1',align:'center'});this.ui.label(this.entranceRoot,b.activity?.name||b.weekly?.name||(b.mode==='arena'?'第 '+b.arenaTier+' 擂':'第 '+b.stage+' 关'),15,y+32,this.w-30,35,{size:24,bold:true,color:'#ffe8bd',align:'center'});const ids=this.session.state.party.filter(Boolean);ids.forEach((id,i)=>this.ui.character(this.entranceRoot,id,this.w/2+(i-(ids.length-1)/2)*58,y+160,this.ui.fullBodyUnit));}
   update(delta:number){if(!this.session||this.destroyed)return;const dt=Math.min(.1,Math.max(0,delta));if(this.resizePending){this.resizePending=false;this.buildLayout();}this.session.update(dt);if(this.dirty||this.navDirty||this.guideDirty)this.render();this.battleView.update(dt);this.ui.update(this.session.time,dt);this.paintEntrance();if(this.toastText&&this.session.time>=this.toastUntil){this.toastText='';this.ui.clear(this.toastRoot);}if(this.ui.errors.length>this.lastIssueCount){for(const err of this.ui.errors.slice(this.lastIssueCount))console.error('[CanClub asset]',err);this.lastIssueCount=this.ui.errors.length;}}
