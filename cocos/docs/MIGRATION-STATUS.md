@@ -39,6 +39,8 @@ CI 入口：[Cocos 3.8.8 migration](https://github.com/HEITAMU/can-club-play/act
 
 本轮养成修改为 `46ac0f63802f72e497589ee073ef2547ed9909af`，包含触摸探针准备修正的验收提交为 **`0f49a4574637cfdabe2d0bf994df604f30978694`**，完整 CI 为 [运行 44501158343](https://github.com/HEITAMU/can-club-play/actions/runs/44501158343)。类型检查与 60 项自动检查（22 项冻结业务对照、10 项新养成规则、14 项绘制、14 项构建及兼容）通过。实际浏览器原始报告保存在 [verification/browser-20261119-growth.json](verification/browser-20261119-growth.json)，两种尺寸各通过 13 组流程、产生 18 张截图，结束时均没有未处理错误或剩余资源请求。浏览器产物 ID 为 `14518100832`，下载 ZIP 的 SHA-256 为 `7a6c10803006f8615e4e90230527c2b0ead2836a7b08fbb3981047a17250d134`。
 
+最终源码提交 **`157aa2a02ddb29fdc1811a20bdfd2d0590eff7d1`** 的主线与迁移分支均通过完整检查：主线 [运行 44510816578](https://github.com/HEITAMU/can-club-play/actions/runs/44510816578)，迁移分支 [运行 44510809837](https://github.com/HEITAMU/can-club-play/actions/runs/44510809837)。两种屏幕尺寸分别通过 13 组流程和 19 张截图，核对自动解锁、不扣研习材料、旧档返还及游戏既有操作。主线随后由验证产物发布作业提交 `7082e219fd0535910c4f7916d151db8a651ad98b`，Pages [运行 44512097145](https://github.com/HEITAMU/can-club-play/actions/runs/44512097145) 的构建与部署均成功；静态站点对外网络请求与微信真机仍需各自检查。
+
 此前输入修复验收提交为 **`60aec3c602db0aa66ca9e9193e13c35ecaf82c4b`**，完整 CI 为 [运行 44490882731](https://github.com/HEITAMU/can-club-play/actions/runs/44490882731)。类型检查与 50 项自动检查（22 项业务、14 项绘制、14 项构建及兼容）通过。实际浏览器原始报告保存在 [verification/browser-20261119-input.json](verification/browser-20261119-input.json)，两种尺寸各通过 12 组流程、产生 14 张截图，结束时均没有未处理错误或剩余资源请求。浏览器产物 ID 为 `14511764669`，下载 ZIP 的 SHA-256 为 `7d8cc98a68d49351ee354479202b6651fdcbf98c7d150e49acc6f1905fb6487a`。
 
 此前 [运行 44448283945](https://github.com/HEITAMU/can-club-play/actions/runs/44448283945) 曾通过，原始报告仍保留为 [verification/browser-20261119.json](verification/browser-20261119.json)。随后同一运行代码的自动复跑 [44448891897](https://github.com/HEITAMU/can-club-play/actions/runs/44448891897) 和 [44448893262](https://github.com/HEITAMU/can-club-play/actions/runs/44448893262) 均在强化后点击背包时超时；它们不能记为通过。本轮据此修复了后台结算重建按下节点、后台加载层覆盖其他页面这两条会影响原生输入的路径，并增加直接覆盖它们的真实触摸用例。旧失败报告没有记录完整的 START/END，因此不把其中某一条路径宣称为那两次失败唯一已证实的原因。
@@ -53,7 +55,7 @@ CI 入口：[Cocos 3.8.8 migration](https://github.com/HEITAMU/can-club-play/act
 
 ## 本轮续接与试玩
 
-- [实际 Cocos 3.8.8 试玩](https://heitamu.github.io/can-club-play/cocos-preview/play.html?v=0e11284cc74698ee2103)，本轮验收的运行文件指纹 **`0e11284cc74698ee2103`**。CI 打开的是同一个由新版 TypeScript 构建的 `cocos-preview/play.html`。上线需等待主线验收后的 GitHub Pages 同步与资源可达性复核。
+- [实际 Cocos 3.8.8 试玩](https://heitamu.github.io/can-club-play/cocos-preview/play.html?v=07306f13cffadc52846f)，最终主线验证和发布的运行文件指纹 **`07306f13cffadc52846f`**。GitHub Actions 已从通过真实引擎浏览器验证的产物部署到主线，静态文件在源站仓库中的数量和指纹已核对；GitHub Pages 部署作业成功。
 - [完整 Creator 工程包下载入口](https://github.com/HEITAMU/can-club-play/actions/workflows/cocos-migration-ci.yml)：选择当前提交的成功运行，下载 `cocos-creator-project-*`。其中包含 PNG、元数据、场景与脚本；解压后用 Creator 3.8.8 打开 `can-club-cocos/`。CI 下载产物保留 14 天；长期源码及重建方式见 [工程说明](../README.md)。工程包生成不等于编辑器导入验收。
 - 导航只在选中页或已结识伙伴数量变化时重建。持有实际触摸时暂缓页面、导航和弹层的破坏性重绘，松手后再消费保留的刷新标记；ScrollView 的模拟取消不结束物理触摸。后台换关不在其他页面显示挡触摸的加载层，已成功加载的资源不重复闪屏，战斗仍等待资源与两次绘制完成再继续。
 - 正式 Creator 微信导出检查按实际 Bundle 版本核对远程配置和本地脚本，并在任何部署目录变动前验证。正式 Web 输出改为 `build/creator-web-mobile/`，便于与源码引擎构建独立验收。
