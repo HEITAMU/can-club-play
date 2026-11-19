@@ -48,7 +48,7 @@ export function gearArt(ui,parent,e,x,y,size) {
   const rect=kit.boxes[Math.max(0,index)], ratio=rect[2]/rect[3];
   const w=ratio>1?size:size*ratio,h=ratio>1?size/ratio:size;
   ui.image(parent,'assets/ui/'+kit.file,x+(size-w)/2,y+(size-h)/2,w,h,rect);
-  if(e.enhance) ui.label(parent,'+'+e.enhance,x-3,y-8,size+6,21,{size:15,bold:true,color:'#fff0b0',align:'right'});
+  if(e.enhance){const level=ui.label(parent,'+'+e.enhance,x-3,y-8,size+6,21,{size:15,bold:true,color:'#fff0b0',align:'right'});level.enableOutline=true;level.outlineColor=ccColor(P.ink);level.outlineWidth=1.5;}
 }
 export function gearTile(ui,parent,e,x,y,size,onClick,name?) {
   const orbit=name?.startsWith('equipped-'),fill=orbit?'#f0dfbc':e?'#d8c4a1':'#344b55';

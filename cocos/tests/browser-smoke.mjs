@@ -24,6 +24,7 @@ const target = new URL(process.env.CAN_CLUB_URL || 'http://127.0.0.1:8765/cocos/
 target.searchParams.set('smoke', '1');
 const output = path.resolve(process.env.CAN_CLUB_SMOKE_OUT || path.join(root, 'cocos/qa/browser-smoke'));
 const timeout = Math.max(10000, Number(process.env.CAN_CLUB_SMOKE_TIMEOUT || 60000));
+const touchCancelDiagnostic = 'Ignored attempt to cancel a touchcancel event with cancelable=false, for example because scrolling is in progress and cannot be interrupted.';
 await fs.mkdir(output, { recursive: true });
 
 const report = {
@@ -46,7 +47,7 @@ try {
   report.browser = {version: browser.version(), channel: process.env.CAN_CLUB_BROWSER_CHANNEL || 'playwright-chromium'};
   for (const viewport of [{ width: 390, height: 844 }, { width: 320, height: 740 }]) {
     const label = `${viewport.width}x${viewport.height}`;
-    const result = { viewport, status: 'running', checks: [], captures: [], errors: [], fixture: 'Fresh account initially; isolated unlocked stage 3, Lv.80 starters and resources for equipment/recruitment; isolated Lv.1 injured team and full milk energy for healing render capture' };
+    const result = { viewport, status: 'running', checks: [], captures: [], errors: [], expectedEngineDiagnostics: [], fixture: 'Fresh account initially; isolated unlocked stage 3, Lv.80 starters and resources for equipment/recruitment; isolated Lv.1 injured team and full milk energy for healing render capture' };
     report.viewports.push(result);
     const context = await browser.newContext({ viewport, deviceScaleFactor: 1, isMobile: true, hasTouch: true, locale: 'zh-CN', timezoneId: 'Asia/Shanghai' });
     const initialStorage = await context.storageState();
@@ -57,6 +58,7 @@ try {
     page.setDefaultNavigationTimeout(timeout);
     const requests = new Set();
     let intentionalReload = false;
+    let expectingTouchCancelDiagnostic = false;
     let resolveBootFailure;
     // Resolve with an Error (rather than reject before ready installs a handler)
     // so an exception during the earliest script evaluation cannot be lost.
@@ -79,6 +81,13 @@ try {
     page.on('console', message => {
       if (message.type() === 'error' && !/\/favicon\.ico(?:\?|$)/.test(message.location().url || '')) {
         const text = message.text();
+        // Cocos 3.8.8 calls preventDefault on canvas touchcancel without testing
+        // cancelable. Classify at most one exact diagnostic only during our
+        // explicit native cancellation below; all other errors still fail.
+        if (expectingTouchCancelDiagnostic && text === touchCancelDiagnostic && result.expectedEngineDiagnostics.length === 0) {
+          result.expectedEngineDiagnostics.push({ message: text, location: message.location(), trigger: 'Explicit native touchCancel; Cocos 3.8.8 preventDefault on a noncancelable event' });
+          return;
+        }
         result.errors.push(`console: ${text}`);
         // Cocos catches some boot exceptions and reports their error objects to
         // the console. Warnings and ordinary log messages are not boot failures.
@@ -465,8 +474,19 @@ try {
         assert.deepEqual((await state()).report, settledReport, 'swiping the outside backdrop must not dismiss the report');
         await reportTouch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...outside, id: 1 }] });
         await frames();
-        await reportTouch.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
-        await frames();
+        await page.evaluate(() => {
+          const app = globalThis.__CAN_CLUB_APP__, cc = globalThis.__CAN_CLUB_ENGINE__;
+          const receipt = globalThis.__CAN_CLUB_BROWSER_SMOKE__.cancelReceipt = { native: null, cocos: false };
+          window.addEventListener('touchcancel', event => { receipt.native = { cancelable: event.cancelable, target: event.target?.id }; }, { once: true, capture: true, passive: true });
+          app.find('modal-backdrop').once(cc.Node.EventType.TOUCH_CANCEL, () => { receipt.cocos = true; }, undefined, true);
+        });
+        expectingTouchCancelDiagnostic = true;
+        try {
+          await reportTouch.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
+          await frames();
+        } finally { expectingTouchCancelDiagnostic = false; }
+        result.cancelReceipt = await page.evaluate(() => globalThis.__CAN_CLUB_BROWSER_SMOKE__.cancelReceipt);
+        assert.deepEqual(result.cancelReceipt, { native: { cancelable: false, target: 'GameCanvas' }, cocos: true }, 'native cancellation must reach the canvas and Cocos backdrop');
         assert.deepEqual((await state()).report, settledReport, 'a cancelled backdrop touch must not dismiss the report');
         await reportTouch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...outside, id: 1 }, { x: crest.x, y: crest.y, id: 2 }] });
         await frames();
