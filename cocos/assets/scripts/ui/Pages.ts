@@ -159,14 +159,14 @@ export class Pages {
     const hero=ui.panel(content,0,0,left,180,{fill:'#b89366',stroke:'#674a38',radius:10,paper:230});
     ui.label(hero,c.job,9,9,left-18,18,{size:11,color:'#583e31'});
     ui.label(hero,c.name,9,26,left-18,28,{size:22,bold:true,color:'#442e25'});
-    ui.label(hero,'Lv. '+level,9,54,left-18,20,{size:12,bold:true,color:'#5b3927'});
+    ui.label(hero,'Lv. '+level+' / '+Math.max(level,G.levelCap(state,id)),9,54,left-18,20,{size:12,bold:true,color:'#5b3927'}).node.name='crew-level-'+id;
     const slot=state.party.indexOf(id);ui.label(hero,slot<0?'未出战':slot<2?'前排 '+(slot+1):'后排 '+(slot-1),9,75,left-18,18,{size:10,color:'#6b5140'});
     ui.character(hero,id,left*.53,143,unit);
     const tag=ui.button(hero,'',left/2-46,140,92,36,()=>this.open('cat-tag',{id}),{fill:'#00000000',stroke:'#00000000',name:'cat-tag-'+id});
     badge(ui,tag,state.roster.stars[id],0,0,92);
     const quote=G.upgradeQuote(level,state.guideStep===3?1:trainingCount(level),G.levelCap(state,id));
-    ui.button(content,quote.levels?'升 '+quote.levels+' 级':'已满级',0,188,left,37,()=>this.act(()=>s.upgrade(id,quote.levels)),{primary:true,disabled:!quote.levels||state.gold<quote.cost,fill:!quote.levels||state.gold<quote.cost?'#8c8a79':'#d7a65e',color:'#483124',paper:160,name:'upgrade-'+id});
-    ui.label(content,quote.levels?'消耗 '+quote.cost.toLocaleString('zh-CN')+' 鱼币':'',0,226,left,17,{size:10,color:'#ecd9af',align:'center'});
+    ui.button(content,quote.levels?'升 '+quote.levels+' 级':level>=G.MAX_LEVEL?'已满级':'已达上限',0,188,left,37,()=>this.act(()=>s.upgrade(id,quote.levels)),{primary:true,disabled:!quote.levels||state.gold<quote.cost,fill:!quote.levels||state.gold<quote.cost?'#8c8a79':'#d7a65e',color:'#483124',paper:160,name:'upgrade-'+id});
+    ui.label(content,quote.levels?'消耗 '+quote.cost.toLocaleString('zh-CN')+' 鱼币':level>G.levelCap(state,id)?'当前星级上限 Lv.'+G.levelCap(state,id):level<G.MAX_LEVEL?'升星可继续培养':'',0,226,left,17,{size:10,color:'#ecd9af',align:'center'});
     ui.button(content,'培养继承',0,246,left,33,()=>this.open('inherit',{id}),{disabled:!G.unlocked(state).some(c=>state.levels[c.id]>level),name:'inherit-'+id,size:12});
     const a=ui.panel(content,left+10,0,right,279,{fill:'#ecd9b4',stroke:'#a88c64',radius:7,paper:260,paperCenter:true});
     ui.label(a,'人物属性',10,9,right-20,24,{size:15,bold:true,color:P.ink});
@@ -199,7 +199,7 @@ export class Pages {
     ui.label(study,'绝活研习 · '+SKILL_STUDY[id].name,10,9,w-20,23,{size:13,bold:true,color:'#fff0ce'});
     const nh=contentHeight(next,w-24,11);line(ui,study,next,12,37,w-24,11,'#d0d5cb',nh);
     const cy=42+nh;costs(ui,study,state,{badges:bq.cost,notes:bq.notes,seals:bq.seals},id,10,cy,w-20,(t,d)=>this.open(t,d),true);
-    ui.button(study,bq.maxed?'已满级':bq.canAfford?'研习':'材料不足',10,cy+53,w-20,32,()=>this.act(()=>s.breakthrough(id)),{primary:true,disabled:bq.maxed||!bq.canAfford,fill:bq.maxed||!bq.canAfford?'#8c8a79':'#d7a65e',color:'#483124',paper:160,name:'breakthrough-'+id,size:12});
+    ui.button(study,bq.maxed?'已满级':!bq.levelReady?'需角色 Lv.'+bq.requiredLevel:bq.canAfford?'研习':'材料不足',10,cy+53,w-20,32,()=>this.act(()=>s.breakthrough(id)),{primary:true,disabled:!bq.canLearn,fill:!bq.canLearn?'#8c8a79':'#d7a65e',color:'#483124',paper:160,name:'breakthrough-'+id,size:12});
     y+=studyH+10;content.getComponent(UITransform)?.setContentSize(w,y);
   }
   avatars(parent,x,y,w,selected){

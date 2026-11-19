@@ -47,7 +47,7 @@ try {
   report.browser = {version: browser.version(), channel: process.env.CAN_CLUB_BROWSER_CHANNEL || 'playwright-chromium'};
   for (const viewport of [{ width: 390, height: 844 }, { width: 320, height: 740 }]) {
     const label = `${viewport.width}x${viewport.height}`;
-    const result = { viewport, status: 'running', checks: [], captures: [], errors: [], expectedEngineDiagnostics: [], fixture: 'Fresh account initially; isolated unlocked stage 3, Lv.80 starters and resources for equipment/recruitment; temporary stage 101 with one original network response delayed to verify navigation, then prior encounter restored; isolated Lv.1 injured team and full milk energy for healing render capture' };
+    const result = { viewport, status: 'running', checks: [], captures: [], errors: [], expectedEngineDiagnostics: [], fixture: 'Fresh account initially; isolated unlocked stage 3, rank-5 Lv.80 starters and resources for equipment/recruitment; temporary stage 101 with one original network response delayed to verify navigation, then prior encounter restored; isolated Lv.1 injured team and full milk energy for healing render capture; isolated rank-2 Lv.30 orange for native ascension, training and level-gated study' };
     report.viewports.push(result);
     const context = await browser.newContext({ viewport, deviceScaleFactor: 1, isMobile: true, hasTouch: true, locale: 'zh-CN', timezoneId: 'Asia/Shanghai' });
     const initialStorage = await context.storageState();
@@ -187,7 +187,7 @@ try {
 
     // Scroll the real Cocos ScrollView if necessary, then dispatch browser touch
     // at the native button's reported CSS screen rectangle. No DOM button proxy.
-    const nativePoint = async (name, { reveal = true, allowNonButton = false } = {}) => {
+    const nativePoint = async (name, { reveal = true, allowNonButton = false, allowDisabled = false } = {}) => {
       await page.waitForFunction(() => globalThis.__CAN_CLUB_APP__?.inspect().loading === false);
       await page.waitForFunction(name => globalThis.__CAN_CLUB_APP__?.inspect().nodeNames.includes(name), name);
       if (name === 'guide-continue') await page.waitForFunction(() => {
@@ -210,7 +210,7 @@ try {
         app.revealTarget(target);
       }, name);
       await frames();
-      const hit = await page.evaluate(({ name, allowNonButton }) => {
+      const hit = await page.evaluate(({ name, allowNonButton, allowDisabled }) => {
         const app = globalThis.__CAN_CLUB_APP__, cc = globalThis.__CAN_CLUB_ENGINE__;
         const inspected = app.inspect();
         if (!Array.isArray(inspected.buttons)) throw new Error('inspect().buttons must expose native CSS screen rectangles');
@@ -222,7 +222,8 @@ try {
           for (const child of node.children) walk(child);
         };
         walk(cc.director.getScene());
-        if (!target || (!button && (!allowNonButton || target.getComponent(cc.Button)))) return { button: null, clips: [] };
+        const component = target?.getComponent(cc.Button);
+        if (!target || (!button && !(allowNonButton && !component) && !(allowDisabled && component && !component.interactable))) return { button: null, clips: [] };
         const frame = cc.view.getFrameSize(), size = inspected.size;
         const scale = Math.min(frame.width / size.width, frame.height / size.height);
         const dx = (frame.width - size.width * scale) / 2, dy = (frame.height - size.height * scale) / 2;
@@ -238,13 +239,13 @@ try {
           return { name: node.name, x: dx + left * scale, y: dy + top * scale, width: (right - left) * scale, height: (bottom - top) * scale };
         };
         const clips = [];
-        if (!button) button = ownRect(target);
+        if (!button) button = { ...ownRect(target), interactable: component?.interactable };
         for (let p = target.parent; p; p = p.parent) if (p.getComponent(cc.Mask)?.enabledInHierarchy) clips.push(ownRect(p));
         return { button, clips };
-      }, { name, allowNonButton });
+      }, { name, allowNonButton, allowDisabled });
       const { button, clips } = hit;
       assert.ok(button, `${label}: missing native button ${name}`);
-      assert.notEqual(button.interactable, false, `${label}: disabled native button ${name}`);
+      if (!allowDisabled) assert.notEqual(button.interactable, false, `${label}: disabled native button ${name}`);
       const visible = { left: Math.max(0, button.x), top: Math.max(0, button.y), right: Math.min(viewport.width, button.x + button.width), bottom: Math.min(viewport.height, button.y + button.height) };
       for (const clip of clips) {
         visible.left = Math.max(visible.left, clip.x); visible.top = Math.max(visible.top, clip.y);
@@ -408,6 +409,7 @@ try {
         app.close();
         Object.assign(s.state, { highest: 3, runCleared: 3, stage: 4, gold: 100000, supplies: 100, badges: 100, gearGuide: 0, gearGuideItem: '', guideStep: 9, battleReport: null });
         s.state.levels.orange = s.state.levels.ink = 80;
+        s.state.roster.stars.orange = s.state.roster.stars.ink = 5;
         s.state.inventory.materials.scrap = 500;
         s.state.inventory.materials.essence = 20;
         s.state.growth.notes = 100;
@@ -755,6 +757,82 @@ try {
         const app = globalThis.__CAN_CLUB_APP__; app.session.resume(); app.refresh();
       });
       result.checks.push('Actual milk skill emits healing; after two Cocos draw events each visible HealingRibbon submitted vertex alpha matches geometry times explicit ancestor opacity, with pooled parent sprite alpha reset');
+
+      // A separate, legal new-rule fixture isolates the growth gates from patrol.
+      // Every promotion, purchased level and learned skill below uses real touch.
+      await page.evaluate(() => {
+        const app = globalThis.__CAN_CLUB_APP__, s = app.session;
+        s.paused = true; s.mode = 'profile'; s.selected = 'orange';
+        s.state.levels.orange = 30; s.state.roster.stars.orange = 2;
+        s.state.breakthroughs.orange = 0; s.state.legacyLevelCaps.orange = 0;
+        s.state.roster.shards.orange = 1000; s.state.gold = 1e8;
+        s.state.badges = 1000; s.state.growth.notes = 10000; s.state.growth.seals = 1000;
+        s.battle.syncStats(s.state, { preserveHealthRatio: true }); app.refresh();
+      });
+      await click('tab-cats'); await waitState({ tab: 'cats', mode: 'profile' });
+      const growthState = () => page.evaluate(() => {
+        const app = globalThis.__CAN_CLUB_APP__, s = app.session.state;
+        const hero = app.session.battle.heroes.find(h => h.catId === 'orange');
+        return { level: s.levels.orange, rank: s.roster.stars.orange, study: s.breakthroughs.orange, gold: s.gold, shards: s.roster.shards.orange, notes: s.growth.notes, badges: s.badges, seals: s.growth.seals, legacyCap: s.legacyLevelCaps.orange, hp: hero?.maxHp, atk: hero?.atk };
+      });
+      const buttonState = name => page.evaluate(name => {
+        const app = globalThis.__CAN_CLUB_APP__, cc = globalThis.__CAN_CLUB_ENGINE__, node = app.find(name);
+        if (!node) throw new Error('Missing growth control: ' + name);
+        return { enabled: node.getComponent(cc.Button)?.interactable, text: node.getComponentsInChildren(cc.Label).map(l => l.string).join(' ') };
+      }, name);
+      const atCap = await growthState();
+      assert.equal((await buttonState('upgrade-orange')).enabled, false);
+      await click('upgrade-orange', { allowDisabled: true });
+      assert.deepEqual(await growthState(), atCap, 'a real tap at the level cap spends nothing');
+      await click('cat-tag-orange'); await waitState({ modal: 'cat-tag' });
+      const capLabels = await page.evaluate(() => {
+        const app = globalThis.__CAN_CLUB_APP__, cc = globalThis.__CAN_CLUB_ENGINE__;
+        return ['ascension-current-cap', 'ascension-next-cap'].map(name => app.find(name).getComponent(cc.Label).string);
+      });
+      assert.deepEqual(capLabels, ['等级上限 Lv.30', '等级上限 Lv.40']);
+      await capture('12-growth-ascension');
+      await click('cat-tag-upgrade');
+      const promoted = await growthState();
+      assert.equal(promoted.rank, 3); assert.equal(promoted.level, 30); assert.equal(promoted.study, 0);
+      assert.equal(promoted.shards, atCap.shards - 20); assert.equal(promoted.hp, atCap.hp); assert.equal(promoted.atk, atCap.atk);
+      await click('modal-close'); await waitState({ modal: '' });
+      for (let i = 0; i < 9; i++) await click('upgrade-orange');
+      const belowStudy = await growthState(); assert.equal(belowStudy.level, 39); assert.ok(belowStudy.gold < promoted.gold);
+      assert.deepEqual(await buttonState('breakthrough-orange'), { enabled: false, text: '需角色 Lv.40' });
+      await click('breakthrough-orange', { allowDisabled: true });
+      assert.deepEqual(await growthState(), belowStudy);
+      await capture('13-growth-study-locked');
+      await click('skill-level-orange'); await waitState({ modal: 'skill' });
+      assert.deepEqual(await buttonState('study-skill'), { enabled: false, text: '需角色 Lv.40' });
+      await click('study-skill', { allowDisabled: true });
+      assert.deepEqual(await growthState(), belowStudy, 'the skill dialog must obey the same level gate');
+      await capture('14-growth-skill-requirements');
+      await click('modal-close'); await waitState({ modal: '' });
+      await click('upgrade-orange'); assert.equal((await growthState()).level, 40);
+      await click('skill-level-orange'); await waitState({ modal: 'skill' });
+      assert.equal((await buttonState('study-skill')).enabled, true);
+      const beforeLearning = await growthState();
+      await click('study-skill');
+      const learned = await growthState();
+      assert.equal(learned.study, 1); assert.equal(learned.level, 40); assert.equal(learned.rank, 3);
+      assert.equal(learned.badges, beforeLearning.badges - 8); assert.equal(learned.notes, beforeLearning.notes - 50); assert.equal(learned.seals, beforeLearning.seals);
+      assert.deepEqual(await buttonState('study-skill'), { enabled: false, text: '需角色 Lv.80' });
+      await capture('15-growth-skill-learned');
+      const persistedGrowth = await page.evaluate(() => {
+        const envelope = JSON.parse(localStorage.getItem('can-club-growth-preview-v1'));
+        const s = JSON.parse(envelope.payload);
+        return { level: s.levels.orange, rank: s.roster.stars.orange, study: s.breakthroughs.orange, gold: s.gold, shards: s.roster.shards.orange, notes: s.growth.notes, badges: s.badges, seals: s.growth.seals, legacyCap: s.legacyLevelCaps.orange };
+      });
+      for (const [key, value] of Object.entries(persistedGrowth)) assert.equal(value, learned[key], `growth state saved: ${key}`);
+      intentionalReload = true;
+      try { await page.reload({ waitUntil: 'domcontentloaded' }); await ready(); }
+      finally { intentionalReload = false; }
+      const reloaded = await growthState();
+      // Patrol resumes after a normal reload and may legitimately earn materials.
+      // Exact saved costs are checked above; persistent growth must stay unchanged.
+      for (const key of ['level', 'rank', 'study', 'legacyCap']) assert.equal(reloaded[key], learned[key], `growth save reload: ${key}`);
+      result.growthRules = { atCap, capLabels, promoted, belowStudy, learned, persistedGrowth, reloaded };
+      result.checks.push('Native level-cap rejection, ascension without instant stats, ten purchased levels, both study controls gated at Lv.39/40, one paid skill rank and persistent reload');
       await assetsReady();
       await page.waitForLoadState('networkidle');
       const final = await healthy();

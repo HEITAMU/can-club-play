@@ -387,6 +387,8 @@ export class GameSession {
   }
 
   inherit(from: string, to = this.selected) {
+    const quote = G.inheritanceQuote(this.state, from, to);
+    if (quote.valid && !quote.ready) return this.fail('先将' + G.CATS.find(c => c.id === quote.blockedId).name + '的等级上限提升到 Lv.' + quote.requiredLevel);
     if (!G.inheritTraining(this.state, from, to)) return this.fail('没有可继承的更高培养等级');
     this.battle?.syncStats(this.state, { preserveHealthRatio: true });
     this.changed('inherit', { from, to });
@@ -412,9 +414,11 @@ export class GameSession {
   }
 
   setParty(slot: number, id: string) {
+    const inheritance = G.inheritanceFor(this.state, slot, id);
     if (!G.setParty(this.state, slot, id)) return this.fail('这位伙伴尚不能上阵');
     this.changed('formation', { slot, id });
     this.restartWithCrew();
+    if (inheritance && !inheritance.ready) this.toast('已换上伙伴，培养仍保留在原伙伴；升星后可继承。');
     return true;
   }
 
@@ -487,16 +491,22 @@ export class GameSession {
   }
 
   ascend(id = this.selected) {
+    if (!G.ownsCompanion(this.state, id)) return this.fail('尚未结识这位伙伴');
     const before = G.catStats(this.state, id), beforePower = G.power(this.state);
-    if (!G.ascendCompanion(this.state, id)) return this.fail('升阶所需信物或训练笔记不足，或已达到最高品质');
+    const cap = G.levelCap(this.state, id);
+    if (!G.ascendCompanion(this.state, id)) return this.fail('升星所需信物或训练笔记不足，或已达到最高品质');
     this.state.growthRebalancePending = false;
     this.growthRunFrom = this.state.highest;
     this.battle?.syncStats(this.state, { preserveHealthRatio: true });
-    this.changed('ascend', { id, before, after: G.catStats(this.state, id), beforePower, afterPower: G.power(this.state) });
+    this.changed('ascend', { id, cap, nextCap: G.levelCap(this.state, id), before, after: G.catStats(this.state, id), beforePower, afterPower: G.power(this.state) });
     return true;
   }
 
   breakthrough(id = this.selected) {
+    if (!G.ownsCompanion(this.state, id)) return this.fail('尚未结识这位伙伴');
+    const quote = G.breakthroughQuote(this.state, id);
+    if (quote.maxed) return this.fail('绝活已研习至最高等级');
+    if (!quote.levelReady) return this.fail('需要角色 Lv.' + quote.requiredLevel);
     if (!G.breakthrough(this.state, id)) return this.fail('绝活研习材料不足，或已研习至最高等级');
     this.battle?.syncStats(this.state, { preserveHealthRatio: true });
     this.changed('breakthrough', { id });

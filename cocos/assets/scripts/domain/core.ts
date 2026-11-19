@@ -1,6 +1,7 @@
 // @ts-nocheck
-// Migrated verbatim from Preview11 source 28eb867; only module specifiers changed.
+// Preview11 baseline with the authorized level-gated growth rule recorded in the manifest.
 import {trainingPower,encounterProgress,GROWTH_SAVE_FORMAT,GROWTH_REVISION,migrateGrowth} from './growth-curve';
+import {GROWTH_RULE_VERSION,MAX_HERO_LEVEL,heroGrowthValue,normalizeGrowthRules} from './growth-rules';
 import {normalizeGuide} from './onboarding';
 import {patrolDrop,grantPatrolDrop} from './patrol-drops';
 import {equipmentEncounterScale} from './equipment-progression';
@@ -21,7 +22,7 @@ import {createShieldPunch,gainShield,tickShieldPunch,controlShieldPunch,absorbSh
 import {actionTiming,attackStyle} from './motion';
 import {CAN_TIMING,canHitAt,canDuration,canTargetOrder} from './can-timing';
 import {heroCombatStats,enemyCombatStats,mitigatedDamage} from './combat-stats';
-export const VERSION=1, MAX_STAGE=3500, MAX_LEVEL=100, MAX_PARTY=5;
+export const VERSION=1, MAX_STAGE=3500, MAX_LEVEL=MAX_HERO_LEVEL, MAX_PARTY=5;
 export const CATS=[
  {id:'orange',name:'橘座',job:'前排守护',tag:'守护',color:'#edab62',accent:'#c8793b',unlock:0,hp:205,atk:17,skill:'锅盖护体',desc:'获得自身最大生命 45% 的护盾，并为队友提供 12% 护盾。',passive:'受到伤害降低 15%。',quote:'这条街的罐头，我罩了。',gear:'pan'},
  {id:'ink',name:'阿墨',job:'单体输出',tag:'突袭',color:'#42465c',accent:'#929db5',unlock:0,hp:116,atk:25,skill:'飞鱼三连',desc:'连续命中生命最低的敌人，合计造成 330% 攻击力的物理伤害，本次攻击额外获得 25 点护甲穿透。',passive:'暴击率额外提高 15%。',quote:'别眨眼，鱼已经到了。',gear:'scarf'},
@@ -69,7 +70,7 @@ export const QUESTS=[
  {id:'half',name:'走到霓虹尽头',desc:'通过第 60 关',key:'highest',goal:60,reward:6000},
  {id:'end',name:'月光罐头收藏家',desc:'通过第 120 关',key:'highest',goal:120,reward:16000}
 ];
-export function initialState(now=Date.now()){return {...normalizeProgression({},CATS.map(c=>c.id)),inventory:createInventory(CATS.map(c=>c.id)),roster:newRoster(),growth:normalizeGrowth(),activities:normalizeActivities(),campaign:normalizeCampaign(),adRewards:normalizeAdRewards(),version:VERSION,growthRevision:GROWTH_REVISION,growthRebalancePending:false,guidance:{equipmentWorn:false},gold:200,levels:Object.fromEntries(CATS.map(c=>[c.id,1])),party:['orange','ink'],stage:1,runCleared:0,highest:0,bones:0,prestiges:0,relics:{},pending:null,claimed:[],wins:0,bosses:0,kills:0,upgrades:0,relicCount:0,idle:0,idleRemainder:0,idleSupplies:0,supplyRemainder:0,supplyClock:2,battleReport:null,lastAccrued:now,onboarded:false,teamPlan:'ink',auto:true,speed:1,sound:true,music:true,gearGuide:0,gearGuideItem:'',guideStep:0,rescueSeen:false,created:now,seconds:0};}
+export function initialState(now=Date.now()){return {...normalizeProgression({},CATS.map(c=>c.id)),inventory:createInventory(CATS.map(c=>c.id)),roster:newRoster(),growth:normalizeGrowth(),activities:normalizeActivities(),campaign:normalizeCampaign(),adRewards:normalizeAdRewards(),version:VERSION,growthRevision:GROWTH_REVISION,growthRuleVersion:GROWTH_RULE_VERSION,legacyLevelCaps:Object.fromEntries(CATS.map(c=>[c.id,0])),growthRebalancePending:false,guidance:{equipmentWorn:false},gold:200,levels:Object.fromEntries(CATS.map(c=>[c.id,1])),party:['orange','ink'],stage:1,runCleared:0,highest:0,bones:0,prestiges:0,relics:{},pending:null,claimed:[],wins:0,bosses:0,kills:0,upgrades:0,relicCount:0,idle:0,idleRemainder:0,idleSupplies:0,supplyRemainder:0,supplyClock:2,battleReport:null,lastAccrued:now,onboarded:false,teamPlan:'ink',auto:true,speed:1,sound:true,music:true,gearGuide:0,gearGuideItem:'',guideStep:0,rescueSeen:false,created:now,seconds:0};}
 export const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 const num=(v,d=0,a=0,b=1e12)=>typeof v==='number'&&Number.isFinite(v)?clamp(v,a,b):d;
 export function unlocked(s){return CATS.filter(c=>owns(s,c.id));}
@@ -77,20 +78,21 @@ export function unlocked(s){return CATS.filter(c=>owns(s,c.id));}
 // Swap levels so every paid level is conserved, even across repeated swaps.
 // Repositioning existing teammates, adding to an empty slot, and replacing a
 // lower-level cat never changes levels.
-export function inheritanceFor(s,slot,id){if(!Number.isInteger(slot)||slot<0||slot>=MAX_PARTY||!unlocked(s).some(c=>c.id===id)||s.party.includes(id))return null;const from=s.party[slot];return from&&s.levels[from]>s.levels[id]?{from,to:id,fromLevel:s.levels[from],toLevel:s.levels[id]}:null;}
-export function inheritTraining(s,from,to){const available=unlocked(s).map(c=>c.id);if(from===to||!available.includes(from)||!available.includes(to)||s.levels[from]<=s.levels[to])return false;[s.levels[from],s.levels[to]]=[s.levels[to],s.levels[from]];s.breakthroughs??={};[s.breakthroughs[from],s.breakthroughs[to]]=[s.breakthroughs[to]||0,s.breakthroughs[from]||0];return true;}
+export function inheritanceQuote(s,from,to){const valid=from!==to&&owns(s,from)&&owns(s,to)&&(s.levels[from]||1)>(s.levels[to]||1),fromLevel=s.levels[from]||1,toLevel=s.levels[to]||1,fromCap=levelCap(s,from),toCap=levelCap(s,to),blockedId=fromLevel>toCap?to:toLevel>fromCap?from:'';return {valid,ready:valid&&!blockedId,from,to,fromLevel,toLevel,fromCap,toCap,blockedId,requiredLevel:blockedId===to?fromLevel:blockedId===from?toLevel:0};}
+export function inheritanceFor(s,slot,id){if(!Number.isInteger(slot)||slot<0||slot>=MAX_PARTY||!unlocked(s).some(c=>c.id===id)||s.party.includes(id))return null;const from=s.party[slot];return from&&s.levels[from]>s.levels[id]?inheritanceQuote(s,from,id):null;}
+export function inheritTraining(s,from,to){if(!inheritanceQuote(s,from,to).ready)return false;[s.levels[from],s.levels[to]]=[s.levels[to],s.levels[from]];s.breakthroughs??={};[s.breakthroughs[from],s.breakthroughs[to]]=[s.breakthroughs[to]||0,s.breakthroughs[from]||0];return true;}
 export function normalizeState(raw,now=Date.now()){
  if(!raw||typeof raw!=='object'||Array.isArray(raw)||raw.version!==VERSION)throw Error('不是兼容的罐头远征队存档');
  const s=initialState(now);s.adRewards=normalizeAdRewards(raw.adRewards);s.campaign=normalizeCampaign(raw.campaign);Object.assign(s,normalizeProgression(raw,CATS.map(c=>c.id)));
  for(const k of ['gold','bones','prestiges','wins','bosses','kills','upgrades','relicCount','seconds'])s[k]=Math.floor(num(raw[k]));
  s.highest=Math.floor(num(raw.highest,0,0,MAX_STAGE));s.runCleared=Math.floor(num(raw.runCleared,0,0,s.highest));s.stage=Math.min(MAX_STAGE,s.runCleared+1);
  s.teamPlan=raw.teamPlan==='pudding'?'pudding':'ink';s.roster=normalizeRoster(raw.roster,CATS,s.highest);s.growth=normalizeGrowth(raw.growth);s.activities=normalizeActivities(raw.activities);if(raw.activities&&![1,2].includes(raw.activities.rewardVersion)){for(const c of CATS){const cleared=s.activities.cleared["recruit:"+c.id]||0;for(let n=1;n<=cleared;n++)s.roster.shards[c.id]+=[20,12,16,20,24,30][n-1]-(2+Math.ceil(n/2))*2;}}
- for(const c of CATS)s.levels[c.id]=Math.floor(num(raw.levels?.[c.id],1,1,levelCap(s,c.id)));
+ for(const c of CATS)s.levels[c.id]=Math.floor(num(raw.levels?.[c.id],1,1,MAX_HERO_LEVEL));
  s.rescueSeen=raw.rescueSeen===true;s.battleReport=normalizeReport(raw.battleReport);if(s.battleReport?.mode==='patrol')s.battleReport=null;s.idleSupplies=Math.floor(num(raw.idleSupplies,0,0,100000));s.supplyRemainder=Math.floor(num(raw.supplyRemainder,0,0,raw.supplyClock===2?599999:59999)*(raw.supplyClock===2?1:10));
  const available=unlocked(s).map(c=>c.id),seen=new Set();s.party=Array.isArray(raw.party)?raw.party.filter(id=>id===null||available.includes(id)&&!seen.has(id)&&seen.add(id)).slice(0,MAX_PARTY):s.party;while(s.party.length&&!s.party.at(-1))s.party.pop();if(!s.party.some(Boolean))s.party=['orange'];
  s.inventory=[1,2].includes(raw.inventory?.version)?normalizeInventory(raw.inventory,CATS.map(c=>c.id)):createInventory(CATS.map(c=>c.id),raw.relics,s.highest,s.party.filter(Boolean));s.relics={};s.pending=null;
  s.claimed=[...new Set(Array.isArray(raw.claimed)?raw.claimed:[])].filter(id=>QUESTS.some(q=>q.id===id));
- s.lastAccrued=num(raw.lastAccrued,now,0,now);s.idle=num(raw.idle,0,0,idleRate(s)*idleMinutes(s));s.idleRemainder=Math.min(59999,Math.max(0,integer(raw.idleRemainder??((s.idle-Math.floor(s.idle))*60000))));s.idle=Math.floor(s.idle);s.created=num(raw.created,now,0,now);s.onboarded=!!raw.onboarded;s.auto=raw.auto!==false;s.speed=raw.speed===2?2:1;s.sound=raw.sound!==false;s.music=raw.music!==false;s.gearGuide=Math.floor(num(raw.gearGuide,0,0,4));s.gearGuideItem=s.inventory.items.some(e=>e.id===raw.gearGuideItem)?raw.gearGuideItem:'';s.guideStep=normalizeGuide(raw.guideStep,s.onboarded);s.guidance={equipmentWorn:raw.guidance?.equipmentWorn===true||s.gearGuide===4||!!(s.gearGuideItem&&gearOwner(s,s.gearGuideItem))||s.inventory.items.some(e=>e.slot!=='rune'&&(e.quality>0||e.tier>1)&&gearOwner(s,e.id))};migrateGrowth(s,raw);return s;
+ s.lastAccrued=num(raw.lastAccrued,now,0,now);s.idle=num(raw.idle,0,0,idleRate(s)*idleMinutes(s));s.idleRemainder=Math.min(59999,Math.max(0,integer(raw.idleRemainder??((s.idle-Math.floor(s.idle))*60000))));s.idle=Math.floor(s.idle);s.created=num(raw.created,now,0,now);s.onboarded=!!raw.onboarded;s.auto=raw.auto!==false;s.speed=raw.speed===2?2:1;s.sound=raw.sound!==false;s.music=raw.music!==false;s.gearGuide=Math.floor(num(raw.gearGuide,0,0,4));s.gearGuideItem=s.inventory.items.some(e=>e.id===raw.gearGuideItem)?raw.gearGuideItem:'';s.guideStep=normalizeGuide(raw.guideStep,s.onboarded);s.guidance={equipmentWorn:raw.guidance?.equipmentWorn===true||s.gearGuide===4||!!(s.gearGuideItem&&gearOwner(s,s.gearGuideItem))||s.inventory.items.some(e=>e.slot!=='rune'&&(e.quality>0||e.tier>1)&&gearOwner(s,e.id))};migrateGrowth(s,raw);normalizeGrowthRules(s,raw,CATS);return s;
 }
 export function upgradeCost(level){return Math.round((22+level*12+Math.pow(level,1.65)*2)*(1+Math.max(0,level-40)**2/150));}
 export function upgradeQuote(level,count=10,cap=MAX_LEVEL){const levels=Math.max(0,Math.min(cap-level,Math.floor(count),10));let cost=0;for(let i=0;i<levels;i++)cost+=upgradeCost(level+i);return {levels,cost};}
@@ -109,7 +111,7 @@ export function removeParty(s,id){
 // Old all-party relic stacks are retired; all combat equipment is character-owned.
 export function buffs(){return {atk:1,hp:1,crit:10,regen:0,canCd:5.6,gold:1,idle:1,reflect:0,shield:0,energy:0,burn:0,boss:1};}
 export function catStats(s,id,equipment=null){const c=CATS.find(c=>c.id===id),l=s.levels[id]||1,g=equipment||gearBonuses(s,id),stars=s.roster?.stars?.[id]||0,base=heroCombatStats(id,l);
- const grow=value=>[trainingPower(l),100,100+8*s.bones,10000+tagBonus(s,id)].reduce((n,p,i)=>mulDiv(n,p,i===3?10000:100),value);
+ const grow=value=>heroGrowthValue(value,l,s.bones);
  return {...base,armor:base.armor+g.armor,magicResist:base.magicResist+g.magicResist,armorPen:base.armorPen+g.armorPen,magicPen:base.magicPen+g.magicPen,hp:mulDiv(grow(c.hp),100+g.hp),atk:mulDiv(grow(c.atk),100+g.atk),crit:Math.min(80,10+g.crit+(id==='ink'&&l>=5?15:0)),level:l,stars,skillRank:s.breakthroughs?.[id]||0,gear:g};
 }
 export function power(s){return s.party.filter(Boolean).reduce((n,id)=>{const c=catStats(s,id);return n+Math.round(c.hp*.3*(1+(c.armor+c.magicResist)/200)+c.atk*3*(1+(c.armorPen+c.magicPen)/200));},0);}
@@ -121,7 +123,7 @@ export function questValue(s,q){return q.key==='cats'?unlocked(s).length:s[q.key
 export function claimQuests(s){let sum=0;for(const q of QUESTS){if(!s.claimed.includes(q.id)&&questValue(s,q)>=q.goal){s.claimed.push(q.id);s.gold+=q.reward;sum+=q.reward;}}return sum;}
 export function rewardFor(s,stage,farm=false){return Math.round((30+encounterProgress(stage)*6)*buffs(s).gold*(farm?0:1));}
 export function upgradeStall(s,id,now=Date.now()){const q=stallQuote(s,id);if(!q.valid||q.maxed||s.supplies<q.cost)return false;accrueIdle(s,now);s.supplies-=q.cost;s.stall??={};s.stall[id]=q.level+1;return true;}
-export function breakthrough(s,id){const c=CATS.find(c=>c.id===id),q=breakthroughQuote(s,id);if(!c||!owns(s,id)||q.maxed||s.badges<q.cost||s.growth.notes<q.notes||s.growth.seals<q.seals)return false;s.badges-=q.cost;s.growth.notes-=q.notes;s.growth.seals-=q.seals;s.breakthroughs[id]=q.rank+1;return true;}
+export function breakthrough(s,id){const c=CATS.find(c=>c.id===id),q=breakthroughQuote(s,id);if(!c||!owns(s,id)||!q.canLearn)return false;s.badges-=q.cost;s.growth.notes-=q.notes;s.growth.seals-=q.seals;s.breakthroughs[id]=q.rank+1;return true;}
 export function seeded(seed){let x=(seed>>>0)||1;return ()=>{x=(Math.imul(x,1664525)+1013904223)>>>0;return x/4294967296;};}
 export function relicOptions(){return [];}
 export function chooseRelic(){return false;}

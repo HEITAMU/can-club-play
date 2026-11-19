@@ -12,6 +12,7 @@ import { BADGE_NAMES } from '../domain/growth-visual';
 import { MATERIAL_NAMES } from '../domain/loot-data';
 import { MATERIAL_INFO, materialHave } from '../domain/material-info';
 import { skillSummary, SKILL_STUDY } from '../domain/skill-training';
+import { SKILL_STUDY_LEVELS } from '../domain/growth-rules';
 import { tokenRewardReady } from '../domain/token-rewards';
 import { teamPlan } from '../domain/team-plans';
 import { crewSkill } from '../domain/crew-skill';
@@ -43,9 +44,9 @@ export class Dialogs {
     if(type==='report'){const touches=new Map();this.bindReportTap(backdrop,touches);return this.report(parent,touches);}
     if(!blocked)backdrop.on(Node.EventType.TOUCH_END,outside);
     if(type==='intro')return this.intro(parent);
-    const titles={equipment:'装备',inherit:'培养继承','cat-tag':'猫牌升阶',skill:'技能升级',set:'套装属性',keepsake:'伙伴信物',material:'材料',arena:'猫巷委托板',street:'委托',stall:'鱼摊',journal:'猫巷手账',challenges:'街头挑战',quests:'接下来做什么',settings:'猫猫休息室',export:'把猫猫存档带走',import:'导入一份存档','confirm-import':'这份存档可以读取',reset:'从头开始？',pause:'歇一会儿',victory:'这条街，已经走遍。',routes:'街区开拓',recruit:'新队员加入'};
+    const titles={equipment:'装备',inherit:'培养继承','cat-tag':'猫牌升星',skill:'技能升级',set:'套装属性',keepsake:'伙伴信物',material:'材料',arena:'猫巷委托板',street:'委托',stall:'鱼摊',journal:'猫巷手账',challenges:'街头挑战',quests:'接下来做什么',settings:'猫猫休息室',export:'把猫猫存档带走',import:'导入一份存档','confirm-import':'这份存档可以读取',reset:'从头开始？',pause:'歇一会儿',victory:'这条街，已经走遍。',routes:'街区开拓',recruit:'新队员加入'};
     const method={'cat-tag':'ascension','confirm-import':'confirmImport',arena:'hub',set:'gearSet',export:'exportSave',import:'importSave'}[type]||type;
-    const defaultH={equipment:570,inherit:400,'cat-tag':530,skill:510,set:350,keepsake:380,material:310,stall:630,settings:430,export:480,import:490,'confirm-import':340,reset:280,pause:310,victory:200,recruit:480}[type];
+    const defaultH={equipment:570,inherit:400,'cat-tag':410,skill:510,set:350,keepsake:380,material:310,stall:630,settings:430,export:480,import:490,'confirm-import':340,reset:280,pause:310,victory:200,recruit:480}[type];
     const popover=['equipment','material','keepsake','set'].includes(type),boxH=Math.min(popover?height*.7:height-36,defaultH||height-50),boxW=Math.min(width-24,popover?270:368),a=this.data.anchor;
     const x=a?Math.max(12,Math.min(width-boxW-12,a.x+a.w/2<width/2?a.x+a.w+8:a.x-boxW-8)):(width-boxW)/2,y=a?Math.max(12,Math.min(height-boxH-12,a.y)):(height-boxH)/2;
     const illustrated=type==='arena'||type==='quests'||type==='street'&&this.data.detail===false;
@@ -119,34 +120,30 @@ export class Dialogs {
   inherit(body,w,h,{id=this.session.selected}){
     const {ui,session:s}=this,level=s.state.levels[id],rows=G.unlocked(s.state).filter(c=>s.state.levels[c.id]>level);
     ui.label(body,'把培养转给'+cat(id).name,2,3,w-4,26,{size:15,bold:true,color:P.ink});
-    rows.forEach((c,i)=>{const n=ui.button(body,'',0,40+i*84,w,76,()=>this.act(()=>s.inherit(c.id,id),()=>this.close()),{name:'inherit-from-'+c.id,fill:'#dfc8a1'});ui.portrait(n,c.id,8,11,46);ui.label(n,cat(id).name+' Lv.'+level+' → Lv.'+s.state.levels[c.id],64,9,w-74,24,{size:12,bold:true,color:P.ink});ui.label(n,c.name+' Lv.'+s.state.levels[c.id]+' → Lv.'+level,64,35,w-74,20,{size:11,color:P.muted});});
+    rows.forEach((c,i)=>{const q=G.inheritanceQuote(s.state,c.id,id),n=ui.button(body,'',0,40+i*84,w,76,()=>this.act(()=>s.inherit(c.id,id),()=>this.close()),{name:'inherit-from-'+c.id,disabled:!q.ready,fill:q.ready?'#dfc8a1':'#d3c5ab'});ui.portrait(n,c.id,8,11,46);ui.label(n,q.ready?cat(id).name+' Lv.'+level+' → Lv.'+q.fromLevel:c.name+' · Lv.'+q.fromLevel,64,9,w-74,24,{size:12,bold:true,color:P.ink});ui.label(n,q.ready?c.name+' Lv.'+q.fromLevel+' → Lv.'+level:cat(q.blockedId).name+'需先升星至上限 '+q.requiredLevel,64,35,w-74,26,{size:11,color:P.muted,wrap:true});});
     if(!rows.length)line(ui,body,'没有培养等级更高的伙伴。',8,48,w-16,12,P.muted,40);
     this.heightOf(body,w,Math.max(h,50+rows.length*84));
   }
   ascension(body,w,h,{id=this.session.selected}){
-    const {ui,session:s}=this,state=s.state,q=starQuote(state,id),before=G.catStats(state,id),after=G.catStats({...state,roster:{...state.roster,stars:{...state.roster.stars,[id]:q.nextRank},tagSteps:{...state.roster.tagSteps,[id]:q.nextStep}}},id);
+    const {ui,session:s}=this,state=s.state,q=starQuote(state,id);
     ui.label(body,cat(id).name+'的猫牌',0,0,w,26,{size:16,bold:true,color:P.ink,align:'center'});
     const positions=q.maxed?[w/2-57]:[17,w-131];
-    positions.forEach((x,i)=>{const rank=i?q.nextRank:q.rank;paw(ui,body,rank,x+13,38,88);ui.label(body,i?'下一品质':'当前',x,28,114,16,{size:10,color:P.muted,align:'center'});ui.label(body,BADGE_NAMES[rank],x,124,114,25,{size:16,bold:true,color:P.ink,align:'center'});ui.label(body,'生命、攻击 +'+(i?q.nextBonus:q.bonus)+'%',x-6,153,126,24,{size:11,color:P.muted,align:'center'});});
+    positions.forEach((x,i)=>{const rank=i?q.nextRank:q.rank;paw(ui,body,rank,x+13,38,88);ui.label(body,i?'升星后':'当前',x,28,114,16,{size:10,color:P.muted,align:'center'});ui.label(body,BADGE_NAMES[rank],x,124,114,25,{size:16,bold:true,color:P.ink,align:'center'});ui.label(body,'等级上限 Lv.'+(i?q.nextCap:q.cap),x-6,153,126,24,{size:12,bold:true,color:P.ink,align:'center'}).node.name=i?'ascension-next-cap':'ascension-current-cap';});
     let y=188;
     if(!q.maxed){
-      ui.panel(body,0,y,w,93,{fill:'#d8c6a2',stroke:'#a88d61',radius:7});
-      ui.label(body,'本次生命、攻击提升 '+q.gain+'%',8,y+8,w-16,24,{size:15,bold:true,color:'#806234',align:'center'});
-      ui.label(body,'攻击 '+fmt(before.atk)+' → '+fmt(after.atk),10,y+39,w-20,21,{size:12,color:P.ink,align:'center'});
-      ui.label(body,'生命 '+fmt(before.hp)+' → '+fmt(after.hp),10,y+64,w-20,21,{size:12,color:P.ink,align:'center'});y+=104;
       y+=costs(ui,body,state,{shards:q.shards,notes:q.notes},id,0,y,w,(t,d)=>this.open(t,d));
     }
     const can=q.owned&&!q.maxed&&q.have>=q.shards&&state.growth.notes>=q.notes;
-    ui.button(body,q.maxed?'已满阶':can?'升阶':'材料不足',0,y,w,41,()=>this.act(()=>s.ascend(id)),{primary:true,disabled:!can,name:'cat-tag-upgrade'});y+=51;
+    ui.button(body,q.maxed?'已满星':can?'升星':'材料不足',0,y,w,41,()=>this.act(()=>s.ascend(id)),{primary:true,disabled:!can,name:'cat-tag-upgrade'});y+=51;
     if(!q.maxed){ui.button(body,'获取信物',0,y,(w-8)/2,31,()=>this.open('street',{group:'recruit',id:'all',detail:true}),{size:11,name:'cat-tag-shards'});ui.button(body,'获取笔记',(w+8)/2,y,(w-8)/2,31,()=>this.open('street',{group:'notes',id:'sweep',detail:true}),{size:11,name:'cat-tag-notes'});y+=38;}
     this.heightOf(body,w,Math.max(h,y));
   }
   skill(body,w,h,{id=this.session.selected}){
     const {ui,session:s}=this,rank=s.state.breakthroughs[id]||0;
     ui.label(body,SKILL_STUDY[id].name,0,0,w,25,{size:16,bold:true,color:P.ink});let y=33;
-    [0,1,2,3].forEach(r=>{const txt=skillSummary(id,r),dh=contentHeight(txt,w-26,12),panel=ui.panel(body,0,y,w,42+dh,{fill:r===rank?'#e3d29e':'#d8c5a4',stroke:r===rank?'#9b6d36':'#a28a68',radius:7});ui.label(panel,'Lv.'+(r+1)+(r===rank?' · 当前':''),10,7,w-20,22,{size:14,bold:true,color:P.ink});line(ui,panel,txt,12,35,w-24,12,P.muted,dh);y+=51+dh;});
+    [0,1,2,3].forEach(r=>{const txt=skillSummary(id,r),dh=contentHeight(txt,w-26,12),panel=ui.panel(body,0,y,w,42+dh,{fill:r===rank?'#e3d29e':'#d8c5a4',stroke:r===rank?'#9b6d36':'#a28a68',radius:7});ui.label(panel,'技能 Lv.'+(r+1)+(r===rank?' · 当前':''),10,7,w-134,22,{size:12,bold:true,color:P.ink});ui.label(panel,r?'需角色 Lv.'+SKILL_STUDY_LEVELS[r]:'基础效果',w-123,7,113,22,{size:10,color:P.muted,align:'right'});line(ui,panel,txt,12,35,w-24,12,P.muted,dh);y+=51+dh;});
     const q=G.breakthroughQuote(s.state,id);y+=costs(ui,body,s.state,{badges:q.cost,notes:q.notes,seals:q.seals},id,0,y,w,(t,d)=>this.open(t,d));
-    ui.button(body,q.maxed?'已满级':'研习',0,y,w,38,()=>this.act(()=>s.breakthrough(id)),{primary:true,disabled:q.maxed||!q.canAfford,name:'study-skill'});this.heightOf(body,w,y+48);
+    ui.button(body,q.maxed?'已满级':!q.levelReady?'需角色 Lv.'+q.requiredLevel:q.canAfford?'研习':'材料不足',0,y,w,38,()=>this.act(()=>s.breakthrough(id)),{primary:true,disabled:!q.canLearn,name:'study-skill'});this.heightOf(body,w,y+48);
   }
   gearSet(body,w,h,{id,companion=this.session.selected}){
     const {ui}=this,set=E.GEAR_SETS.find(s=>s.id===id),n=E.gearBonuses(this.session.state,companion).counts[id]||0;
@@ -165,9 +162,9 @@ export class Dialogs {
   keepsake(body,w,h,{id}){
     const {ui,session:s}=this,[owner,name,desc]=KEEPSAKES[id],q=recruitQuote(s.state,id);
     keepsakeArt(ui,body,id,w/2-36,2,72);ui.label(body,name,0,79,w,28,{size:18,bold:true,color:P.ink,align:'center'});
-    ui.label(body,owner+' · 持有 '+fmt(q.have)+' / '+(q.owned?'升阶所需信物':q.cost),0,110,w,22,{size:12,color:P.muted,align:'center'});
+    ui.label(body,owner+' · 持有 '+fmt(q.have)+' / '+(q.owned?'升星所需信物':q.cost),0,110,w,22,{size:12,color:P.muted,align:'center'});
     const dh=contentHeight(desc,w-14,12);line(ui,body,desc,7,144,w-14,12,P.muted,dh);let y=154+dh;
-    ui.button(body,q.owned?'查看伙伴升阶':'邀入远征队 · '+q.have+'/'+q.cost,0,y,w,37,()=>{if(q.owned){this.open('cat-tag',{id});}else this.act(()=>s.recruit(id),()=>this.open('recruit',{id}));},{primary:true,disabled:!q.owned&&q.have<q.cost,name:'recruit-'+id,size:12});y+=46;
+    ui.button(body,q.owned?'查看伙伴升星':'邀入远征队 · '+q.have+'/'+q.cost,0,y,w,37,()=>{if(q.owned){this.open('cat-tag',{id});}else this.act(()=>s.recruit(id),()=>this.open('recruit',{id}));},{primary:true,disabled:!q.owned&&q.have<q.cost,name:'recruit-'+id,size:12});y+=46;
     ui.button(body,'去失物追寻',0,y,w,32,()=>this.open('street',{group:'recruit',id:'all',detail:true}),{name:'keepsake-source',size:12});this.heightOf(body,w,y+43);
   }
   recruit(body,w,h,{id}){
@@ -264,12 +261,17 @@ export class Dialogs {
     if(s.highest<3)return{title:'先通关第 3 关',text:'主线会自动推进。打不过时，先用鱼币给上阵伙伴升级。',action:'battle',label:'继续主线'};
     if(!s.activities.cleared.salvage)return{title:'去废件仓库拿装备',text:'街区 → 委托板 → 旧街寻宝 → 废件仓库。',action:'salvage',label:'前往废件仓库'};
     if(!s.guidance?.equipmentWorn&&s.inventory.items.some(e=>!E.gearOwner(s,e.id)))return{title:'给伙伴穿上新装备',text:'选中一位伙伴，点背包中的装备，再点“穿戴”。',action:'equipment',label:'前往穿戴'};
-    const ready=teamPlan(s).order.filter(id=>s.party.includes(id)).find(id=>{const q=starQuote(s,id);return!q.maxed&&q.have>=q.shards&&s.growth.notes>=q.notes;});
-    if(ready)return{title:cat(ready).name+'可以升阶',text:'这次生命和攻击提升 '+starQuote(s,ready).gain+'%，升阶后继续推进主线。',action:'cat-tag',id:ready,label:'前往升阶'};
+    const order=teamPlan(s).order.filter(id=>s.party.includes(id));
+    const study=order.find(id=>G.breakthroughQuote(s,id).canLearn);
+    if(study){const q=G.breakthroughQuote(s,study);return{title:cat(study).name+'可以研习技能',text:SKILL_STUDY[study].name+' Lv.'+(q.rank+1)+' → Lv.'+(q.rank+2),action:'skill',id:study,label:'前往研习'};}
+    const capped=order.find(id=>s.levels[id]>=G.levelCap(s,id)&&s.levels[id]<G.MAX_LEVEL&&!starQuote(s,id).maxed);
+    if(capped){const q=starQuote(s,capped);return{title:cat(capped).name+'已达等级上限',text:'等级上限 Lv.'+q.cap+' → Lv.'+q.nextCap,action:'cat-tag',id:capped,label:'前往升星'};}
+    const train=order.find(id=>s.levels[id]<G.levelCap(s,id));
+    if(train){const q=G.breakthroughQuote(s,train);return{title:'培养'+cat(train).name,text:q.maxed||q.levelReady?'当前等级上限 Lv.'+G.levelCap(s,train):'角色 Lv.'+q.requiredLevel+' 可研习下一级绝活。',action:'train',id:train,label:'前往培养'};}
     if(s.runCleared>=G.MAX_STAGE)return{title:'主线已通关，挑战街区硬仗',text:'继续挑战街区硬仗、街头擂台与每周委托。',action:'hard',label:'前往街区硬仗'};
-    return{title:b?.result==='lose'?'积攒材料，给伙伴升阶':'继续推进主线',text:'伙伴信物来自失物追寻，训练笔记来自后巷清扫。',action:b?.result==='lose'?'cat-tag':'battle',id:teamPlan(s).core,label:b?.result==='lose'?'查看升阶':'回到战场'};
+    return{title:b?.result==='lose'?'强化装备，再战一次':'继续推进主线',text:'旧街寻宝获取装备，旧件回收场获取强化材料。',action:b?.result==='lose'?'equipment':'battle',id:teamPlan(s).core,label:b?.result==='lose'?'查看装备':'回到战场'};
   }
-  go(action,id?){const s=this.session;if(action==='cat-tag'){this.open('cat-tag',{id:id||s.selected});return;}if(['salvage','recruit','hard'].includes(action)){s.changeTab('map');this.open('street',{group:action==='salvage'?'equipment':action,id:action==='salvage'?'salvage':action==='hard'?'coldstore':'all',detail:true});return;}if(action==='arena'){s.changeTab('map');this.open('challenges');return;}this.close();if(action==='equipment'||action==='train'){s.selectCrew(s.state.party.find(Boolean)||'orange');s.setMode(action==='equipment'?'equipment':'profile');s.changeTab('cats');}else s.changeTab('battle');}
+  go(action,id?){const s=this.session;if(action==='cat-tag'||action==='skill'){this.open(action,{id:id||s.selected});return;}if(['salvage','recruit','hard'].includes(action)){s.changeTab('map');this.open('street',{group:action==='salvage'?'equipment':action,id:action==='salvage'?'salvage':action==='hard'?'coldstore':'all',detail:true});return;}if(action==='arena'){s.changeTab('map');this.open('challenges');return;}this.close();if(action==='equipment'||action==='train'){s.selectCrew(id&&G.ownsCompanion(s.state,id)?id:s.state.party.find(Boolean)||'orange');s.setMode(action==='equipment'?'equipment':'profile');s.changeTab('cats');}else s.changeTab('battle');}
   quests(body,w,h){
     const {ui,session:s}=this,state=s.state,next=this.nextGrowth(),nh=contentHeight(next.text,w-22,12),p=ui.panel(body,0,0,w,115+nh,{fill:'#f3e4c6',stroke:'#c1a273',radius:8,paper:260,paperBlend:'normal',paperCenter:true});
     ui.label(p,'当前目标',10,7,w-20,19,{size:10,color:P.muted});ui.label(p,next.title,10,30,w-20,28,{size:17,bold:true,color:P.ink});line(ui,p,next.text,11,66,w-22,12,P.muted,nh);ui.button(p,next.label,10,74+nh,w-20,32,()=>this.go(next.action,next.id),{primary:true,name:'growth-next',size:12});let y=128+nh;

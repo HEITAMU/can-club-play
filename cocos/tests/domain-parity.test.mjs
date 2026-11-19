@@ -13,6 +13,7 @@ const domain = path.join(root, 'cocos/assets/scripts/domain');
 const require = createRequire(import.meta.url);
 const esbuild = process.env.CAN_CLUB_ESBUILD ? require(process.env.CAN_CLUB_ESBUILD) : require('esbuild');
 const manifest = JSON.parse(await fs.readFile(path.join(domain, 'migration-manifest.json'), 'utf8'));
+const ruleChanges = await Promise.all((manifest.ruleChanges || []).map(async change => ({ ...change, patch: JSON.parse(await fs.readFile(path.join(root, 'cocos', change.patch), 'utf8')) })));
 const temporary = await fs.mkdtemp(path.join(os.tmpdir(), 'can-club-parity-'));
 const originalDir = path.join(temporary, 'original');
 await fs.mkdir(originalDir);
@@ -70,13 +71,27 @@ function combatState(battle) {
   return { time: battle.time, result: battle.result, round: battle.round, turnActor: battle.turnActor, canCd: battle.canCd, kills: battle.kills, actors };
 }
 
-test('all full modules retain the source apart from specifiers and documented display corrections', async () => {
+function baselineFields(state) {
+  const { growthRuleVersion, legacyLevelCaps, ...rest } = state;
+  return rest;
+}
+
+test('all full modules match the frozen source plus exact, separately authorized rule edits', async () => {
   for (const entry of manifest.modules) {
     const source = await fs.readFile(path.join(originalDir, entry.source), 'utf8');
     assert.equal(crypto.createHash('sha256').update(source).digest('hex'), entry.sourceSha256);
     let expected = source.replace(/(['"])(\.\/[^'"]+?)\.mjs(?:\?[^'"]*)?\1/g, '$1$2$1');
     for (const correction of manifest.displayCorrections || [])
       if (correction.target === entry.target) expected = expected.replaceAll(correction.find, correction.replace);
+    for (const change of ruleChanges) {
+      assert.equal(change.id, change.patch.id);
+      assert.ok(change.authorization && change.tests.length);
+      for (const file of change.patch.files.filter(file => file.target === entry.target)) for (const edit of file.edits) {
+        assert.ok(edit.find.length > 0, `${change.id}: edits require an exact source context`);
+        assert.equal(expected.split(edit.find).length - 1, 1, `${entry.target}: each authorized edit must match exactly once`);
+        expected = expected.replace(edit.find, edit.replace);
+      }
+    }
     const actual = await fs.readFile(path.join(domain, entry.target), 'utf8');
     assert.equal(actual.split('\n').slice(2).join('\n'), expected, entry.target);
   }
@@ -138,13 +153,14 @@ test('native effect strip vertices and clipped UVs match the original Canvas dra
   }
 });
 
-test('all eight character stats match at representative levels and ascensions', () => {
-  for (const level of [1, 5, 10, 40, 80, 160]) for (const rank of [0, 1, 3, 6, 9]) {
+test('all eight characters retain initial stats and each completed quality-level strength endpoint', () => {
+  for (const [level, rank] of [[1, 0], [5, 0], ...[10, 20, 30, 40, 60, 80, 100, 120, 140, 160].map((level, rank) => [level, rank])]) {
     const oldState = fixture(original, { level, rank });
     const newState = fixture(migrated, { level, rank });
     for (const cat of original.core.CATS) {
       assert.deepEqual(migrated.core.catStats(newState, cat.id), original.core.catStats(oldState, cat.id), `${cat.id} Lv.${level} rank ${rank}`);
-      assert.deepEqual(migrated.companions.starQuote(newState, cat.id), original.companions.starQuote(oldState, cat.id));
+      const quote = migrated.companions.starQuote(newState, cat.id), oldQuote = original.companions.starQuote(oldState, cat.id);
+      for (const key of ['rank', 'nextRank', 'shards', 'notes', 'owned', 'have', 'maxed']) assert.equal(quote[key], oldQuote[key], `${cat.id}: ${key}`);
     }
     assert.equal(migrated.core.power(newState), original.core.power(oldState));
   }
@@ -172,7 +188,7 @@ for (const scenario of [
   }
   assert.ok(beforeOld.result, 'scenario completes');
   assert.deepEqual(migrated.core.settleBattle(newState, beforeNew, NOW), original.core.settleBattle(oldState, beforeOld, NOW));
-  assert.deepEqual(newState, oldState);
+  assert.deepEqual(baselineFields(newState), oldState);
 });
 
 test('equipment generation, all +1..+15 enhancements, reforge, and dismantle match', () => {
@@ -189,7 +205,7 @@ test('equipment generation, all +1..+15 enhancements, reforge, and dismantle mat
     assert.equal(migrated.equipment.reforgeGear(newState, b.item.id, 0), original.equipment.reforgeGear(oldState, a.item.id, 0));
     assert.deepEqual(migrated.equipment.dismantleGear(newState, b.item.id), original.equipment.dismantleGear(oldState, a.item.id));
   }
-  assert.deepEqual(newState, oldState);
+  assert.deepEqual(baselineFields(newState), oldState);
 });
 
 test('three daily keepsake victories, random five, chosen five, replay protection and midnight reset match', () => {
@@ -209,7 +225,7 @@ test('three daily keepsake victories, random five, chosen five, replay protectio
   }
   assert.equal(migrated.activities.activityInfo(b, { kind: 'recruit', tier: 1 }, NOW).open, false);
   assert.equal(migrated.activities.activityInfo(b, { kind: 'recruit', tier: 1 }, NOW + 86400000).quota.remaining, 3);
-  assert.deepEqual(b, a);
+  assert.deepEqual(baselineFields(b), a);
 });
 
 test('rotation locks, material stages, weekly rewards and Beijing day keys match', () => {
@@ -221,15 +237,15 @@ test('rotation locks, material stages, weekly rewards and Beijing day keys match
   for (const tier of [1, 2, 3]) assert.deepEqual(migrated.campaign.weeklyInfo(b, tier, NOW), original.campaign.weeklyInfo(a, tier, NOW));
 });
 
-test('old Preview11 saves round-trip with exact inventory, token tickets and progression', () => {
+test('old Preview11 saves retain inventory, token tickets and earned progress through the authorized rule migration', () => {
   const state = fixture(original, { stage: 2345, level: 125, rank: 6, rich: true });
   state.activities.tokenSerial = 7;
   state.activities.tokenRewards = [{ serial: 7, claimed: false }];
   state.battleReport = { win: true, mode: 'activity', title: '失物追寻', stage: 5, companion: 'mint', tokenTicket: 7, rewards: { shards: 5 }, route: { group: 'recruit', id: 'all', tier: 1 } };
   const oldSave = original.core.encodeSave(state);
-  assert.deepEqual(migrated.core.decodeSave(oldSave, NOW), original.core.decodeSave(oldSave, NOW));
+  assert.deepEqual(baselineFields(migrated.core.decodeSave(oldSave, NOW)), original.core.decodeSave(oldSave, NOW));
   const normalized = migrated.core.decodeSave(oldSave, NOW);
-  assert.deepEqual(original.core.decodeSave(migrated.core.encodeSave(normalized), NOW), normalized);
+  assert.deepEqual(migrated.core.decodeSave(migrated.core.encodeSave(normalized), NOW), normalized);
   assert.throws(() => migrated.core.decodeSave(oldSave.replace('CAN-CLUB-GROWTH-1', 'CAN-CLUB-1'), NOW));
 });
 

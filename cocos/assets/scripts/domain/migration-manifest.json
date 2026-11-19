@@ -290,5 +290,20 @@
       "replace": "回复40生命值",
       "reason": "Preview11 changed support healing to fixed 40 but retained obsolete 20% combat-log copy; display only, no rule change."
     }
+  ],
+  "ruleChanges": [
+    {
+      "id": "level-gated-growth-20261119",
+      "authorization": "用户：升星改掉，改成升星解锁等级限制，等级限制技能学习",
+      "patch": "tests/fixtures/level-gated-growth.patch.json",
+      "newModules": [
+        "growth-rules.ts"
+      ],
+      "tests": [
+        "tests/progression-rules.test.mjs",
+        "tests/domain-parity.test.mjs",
+        "tests/browser-smoke.mjs"
+      ]
+    }
   ]
 }
