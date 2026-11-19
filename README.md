@@ -1,6 +1,6 @@
 # 当前开发入口：Cocos Creator 3.8.8
 
-自 2026-11-19 起，《罐头远征队》的后续开发固定使用 **Cocos Creator 3.8.8**，主工程位于 [`cocos/`](cocos/README.md)。迁移基线为成长试玩 `0.28.0-preview.11`，保留八名伙伴、3500 关、现有原画与存档格式。后续按用户要求将养成改为“升星提高等级上限，等级限制技能研习”，见 [当前养成规则](cocos/docs/growth-rules.md)。
+自 2026-11-19 起，《罐头远征队》的后续开发固定使用 **Cocos Creator 3.8.8**，主工程位于 [`cocos/`](cocos/README.md)。迁移基线为成长试玩 `0.28.0-preview.11`，保留八名伙伴、3500 关、现有原画与存档格式。后续按用户要求将养成改为“升星提高等级上限，角色达级自动解锁绝活技能（40／80／120 级），无需研习”，见 [当前养成规则](cocos/docs/growth-rules.md)。
 
 请先阅读 [工程使用方法](cocos/README.md)、[迁移验收状态](cocos/docs/MIGRATION-STATUS.md) 和 [接续规则](AGENTS.md)。迁移前主线和 Preview11 源码均已建立独立备份分支；根目录旧 H5 文件继续作为备份与对照保留，新增功能进入 `cocos/`。
 

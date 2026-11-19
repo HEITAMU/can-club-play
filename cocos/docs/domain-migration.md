@@ -8,7 +8,7 @@
 
 因此本次保留的是 Preview11 的 **3,500 关**、八名伙伴、十档品质、两套推荐阵容、最新失物信物奖励与固定数值的开罐支援，而不是将旧版 600 关规则重新接到新入口。`main` 发布后修复的结算层优先级已接入 `GameSession`；图片预加载及启动预算属于资源层，独立于这里的数值模块。
 
-`assets/scripts/domain/migration-manifest.json` 记录了每个完整迁移模块的源文件、目标文件与源 SHA-256。迁移阶段共 58 个 TypeScript 模块；后续另增加 `growth-rules.ts`，实现用户明确要求的等级上限与技能门槛：
+`assets/scripts/domain/migration-manifest.json` 记录了每个完整迁移模块的源文件、目标文件与源 SHA-256。迁移阶段共 58 个 TypeScript 模块；后续另增加 `growth-rules.ts`，实现用户明确要求的等级上限及达级自动解锁技能：
 
 - 55 个完整模块以冻结源为基线，仅将 `.mjs?v=…` 引用换成 Creator 使用的无扩展名相对引用。此后 `core.ts`、`companions.ts`、`progression.ts` 按用户授权修改养成规则；其余模块继续严格对照。
 - `crew-skill.ts` 从原入口提取八名伙伴的技能说明与相关计算，供原生界面使用。
@@ -19,7 +19,7 @@
 
 迁移阶段的文案修正是 `battle-cues.ts` 中两处过期的「回血20%」，改为「回复40生命值」。Preview11 真实开罐规则已经是固定恢复 40、固定伤害 50、冷却 5.6 秒，原战报文字没有同步。这个修正列在 manifest 的 `displayCorrections` 中，不改变战斗事件或数值。
 
-新的升星、等级和研习关系是单独的用户授权规则变更，见 [养成规则](growth-rules.md)。manifest 的 `ruleChanges` 保存授权原文、精确修改块和测试入口。完整模块测试先核对冻结源 SHA，再逐块应用已记录变化并比较全文；没有换基线、将规则改动混入文案修正或整文件跳过。
+新的升星、等级和技能自动解锁关系是两次明确授权的规则变更，见 [养成规则](growth-rules.md)。manifest 的 `ruleChanges` 保存授权原文、精确修改块和测试入口。完整模块测试先核对冻结源 SHA，再逐块应用已记录变化并比较全文；没有换基线、将规则改动混入文案修正或整文件跳过。
 
 ## 保持的规则与身份
 
@@ -29,7 +29,7 @@
 | 伙伴身份 | `orange`、`ink`、`milk`、`spark`、`mint`、`bolt`、`pudding`、`star`；石墩继续使用兼容 ID `pudding` |
 | 战斗 | 原回合顺序、能量、普攻/绝活、护盾、中断、控制、命中时点与胜负结算；动画不决定真实伤害 |
 | 主线 | 3,500 关完整敌方配置与奖励曲线；普通巡街胜利后自动推进，失败后继续巡街 |
-| 培养 | 保留鱼币升级价格、升星成本、两套推荐阵容与研习成本；升星改为等级上限，属性随等级成长，研习受角色等级限制，继承检查双方上限 |
+| 培养 | 保留鱼币升级价格、升星成本与两套推荐阵容；升星提高等级上限，属性随等级成长，40／80／120 级自动解锁绝活，不再有研习成本，继承检查双方上限 |
 | 装备 | 五个部位、套装、符文、副属性、锁定、穿脱、强化 +15、分解与洗炼 |
 | 委托 | 原材料来源、三条装备路线、每日轮换、每周挑战、练习与可领取次数区分 |
 | 失物信物 | 每日三次奖励，胜利随机 5 份；完整观看视频后可选 5 份；原票据和重复领取保护 |
@@ -75,7 +75,7 @@ const session = new GameSession({
 | 生命周期 | `subscribe(listener)`、`update(dt)`、`save()`、`setLoading(bool)`、`setHidden(bool)`、`pause()`、`resume()` |
 | 战斗 | `startBattle(options)`、`useCan()`、`closeReport(action?)`、`reportRequest(report?)`、`returnToStreet()` |
 | 页面/伙伴 | `changeTab(tab)`、`selectCrew(id)`、`setMode(mode)` |
-| 培养 | `upgrade(id, count)`、`inherit(from, to)`、`recruit(id)`、`ascend(id)`、`breakthrough(id)` |
+| 培养 | `upgrade(id, count)`、`inherit(from, to)`、`recruit(id)`、`ascend(id)`；旧 `breakthrough()` 仅保留不可操作兼容入口 |
 | 阵容 | `setParty(slot, id)`、`removeParty(id)`、`applyTeamPlan(id)`；`applyTeam(id)` 为同义入口 |
 | 装备 | `equip(uid, id)`、`unequip(id, slot)`、`enhance(uid)`、`reforge(uid, index)`、`dismantle(uid)`、`lockGear(uid)` |
 | 收入/任务 | `claimIdle()`、`claimQuests(id?)`、`claimDaily(id)`、`claimDailyChest()`、`claimJourney(id)`、`upgradeStall(id)` |
@@ -150,7 +150,7 @@ node --test cocos/tests/domain-parity.test.mjs
 8. Session 广告请求完成限制、并发锁、结算关闭锁与重复领取防护；SDK 上一单回调不能完成或取消第二单。
 9. 原 `paintVFX` 的真实 Canvas 绘制指令与原生 `stripGeometry` 顶点/UV 对照，覆盖横向、纵向条带形变和揭露裁剪；保持 12 段、0.35 像素交叠与固定裁剪框。
 
-`npm run test:domain` 同时运行上述对照与 `progression-rules.test.mjs`。新增检查覆盖十档培养上限、39/40、79/80、119/120 级学习边界、升星无即时属性增幅、战斗技能同步、八角色旧等级 1–160 与十品质的迁移、重复保存/备份恢复、双向继承与旧档保护不能绕过新上限。
+`npm run test:domain` 同时运行上述对照与 `progression-rules.test.mjs`。新增检查覆盖十档培养上限、39/40、79/80、119/120 级自动解锁边界、升星无即时属性增幅、战斗技能同步、八角色旧等级 1–160 与十品质的迁移、重复保存/备份恢复、双向继承与旧档保护不能绕过新上限。
 
 这些结果验证逻辑迁移与状态控制。Cocos 引擎构建、页面视觉、资源加载、手机触控和微信真机运行需要各自的验证记录，不能由这组 Node 测试代替。
 
@@ -160,6 +160,6 @@ node --test cocos/tests/domain-parity.test.mjs
 
 脚本要求真实 `cc.VERSION === '3.8.8'` 和 `cc.Scene`，在 390×844 与 320×740 两种尺寸上用真实浏览器触摸点击 Cocos 按钮。覆盖首次完整教学、切页继续战斗、两次真实打捞/结算、穿戴教学、结算存储与刷新恢复、奖励详情、滑动/取消/双指防误关闭、强化、材料和信物页面、招募与跨节点拖放，以及实际治疗事件渲染；检查请求失败、脚本错误、原生图片错误及可见 Sprite 的纹理装载，并截图供审阅。
 
-每个尺寸单独建立全新的非持久化 browser context，不连接个人浏览器、不读取玩家存档。首次开场断言前没有预置进度；之后仅在这个临时 context 中设置标明为开发数据的第 3 关解锁、两名传说+品质的 80 级伙伴及资源，以缩短活动流程等待。另在隔离的史诗品质 30 级橘座上，通过真实点击验证升星至史诗+、十次升级至 40 级、两处技能门槛、研习与重载。报告中保留这些测试条件，不能把它当作正常玩家养成结果。
+每个尺寸单独建立全新的非持久化 browser context，不连接个人浏览器、不读取玩家存档。首次开场断言前没有预置进度；之后仅在这个临时 context 中设置标明为开发数据的第 3 关解锁、两名传说+品质的 80 级伙伴及资源，以缩短活动流程等待。另在隔离的史诗品质 30 级橘座上，通过真实点击验证升星至史诗+、十次升级至 40 级、技能自动解锁、无研习操作、80／120 级跨越和重载。报告中保留这些测试条件，不能把它当作正常玩家养成结果。
 
 历史 CI [运行 44448283945](https://github.com/HEITAMU/can-club-play/actions/runs/44448283945)对提交 `2f6deb7` 完整通过：两种尺寸各 10 组流程、14 张截图。原始 [浏览器报告](verification/browser-20261119.json)同时记录隔离测试数据、原生取消事件收据、单列的已确认引擎诊断与治疗顶点透明度。后续输入修复和养成调整的实际运行记录以 [当前验收状态](MIGRATION-STATUS.md) 为准。只有主动取消用例的确切窗口允许记录一条完整匹配的引擎诊断，其他错误继续失败。截图仍需另做视觉检查，不代表与旧版 Canvas 逐像素一致、Creator 编辑器正式构建或微信真机验收。

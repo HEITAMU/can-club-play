@@ -1,6 +1,6 @@
 # 罐头远征队 · Cocos Creator 3.8.8
 
-此目录是后续开发的主工程，迁移来源为冻结的 `0.28.0-preview.11`（`28eb867`）。角色 ID、存档格式与未另行授权调整的业务沿用该基线；渲染和交互由 Cocos 原生节点实现。2026-11-19 用户授权的新养成链已实现为“升星提高等级上限、等级限制技能研习”，具体上限、学习条件和旧档处理见 [养成规则](docs/growth-rules.md)。
+此目录是后续开发的主工程，迁移来源为冻结的 `0.28.0-preview.11`（`28eb867`）。角色 ID、存档格式与未另行授权调整的业务沿用该基线；渲染和交互由 Cocos 原生节点实现。2026-11-19 用户授权的新养成链已实现为“升星提高等级上限、角色达到 40／80／120 级自动解锁绝活，不再手动研习”，具体上限、自动解锁与旧档返还见 [养成规则](docs/growth-rules.md)。
 
 ## 打开工程
 
@@ -110,7 +110,7 @@ node scripts/build.mjs --wechat
 
 ## 持续验证
 
-`.github/workflows/cocos-migration-ci.yml` 在 `main` 或 `migration/cocos-3.8.8` 的 Cocos 工程、试玩或工作流更新时运行，也可手动触发。它依次安装锁定依赖、对照官方引擎声明检查类型、对照冻结 Preview11 验证业务和形变几何、构建 Web/微信共同入口，再在真实 Chromium 中运行 Cocos 场景和原生触控流程。工作流只有 `contents: read` 权限。
+`.github/workflows/cocos-migration-ci.yml` 在 `main` 或 `migration/cocos-3.8.8` 的 Cocos 工程、试玩或工作流更新时运行，也可手动触发。它依次安装锁定依赖、对照官方引擎声明检查类型、对照冻结 Preview11 验证业务和形变几何、构建 Web/微信共同入口，再在真实 Chromium 中运行 Cocos 场景和原生触控流程。主测试作业只有 `contents: read` 权限；主线全部验收通过后，独立的发布作业才临时使用 `contents: write` 将实际构建的试玩目录同步到 GitHub Pages。
 
 `npm run test:domain` 可独立运行业务对照；`npm run test:painted` 包括姿态合成与原治疗流带几何/渐变对照。`npm run test:build` 验证超预算时命令确实失败、单分包没有错误的 4 MiB 限制，以及正式输出配置检查；其中 Creator 输出使用文件夹 fixture，不冒充编辑器真实导出。`npm run test:browser` 需要已构建并由静态服务器托管的 Web 版本，默认地址为 `http://127.0.0.1:8765/cocos/build/web-mobile/`，可用 `CAN_CLUB_URL` 覆盖。测试创建独立浏览器上下文，不读取玩家的实际存档。
 
