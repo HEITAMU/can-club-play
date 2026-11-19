@@ -15,7 +15,7 @@ import { skillSummary, SKILL_STUDY } from '../domain/skill-training';
 import { tokenRewardReady } from '../domain/token-rewards';
 import { teamPlan } from '../domain/team-plans';
 import { crewSkill } from '../domain/crew-skill';
-import { P, fmt, clean, cat, contentHeight, line, progress, keepsakeArt, materialArt, gearArt, gearTile, rewardRow, costs, badge, paw, anchorRect, sceneCard } from './Pages';
+import { P, fmt, clean, cat, contentHeight, line, progress, keepsakeArt, materialArt, gearArt, gearTile, rewardRow, costs, badge, paw, anchorRect, sceneCard, coverRect } from './Pages';
 
 const GROUPS=[{id:'recruit',name:'失物追寻',copy:'每日三次 · 随机信物与广告自选'},{id:'notes',name:'后巷清扫',copy:'研习技能所需的笔记'},{id:'badges',name:'夜班护送',copy:'研习技能所需的勋章'},{id:'scrap',name:'旧件回收场',copy:'强化装备所需的零件'},{id:'essence',name:'熄灯工坊',copy:'洗炼副属性所需的打磨砂'},{id:'equipment',name:EQUIPMENT_SERIES,copy:'三处旧街据点 · 按部位寻宝'},{id:'hard',name:'街区硬仗',copy:'街区硬仗 · 历练印记与首通装备'}];
 const JOBS={notes:'sweep',badges:'escort',scrap:'parts',essence:'polish'};
@@ -185,7 +185,7 @@ export class Dialogs {
     // chapter-entry-art.mjs uses a 1536×1024 SVG image coordinate system;
     // this original atlas is 1152×768, so convert the preserved crop by 3/4.
     const rect=[kind==='journal'?3:771,3,762,1018].map(value=>value*.75);
-    ui.image(n,'assets/ui/journal-challenge-v02677.webp',0,0,73,79,rect);ui.label(n,title,88,23,w-100,30,{size:17,bold:true,color:P.ink});}
+    ui.image(n,'assets/ui/journal-challenge-v02677.webp',0,0,73,79,coverRect(rect,73,79));ui.label(n,title,88,23,w-100,30,{size:17,bold:true,color:P.ink});}
   street(body,w,h,data){
     const {ui,session:s}=this,state=s.state,view={group:'recruit',tier:1,detail:true,runeSearch:false,...data};
     if(view.group==='materials')view.group=groupFor(view.id);if(view.group==='hunt')view.group='equipment';

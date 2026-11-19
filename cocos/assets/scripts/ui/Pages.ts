@@ -102,6 +102,11 @@ export function paw(ui,parent,rank,x,y,size=88){
   for(const [px,py,r]of [[18,39,-28],[32,25,-12],[50,20,0],[68,25,12],[82,39,28]]){const pad=ui.group(n,px*s,py*s,0,0,'toe');pad.angle=-r;const p=pad.addComponent(Graphics);p.fillColor=ccColor(rank%2?rankColor(rank):'#9c8061');p.strokeColor=ccColor(rank%2?'#fff3cd':'#654c35');p.lineWidth=2.5*s;p.ellipse(0,0,7*s,10*s);p.fill();p.stroke();}
   return n;
 }
+// Match the frozen SVG's xMidYMid slice without stretching its painted atlas.
+export function coverRect(rect,w,h){
+  const [x,y,sw,sh]=rect,scale=Math.max(w/sw,h/sh),cw=w/scale,ch=h/scale;
+  return [x+(sw-cw)/2,y+(sh-ch)/2,cw,ch];
+}
 export function sceneCard(ui,parent,q,x,y,w,h) {
   const hard=['coldstore','lifeline','ironwall','alarm','blackout','clockwork'];
   const special=q.kind==='hard',file=special?'quest-locations-v02672.webp':'commissions-v02646.webp';
@@ -109,7 +114,7 @@ export function sceneCard(ui,parent,q,x,y,w,h) {
   // The frozen SVG declares a 1536×1024 image, but the hard-job atlas is
   // authored at 1152×768. SpriteFrame crops use physical pixels, not SVG units.
   const rect=[index%3*512+3,Math.floor(index/3)*512+3,506,special?506:300].map(value=>value*(special?.75:1));
-  return ui.image(parent,'assets/scenes/'+file,x,y,w,h,rect);
+  return ui.image(parent,'assets/scenes/'+file,x,y,w,h,coverRect(rect,w,h));
 }
 
 export class Pages {
