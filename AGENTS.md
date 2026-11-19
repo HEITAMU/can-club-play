@@ -3,7 +3,7 @@
 ## 当前开发引擎：Cocos Creator 3.8.8
 
 自 2026-11-19 起，后续功能、数据与界面修改以 `cocos/` 为主工程，固定使用 Creator 3.8.8。
-先读 `cocos/README.md`、`cocos/docs/domain-migration.md`、`cocos/docs/ui-parity.md`。
+先读 `cocos/README.md`、`cocos/docs/MIGRATION-STATUS.md`、`cocos/docs/domain-migration.md`、`cocos/docs/ui-parity.md`。
 根目录旧 H5/微信打包脚本为迁移前保留版本，不再作为新增玩法的主线。
 
 迁移规则源为成长试玩 Preview11 的 `28eb8674f4b35a381ca37363d29189a9b4911da7`，另包含主线结算与资源预载修复。不要误以根目录旧版规则覆盖它。

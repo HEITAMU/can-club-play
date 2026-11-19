@@ -10,7 +10,7 @@ CI 的 `cocos-creator-project-*` 产物内提供 **CanClub-Creator-3.8.8.zip**�
 
 入口场景为 `assets/scenes/Main.scene`，启动组件为 `assets/scripts/CanClubGame.ts`。设计宽度 390、高度 844，按宽适配并根据可视区域计算高度。`package.json` 锁定 Creator 版本，场景与脚本的 UUID 由构建脚本稳定生成。
 
-用户确认的原画与设定页对应见 [美术基线](docs/art-baseline.md)。实际 Cocos Web 试玩可[直接打开](https://heitamu.github.io/can-club-play/cocos-preview/play.html?v=5e0cfba8f77492db3374)，对应仓库的 [`cocos-preview/play.html`](../cocos-preview/play.html)，由下面的同一份源引擎构建生成；它不是 Creator 编辑器正式导出。
+用户确认的原画与设定页对应见 [美术基线](docs/art-baseline.md)。实际 Cocos Web 试玩可[直接打开](https://heitamu.github.io/can-club-play/cocos-preview/play.html?v=2d9092b1b4e67195f216)，对应仓库的 [`cocos-preview/play.html`](../cocos-preview/play.html)，由下面的同一份源引擎构建生成；它不是 Creator 编辑器正式导出。
 
 `assets/scripts/domain/` 存放迁移的纯逻辑；`game/` 管理会话；`render/` 与 `ui/` 负责原生显示和输入；`platform/` 处理存档、音频、广告和平台生命周期。Web 与微信都调用同一份 `bootGame`。
 
@@ -40,7 +40,7 @@ npm run build:wechat
 
 这些脚本在没有 Creator 编辑器的环境中使用 **官方 3.8.8 源码编译的引擎**。它们不伪装为 Creator 编辑器正式构建。`vendor/engine-manifest.json` 记录引擎版本、提交、模块及 SHA-256。正式发布前仍须在 Creator 3.8.8 中打开工程、导入资源、构建，并用微信开发者工具及真机核验。
 
-Creator 命令行正式构建配置在 `build-config/web-mobile.json` 与 `build-config/wechatgame.json`。微信正式构建使用下文的资源服务器配置与检查脚本；Web 可在编辑器构建面板导入 `build-config/web-mobile.json`。
+Creator 命令行正式构建配置在 `build-config/web-mobile.json` 与 `build-config/wechatgame.json`。微信正式构建使用下文的资源服务器配置与检查脚本；Web 可在编辑器构建面板导入 `build-config/web-mobile.json`，输出到独立的 `build/creator-web-mobile/`。首次编辑器验收可先导出 Web，不依赖微信资源服务器；需要正常安装并登录的 Creator 3.8.8 桌面环境，CLI 同样需要 GUI。
 
 ## Creator 正式微信构建
 
@@ -55,7 +55,7 @@ WECHAT_APPID=your_appid \
 npm run build:creator:wechat
 ```
 
-脚本生成 `build/creator-wechat-config.json`，调用安装的编辑器，并检查它实际生成的 `settings`、`remoteBundles` 和 `remote/resources/config*.json`。Creator 命令行的成功码为 `36`；脚本正确处理该成功码。未指定编辑器、资源服务器未填或导出没有形成远程 Bundle 时，脚本失败并说明原因。
+脚本生成 `build/creator-wechat-config.json`，调用安装的编辑器，并检查它实际生成的 `settings`、`remoteBundles`。远程 `resources` 配置和主包内的 Bundle 脚本必须与 `assets.bundleVers.resources` 指定版本完全对应，配置名称必须为 `resources`；检查失败时不注入入口、不移动资源、不清理旧部署目录。Creator 命令行的成功码为 `36`；脚本正确处理该成功码。未指定编辑器、资源服务器未填或导出没有形成远程 Bundle 时，脚本失败并说明原因。
 
 成功导出后，`build/creator-wechatgame/` 是导入微信开发者工具的主包，`build/creator-remote-art/remote/` 是必须部署到资源服务器的完整远程目录。以示例地址为例，文件应能通过 `https://your-registered-domain.example/can-club/remote/resources/config.<hash>.json` 访问。保持 `remote/` 层级及版本文件名；不要把远程资源复制回主包。脚本保留主包内必要的 `src/bundle-scripts`，并在资源移出后递归检查主包预算。
 
