@@ -48,9 +48,8 @@ jobs:
       - name: Build shared Web entry and full-resolution resources
         run: node scripts/build.mjs --web --faces
       - name: Stage the actual public Cocos preview
-        run: |
-          npm run build:preview
-          git diff --exit-code -- ../cocos-preview/play.html ../cocos-preview/PREVIEW-REPORT.json
+        # Runtime hashes change with code; test the freshly staged bundle before publishing.
+        run: npm run build:preview
       - name: Build shared WeChat entry
         run: node scripts/build.mjs --wechat --code-only
       - name: Package complete Creator project with prepared PNG imports
@@ -112,3 +111,42 @@ jobs:
           if-no-files-found: warn
           compression-level: 0
           retention-days: 14
+
+      - name: Upload tested static preview for deployment
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cocos-verified-preview-${{ github.run_number }}
+          path: cocos-preview/
+          if-no-files-found: error
+          retention-days: 3
+
+  publish-preview:
+    name: Publish tested Cocos preview to GitHub Pages
+    needs: source-runtime
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download verified preview
+        uses: actions/download-artifact@v4
+        with:
+          name: cocos-verified-preview-${{ github.run_number }}
+          path: cocos-preview/
+      - name: Commit only verified preview assets
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f cocos-preview/
+          if git diff --cached --quiet; then
+            echo "Preview already matches the verified build."
+            exit 0
+          fi
+          git commit -m "[skip ci] Publish verified Cocos 3.8.8 preview"
+          git push origin HEAD:main
