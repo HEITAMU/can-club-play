@@ -18,7 +18,7 @@ import { teamPlan } from '../domain/team-plans';
 import { crewSkill } from '../domain/crew-skill';
 import { P, fmt, clean, cat, contentHeight, line, progress, keepsakeArt, materialArt, gearArt, gearTile, rewardRow, costs, badge, paw, anchorRect, sceneCard, coverRect } from './Pages';
 
-const GROUPS=[{id:'recruit',name:'失物追寻',copy:'每日三次 · 随机信物与广告自选'},{id:'notes',name:'后巷清扫',copy:'研习技能所需的笔记'},{id:'badges',name:'夜班护送',copy:'研习技能所需的勋章'},{id:'scrap',name:'旧件回收场',copy:'强化装备所需的零件'},{id:'essence',name:'熄灯工坊',copy:'洗炼副属性所需的打磨砂'},{id:'equipment',name:EQUIPMENT_SERIES,copy:'三处旧街据点 · 按部位寻宝'},{id:'hard',name:'街区硬仗',copy:'街区硬仗 · 历练印记与首通装备'}];
+const GROUPS=[{id:'recruit',name:'失物追寻',copy:'每日三次 · 随机信物与广告自选'},{id:'notes',name:'后巷清扫',copy:'升星所需的训练笔记'},{id:'badges',name:'夜班护送',copy:'夜班勋章奖励'},{id:'scrap',name:'旧件回收场',copy:'强化装备所需的零件'},{id:'essence',name:'熄灯工坊',copy:'洗炼副属性所需的打磨砂'},{id:'equipment',name:EQUIPMENT_SERIES,copy:'三处旧街据点 · 按部位寻宝'},{id:'hard',name:'街区硬仗',copy:'街区硬仗 · 历练印记与首通装备'}];
 const JOBS={notes:'sweep',badges:'escort',scrap:'parts',essence:'polish'};
 export const groupFor = kind => ({sweep:'notes',escort:'badges',parts:'scrap',polish:'essence',salvage:'equipment',wardrobe:'equipment',nightwatch:'equipment',hunt:'equipment'}[kind]||kind);
 const requestFor=(group,id='',tier=1,runeSearch=false)=>({... (group==='equipment'?{kind:equipmentRoute(id)?id:'salvage',id:''}:JOBS[group]?{kind:JOBS[group],id:''}:group==='materials'?{kind:id,id:''}:{kind:group,id}),tier,runeSearch});
@@ -139,11 +139,11 @@ export class Dialogs {
     this.heightOf(body,w,Math.max(h,y));
   }
   skill(body,w,h,{id=this.session.selected}){
-    const {ui,session:s}=this,rank=s.state.breakthroughs[id]||0;
+    const {ui,session:s}=this,rank=G.catStats(s.state,id).skillRank;
     ui.label(body,SKILL_STUDY[id].name,0,0,w,25,{size:16,bold:true,color:P.ink});let y=33;
-    [0,1,2,3].forEach(r=>{const txt=skillSummary(id,r),dh=contentHeight(txt,w-26,12),panel=ui.panel(body,0,y,w,42+dh,{fill:r===rank?'#e3d29e':'#d8c5a4',stroke:r===rank?'#9b6d36':'#a28a68',radius:7});ui.label(panel,'技能 Lv.'+(r+1)+(r===rank?' · 当前':''),10,7,w-134,22,{size:12,bold:true,color:P.ink});ui.label(panel,r?'需角色 Lv.'+SKILL_STUDY_LEVELS[r]:'基础效果',w-123,7,113,22,{size:10,color:P.muted,align:'right'});line(ui,panel,txt,12,35,w-24,12,P.muted,dh);y+=51+dh;});
-    const q=G.breakthroughQuote(s.state,id);y+=costs(ui,body,s.state,{badges:q.cost,notes:q.notes,seals:q.seals},id,0,y,w,(t,d)=>this.open(t,d));
-    ui.button(body,q.maxed?'已满级':!q.levelReady?'需角色 Lv.'+q.requiredLevel:q.canAfford?'研习':'材料不足',0,y,w,38,()=>this.act(()=>s.breakthrough(id)),{primary:true,disabled:!q.canLearn,name:'study-skill'});this.heightOf(body,w,y+48);
+    [0,1,2,3].forEach(r=>{const txt=skillSummary(id,r),dh=contentHeight(txt,w-26,12),panel=ui.panel(body,0,y,w,42+dh,{fill:r===rank?'#e3d29e':'#d8c5a4',stroke:r===rank?'#9b6d36':'#a28a68',radius:7});ui.label(panel,'技能 Lv.'+(r+1)+(r===rank?' · 当前':''),10,7,w-134,22,{size:12,bold:true,color:P.ink});ui.label(panel,r?'Lv.'+SKILL_STUDY_LEVELS[r]+' 自动解锁':'基础效果',w-126,7,116,22,{size:10,color:P.muted,align:'right'});line(ui,panel,txt,12,35,w-24,12,P.muted,dh);y+=51+dh;});
+    const q=G.breakthroughQuote(s.state,id);
+    ui.label(body,q.maxed?'绝活效果已全部解锁':'继续培养至 Lv.'+q.requiredLevel+'，自动解锁下一级效果',0,y+6,w,40,{size:12,color:P.ink,align:'center'});this.heightOf(body,w,y+52);
   }
   gearSet(body,w,h,{id,companion=this.session.selected}){
     const {ui}=this,set=E.GEAR_SETS.find(s=>s.id===id),n=E.gearBonuses(this.session.state,companion).counts[id]||0;
@@ -262,12 +262,10 @@ export class Dialogs {
     if(!s.activities.cleared.salvage)return{title:'去废件仓库拿装备',text:'街区 → 委托板 → 旧街寻宝 → 废件仓库。',action:'salvage',label:'前往废件仓库'};
     if(!s.guidance?.equipmentWorn&&s.inventory.items.some(e=>!E.gearOwner(s,e.id)))return{title:'给伙伴穿上新装备',text:'选中一位伙伴，点背包中的装备，再点“穿戴”。',action:'equipment',label:'前往穿戴'};
     const order=teamPlan(s).order.filter(id=>s.party.includes(id));
-    const study=order.find(id=>G.breakthroughQuote(s,id).canLearn);
-    if(study){const q=G.breakthroughQuote(s,study);return{title:cat(study).name+'可以研习技能',text:SKILL_STUDY[study].name+' Lv.'+(q.rank+1)+' → Lv.'+(q.rank+2),action:'skill',id:study,label:'前往研习'};}
     const capped=order.find(id=>s.levels[id]>=G.levelCap(s,id)&&s.levels[id]<G.MAX_LEVEL&&!starQuote(s,id).maxed);
     if(capped){const q=starQuote(s,capped);return{title:cat(capped).name+'已达等级上限',text:'等级上限 Lv.'+q.cap+' → Lv.'+q.nextCap,action:'cat-tag',id:capped,label:'前往升星'};}
     const train=order.find(id=>s.levels[id]<G.levelCap(s,id));
-    if(train){const q=G.breakthroughQuote(s,train);return{title:'培养'+cat(train).name,text:q.maxed||q.levelReady?'当前等级上限 Lv.'+G.levelCap(s,train):'角色 Lv.'+q.requiredLevel+' 可研习下一级绝活。',action:'train',id:train,label:'前往培养'};}
+    if(train){const q=G.breakthroughQuote(s,train);return{title:'培养'+cat(train).name,text:q.maxed?'绝活效果已全部解锁':'角色 Lv.'+q.requiredLevel+' 自动解锁下一级绝活。',action:'train',id:train,label:'前往培养'};}
     if(s.runCleared>=G.MAX_STAGE)return{title:'主线已通关，挑战街区硬仗',text:'继续挑战街区硬仗、街头擂台与每周委托。',action:'hard',label:'前往街区硬仗'};
     return{title:b?.result==='lose'?'强化装备，再战一次':'继续推进主线',text:'旧街寻宝获取装备，旧件回收场获取强化材料。',action:b?.result==='lose'?'equipment':'battle',id:teamPlan(s).core,label:b?.result==='lose'?'查看装备':'回到战场'};
   }

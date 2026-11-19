@@ -1,0 +1,60 @@
+{
+  "id": "auto-skill-unlock-20261119",
+  "files": [
+    {
+      "target": "core.ts",
+      "edits": [
+        {
+          "find": "import {GROWTH_RULE_VERSION,MAX_HERO_LEVEL,heroGrowthValue,normalizeGrowthRules} from './growth-rules';",
+          "replace": "import {GROWTH_RULE_VERSION,MAX_HERO_LEVEL,SKILL_UNLOCK_RULE_VERSION,heroGrowthValue,normalizeGrowthRules,normalizeAutoSkillRanks,syncAutoSkillRank,skillRankForLevel} from './growth-rules';"
+        },
+        {
+          "find": "growthRuleVersion:GROWTH_RULE_VERSION,legacyLevelCaps:",
+          "replace": "growthRuleVersion:GROWTH_RULE_VERSION,skillUnlockRuleVersion:SKILL_UNLOCK_RULE_VERSION,legacyLevelCaps:"
+        },
+        {
+          "find": "export function inheritTraining(s,from,to){if(!inheritanceQuote(s,from,to).ready)return false;[s.levels[from],s.levels[to]]=[s.levels[to],s.levels[from]];s.breakthroughs??={};[s.breakthroughs[from],s.breakthroughs[to]]=[s.breakthroughs[to]||0,s.breakthroughs[from]||0];return true;}",
+          "replace": "export function inheritTraining(s,from,to){if(!inheritanceQuote(s,from,to).ready)return false;[s.levels[from],s.levels[to]]=[s.levels[to],s.levels[from]];syncAutoSkillRank(s,from);syncAutoSkillRank(s,to);return true;}"
+        },
+        {
+          "find": "migrateGrowth(s,raw);normalizeGrowthRules(s,raw,CATS);return s;",
+          "replace": "migrateGrowth(s,raw);normalizeGrowthRules(s,raw,CATS);normalizeAutoSkillRanks(s,raw,CATS);return s;"
+        },
+        {
+          "find": "if(done)recordActivity(s,'train',done,now);return done;",
+          "replace": "if(done){syncAutoSkillRank(s,id);recordActivity(s,'train',done,now);}return done;"
+        },
+        {
+          "find": "skillRank:s.breakthroughs?.[id]||0,gear:g",
+          "replace": "skillRank:skillRankForLevel(l),gear:g"
+        },
+        {
+          "find": "export function breakthrough(s,id){const c=CATS.find(c=>c.id===id),q=breakthroughQuote(s,id);if(!c||!owns(s,id)||!q.canLearn)return false;s.badges-=q.cost;s.growth.notes-=q.notes;s.growth.seals-=q.seals;s.breakthroughs[id]=q.rank+1;return true;}",
+          "replace": "// Legacy study action is intentionally inert: leveling is now the sole unlock.\nexport function breakthrough(){return false;}"
+        }
+      ]
+    },
+    {
+      "target": "progression.ts",
+      "edits": [
+        {
+          "find": "import { levelCap, SKILL_STUDY_LEVELS } from './growth-rules';",
+          "replace": "import { levelCap, SKILL_STUDY_LEVELS, skillRankForLevel } from './growth-rules';"
+        },
+        {
+          "find": "export function breakthroughQuote(s,id){const rank=safe(s.breakthroughs?.[id],3),maxed=rank===3,requiredLevel=SKILL_STUDY_LEVELS[Math.min(3,rank+1)],cost=[8,20,40][rank]||0;const notes=[50,140,300][rank]||0,seals=[0,6,18][rank]||0,levelReady=(s.levels?.[id]||1)>=requiredLevel,canAfford=s.badges>=cost&&(s.growth?.notes||0)>=notes&&(s.growth?.seals||0)>=seals;return {rank,requiredLevel,cost,notes,seals,levelReady,canAfford,maxed,canLearn:!maxed&&levelReady&&canAfford,cap:levelCap(s,id)};}",
+          "replace": "export function breakthroughQuote(s,id){const rank=skillRankForLevel(s.levels?.[id]??1),maxed=rank>=3,requiredLevel=SKILL_STUDY_LEVELS[Math.min(3,rank+1)];return {rank,requiredLevel,cost:0,notes:0,seals:0,levelReady:maxed,canAfford:false,maxed,canLearn:false,automatic:true,cap:levelCap(s,id)};}"
+        }
+      ]
+    },
+    {
+      "target": "skill-training.ts",
+      "edits": [
+        {
+          "find": "export const skillRank=(s,id)=>Math.max(0,Math.min(3,Math.floor(s.breakthroughs?.[id]||0)));",
+          "replace": "import { skillRankForLevel } from './growth-rules';\nexport const skillRank=(s,id)=>skillRankForLevel(s.levels?.[id]??1);"
+        }
+      ]
+    }
+  ]
+}

@@ -382,7 +382,9 @@ export class GameSession {
     if (!done) return false;
     this.battle?.syncStats(this.state);
     this.guideEvent('upgrade');
-    this.changed('upgrade', { id, done, before, after: G.catStats(this.state, id), beforePower, afterPower: G.power(this.state) });
+    const after = G.catStats(this.state, id);
+    this.changed('upgrade', { id, done, before, after, beforePower, afterPower: G.power(this.state) });
+    if (after.skillRank > before.skillRank) this.toast(G.CATS.find(c => c.id === id).name + '的绝活自动解锁至 Lv.' + (after.skillRank + 1));
     return done;
   }
 
@@ -502,16 +504,8 @@ export class GameSession {
     return true;
   }
 
-  breakthrough(id = this.selected) {
-    if (!G.ownsCompanion(this.state, id)) return this.fail('尚未结识这位伙伴');
-    const quote = G.breakthroughQuote(this.state, id);
-    if (quote.maxed) return this.fail('绝活已研习至最高等级');
-    if (!quote.levelReady) return this.fail('需要角色 Lv.' + quote.requiredLevel);
-    if (!G.breakthrough(this.state, id)) return this.fail('绝活研习材料不足，或已研习至最高等级');
-    this.battle?.syncStats(this.state, { preserveHealthRatio: true });
-    this.changed('breakthrough', { id });
-    return true;
-  }
+  // Retained for old callbacks and saves. Skill ranks now follow level only.
+  breakthrough() { return this.fail('绝活随角色等级自动解锁，无需研习'); }
 
   claimIdle() {
     G.accrueIdle(this.state, this.now());

@@ -304,6 +304,17 @@
         "tests/domain-parity.test.mjs",
         "tests/browser-smoke.mjs"
       ]
+    },
+    {
+      "id": "auto-skill-unlock-20261119",
+      "authorization": "用户：到等级以后自动解锁，就咸鱼之王那种的",
+      "patch": "tests/fixtures/auto-skill-unlock.patch.json",
+      "newModules": [],
+      "tests": [
+        "tests/progression-rules.test.mjs",
+        "tests/domain-parity.test.mjs",
+        "tests/browser-smoke.mjs"
+      ]
     }
   ]
 }

@@ -183,7 +183,7 @@ export class Pages {
     ui.label(skills,'主动 · Lv.'+(SKILL_STUDY[id].index===0?stats.skillRank+1:1),w-100,40,88,20,{size:10,color:P.muted,align:'right'});
     line(ui,skills,skill.description,12,66,w-24,12,P.ink,descH);
     let sy=66+descH+8;
-    ui.button(skills,'技能升级',12,sy,w-24,28,()=>this.open('skill',{id}),{name:'skill-level-'+id,size:11});sy+=38;
+    ui.button(skills,'技能详情',12,sy,w-24,28,()=>this.open('skill',{id}),{name:'skill-level-'+id,size:11});sy+=38;
     const passiveName={orange:'稳稳接住',ink:'一击中的',milk:'加满一杯',spark:'余温未散',mint:'冷静一下',bolt:'彻底拆解',pudding:'硬气护体',star:'星光先行'}[id];
     ui.panel(skills,7,sy-2,w-14,passH+31,{fill:level>=5?'#dddcc5':'#d7cfbc',stroke:'#9a9e7d',radius:7,paper:230});
     ui.label(skills,passiveName,12,sy,w-146,21,{size:12,bold:true,color:level>=5?P.green:P.muted});ui.label(skills,level>=5?'被动 · Lv.'+(SKILL_STUDY[id].index===1?stats.skillRank+1:1):'角色 Lv.5 解锁',w-137,sy,124,21,{size:10,color:P.muted,align:'right'});sy+=25;
@@ -194,12 +194,11 @@ export class Pages {
       const h=contentHeight(t.desc,w-24,12);line(ui,skills,t.desc,12,sy,w-24,12,t.active?P.ink:P.muted,h);sy+=h+12;
     });
     y+=skillH+10;
-    const bq=G.breakthroughQuote(state,id),next=bq.maxed?'技能已满级':'下一级：'+skillSummary(id,bq.rank+1),studyH=42+contentHeight(next,w-24,11)+94;
+    const bq=G.breakthroughQuote(state,id),next=bq.maxed?'已解锁全部绝活效果':'下一级：'+skillSummary(id,bq.rank+1),nh=contentHeight(next,w-24,11),studyH=nh+70;
     const study=ui.panel(content,0,y,w,studyH,{fill:'#54736c',stroke:'#35453d',radius:8,paper:230});
-    ui.label(study,'绝活研习 · '+SKILL_STUDY[id].name,10,9,w-20,23,{size:13,bold:true,color:'#fff0ce'});
-    const nh=contentHeight(next,w-24,11);line(ui,study,next,12,37,w-24,11,'#d0d5cb',nh);
-    const cy=42+nh;costs(ui,study,state,{badges:bq.cost,notes:bq.notes,seals:bq.seals},id,10,cy,w-20,(t,d)=>this.open(t,d),true);
-    ui.button(study,bq.maxed?'已满级':!bq.levelReady?'需角色 Lv.'+bq.requiredLevel:bq.canAfford?'研习':'材料不足',10,cy+53,w-20,32,()=>this.act(()=>s.breakthrough(id)),{primary:true,disabled:!bq.canLearn,fill:!bq.canLearn?'#8c8a79':'#d7a65e',color:'#483124',paper:160,name:'breakthrough-'+id,size:12});
+    ui.label(study,'绝活成长 · '+SKILL_STUDY[id].name,10,9,w-20,23,{size:13,bold:true,color:'#fff0ce'});
+    line(ui,study,next,12,37,w-24,11,'#d0d5cb',nh);
+    ui.label(study,bq.maxed?'所有阶段已自动解锁':'角色 Lv.'+bq.requiredLevel+' 自动解锁下一档',12,44+nh,w-24,17,{size:11,color:'#fff0ce'});
     y+=studyH+10;content.getComponent(UITransform)?.setContentSize(w,y);
   }
   avatars(parent,x,y,w,selected){
