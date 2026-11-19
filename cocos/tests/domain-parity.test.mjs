@@ -56,7 +56,7 @@ function fixture(api, { stage = 1, level = 1, rank = 0, party = ['orange', 'ink'
   state.stage = stage;
   state.roster.owned = api.core.CATS.map(c => c.id);
   state.party = [...party];
-  for (const c of api.core.CATS) { state.levels[c.id] = level; state.roster.stars[c.id] = rank; }
+  for (const c of api.core.CATS) { state.levels[c.id] = level; state.roster.stars[c.id] = rank; state.breakthroughs[c.id] = level >= 120 ? 3 : level >= 80 ? 2 : level >= 40 ? 1 : 0; }
   if (rich) {
     state.gold = 1e12; state.growth.notes = 1e8; state.growth.seals = 1e8; state.badges = 1e8;
     state.inventory.materials.scrap = 1e8; state.inventory.materials.essence = 1e8;
@@ -72,7 +72,7 @@ function combatState(battle) {
 }
 
 function baselineFields(state) {
-  const { growthRuleVersion, legacyLevelCaps, ...rest } = state;
+  const { growthRuleVersion, skillUnlockRuleVersion, legacyLevelCaps, ...rest } = state;
   return rest;
 }
 
@@ -243,8 +243,22 @@ test('old Preview11 saves retain inventory, token tickets and earned progress th
   state.activities.tokenRewards = [{ serial: 7, claimed: false }];
   state.battleReport = { win: true, mode: 'activity', title: '失物追寻', stage: 5, companion: 'mint', tokenTicket: 7, rewards: { shards: 5 }, route: { group: 'recruit', id: 'all', tier: 1 } };
   const oldSave = original.core.encodeSave(state);
-  assert.deepEqual(baselineFields(migrated.core.decodeSave(oldSave, NOW)), original.core.decodeSave(oldSave, NOW));
-  const normalized = migrated.core.decodeSave(oldSave, NOW);
+  const normalized = migrated.core.decodeSave(oldSave, NOW), oldNormalized = original.core.decodeSave(oldSave, NOW);
+  assert.deepEqual(normalized.inventory, oldNormalized.inventory);
+  assert.deepEqual(normalized.roster, oldNormalized.roster);
+  assert.deepEqual(normalized.activities, oldNormalized.activities);
+  assert.deepEqual(normalized.party, oldNormalized.party);
+  assert.equal(normalized.highest, oldNormalized.highest);
+  assert.equal(normalized.gold, oldNormalized.gold);
+  // Each of the eight old rank-3 studies is refunded once. No one loses
+  // a previously earned level, and new skill strength is automatic by level.
+  assert.equal(normalized.badges, oldNormalized.badges + 68 * 8);
+  assert.equal(normalized.growth.notes, oldNormalized.growth.notes + 490 * 8);
+  assert.equal(normalized.growth.seals, oldNormalized.growth.seals + 24 * 8);
+  for (const cat of migrated.core.CATS) assert.equal(
+    migrated.core.catStats(normalized, cat.id).skillRank,
+    normalized.levels[cat.id] >= 120 ? 3 : normalized.levels[cat.id] >= 80 ? 2 : normalized.levels[cat.id] >= 40 ? 1 : 0,
+  );
   assert.deepEqual(migrated.core.decodeSave(migrated.core.encodeSave(normalized), NOW), normalized);
   assert.throws(() => migrated.core.decodeSave(oldSave.replace('CAN-CLUB-GROWTH-1', 'CAN-CLUB-1'), NOW));
 });
