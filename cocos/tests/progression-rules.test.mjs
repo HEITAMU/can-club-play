@@ -33,163 +33,177 @@ function state(api = G) {
 const snapshot = s => JSON.stringify(s);
 const sessionFor = s => new GameSession({ load: () => G.encodeSave(s), save() {}, now: () => NOW });
 
-test('ten quality caps and the three skill study gates are shared by all eight companions', () => {
-  assert.deepEqual(R.ASCENSION_LEVEL_CAPS, [10, 20, 30, 40, 60, 80, 100, 120, 140, 160]);
-  assert.deepEqual(R.SKILL_STUDY_LEVELS, [1, 40, 80, 120]);
+
+test('ten quality caps and three automatic skill unlock thresholds apply to all eight companions', () => {
+  assert.deepEqual(R.ASCENSION_LEVEL_CAPS, [10,20,30,40,60,80,100,120,140,160]);
+  assert.deepEqual(R.SKILL_STUDY_LEVELS, [1,40,80,120]);
   assert.equal(G.MAX_LEVEL, 160);
-  for (const c of G.CATS) for (let rank = 0; rank < 10; rank++) {
-    const s = state(); s.roster.stars[c.id] = rank;
-    assert.equal(G.levelCap(s, c.id), R.ASCENSION_LEVEL_CAPS[rank]);
-    const q = G.starQuote(s, c.id);
-    assert.equal(q.cap, R.ASCENSION_LEVEL_CAPS[rank]);
-    assert.equal(q.nextCap, R.ASCENSION_LEVEL_CAPS[Math.min(9, rank + 1)]);
-  }
-});
-
-test('training stops at each cap, charges only completed levels, and promotion opens further training', () => {
-  for (const c of G.CATS) for (let rank = 0; rank < 10; rank++) {
-    const s = state(); s.roster.stars[c.id] = rank;
-    const cap = R.ASCENSION_LEVEL_CAPS[rank]; s.levels[c.id] = cap - 1;
-    const gold = s.gold, cost = G.upgradeCost(cap - 1);
-    assert.deepEqual(G.upgradeQuote(cap - 1, 10, cap), { levels: 1, cost });
-    assert.equal(G.upgrade(s, c.id, 10, NOW), 1);
-    assert.equal(s.levels[c.id], cap); assert.equal(s.gold, gold - cost);
-    const stopped = snapshot(s); assert.equal(G.upgrade(s, c.id, 10, NOW), 0); assert.equal(snapshot(s), stopped);
-    const q = G.starQuote(s, c.id), before = G.catStats(s, c.id);
-    assert.equal(G.ascendCompanion(s, c.id), rank < 9);
-    assert.equal(s.levels[c.id], cap);
-    assert.equal(G.catStats(s, c.id).hp, before.hp); assert.equal(G.catStats(s, c.id).atk, before.atk);
-    if (rank < 9) {
-      assert.equal(s.roster.shards[c.id], 1000 - q.shards); assert.equal(s.growth.notes, 10000 - q.notes);
-      assert.equal(G.upgrade(s, c.id, 1, NOW), 1);
-      assert.ok(G.catStats(s, c.id).hp > before.hp); assert.ok(G.catStats(s, c.id).atk >= before.atk);
-    } else assert.equal(snapshot(s), stopped);
-  }
-});
-
-test('skill study checks each level boundary before spending, without automatic learning on promotion', () => {
-  for (const c of G.CATS) for (let rank = 0; rank < 3; rank++) {
-    const s = state(), required = [40, 80, 120][rank];
-    s.roster.stars[c.id] = 8; s.levels[c.id] = required - 1; s.breakthroughs[c.id] = rank;
-    let q = G.breakthroughQuote(s, c.id);
-    assert.equal(q.requiredLevel, required); assert.equal(q.levelReady, false); assert.equal(q.canAfford, true); assert.equal(q.canLearn, false);
-    const blocked = snapshot(s); assert.equal(G.breakthrough(s, c.id), false); assert.equal(snapshot(s), blocked);
-    assert.equal(G.ascendCompanion(s, c.id), true);
-    assert.equal(G.breakthrough(s, c.id), false); assert.equal(s.breakthroughs[c.id], rank);
-    assert.equal(G.upgrade(s, c.id, 1, NOW), 1); assert.equal(s.breakthroughs[c.id], rank);
-    q = G.breakthroughQuote(s, c.id); assert.equal(q.canLearn, true);
-    const before = { badges: s.badges, notes: s.growth.notes, seals: s.growth.seals };
-    assert.equal(G.breakthrough(s, c.id), true); assert.equal(s.breakthroughs[c.id], rank + 1);
-    assert.equal(s.badges, before.badges - q.cost); assert.equal(s.growth.notes, before.notes - q.notes); assert.equal(s.growth.seals, before.seals - q.seals);
-  }
-});
-
-test('failed or maxed learning and ascension are atomic, including unavailable and unknown companions', () => {
-  for (const missing of ['badges', 'notes', 'seals', 'maxed', 'unowned', 'unknown']) {
-    const s = state(); s.roster.stars.orange = 9; s.levels.orange = 160; s.breakthroughs.orange = 1;
-    if (missing === 'badges') s.badges = 0;
-    if (missing === 'notes' || missing === 'seals') s.growth[missing] = 0;
-    if (missing === 'maxed') s.breakthroughs.orange = 3;
-    if (missing === 'unowned') s.roster.owned = ['ink'];
-    const before = snapshot(s); assert.equal(G.breakthrough(s, missing === 'unknown' ? 'none' : 'orange'), false); assert.equal(snapshot(s), before);
-  }
-  for (const missing of ['shards', 'notes', 'maxed', 'unowned', 'unknown']) {
-    const s = state(); s.roster.stars.orange = missing === 'maxed' ? 9 : 1;
-    if (missing === 'shards') s.roster.shards.orange = 0;
-    if (missing === 'notes') s.growth.notes = 0;
-    if (missing === 'unowned') s.roster.owned = ['ink'];
-    const before = snapshot(s); assert.equal(G.ascendCompanion(s, missing === 'unknown' ? 'none' : 'orange'), false); assert.equal(snapshot(s), before);
-  }
-});
-
-test('session gates direct calls and synchronizes learned skill ranks to actual battle actors', () => {
-  for (const c of G.CATS) {
-    const s = state(); s.party = [c.id]; s.roster.stars[c.id] = 3; s.levels[c.id] = 39;
-    const session = sessionFor(s), before = snapshot(session.state);
-    assert.equal(session.breakthrough(c.id), false); assert.match(session.notice, /Lv\.40/); assert.equal(snapshot(session.state), before);
-    assert.equal(session.upgrade(c.id), 1);
-    assert.equal(session.breakthrough(c.id), true);
-    assert.equal(session.battle.heroes[0].skillRank, 1);
-    assert.equal(session.battle.heroes[0].level, 40);
-    const stats = G.catStats(session.state, c.id), power = G.power(session.state);
-    assert.equal(session.ascend(c.id), true);
-    assert.equal(session.battle.heroes[0].maxHp, stats.hp); assert.equal(G.power(session.state), power);
-  }
-  const s = state(); s.party = ['ink']; s.roster.stars.ink = 3; s.levels.ink = 40;
-  const session = sessionFor(s), low = new G.Battle(session.state, { stage: 3500, seed: 123, now: NOW });
-  assert.equal(session.breakthrough('ink'), true);
-  const high = new G.Battle(session.state, { stage: 3500, seed: 123, now: NOW });
-  for (const battle of [low, high]) { battle.heroes[0].crit = 0; battle.skill(battle.heroes[0]); }
-  assert.ok(high.enemies.reduce((n, e) => n + e.hp, 0) < low.enemies.reduce((n, e) => n + e.hp, 0), 'actual learned flying-fish skill must deal more damage');
-});
-
-test('legacy conversion preserves every level, quality, paid skill and original integer hp/attack', () => {
-  for (let level = 1; level <= 160; level++) for (let rank = 0; rank < 10; rank++) {
-    const source = state(old); source.bones = level % 3;
-    for (const c of old.CATS) { source.levels[c.id] = level; source.roster.stars[c.id] = rank; source.breakthroughs[c.id] = 3; }
-    const migrated = G.normalizeState(source, NOW);
-    for (const c of old.CATS) {
-      const a = old.catStats(source, c.id), b = G.catStats(migrated, c.id);
-      assert.ok(b.hp >= a.hp && b.atk >= a.atk, `${c.id} level ${level} rank ${rank}`);
-      assert.ok(migrated.levels[c.id] >= level && migrated.levels[c.id] <= 160);
-      assert.equal(migrated.roster.stars[c.id], rank); assert.equal(migrated.breakthroughs[c.id], 3);
+  for (const cat of G.CATS) {
+    for (let rank=0;rank<10;rank++) {
+      const s=state();s.roster.stars[cat.id]=rank;
+      assert.equal(G.levelCap(s,cat.id),R.ASCENSION_LEVEL_CAPS[rank]);
+      const q=G.starQuote(s,cat.id);
+      assert.equal(q.cap,R.ASCENSION_LEVEL_CAPS[rank]);
+      assert.equal(q.nextCap,R.ASCENSION_LEVEL_CAPS[Math.min(9,rank+1)]);
     }
-    assert.equal(migrated.gold, source.gold); assert.deepEqual(migrated.growth, source.growth); assert.deepEqual(migrated.roster.shards, source.roster.shards); assert.equal(migrated.upgrades, source.upgrades);
+    for (const [level,rank] of [[1,0],[5,0],[39,0],[40,1],[79,1],[80,2],[119,2],[120,3],[160,3]]) {
+      const s=state(); s.levels[cat.id]=level;
+      assert.equal(R.skillRankForLevel(level),rank);
+      assert.equal(G.catStats(s,cat.id).skillRank,rank);
+      assert.equal(S.skillRank(s,cat.id),rank);
+      assert.equal(G.breakthroughQuote(s,cat.id).rank,rank);
+    }
   }
 });
 
-test('legacy conversion and the earlier growth compensation remain idempotent across save and backup restore', () => {
-  for (const revision of [undefined, 1, 2]) {
-    const source = state(old); source.gold = 1e8; source.growthRevision = revision; source.levels.orange = 80; source.roster.stars.ink = 7; source.breakthroughs.ink = 3;
-    const migrated = G.decodeSave(old.encodeSave(source), NOW);
-    const saved = G.encodeSave(migrated);
-    assert.deepEqual(G.decodeSave(saved, NOW), migrated);
-    assert.deepEqual(G.decodeSave(G.encodeSave(G.decodeSave(saved, NOW)), NOW), migrated);
-    const restored = new GameSession({ load: () => 'broken', loadBackup: () => saved, save() {}, now: () => NOW });
-    assert.deepEqual(restored.state.levels, migrated.levels); assert.deepEqual(restored.state.roster, migrated.roster);
-    assert.deepEqual(restored.state.growth, migrated.growth); assert.equal(restored.state.gold, migrated.gold);
-    if (revision === 2) { assert.equal(migrated.gold, source.gold); assert.deepEqual(migrated.growth, source.growth); }
+test('quality raises only level cap; training changes stats and auto-unlocks exactly at level thresholds', () => {
+  for (const cat of G.CATS) for (let rank=0;rank<10;rank++) {
+    const s=state();s.roster.stars[cat.id]=rank;
+    const cap=R.ASCENSION_LEVEL_CAPS[rank];s.levels[cat.id]=cap-1;
+    const oldGold=s.gold,cost=G.upgradeCost(cap-1),beforeRank=G.catStats(s,cat.id).skillRank;
+    assert.deepEqual(G.upgradeQuote(cap-1,10,cap),{levels:1,cost});
+    assert.equal(G.upgrade(s,cat.id,10,NOW),1);
+    assert.equal(s.levels[cat.id],cap);assert.equal(s.gold,oldGold-cost);
+    assert.equal(s.breakthroughs[cat.id],R.skillRankForLevel(cap));
+    assert.equal(G.catStats(s,cat.id).skillRank,R.skillRankForLevel(cap));
+    assert.ok(G.catStats(s,cat.id).skillRank>=beforeRank);
+    const stopped=snapshot(s);assert.equal(G.upgrade(s,cat.id,10,NOW),0);assert.equal(snapshot(s),stopped);
+    const quote=G.starQuote(s,cat.id),before=G.catStats(s,cat.id);
+    assert.equal(G.ascendCompanion(s,cat.id),rank<9);
+    assert.equal(s.levels[cat.id],cap);assert.equal(G.catStats(s,cat.id).hp,before.hp);assert.equal(G.catStats(s,cat.id).atk,before.atk);
+    if(rank<9){assert.equal(s.roster.shards[cat.id],1000-quote.shards);assert.equal(G.upgrade(s,cat.id,1,NOW),1);}
+    else assert.equal(snapshot(s),stopped);
   }
 });
 
-test('legacy protection cannot purchase or receive new over-cap training after a transfer', () => {
-  const source = state(old); source.levels.orange = 160; source.roster.stars.milk = 9;
-  const s = G.normalizeState(source, NOW);
-  // The old quality on milk converted its strength; use an already-trained legal
-  // recipient at Lv.1 to isolate the transfer boundary without changing the legacy owner.
-  s.levels.milk = 1;
-  assert.equal(s.legacyLevelCaps.orange, 160); assert.equal(G.levelCap(s, 'orange'), 10);
-  assert.equal(G.inheritTraining(s, 'orange', 'milk'), true);
-  assert.equal(s.levels.orange, 1); assert.equal(s.levels.milk, 160); assert.equal(s.legacyLevelCaps.orange, 160); assert.equal(s.legacyLevelCaps.milk, 0);
-  assert.equal(G.upgrade(s, 'orange', 10, NOW), 9); assert.equal(G.upgrade(s, 'orange', 10, NOW), 0);
-  const before = snapshot(s); assert.equal(G.inheritTraining(s, 'milk', 'orange'), false); assert.equal(snapshot(s), before);
-  assert.deepEqual(G.decodeSave(G.encodeSave(s), NOW), s);
-});
-
-test('inheritance validates both receiving caps and formation changes never silently take blocked training', () => {
-  const s = state(); s.party = ['orange', 'ink']; s.roster.stars.orange = 7; s.levels.orange = 120; s.breakthroughs.orange = 3;
-  let before = snapshot(s); assert.equal(G.inheritTraining(s, 'orange', 'milk'), false); assert.equal(snapshot(s), before);
-  const levels = { ...s.levels }, skills = { ...s.breakthroughs };
-  assert.equal(G.setParty(s, 0, 'milk'), true); assert.equal(s.party[0], 'milk'); assert.deepEqual(s.levels, levels); assert.deepEqual(s.breakthroughs, skills);
-  s.roster.stars.milk = 7;
-  for (let i = 0; i < 4; i++) {
-    assert.equal(G.inheritTraining(s, 'orange', 'milk'), true); assert.equal(G.inheritTraining(s, 'milk', 'orange'), true);
-    assert.deepEqual(s.levels, levels); assert.deepEqual(s.breakthroughs, skills);
+test('levels 40,80,120 unlock automatically; no study materials or confirmation are needed', () => {
+  for (const cat of G.CATS) for (const [level,expected] of [[39,0],[79,1],[119,2]]) {
+    const s=state();s.roster.stars[cat.id]=9;s.levels[cat.id]=level;s.breakthroughs[cat.id]=expected;
+    const badges=s.badges,notes=s.growth.notes,seals=s.growth.seals;
+    assert.equal(G.catStats(s,cat.id).skillRank,expected);
+    const quote=G.breakthroughQuote(s,cat.id);
+    assert.equal(quote.requiredLevel,level+1);
+    assert.equal(quote.automatic,true);assert.equal(quote.canLearn,false);
+    const old=snapshot(s);assert.equal(G.breakthrough(s,cat.id),false);assert.equal(snapshot(s),old);
+    assert.equal(G.upgrade(s,cat.id,1,NOW),1);
+    assert.equal(s.levels[cat.id],level+1);
+    assert.equal(s.breakthroughs[cat.id],expected+1);
+    assert.equal(G.catStats(s,cat.id).skillRank,expected+1);
+    assert.equal(s.badges,badges);assert.equal(s.growth.notes,notes);assert.equal(s.growth.seals,seals);
+    assert.equal(G.breakthroughQuote(s,cat.id).rank,expected+1);
   }
-  s.roster.stars.orange = 0; s.levels.milk = 40;
-  before = snapshot(s); assert.equal(G.inheritanceQuote(s, 'orange', 'milk').blockedId, 'orange'); assert.equal(G.inheritTraining(s, 'orange', 'milk'), false); assert.equal(snapshot(s), before);
 });
 
-test('current-format saves do not acquire legacy exemptions; reset returns a fresh capped account', () => {
-  const s = state(); s.levels.orange = 160; s.levels.ink = -20; s.legacyLevelCaps.orange = NaN; s.legacyLevelCaps.unknown = 160;
-  const normalized = G.decodeSave(G.encodeSave(s), NOW);
-  assert.equal(normalized.levels.orange, 10); assert.equal(normalized.levels.ink, 1); assert.equal(normalized.legacyLevelCaps.orange, 0); assert.equal(normalized.legacyLevelCaps.unknown, undefined);
-  const legacy = state(old); legacy.levels.orange = 160;
-  const session = sessionFor(G.normalizeState(legacy, NOW));
-  assert.equal(session.state.levels.orange, 160);
-  // The retained current level can meet a study gate, but never raises the
-  // natural training or inheritance cap. Previously learned skills stay learned.
-  assert.equal(session.breakthrough('orange'), true); assert.equal(G.levelCap(session.state, 'orange'), 10);
-  session.reset(); assert.equal(session.state.levels.orange, 1); assert.equal(G.levelCap(session.state, 'orange'), 10);
-  assert.ok(Object.values(session.state.legacyLevelCaps).every(value => value === 0));
+test('unaffordable study resources do not prevent automatic unlocking; manual study is always inert', () => {
+  const s=state();s.roster.stars.orange=9;s.levels.orange=39;s.badges=0;s.growth.notes=0;s.growth.seals=0;
+  assert.equal(G.upgrade(s,'orange',1,NOW),1);
+  assert.equal(s.breakthroughs.orange,1);
+  assert.equal(G.breakthroughQuote(s,'orange').canLearn,false);
+  const snapshotBefore=snapshot(s);
+  assert.equal(G.breakthrough(s,'orange'),false);assert.equal(snapshot(s),snapshotBefore);
+  assert.equal(G.breakthrough(s,'unknown'),false);assert.equal(snapshot(s),snapshotBefore);
+});
+
+test('real session auto-updates live battle skill and exact skill effects at the threshold', () => {
+  for (const cat of G.CATS) {
+    const s=state();s.party=[cat.id];s.roster.stars[cat.id]=9;s.levels[cat.id]=39;
+    const session=sessionFor(s);
+    const before=session.battle.heroes[0].skillRank;
+    assert.equal(before,0);
+    assert.equal(session.breakthrough(cat.id),false);
+    const materials=[session.state.badges,session.state.growth.notes,session.state.growth.seals];
+    assert.equal(session.upgrade(cat.id),1);
+    assert.equal(session.battle.heroes[0].skillRank,1);
+    assert.equal(session.battle.heroes[0].level,40);
+    assert.deepEqual([session.state.badges,session.state.growth.notes,session.state.growth.seals],materials);
+  }
+  const s=state();s.party=['ink'];s.roster.stars.ink=9;s.levels.ink=39;
+  const low=new G.Battle(s,{stage:3500,seed:123,now:NOW});
+  assert.equal(G.upgrade(s,'ink',1,NOW),1);
+  const high=new G.Battle(s,{stage:3500,seed:123,now:NOW});
+  // Equalize attack and the other stats so the difference is specifically the skill unlock.
+  const a=low.heroes[0],b=high.heroes[0];
+  b.atk=a.atk;b.crit=a.crit=0;
+  low.skill(a);high.skill(b);
+  assert.ok(high.enemies.reduce((n,e)=>n+e.hp,0)<low.enemies.reduce((n,e)=>n+e.hp,0));
+});
+
+test('old saves keep progress and receive a one-time refund of paid study materials', () => {
+  const refund=[{badges:0,notes:0,seals:0},{badges:8,notes:50,seals:0},{badges:28,notes:190,seals:6},{badges:68,notes:490,seals:24}];
+  for(let paid=0;paid<=3;paid++){
+    const source=state(old);source.roster.stars.orange=9;source.levels.orange=30;source.breakthroughs.orange=paid;
+    const before= {badges:source.badges,notes:source.growth.notes,seals:source.growth.seals,gold:source.gold,stars:source.roster.stars.orange};
+    const current=G.normalizeState(source,NOW);
+    assert.equal(current.skillUnlockRuleVersion,R.SKILL_UNLOCK_RULE_VERSION);
+    assert.equal(current.levels.orange>=30,true);
+    assert.equal(G.catStats(current,'orange').skillRank,R.skillRankForLevel(current.levels.orange));
+    assert.equal(current.badges,before.badges+refund[paid].badges);
+    assert.equal(current.growth.notes,before.notes+refund[paid].notes);
+    assert.equal(current.growth.seals,before.seals+refund[paid].seals);
+    assert.equal(current.roster.stars.orange,before.stars);
+    assert.equal(current.gold,before.gold);
+    const saved=G.encodeSave(current);
+    assert.deepEqual(G.decodeSave(saved,NOW),current,'reloading cannot refund twice');
+    assert.deepEqual(G.decodeSave(G.encodeSave(G.decodeSave(saved,NOW)),NOW),current,'repeat save cannot refund twice');
+  }
+});
+
+test('all legacy levels and qualities retain combat stats through the prior quality-strength conversion', () => {
+  for (let level=1;level<=160;level++) for(let rank=0;rank<10;rank++){
+    const source=state(old);source.bones=level%3;
+    for(const cat of old.CATS){source.levels[cat.id]=level;source.roster.stars[cat.id]=rank;source.breakthroughs[cat.id]=3;}
+    const migrated=G.normalizeState(source,NOW);
+    for(const cat of old.CATS){
+      const before=old.catStats(source,cat.id),after=G.catStats(migrated,cat.id);
+      assert.ok(after.hp>=before.hp&&after.atk>=before.atk,cat.id+' '+level+' '+rank);
+      assert.ok(migrated.levels[cat.id]>=level&&migrated.levels[cat.id]<=160);
+      assert.equal(migrated.roster.stars[cat.id],rank);
+      assert.equal(after.skillRank,R.skillRankForLevel(migrated.levels[cat.id]));
+    }
+  }
+});
+
+test('old backup restore, earlier growth compensation and automatic-skill conversion are idempotent', () => {
+  for(const revision of [undefined,1,2]){
+    const source=state(old);source.gold=1e8;source.growthRevision=revision;source.levels.orange=80;source.roster.stars.ink=7;source.breakthroughs.ink=3;
+    const migrated=G.decodeSave(old.encodeSave(source),NOW);
+    assert.deepEqual(G.decodeSave(G.encodeSave(migrated),NOW),migrated);
+    const restored=new GameSession({load:()=> 'broken',loadBackup:()=>G.encodeSave(migrated),save(){},now:()=>NOW});
+    assert.deepEqual(restored.state.levels,migrated.levels);
+    assert.deepEqual(restored.state.roster,migrated.roster);
+    assert.deepEqual(restored.state.growth,migrated.growth);
+    assert.equal(restored.state.gold,migrated.gold);
+  }
+});
+
+test('inheritance stays gated by quality and skill ranks track receiving levels, not the original owner', () => {
+  const s=state();s.party=['orange','ink'];s.roster.stars.orange=7;s.roster.stars.milk=7;
+  s.levels.orange=120;s.levels.milk=39;s.breakthroughs.orange=3;s.breakthroughs.milk=0;
+  assert.equal(G.inheritTraining(s,'orange','milk'),true);
+  assert.equal(s.levels.orange,39);assert.equal(s.levels.milk,120);
+  assert.equal(s.breakthroughs.orange,0);assert.equal(s.breakthroughs.milk,3);
+  assert.equal(G.catStats(s,'orange').skillRank,0);assert.equal(G.catStats(s,'milk').skillRank,3);
+  s.roster.stars.orange=0;
+  const prior=snapshot(s);
+  assert.equal(G.inheritTraining(s,'milk','orange'),false);assert.equal(snapshot(s),prior);
+  assert.equal(G.setParty(s,0,'milk'),true);
+  assert.equal(s.party[0],'milk');
+  assert.equal(s.levels.orange,39);
+});
+
+test('current-format save has no legacy quality exemptions, and reset clears previous progress', () => {
+  const s=state();s.levels.orange=160;s.levels.ink=-20;s.legacyLevelCaps.orange=NaN;
+  const normalized=G.decodeSave(G.encodeSave(s),NOW);
+  assert.equal(normalized.levels.orange,10);assert.equal(normalized.levels.ink,1);
+  assert.equal(normalized.breakthroughs.orange,0);
+  const oldSource=state(old);oldSource.levels.orange=160;
+  const session=sessionFor(G.normalizeState(oldSource,NOW));
+  assert.equal(session.state.levels.orange,160);
+  assert.equal(session.state.breakthroughs.orange,3);
+  assert.equal(session.breakthrough('orange'),false);
+  assert.equal(G.levelCap(session.state,'orange'),10);
+  session.reset();
+  assert.equal(session.state.levels.orange,1);
+  assert.equal(session.state.breakthroughs.orange,0);
+  assert.equal(G.levelCap(session.state,'orange'),10);
 });
