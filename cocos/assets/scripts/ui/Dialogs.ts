@@ -1,6 +1,6 @@
 // @ts-nocheck
 // Every modal is a native Cocos node tree. Domain mutations stay in GameSession.
-import { Node, UITransform, EditBox, Label, BlockInputEvents } from 'cc';
+import { Node, UITransform, EditBox, Label, BlockInputEvents, Graphics, Color, view, Button } from 'cc';
 import * as G from '../domain/core';
 import * as E from '../domain/equipment';
 import * as A from '../domain/activities';
@@ -17,7 +17,7 @@ import { teamPlan } from '../domain/team-plans';
 import { crewSkill } from '../domain/crew-skill';
 import { P, fmt, clean, cat, contentHeight, line, progress, keepsakeArt, materialArt, gearArt, gearTile, rewardRow, costs, badge, paw, anchorRect, sceneCard } from './Pages';
 
-const GROUPS=[{id:'recruit',name:'失物追寻',copy:'每日三次 · 随机信物与广告自选'},{id:'notes',name:'后巷清扫',copy:'研习技能所需的笔记'},{id:'badges',name:'夜班护送',copy:'研习技能所需的勋章'},{id:'scrap',name:'旧件回收场',copy:'强化装备所需的零件'},{id:'essence',name:'熄灯工坊',copy:'洗炼副属性所需的打磨砂'},{id:'equipment',name:EQUIPMENT_SERIES,copy:'三处旧街据点 · 按部位寻宝'},{id:'hard',name:'街区硬仗',copy:'历练印记与首通装备'}];
+const GROUPS=[{id:'recruit',name:'失物追寻',copy:'每日三次 · 随机信物与广告自选'},{id:'notes',name:'后巷清扫',copy:'研习技能所需的笔记'},{id:'badges',name:'夜班护送',copy:'研习技能所需的勋章'},{id:'scrap',name:'旧件回收场',copy:'强化装备所需的零件'},{id:'essence',name:'熄灯工坊',copy:'洗炼副属性所需的打磨砂'},{id:'equipment',name:EQUIPMENT_SERIES,copy:'三处旧街据点 · 按部位寻宝'},{id:'hard',name:'街区硬仗',copy:'街区硬仗 · 历练印记与首通装备'}];
 const JOBS={notes:'sweep',badges:'escort',scrap:'parts',essence:'polish'};
 export const groupFor = kind => ({sweep:'notes',escort:'badges',parts:'scrap',polish:'essence',salvage:'equipment',wardrobe:'equipment',nightwatch:'equipment',hunt:'equipment'}[kind]||kind);
 const requestFor=(group,id='',tier=1,runeSearch=false)=>({... (group==='equipment'?{kind:equipmentRoute(id)?id:'salvage',id:''}:JOBS[group]?{kind:JOBS[group],id:''}:group==='materials'?{kind:id,id:''}:{kind:group,id}),tier,runeSearch});
@@ -39,26 +39,55 @@ export class Dialogs {
   render(parent,width,height,type,data={}){
     this.width=width;this.height=height;this.renderRoot=parent;this.type=type;this.data=data||{};
     const blocked=type==='intro',outside=type==='report'?()=>this.dismissReport():()=>this.dismiss();
-    const backdrop=this.ui.panel(parent,0,0,width,height,{fill:['equipment','material','set'].includes(type)?'#00000000':'#211927bb',stroke:'#00000000',radius:0});backdrop.name='modal-backdrop';backdrop.addComponent(BlockInputEvents);if(!blocked)backdrop.on(Node.EventType.TOUCH_END,outside);
-    if(type==='report')return this.report(parent);
+    const backdrop=this.ui.panel(parent,0,0,width,height,{fill:['equipment','material','set'].includes(type)?'#00000000':'#211927bb',stroke:'#00000000',radius:0});backdrop.name='modal-backdrop';backdrop.addComponent(BlockInputEvents);
+    if(type==='report'){const touches=new Map();this.bindReportTap(backdrop,touches);return this.report(parent,touches);}
+    if(!blocked)backdrop.on(Node.EventType.TOUCH_END,outside);
     if(type==='intro')return this.intro(parent);
     const titles={equipment:'装备',inherit:'培养继承','cat-tag':'猫牌升阶',skill:'技能升级',set:'套装属性',keepsake:'伙伴信物',material:'材料',arena:'猫巷委托板',street:'委托',stall:'鱼摊',journal:'猫巷手账',challenges:'街头挑战',quests:'接下来做什么',settings:'猫猫休息室',export:'把猫猫存档带走',import:'导入一份存档','confirm-import':'这份存档可以读取',reset:'从头开始？',pause:'歇一会儿',victory:'这条街，已经走遍。',routes:'街区开拓',recruit:'新队员加入'};
     const method={'cat-tag':'ascension','confirm-import':'confirmImport',arena:'hub',set:'gearSet',export:'exportSave',import:'importSave'}[type]||type;
     const defaultH={equipment:570,inherit:400,'cat-tag':530,skill:510,set:350,keepsake:380,material:310,stall:630,settings:430,export:480,import:490,'confirm-import':340,reset:280,pause:310,victory:200,recruit:480}[type];
     const popover=['equipment','material','keepsake','set'].includes(type),boxH=Math.min(popover?height*.7:height-36,defaultH||height-50),boxW=Math.min(width-24,popover?270:368),a=this.data.anchor;
     const x=a?Math.max(12,Math.min(width-boxW-12,a.x+a.w/2<width/2?a.x+a.w+8:a.x-boxW-8)):(width-boxW)/2,y=a?Math.max(12,Math.min(height-boxH-12,a.y)):(height-boxH)/2;
-    const panel=this.ui.panel(parent,x,y,boxW,boxH,{fill:'#e9d8b5',stroke:'#654731',radius:13});
+    const illustrated=type==='arena'||type==='quests'||type==='street'&&this.data.detail===false;
+    const paperSize={equipment:280,inherit:280,material:280,keepsake:280,'cat-tag':260,pause:240,journal:260,challenges:260}[type];
+    const panel=this.ui.panel(parent,x,y,boxW,boxH,{fill:illustrated?(type==='quests'?'#334a51':'#293e4c'):type==='pause'?'#efe0bd':type==='cat-tag'?'#eeddb7':type==='journal'||type==='challenges'?'#e8d4ad':paperSize?'#ead9b9':'#e9d8b5',stroke:'#654731',radius:13,paper:paperSize,paperBlend:'normal',paperCenter:paperSize!==280});
     panel.addComponent(BlockInputEvents);
     panel.name='dialog-'+type;
-    this.ui.label(panel,titles[type]||'',15,13,boxW-66,29,{size:19,bold:true,color:P.ink});
-    this.ui.button(panel,'×',boxW-44,10,32,30,()=>this.dismiss(),{name:'modal-close',size:23,fill:'#ceb18a'});
-    const body=this.ui.scroll(panel,12,53,boxW-24,boxH-65,boxH-65);
+    let body,bodyW,bodyH;
+    if(illustrated){
+      const shell=this.ui.scroll(panel,1,1,boxW-2,boxH-2,boxH-2),headerH=type==='quests'?110:124;
+      const group=GROUPS.find(g=>g.id===(this.data.group==='materials'?groupFor(this.data.id):this.data.group==='hunt'?'equipment':this.data.group||'recruit'));
+      this.artHeader(shell,boxW-2,headerH,type==='quests'?'接下来做什么':type==='arena'?'猫巷委托板':group?.name||'委托',type==='quests'?'远征队手账':type==='arena'?'挑一份委托，带上伙伴出发。':group?.copy||'',type==='quests');
+      bodyW=boxW-26;bodyH=Math.max(1,boxH-headerH-30);body=this.ui.group(shell,12,headerH+14,bodyW,bodyH,'dialog-content');body.__scrollShell=shell;body.__scrollTop=headerH+14;
+    }else{
+      this.ui.label(panel,titles[type]||'',15,13,boxW-66,29,{size:19,bold:true,color:P.ink});
+      bodyW=boxW-24;bodyH=boxH-65;body=this.ui.scroll(panel,12,53,bodyW,bodyH,bodyH);
+    }
     body.name='dialog-content';
-    if(typeof this[method]==='function')this[method](body,boxW-24,boxH-65,this.data);
-    else line(this.ui,body,'',0,0,boxW-24);
+    if(typeof this[method]==='function')this[method](body,bodyW,bodyH,this.data);
+    else line(this.ui,body,'',0,0,bodyW);
+    this.ui.button(panel,'×',boxW-44,10,32,30,()=>this.dismiss(),{name:'modal-close',size:23,fill:illustrated?'#293847e8':'#ceb18a',stroke:illustrated?'#c4a674':undefined,color:illustrated?'#fff1cc':undefined});
     return panel;
   }
-  heightOf(node,w,h){node.getComponent(UITransform)?.setContentSize(w,Math.max(1,h));}
+  heightOf(node,w,h){node.getComponent(UITransform)?.setContentSize(w,Math.max(1,h));if(node.__scrollShell){const t=node.__scrollShell.getComponent(UITransform);t.setContentSize(t.width,Math.max(t.height,node.__scrollTop+h+14));}}
+  artHeader(parent,w,h,title,subtitle,growth=false){
+    const {ui}=this,n=ui.clip(parent,0,0,w,h,13,true);n.name=growth?'growth-header':'commission-header';
+    // Frozen CSS uses center/cover, not a stretched banner. Keep the 1080×360 art.
+    const scale=Math.max(w/1080,h/360),sw=Math.min(1080,w/scale),sh=Math.min(360,h/scale);
+    ui.image(n,'assets/ui/commission-board-v02641.webp',0,0,w,h,[(1080-sw)/2,(360-sh)/2,sw,sh]);
+    if(!growth){
+      const shade=ui.group(n,0,0,w,h,'commission-header-shade').addComponent(Graphics);
+      // The original dark-to-transparent vertical overlay leaves the upper 15% clear.
+      for(let y=0;y<Math.ceil(h);y++){shade.fillColor=new Color(21,43,62,Math.round(238*Math.max(0,((y+.5)/h-.15)/.85)));shade.rect(0,-Math.min(h,y+1),w,Math.min(1,h-y));shade.fill();}
+      const label=ui.label(n,title,16,48,w-32,28,{size:23,bold:true,color:'#ffe3a5'});label.lineHeight=28;
+      ui.label(n,subtitle,16,80,w-32,24,{size:12,color:'#e5dbc6'});
+    }else{
+      ui.label(n,subtitle,16,26,w-32,16,{size:11,color:'#f6d9a0'});
+      ui.label(n,title,16,48,w-32,37,{size:26,bold:true,color:'#fff0cc'});
+    }
+    const rim=ui.group(n,0,0,w,h,'header-rule').addComponent(Graphics);rim.strokeColor=new Color(growth?165:182,growth?129:147,growth?77:92);rim.lineWidth=growth?3:2;rim.moveTo(0,-h+rim.lineWidth/2);rim.lineTo(w,-h+rim.lineWidth/2);rim.stroke();
+    return n;
+  }
   intro(parent){
     const {ui}=this,w=Math.min(350,this.width-34),h=295,x=(this.width-w)/2,y=(this.height-h)/2;
     const p=ui.panel(parent,x,y,w,h,{fill:'#e9d8b5',stroke:P.rim,radius:13});p.name='intro';ui.image(p,'assets/mobile/street-0-v02684.webp',5,5,w-10,108,[0,235,418,145]);
@@ -72,19 +101,19 @@ export class Dialogs {
     const owner=E.gearOwner(state,uid),q=E.enhanceQuote(e),set=E.GEAR_SETS.find(set=>set.id===e.set);
     gearArt(ui,body,e,5,8,56);ui.label(body,E.GEAR_SLOTS.find(x=>x.id===e.slot).name,73,1,w-73,21,{size:11,color:P.muted});
     line(ui,body,E.gearName(e)+(e.enhance?' +'+e.enhance:''),73,24,w-73,16,P.ink,50);
-    let y=82;Object.entries(E.gearValues(e)).forEach(([k,v])=>{ui.panel(body,0,y,w,30,{fill:'#d8c197',stroke:'#b59a6e',radius:5});ui.label(body,E.attrText(k,v),9,y+3,w-18,24,{size:13,bold:true,color:P.ink});y+=35;});
+    let y=82;Object.entries(E.gearValues(e)).forEach(([k,v])=>{ui.panel(body,0,y,w,30,{fill:'#d5d7be',stroke:'#a1aa89',radius:5,paper:384});ui.label(body,E.attrText(k,v),9,y+3,w-18,24,{size:13,bold:true,color:P.ink});y+=35;});
     if(e.slot==='rune'){const desc=E.RUNES.find(r=>r.id===e.rune).desc,dh=contentHeight(desc,w-10,12);line(ui,body,desc,5,y,w-10,12,P.ink,dh);y+=dh+13;}
     else {ui.label(body,set.name,3,y,w-6,23,{size:14,bold:true,color:P.ink});y+=26;for(const [n,t]of [[2,set.two],[4,set.four]]){const txt=n+' 件 · '+t,dh=contentHeight(txt,w-10,12);line(ui,body,txt,5,y,w-10,12,P.muted,dh);y+=dh+8;}}
     if(inspect){this.heightOf(body,w,y+8);return;}
-    ui.button(body,owner===id?'卸下':'穿戴 · '+cat(id).name,0,y,w,39,()=>this.act(()=>owner===id?s.unequip(id,e.slot):s.equip(uid,id),()=>{if(s.state.guideStep===23)this.close();}),{primary:true,name:'gear-equip'});y+=47;
-    const expanded=this.gearExpanded.has(uid);ui.button(body,'强化与管理　'+(expanded?'▾':'▸'),0,y,w,31,()=>{if(expanded)this.gearExpanded.delete(uid);else this.gearExpanded.add(uid);this.refresh();},{name:'gear-more',size:12});y+=39;
+    ui.button(body,owner===id?'卸下':'穿戴 · '+cat(id).name,0,y,w,39,()=>this.act(()=>owner===id?s.unequip(id,e.slot):s.equip(uid,id),()=>{if(s.state.guideStep===23)this.close();}),{primary:true,fill:'#c48b54',stroke:'#805638',color:'#fff0ce',paper:384,name:'gear-equip'});y+=47;
+    const expanded=this.gearExpanded.has(uid);ui.button(body,'强化与管理　'+(expanded?'▾':'▸'),0,y,w,31,()=>{if(expanded)this.gearExpanded.delete(uid);else this.gearExpanded.add(uid);this.refresh();},{name:'gear-more',fill:'#c5cfb5',color:'#4d6146',paper:384,size:12});y+=39;
     if(expanded){if(e.slot!=='rune'){
       const costLine=q.maxed?'强化已满 +'+E.GEAR_MAX:'强化　'+fmt(q.gold)+' 鱼币 / '+q.scrap+' 零件';
-      ui.button(body,costLine,0,y,w,37,()=>this.act(()=>s.enhance(uid)),{disabled:q.maxed||state.gold<q.gold||state.inventory.materials.scrap<q.scrap,name:'gear-enhance',size:12});y+=44;
-      e.subs.forEach((sub,i)=>{ui.button(body,'洗炼 · '+E.ATTRS[sub.key].name+'　2 打磨砂',0,y,w,33,()=>this.act(()=>s.reforge(uid,i)),{disabled:state.inventory.materials.essence<2,name:'gear-reforge-'+i,size:11});y+=39;});
+      ui.button(body,costLine,0,y,w,37,()=>this.act(()=>s.enhance(uid)),{disabled:q.maxed||state.gold<q.gold||state.inventory.materials.scrap<q.scrap,fill:'#c5cfb5',color:'#4d6146',paper:384,name:'gear-enhance',size:12});y+=44;
+      e.subs.forEach((sub,i)=>{ui.button(body,'洗炼 · '+E.ATTRS[sub.key].name+'　2 打磨砂',0,y,w,33,()=>this.act(()=>s.reforge(uid,i)),{disabled:state.inventory.materials.essence<2,fill:'#c5cfb5',color:'#4d6146',paper:384,name:'gear-reforge-'+i,size:11});y+=39;});
     }
-    ui.button(body,e.locked?'解锁':'锁定',0,y,(w-8)/2,32,()=>this.act(()=>s.lockGear(uid)),{name:'gear-lock',size:12});
-    ui.button(body,'分解',(w+8)/2,y,(w-8)/2,32,()=>this.act(()=>s.dismantle(uid),()=>this.close()),{disabled:!!owner||e.locked,name:'gear-dismantle',size:12});y+=45;}
+    ui.button(body,e.locked?'解锁':'锁定',0,y,(w-8)/2,32,()=>this.act(()=>s.lockGear(uid)),{name:'gear-lock',fill:'#c5cfb5',color:'#4d6146',paper:384,size:12});
+    ui.button(body,'分解',(w+8)/2,y,(w-8)/2,32,()=>this.act(()=>s.dismantle(uid),()=>this.close()),{disabled:!!owner||e.locked,fill:'#c5cfb5',color:'#4d6146',paper:384,name:'gear-dismantle',size:12});y+=45;}
     const story=E.gearStory(e),sh=contentHeight(story,w-10,11);line(ui,body,story,5,y,w-10,11,P.muted,sh);this.heightOf(body,w,y+sh+8);
   }
   inherit(body,w,h,{id=this.session.selected}){
@@ -130,7 +159,7 @@ export class Dialogs {
     let y=96,dh=contentHeight(info.description,w-12,12);line(ui,body,info.description||'',6,y,w-12,12,P.muted,dh);y+=dh+10;
     if(info.source){const sh=contentHeight(info.source,w-12,11);line(ui,body,info.source,6,y,w-12,11,P.muted,sh);y+=sh+8;}
     ui.label(body,'当前持有：'+fmt(materialHave(this.session.state,id,companion)),6,y,w-12,24,{size:12,color:P.ink});y+=33;
-    if(info.group&&!inspect){ui.button(body,'前往获取',0,y,w,36,()=>this.open('street',{group:info.group,id:id==='shards'?'all':info.route,detail:true}),{primary:true,name:'material-go'});y+=45;}
+    if(info.group&&!inspect){ui.button(body,'前往获取',0,y,w,36,()=>this.open('street',{group:info.group,id:id==='shards'?'all':info.route,detail:true}),{primary:true,fill:'#c48b54',stroke:'#805638',color:'#fff0ce',paper:384,name:'material-go'});y+=45;}
     this.heightOf(body,w,Math.max(h,y));
   }
   keepsake(body,w,h,{id}){
@@ -174,7 +203,7 @@ export class Dialogs {
         if(reason)line(ui,card,reason,122,104,w-132,10,'#9c3e30',26);y+=143;
       });
       if(view.group==='recruit'){
-        ui.label(body,'伙伴信物',0,y,w,25,{size:15,bold:true,color:P.ink});y+=33;
+        ui.label(body,'伙伴信物',0,y,w,25,{size:15,bold:true,color:'#f1dfc4'});y+=33;
         G.CATS.forEach((c,i)=>{const rq=recruitQuote(state,c.id),n=ui.button(body,'',i%2*(w+9)/2,y+Math.floor(i/2)*86,(w-9)/2,78,()=>this.open('keepsake',{id:c.id}),{fill:'#e8d1ad',name:'recruit-card-'+c.id});keepsakeArt(ui,n,c.id,4,9,48);ui.label(n,c.name,57,8,(w-9)/2-63,22,{size:13,bold:true,color:P.ink});ui.label(n,rq.owned?'已结识':rq.have+'/'+rq.cost,57,34,(w-9)/2-63,22,{size:11,color:rq.have>=rq.cost?P.green:P.muted});});y+=Math.ceil(G.CATS.length/2)*86;
       }
       this.heightOf(body,w,y+10);return;
@@ -199,7 +228,8 @@ export class Dialogs {
       ui.label(body,q.first?'首通奖励':q.rewardable?'今日重复领奖 '+q.quota.remaining+'/'+q.quota.limit:'今日奖励已领完 · 可练习',0,y,w,24,{size:11,color:P.muted,align:'center'});y+=31;
     }
     if(!q.dropSlots){y+=rewardRow(ui,body,rewardFor(q),0,y,w,{onMaterial:(id,companion)=>this.open('material',{id,companion})})+9;}
-    ui.button(body,q.open?(q.rewardable?'接下委托 · 出发':'练习挑战'):q.exhausted?'已完成':'尚未开启',0,y,w,42,()=>{if(!q.open){this.cb.toast(A.activityLockReason(state,q));return;}s.guideEvent('depart');this.close();s.startActivity(q.request);},{primary:true,name:'street-fight'});this.heightOf(body,w,y+51);
+    ui.button(body,q.open?(q.rewardable?'接下委托 · 出发':'练习挑战'):q.exhausted?'已完成':'尚未开启',0,y,w,42,()=>{if(!q.open){this.cb.toast(A.activityLockReason(state,q));return;}s.guideEvent('depart');this.close();s.startActivity(q.request);},{primary:true,name:'street-fight'});
+    const sheet=ui.panel(body,0,40,w,y+11,{fill:'#e7d7b5',stroke:'#bda176',radius:9,paper:240,paperBlend:'normal',paperCenter:true});sheet.name='street-detail-paper';sheet.setSiblingIndex(0);this.heightOf(body,w,y+51);
   }
   dropSlots(parent,q,x,y,w){
     const {ui}=this,slots=[...(q.dropSlots||[]),...(q.kind==='nightwatch'?['rune']:[])],size=36,cw=w/Math.max(slots.length,1),cells={claw:0,brace:1,coat:2,collar:3};
@@ -223,9 +253,9 @@ export class Dialogs {
   }
   challenges(body,w,h){
     const {ui,session:s}=this,state=s.state;ui.label(body,'本周挑战 · '+C.weeklyInfo(state,1).name,0,0,w,29,{size:17,bold:true,color:P.ink});let y=38;
-    [1,2,3].forEach(tier=>{const q=C.weeklyInfo(state,tier),p=ui.panel(body,0,y,w,103,{fill:'#dacaab',stroke:'#ad9168',radius:7});ui.label(p,['入门','进阶','极限'][tier-1],10,8,w-20,25,{size:15,bold:true,color:P.ink});rewardRow(ui,p,q.reward,8,39,w-95,{});ui.button(p,q.claimed?'再战':'挑战',w-85,43,75,37,()=>{if(!q.open){this.cb.toast('通关第 15 关后解锁');return;}this.close();s.startWeekly(tier);},{name:'weekly-'+tier,primary:true,size:12});y+=113;});
+    [1,2,3].forEach(tier=>{const q=C.weeklyInfo(state,tier),p=ui.panel(body,0,y,w,103,{fill:'#f4e7c9',stroke:'#b79768',radius:7,paper:240,paperBlend:'normal',paperCenter:true});ui.label(p,['入门','进阶','极限'][tier-1],10,8,w-20,25,{size:15,bold:true,color:P.ink});rewardRow(ui,p,q.reward,8,39,w-95,{});ui.button(p,q.claimed?'再战':'挑战',w-85,43,75,37,()=>{if(!q.open){this.cb.toast('通关第 15 关后解锁');return;}this.close();s.startWeekly(tier);},{name:'weekly-'+tier,primary:true,size:12});y+=113;});
     ui.label(body,'街头擂台',0,y,w,28,{size:18,bold:true,color:P.ink});y+=39;
-    for(let tier=1;tier<=G.ARENA_MAX;tier++){const info=G.arenaInfo(tier),open=G.arenaOpen(state,tier),p=ui.button(body,'',0,y,w,80,()=>{if(!open){this.cb.toast(state.highest<G.ARENA_UNLOCK?'通关第 '+G.ARENA_UNLOCK+' 关后解锁':'完成第 '+(tier-1)+' 擂后解锁');return;}this.close();s.startArena(tier);},{fill:'#d8c29c',name:'arena-tier-'+tier});ui.label(p,info.name+' '+tier,10,7,w-20,27,{size:15,bold:true,color:P.ink});line(ui,p,info.rule,10,36,w-20,10,P.muted,37);y+=89;}
+    for(let tier=1;tier<=G.ARENA_MAX;tier++){const info=G.arenaInfo(tier),open=G.arenaOpen(state,tier),p=ui.button(body,'',0,y,w,80,()=>{if(!open){this.cb.toast(state.highest<G.ARENA_UNLOCK?'通关第 '+G.ARENA_UNLOCK+' 关后解锁':'完成第 '+(tier-1)+' 擂后解锁');return;}this.close();s.startArena(tier);},{fill:'#f4e7c9',paper:240,paperBlend:'normal',paperCenter:true,name:'arena-tier-'+tier});ui.label(p,info.name+' '+tier,10,7,w-20,27,{size:15,bold:true,color:P.ink});line(ui,p,info.rule,10,36,w-20,10,P.muted,37);y+=89;}
     this.heightOf(body,w,y);
   }
   nextGrowth(){
@@ -241,12 +271,12 @@ export class Dialogs {
   }
   go(action,id?){const s=this.session;if(action==='cat-tag'){this.open('cat-tag',{id:id||s.selected});return;}if(['salvage','recruit','hard'].includes(action)){s.changeTab('map');this.open('street',{group:action==='salvage'?'equipment':action,id:action==='salvage'?'salvage':action==='hard'?'coldstore':'all',detail:true});return;}if(action==='arena'){s.changeTab('map');this.open('challenges');return;}this.close();if(action==='equipment'||action==='train'){s.selectCrew(s.state.party.find(Boolean)||'orange');s.setMode(action==='equipment'?'equipment':'profile');s.changeTab('cats');}else s.changeTab('battle');}
   quests(body,w,h){
-    const {ui,session:s}=this,state=s.state,next=this.nextGrowth(),nh=contentHeight(next.text,w-22,12),p=ui.panel(body,0,0,w,115+nh,{fill:'#e4cda7',stroke:'#a58351',radius:8});
+    const {ui,session:s}=this,state=s.state,next=this.nextGrowth(),nh=contentHeight(next.text,w-22,12),p=ui.panel(body,0,0,w,115+nh,{fill:'#f3e4c6',stroke:'#c1a273',radius:8,paper:260,paperBlend:'normal',paperCenter:true});
     ui.label(p,'当前目标',10,7,w-20,19,{size:10,color:P.muted});ui.label(p,next.title,10,30,w-20,28,{size:17,bold:true,color:P.ink});line(ui,p,next.text,11,66,w-22,12,P.muted,nh);ui.button(p,next.label,10,74+nh,w-20,32,()=>this.go(next.action,next.id),{primary:true,name:'growth-next',size:12});let y=128+nh;
     ui.button(body,'去拿装备',0,y,(w-8)/2,32,()=>this.go('salvage'),{size:11});ui.button(body,'穿戴 / 强化',(w+8)/2,y,(w-8)/2,32,()=>this.go('equipment'),{size:11});y+=45;
     const ready=G.QUESTS.filter(q=>!state.claimed.includes(q.id)&&G.questValue(state,q)>=q.goal);
-    ui.label(body,'成长奖励',0,y,w*.45,30,{size:16,bold:true,color:P.ink});ui.button(body,ready.length?'领取 '+fmt(ready.reduce((n,q)=>n+q.reward,0))+' 鱼币':'暂无待领',w*.45,y,w*.55,30,()=>this.act(()=>s.claimQuests()),{disabled:!ready.length,primary:true,name:'claim-quests',size:10});y+=40;
-    G.QUESTS.forEach(q=>{const v=Math.min(G.questValue(state,q),q.goal),claimed=state.claimed.includes(q.id),done=v>=q.goal,p=ui.panel(body,0,y,w,115,{fill:'#dfcda9',stroke:'#b0956b',radius:7});ui.label(p,q.name,10,7,w-20,24,{size:14,bold:true,color:P.ink});line(ui,p,q.desc,10,36,w-20,11,P.muted,22);progress(ui,p,10,66,w-110,6,v/q.goal);ui.label(p,v+' / '+q.goal,10,80,88,18,{size:10,color:P.muted});
+    ui.label(body,'成长奖励',0,y,w*.45,30,{size:16,bold:true,color:'#ffe3ad'});ui.button(body,ready.length?'领取 '+fmt(ready.reduce((n,q)=>n+q.reward,0))+' 鱼币':'暂无待领',w*.45,y,w*.55,30,()=>this.act(()=>s.claimQuests()),{disabled:!ready.length,primary:true,name:'claim-quests',size:10});y+=40;
+    G.QUESTS.forEach(q=>{const v=Math.min(G.questValue(state,q),q.goal),claimed=state.claimed.includes(q.id),done=v>=q.goal,p=ui.panel(body,0,y,w,115,{fill:'#f3e4c6',stroke:'#c1a273',radius:7,paper:260,paperBlend:'normal',paperCenter:true});ui.label(p,q.name,10,7,w-20,24,{size:14,bold:true,color:P.ink});line(ui,p,q.desc,10,36,w-20,11,P.muted,22);progress(ui,p,10,66,w-110,6,v/q.goal);ui.label(p,v+' / '+q.goal,10,80,88,18,{size:10,color:P.muted});
       ui.label(p,fmt(q.reward)+' 鱼币',w-97,37,87,20,{size:10,color:P.muted,align:'right'});
       ui.button(p,claimed?'已领取':done?'领取':'前往',w-95,70,85,31,()=>{if(done){this.act(()=>s.claimQuests(q.id));return;}this.go(q.key==='upgrades'?'train':q.key==='relicCount'?'salvage':q.key==='cats'?'recruit':q.key==='arenaCleared'?'arena':'battle');},{disabled:claimed,primary:done,name:'growth-quest-'+q.id,size:11});y+=124;});this.heightOf(body,w,y);
   }
@@ -297,21 +327,67 @@ export class Dialogs {
     for(let i=0;i<Math.ceil(G.MAX_STAGE/20);i++){const chapter=G.CHAPTERS[i%6],done=Math.min(20,Math.max(0,state.runCleared-i*20)),y=54+i*85,p=ui.panel(body,0,y,w,76,{fill:'#ddc7a4',stroke:'#b29364',radius:7});ui.image(p,'assets/mobile/street-'+(i%6)+'-v02684.webp',0,0,75,76);ui.label(p,chapter.name+' · '+(Math.floor(i/6)+1),87,10,w-97,27,{size:14,bold:true,color:P.ink});ui.label(p,done+'/20'+(done===20?'　✓':''),87,43,w-97,20,{size:11,color:P.muted});}
     this.heightOf(body,w,57+Math.ceil(G.MAX_STAGE/20)*85);
   }
-  report(parent){
-    const {ui,session:s}=this,r=s.report;if(!r)return;const w=Math.min(this.width-26,366),h=Math.min(this.height-70,r.tokenTicket?650:460),x=(this.width-w)/2,y=(this.height-h)/2;
-    const p=ui.panel(parent,x,y,w,h,{fill:r.win?'#e6d1a7':'#ccbfae',stroke:P.rim,radius:13});p.name='result-layer';
-    ui.image(p,'assets/ui/battle-results-v02641.webp',3,2,w-6,144,r.win?[0,0,512,512]:[512,0,512,512]);
-    ui.label(p,r.win?'拿下了！':'暂时失利',12,146,w-24,36,{size:24,bold:true,color:P.ink,align:'center'});ui.label(p,r.title,12,185,w-24,29,{size:14,color:P.muted,align:'center'});
-    let cy=226;if(r.rewardCapped){ui.label(p,'本次为练习',12,214,w-24,21,{size:11,color:P.muted,align:'center'});cy+=24;}cy+=rewardRow(ui,p,r.rewards,20,cy,w-40,{companion:r.companion,onMaterial:(id,companion)=>this.open('material',{id,companion,inspect:true}),onGear:()=>r.gearUid&&this.open('equipment',{uid:r.gearUid,id:s.selected,inspect:true})});
-    if(r.gearUid){const e=s.state.inventory.items.find(e=>e.id===r.gearUid);if(e){gearTile(ui,p,e,w/2-26,cy+5,52,n=>this.open('equipment',{uid:e.id,id:s.selected,inspect:true,anchor:this.anchor(n)}),'result-gear');cy+=68;}}
-    if(r.tokenTicket){
-      if(this.tokenTicket!==r.tokenTicket){this.tokenTicket=r.tokenTicket;this.tokenSelected='';}
-      ui.label(p,r.tokenClaimed?'自选信物已领取':'广告奖励 · 额外自选 5 个信物',12,cy+5,w-24,26,{size:14,bold:true,color:P.ink,align:'center'});cy+=40;
-      const cw=(w-36)/4;G.CATS.forEach((c,i)=>{const n=ui.button(p,'',18+i%4*cw,cy+Math.floor(i/4)*65,cw-7,59,()=>{this.tokenSelected=c.id;this.refresh();},{primary:this.tokenSelected===c.id,disabled:r.tokenClaimed,name:'token-select-'+c.id,fill:this.tokenSelected===c.id?'#e7c481':'#d9c39d'});keepsakeArt(ui,n,c.id,(cw-7)/2-19,1,38);ui.label(n,c.name,2,39,cw-11,17,{size:10,color:P.ink,align:'center'});});cy+=137;
-      ui.button(p,r.tokenClaimed?'已领取':this.busy?'广告准备中…':this.tokenSelected?'看广告 · '+cat(this.tokenSelected).name+'的信物 ×5':'选好伙伴后，看广告领取',16,cy,w-32,39,async()=>{if(this.busy||r.tokenClaimed)return;this.busy=true;this.refresh();try{await s.watchTokenReward(this.tokenSelected);}finally{this.busy=false;this.refresh();}},{primary:true,disabled:r.tokenClaimed||this.busy||!this.tokenSelected||!tokenRewardReady(s.state,r.tokenTicket),name:'token-ad-claim',size:12});cy+=48;
+  report(parent,touches=new Map()){
+    const {ui,session:s}=this,r=s.report;if(!r)return;
+    const w=Math.min(this.width-26,366),h=Math.min(this.height*.86,r.tokenTicket?700:r.gearUid?530:460),x=(this.width-w)/2,y=(this.height-h)/2;
+    const p=ui.panel(parent,x,y,w,h,{fill:r.win?'#314b53':'#484656',stroke:r.win?'#604839':'#69504a',radius:18});p.name='result-layer';p.addComponent(BlockInputEvents);
+    this.bindReportTap(p,touches);
+    const body=ui.scroll(p,12,8,w-24,h-16,h-16),bw=w-24;body.name='result-content';
+    // expedition-flow.css retains square cells, with a 120px compact-height rule.
+    const crest=view.getFrameSize().height<=650?120:168;
+    ui.image(body,'assets/ui/battle-results-v02641.webp',(bw-crest)/2,8,crest,crest,r.win?[0,0,512,512]:[512,0,512,512]).name='result-crest';
+    const titleH=Math.max(20,contentHeight(r.title,bw-12,12));ui.label(body,r.title,6,crest+16,bw-12,titleH,{size:12,color:'#d7d4ba',align:'center'});
+    ui.label(body,r.win?'拿下了！':'暂时失利',6,crest+titleH+24,bw-12,45,{size:32,bold:true,color:r.win?'#ffdda0':'#eed6ce',align:'center'});
+    let cy=crest+titleH+84;ui.panel(body,12,cy-5,bw-24,1,{fill:'#b99b6d',stroke:'#00000000',radius:0});cy+=20;
+    if(r.win){
+      if(r.rewardCapped){ui.label(body,'本次为练习',6,cy,bw-12,23,{size:12,color:'#f3dbad',align:'center'});cy+=32;}
+      const rewards=Object.entries(r.rewards||{}).filter(([key,n])=>Number(n)>0&&MATERIAL_NAMES[key]).map(([key,n])=>({key,n}));
+      const gear=r.gearUid?s.state.inventory.items.find(e=>e.id===r.gearUid):null;
+      if(r.gearUid)rewards.push({key:'gear',n:1,gear,uid:r.gearUid});
+      const columns=Math.max(1,Math.min(3,Math.floor((bw+10)/92))),cardW=82,cardH=118;
+      rewards.forEach((reward,i)=>{
+        const row=Math.floor(i/columns),count=Math.min(columns,rewards.length-row*columns),left=(bw-count*cardW-(count-1)*10)/2;
+        const card=ui.button(body,'',left+i%columns*(cardW+10),cy+row*(cardH+10),cardW,cardH,n=>reward.uid?this.open('equipment',{uid:reward.uid,id:s.selected,inspect:true,anchor:this.anchor(n)}):this.open('material',{id:reward.key,companion:r.companion,inspect:true}),{fill:'#efdfbd',stroke:reward.gear?E.QUALITIES[reward.gear.quality].color:'#80634b',name:reward.uid?'result-gear':'reward-'+reward.key});
+        if(reward.gear)gearArt(ui,card,reward.gear,15,10,52);else materialArt(ui,card,reward.key,15,10,52,r.companion);
+        ui.label(card,fmt(reward.n),4,67,cardW-8,23,{size:16,bold:true,color:'#544331',align:'center'});
+        ui.label(card,reward.uid?(reward.gear?E.QUALITIES[reward.gear.quality].name:'装备'):MATERIAL_NAMES[reward.key],4,94,cardW-8,15,{size:10,color:'#544331',align:'center'});
+      });
+      cy+=Math.ceil(rewards.length/columns)*(cardH+10);
+      if(r.tokenTicket){
+        if(this.tokenTicket!==r.tokenTicket){this.tokenTicket=r.tokenTicket;this.tokenSelected='';}
+        const tokenH=r.tokenClaimed?90:230,token=ui.panel(body,0,cy+4,bw,tokenH,{fill:'#f0dfb9',stroke:'#c6ac80',radius:13});
+        ui.label(token,r.tokenClaimed?'自选信物已领取':'广告奖励 · 额外自选 5 个信物',10,7,bw-20,26,{size:14,bold:true,color:'#594832',align:'center'});
+        if(!r.tokenClaimed){const cw=(bw-24)/4;G.CATS.forEach((c,i)=>{const n=ui.button(token,'',12+i%4*cw,42+Math.floor(i/4)*65,cw-6,59,()=>{this.tokenSelected=c.id;this.refresh();},{primary:this.tokenSelected===c.id,name:'token-select-'+c.id,fill:this.tokenSelected===c.id?'#ffe9ad':'#e3cfa3',stroke:this.tokenSelected===c.id?'#8b572c':'#00000000'});keepsakeArt(ui,n,c.id,(cw-6)/2-18,1,36);ui.label(n,c.name,2,39,cw-10,17,{size:11,color:P.ink,align:'center'});});}
+        ui.button(token,r.tokenClaimed?'已领取':this.busy?'广告准备中…':this.tokenSelected?'看广告 · '+cat(this.tokenSelected).name+'的信物 ×5':'选好伙伴后，看广告领取',12,r.tokenClaimed?41:180,bw-24,39,async()=>{if(this.busy||r.tokenClaimed)return;this.busy=true;this.refresh();try{await s.watchTokenReward(this.tokenSelected);}finally{this.busy=false;this.refresh();}},{primary:true,disabled:r.tokenClaimed||this.busy||!this.tokenSelected||!tokenRewardReady(s.state,r.tokenTicket),name:'token-ad-claim',size:12});cy+=tokenH+18;
+      }
+      ui.button(body,'收下奖励',4,cy+9,bw-8,39,()=>this.dismissReport(),{primary:true,name:'result-close',size:12});cy+=60;
+    }else{
+      ui.button(body,'再次挑战',0,cy,(bw-10)/2,43,()=>this.dismissReport('retry'),{primary:true,name:'result-retry',size:12});
+      ui.button(body,'调整伙伴',(bw+10)/2,cy,(bw-10)/2,43,()=>this.dismissReport('crew'),{name:'result-crew',size:12});cy+=55;
     }
-    if(!r.win){ui.button(p,'再次挑战',16,h-62,(w-40)/2,38,()=>this.dismissReport('retry'),{primary:true,name:'result-retry',size:12});ui.button(p,'调整伙伴',24+(w-40)/2,h-62,(w-40)/2,38,()=>this.dismissReport('crew'),{name:'result-crew',size:12});}
-    else ui.button(p,'收下奖励',16,Math.min(h-57,cy+9),w-32,37,()=>this.dismissReport(),{primary:true,name:'result-close',size:12});
+    this.heightOf(body,bw,Math.max(h-16,cy));
+  }
+  bindReportTap(panel,touches=new Map()){
+    // Preserve Preview11's non-interactive click-to-dismiss without turning a
+    // ScrollView drag or a reward button into a dismissal. Capture runs before
+    // ScrollView/Button consume their own events; no control event is blocked.
+    // The panel and outside backdrop share this map: two fingers on different
+    // surfaces must still count as one cancelled multi-touch gesture.
+    const id=e=>e.getID?.()??e.touch?.getID?.()??0;
+    const interactive=target=>{for(let n=target;n;n=n.parent){if(n.getComponent?.(Button)||n.getComponent?.(EditBox))return true;if(n===panel)break;}return false;};
+    const moved=(e,t)=>{const point=e.getUILocation();if((point.x-t.x)**2+(point.y-t.y)**2>64)t.moved=true;};
+    panel.on(Node.EventType.TOUCH_START,e=>{
+      const point=e.getUILocation(),multiple=touches.size>0;
+      for(const previous of touches.values())previous.moved=true;
+      touches.set(id(e),{x:point.x,y:point.y,moved:multiple,blocked:interactive(e.target)});
+    },this,true);
+    panel.on(Node.EventType.TOUCH_MOVE,e=>{const t=touches.get(id(e));if(t)moved(e,t);},this,true);
+    panel.on(Node.EventType.TOUCH_CANCEL,e=>touches.delete(id(e)),this,true);
+    panel.on(Node.EventType.TOUCH_END,e=>{
+      const t=touches.get(id(e));touches.delete(id(e));if(!t)return;moved(e,t);
+      if(t.blocked||t.moved||interactive(e.target))return;
+      e.propagationStopped=true;this.dismissReport();
+    },this,true);
   }
   dismissReport(action=''){
     // The host clears only its modal stack before closeReport emits guide/navigation.

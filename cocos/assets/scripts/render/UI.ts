@@ -13,9 +13,10 @@ export const fmt = (n:number) => n>=1e8?Math.floor(n/1e8)+'亿':n>=1e4?Math.floo
 // UITransform.getBoundingBoxToWorld includes children (including scroll content).
 // Input and clipping use the host's own rectangle instead.
 export function worldRect(node:Node){const t=node.getComponent(UITransform)!;const a=t.anchorPoint,w=t.width,h=t.height;const points=[[-a.x*w,-a.y*h],[(1-a.x)*w,-a.y*h],[-a.x*w,(1-a.y)*h],[(1-a.x)*w,(1-a.y)*h]].map(([x,y])=>t.convertToWorldSpaceAR(new Vec3(x,y,0)));const x=Math.min(...points.map(p=>p.x)),y=Math.min(...points.map(p=>p.y)),right=Math.max(...points.map(p=>p.x)),top=Math.max(...points.map(p=>p.y));return {x,y,width:right-x,height:top-y};}
-type PanelOptions={fill?:string,stroke?:string,radius?:number,asset?:string,width?:number};
+type PaperOptions={paper?:number,paperBlend?:'multiply'|'normal',paperCenter?:boolean};
+type PanelOptions=PaperOptions&{fill?:string,stroke?:string,radius?:number,asset?:string,width?:number};
 type LabelOptions={size?:number,color?:string,align?:'left'|'center'|'right',bold?:boolean,wrap?:boolean,overflow?:number};
-type ButtonOptions={primary?:boolean,disabled?:boolean,fill?:string,name?:string,size?:number,color?:string,stroke?:string};
+type ButtonOptions=PaperOptions&{primary?:boolean,disabled?:boolean,fill?:string,name?:string,size?:number,color?:string,stroke?:string};
 
 export class UI {
   actors = new Set<PaintedActor>();
@@ -36,18 +37,44 @@ export class UI {
     const n=this.group(parent,x,y,w,h,'panel');
     const g=n.addComponent(Graphics),r=Math.min(opts.radius??10,w/2,h/2);
     g.fillColor=color(opts.fill??THEME.paper);g.strokeColor=color(opts.stroke??THEME.rim);g.lineWidth=opts.width??1.1;
-    g.roundRect(.5,-h+.5,Math.max(0,w-1),Math.max(0,h-1),r);g.fill();if((opts.stroke??THEME.rim)!=='transparent'&&g.strokeColor.a)g.stroke();
-    if(opts.asset)this.image(n,opts.asset,0,0,w,h);return n;
+    g.roundRect(.5,-h+.5,Math.max(0,w-1),Math.max(0,h-1),r);g.fill();
+    if(opts.asset)this.image(n,opts.asset,0,0,w,h);
+    if(opts.paper)this.paper(n,w,h,opts.fill??THEME.paper,opts.paper,opts.paperBlend??'multiply',opts.paperCenter??false,r);
+    if((opts.stroke??THEME.rim)!=='transparent'&&g.strokeColor.a){
+      if(opts.paper||opts.asset){const rim=this.group(n,0,0,w,h,'panel-rim').addComponent(Graphics);rim.strokeColor=g.strokeColor;rim.lineWidth=g.lineWidth;rim.roundRect(.5,-h+.5,Math.max(0,w-1),Math.max(0,h-1),r);rim.stroke();}
+      else g.stroke();
+    }
+    return n;
+  }
+  clip(parent:Node,x:number,y:number,w:number,h:number,radius=0,topOnly=false):Node{
+    const n=this.group(parent,x,y,w,h,'surface-clip'),mask=n.addComponent(Mask);mask.type=Mask.Type.GRAPHICS_STENCIL;
+    const g=mask.subComp as Graphics,r=Math.min(radius,w/2,h/2);g.clear();
+    if(topOnly&&r){g.moveTo(0,-h);g.lineTo(w,-h);g.lineTo(w,-r);g.quadraticCurveTo(w,0,w-r,0);g.lineTo(r,0);g.quadraticCurveTo(0,0,0,-r);g.close();}
+    else g.roundRect(0,-h,w,h,r);
+    g.fill();return n;
+  }
+  // The frozen paper is opaque RGB. Sprite tint therefore reproduces its CSS
+  // background-blend-mode:multiply; white tint retains the normal paper surface.
+  // A native tiled Sprite shares the original 384px texture across every panel.
+  paper(parent:Node,w:number,h:number,fill:string,tile:number,blend:'multiply'|'normal'='multiply',center=false,radius=0):Node{
+    const n=this.clip(parent,0,0,w,h,radius);n.name='paper-grain';
+    const offset=(length:number)=>{const v=(length-tile)/2;return center?v-Math.ceil(v/tile)*tile:0;};
+    const left=offset(w),top=offset(h),scale=tile/384;
+    // TILED builds rows from the bottom. Whole rows preserve the CSS top origin;
+    // the stencil clips the last row, rather than shifting the paper pattern.
+    const art=this.image(n,'assets/ui/paper-grain-v02642.webp',left,top,Math.ceil((w-left)/tile)*384,Math.ceil((h-top)/tile)*384);
+    art.setScale(scale,scale,1);const s=art.getComponent(Sprite)!;s.type=Sprite.Type.TILED;s.color=blend==='multiply'?color(fill):Color.WHITE;
+    return n;
   }
   label(parent:Node,value:any,x:number,y:number,w:number,h:number,opts:LabelOptions={}):Label{
     const n=this.group(parent,x,y,w,h,'text:'+plain(value).slice(0,30));
-    const l=n.addComponent(Label);l.string=plain(value);l.fontSize=opts.size??14;l.lineHeight=Math.round(l.fontSize*1.42);l.color=color(opts.color??THEME.ink);l.isBold=opts.bold??false;l.enableWrapText=opts.wrap??true;l.horizontalAlign=opts.align==='center'?1:opts.align==='right'?2:0;l.verticalAlign=1;l.overflow=opts.overflow??Label.Overflow.CLAMP;l.cacheMode=Label.CacheMode.CHAR;return l;
+    const l=n.addComponent(Label);l.string=plain(value);l.fontFamily='sans-serif';l.fontSize=opts.size??14;l.lineHeight=Math.round(l.fontSize*1.42);l.color=color(opts.color??THEME.ink);l.isBold=opts.bold??false;l.enableWrapText=opts.wrap??true;l.horizontalAlign=opts.align==='center'?1:opts.align==='right'?2:0;l.verticalAlign=1;l.overflow=opts.overflow??Label.Overflow.CLAMP;l.cacheMode=Label.CacheMode.CHAR;return l;
   }
   button(parent:Node,title:string,x:number,y:number,w:number,h:number,fn:(node?:Node)=>void,opts:ButtonOptions={}):Node{
     const n=this.group(parent,x,y,w,h,opts.name??'button:'+plain(title));
     const visual=this.group(n,w/2,h/2,w,h,'press-visual');visual.getComponent(UITransform)!.setAnchorPoint(.5,.5);
     const fill=opts.fill??(opts.primary?'#ab7544':'#dfc59d');
-    this.panel(visual,-w/2,-h/2,w,h,{fill,stroke:opts.stroke??(fill.endsWith('00')?'#00000000':opts.primary?'#754e36':'#a17b50'),radius:8});
+    this.panel(visual,-w/2,-h/2,w,h,{fill,stroke:opts.stroke??(fill.endsWith('00')?'#00000000':opts.primary?'#754e36':'#a17b50'),radius:8,paper:opts.paper,paperBlend:opts.paperBlend,paperCenter:opts.paperCenter});
     const l=this.label(visual,title,-w/2+4,-h/2,w-8,h,{size:opts.size??13,bold:true,align:'center',color:opts.color??(opts.primary?THEME.light:THEME.ink)});
     const b=n.addComponent(Button);b.transition=Button.Transition.SCALE;b.target=visual;b.zoomScale=.95;b.duration=.07;b.interactable=!opts.disabled;
     if(opts.disabled)n.addComponent(UIOpacity).opacity=135;

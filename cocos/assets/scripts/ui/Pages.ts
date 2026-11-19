@@ -1,6 +1,6 @@
 // @ts-nocheck
 // Native Cocos UI. All prices, growth and combat data come from the migrated domain.
-import { Node, UITransform, Vec3, Vec2, Button, Graphics, Color, UIOpacity } from 'cc';
+import { Node, UITransform, Vec3, Vec2, Button, Graphics, Color, UIOpacity, view } from 'cc';
 import { worldRect } from '../render/UI';
 import * as G from '../domain/core';
 import * as E from '../domain/equipment';
@@ -51,8 +51,9 @@ export function gearArt(ui,parent,e,x,y,size) {
   if(e.enhance) ui.label(parent,'+'+e.enhance,x-3,y-8,size+6,21,{size:15,bold:true,color:'#fff0b0',align:'right'});
 }
 export function gearTile(ui,parent,e,x,y,size,onClick,name?) {
-  const tile=ui.button(parent,'',x,y,size,size,()=>onClick?.(tile),{fill:'#f0dfbc',name:name||'gear-'+e?.id});
-  ui.panel(tile,2,2,size-4,size-4,{fill:'#f0dfbc',stroke:e?E.QUALITIES[e.quality].color:'#957448',radius:7});
+  const orbit=name?.startsWith('equipped-'),fill=orbit?'#f0dfbc':e?'#d8c4a1':'#344b55';
+  const tile=ui.button(parent,'',x,y,size,size,()=>onClick?.(tile),{fill,paper:orbit?undefined:160,name:name||'gear-'+e?.id});
+  ui.panel(tile,2,2,size-4,size-4,{fill:orbit?'#f0dfbc':'#00000000',stroke:e?E.QUALITIES[e.quality].color:orbit?'#957448':'#7f9086',radius:7});
   if(e)gearArt(ui,tile,e,6,6,size-12);
   return tile;
 }
@@ -72,10 +73,10 @@ export function rewardRow(ui,parent,reward,x,y,w,{companion,onMaterial,onGear}={
   });
   return Math.ceil(entries.length/4)*57;
 }
-export function costs(ui,parent,s,values,id,x,y,w,open) {
+export function costs(ui,parent,s,values,id,x,y,w,open,paper=false) {
   const rows=Object.entries(values).filter(([,n])=>n>0),cw=w/Math.max(rows.length,1);
   rows.forEach(([key,needed],i)=>{
-    const have=materialHave(s,key,id),n=ui.button(parent,'',x+i*cw,y,cw-4,48,()=>open('material',{id:key,companion:id}),{fill:'#f0e0bd',name:'cost-'+key});
+    const have=materialHave(s,key,id),n=ui.button(parent,'',x+i*cw,y,cw-4,48,()=>open('material',{id:key,companion:id}),{fill:'#f0dfb9',paper:paper?160:undefined,paperBlend:'normal',name:'cost-'+key});
     materialArt(ui,n,key,4,10,24,id);
     ui.label(n,key==='shards'?'专属信物':MATERIAL_NAMES[key],31,4,cw-38,18,{size:9,color:P.muted});
     ui.label(n,fmt(have)+' / '+fmt(needed),31,22,cw-36,20,{size:11,bold:true,color:have>=needed?'#4c7153':'#a34536'});
@@ -120,7 +121,7 @@ export class Pages {
   act(fn){const result=fn();if(result!==false&&result!==null)this.refresh();return result;}
   render(parent,width,height){
     this.width=width;this.height=height;this.renderRoot=parent;const {ui,session:s}=this;
-    ui.panel(parent,0,0,width,height,{fill:'#293f51',stroke:'#293f51',radius:0});
+    ui.panel(parent,0,0,width,height,{fill:s.tab==='map'?'#293f51':'#304755',stroke:'#00000000',radius:0,paper:s.tab==='map'?undefined:310});
     if(s.tab==='map')this.map(parent);
     else if(s.tab==='bag'||s.tab==='relics')this.bag(parent);
     else this.crew(parent);
@@ -128,8 +129,8 @@ export class Pages {
   crew(parent){
     const {ui,session:s}=this,w=this.width;
     const tabs=[['profile','养成'],['equipment','装备'],['formation','阵容']],tw=(w-58)/3;
-    ui.panel(parent,10,5,w-20,42,{fill:'#514453',stroke:'#82707c',radius:10});ui.icon(parent,'can',14,13,24);
-    tabs.forEach(([id,title],i)=>{ui.button(parent,title,42+i*tw,8,tw-4,35,()=>{s.setMode(id);this.refresh();},{fill:s.mode===id?'#d2a65e':'#00000000',stroke:'#00000000',color:s.mode===id?'#342d30':'#dacdbd',name:'crew-mode-'+id,size:13});});
+    ui.panel(parent,10,5,w-20,42,{fill:'#62535e',stroke:'#463b3e',radius:10,paper:230});ui.icon(parent,'can',14,13,24);
+    tabs.forEach(([id,title],i)=>{ui.button(parent,title,42+i*tw,8,tw-4,35,()=>{s.setMode(id);this.refresh();},{fill:s.mode===id?'#d8ac64':'#00000000',paper:s.mode===id?180:undefined,stroke:'#00000000',color:s.mode===id?'#422f27':'#f1dfc4',name:'crew-mode-'+id,size:13});});
     materialArt(ui,parent,'gold',w-179,51,19);ui.label(parent,Math.floor(s.state.gold).toLocaleString('zh-CN'),w-155,48,116,25,{size:13,bold:true,color:'#f5dfac',align:'right'}).node.name='wallet-gold';ui.label(parent,'鱼币',w-34,50,28,22,{size:10,color:'#d5cbb1'});
     if(s.tab==='formation'||s.mode==='formation')return this.formation(parent,82);
     this.avatarRail(parent,10,79,w-20,s.selected);
@@ -137,7 +138,7 @@ export class Pages {
     this.profile(parent,161);
   }
   avatarRail(parent,x,y,w,selected){
-    const {ui,session:s}=this,rows=G.unlocked(s.state),rail=ui.panel(parent,x,y,w,70,{fill:'#344b4e',stroke:'#a58c65',radius:9});rail.name='crew-roster';
+    const {ui,session:s}=this,rows=G.unlocked(s.state),rail=ui.panel(parent,x,y,w,70,{fill:'#344b4e',stroke:'#a58c65',radius:9,paper:220,paperCenter:true});rail.name='crew-roster';
     const content=ui.scroll(rail,7,7,w-14,56,56),scroll=content.__scrollView;
     content.getComponent(UITransform)?.setContentSize(Math.max(w-14,rows.length*64-8),56);
     if(scroll){scroll.horizontal=true;scroll.vertical=false;}
@@ -150,7 +151,7 @@ export class Pages {
     const skillH=160+descH+passH+passive.reduce((n,t)=>n+50+contentHeight(t.desc,w-34,12),0);
     const total=286+skillH+190;
     const content=ui.scroll(parent,10,top,w,this.height-top-6,Math.max(this.height-top-6,total));content.name='crew-detail';
-    const hero=ui.panel(content,0,0,left,180,{fill:'#b89366',stroke:'#674a38',radius:10});
+    const hero=ui.panel(content,0,0,left,180,{fill:'#b89366',stroke:'#674a38',radius:10,paper:230});
     ui.label(hero,c.job,9,9,left-18,18,{size:11,color:'#583e31'});
     ui.label(hero,c.name,9,26,left-18,28,{size:22,bold:true,color:'#442e25'});
     ui.label(hero,'Lv. '+level,9,54,left-18,20,{size:12,bold:true,color:'#5b3927'});
@@ -159,18 +160,19 @@ export class Pages {
     const tag=ui.button(hero,'',left/2-46,140,92,36,()=>this.open('cat-tag',{id}),{fill:'#00000000',stroke:'#00000000',name:'cat-tag-'+id});
     badge(ui,tag,state.roster.stars[id],0,0,92);
     const quote=G.upgradeQuote(level,state.guideStep===3?1:trainingCount(level),G.levelCap(state,id));
-    ui.button(content,quote.levels?'升 '+quote.levels+' 级':'已满级',0,188,left,37,()=>this.act(()=>s.upgrade(id,quote.levels)),{primary:true,disabled:!quote.levels||state.gold<quote.cost,name:'upgrade-'+id});
+    ui.button(content,quote.levels?'升 '+quote.levels+' 级':'已满级',0,188,left,37,()=>this.act(()=>s.upgrade(id,quote.levels)),{primary:true,disabled:!quote.levels||state.gold<quote.cost,fill:!quote.levels||state.gold<quote.cost?'#8c8a79':'#d7a65e',color:'#483124',paper:160,name:'upgrade-'+id});
     ui.label(content,quote.levels?'消耗 '+quote.cost.toLocaleString('zh-CN')+' 鱼币':'',0,226,left,17,{size:10,color:'#ecd9af',align:'center'});
     ui.button(content,'培养继承',0,246,left,33,()=>this.open('inherit',{id}),{disabled:!G.unlocked(state).some(c=>state.levels[c.id]>level),name:'inherit-'+id,size:12});
-    const a=ui.panel(content,left+10,0,right,279,{fill:'#ecd9b4',stroke:'#a88c64',radius:7});
+    const a=ui.panel(content,left+10,0,right,279,{fill:'#ecd9b4',stroke:'#a88c64',radius:7,paper:260,paperCenter:true});
     ui.label(a,'人物属性',10,9,right-20,24,{size:15,bold:true,color:P.ink});
     ui.label(a,'普攻 · '+(stats.normalDamageType==='magic'?'法术':'物理'),10,35,right-20,19,{size:10,color:P.muted});
     [['生命',fmt(stats.hp)],['攻击',fmt(stats.atk)],['暴击',stats.crit+'%'],['护甲',stats.armor],['魔抗',stats.magicResist],['护甲穿透',stats.armorPen],['法术穿透',stats.magicPen]].forEach(([key,value],i)=>{
       ui.label(a,key,10,64+i*29,right*.55-10,22,{size:11,color:P.muted});ui.label(a,String(value),right*.5,64+i*29,right*.5-11,22,{size:13,color:P.ink,bold:true,align:'right'});
     });
     let y=291;
-    const skills=ui.panel(content,0,y,w,skillH,{fill:'#e9d8b5',stroke:P.rim,radius:10});
+    const skills=ui.panel(content,0,y,w,skillH,{fill:'#e9d8b5',stroke:P.rim,radius:10,paper:320,paperBlend:'normal'});
     ui.label(skills,'角色技能',10,9,w-20,23,{size:15,bold:true,color:P.ink});
+    ui.panel(skills,7,32,w-14,descH+74,{fill:'#f4e6c8',stroke:'#b89364',radius:7,paper:250,paperBlend:'normal'});
     const skillIndex=G.CATS.findIndex(c=>c.id===id);ui.image(skills,'assets/ui/skills-v02644.webp',12,34,32,32,[skillIndex%4*300,Math.floor(skillIndex/4)*300,300,300]);
     ui.label(skills,c.skill,49,39,w-145,23,{size:14,bold:true,color:P.ink});
     ui.label(skills,'主动 · Lv.'+(SKILL_STUDY[id].index===0?stats.skillRank+1:1),w-100,40,88,20,{size:10,color:P.muted,align:'right'});
@@ -178,19 +180,21 @@ export class Pages {
     let sy=66+descH+8;
     ui.button(skills,'技能升级',12,sy,w-24,28,()=>this.open('skill',{id}),{name:'skill-level-'+id,size:11});sy+=38;
     const passiveName={orange:'稳稳接住',ink:'一击中的',milk:'加满一杯',spark:'余温未散',mint:'冷静一下',bolt:'彻底拆解',pudding:'硬气护体',star:'星光先行'}[id];
+    ui.panel(skills,7,sy-2,w-14,passH+31,{fill:level>=5?'#dddcc5':'#d7cfbc',stroke:'#9a9e7d',radius:7,paper:230});
     ui.label(skills,passiveName,12,sy,w-146,21,{size:12,bold:true,color:level>=5?P.green:P.muted});ui.label(skills,level>=5?'被动 · Lv.'+(SKILL_STUDY[id].index===1?stats.skillRank+1:1):'角色 Lv.5 解锁',w-137,sy,124,21,{size:10,color:P.muted,align:'right'});sy+=25;
     line(ui,skills,skill.passive,12,sy,w-24,12,level>=5?P.ink:P.muted,passH);sy+=passH+10;
     passive.forEach(t=>{
+      ui.panel(skills,7,sy-2,w-14,31+contentHeight(t.desc,w-24,12),{fill:t.active?'#dddcc5':'#d7cfbc',stroke:'#9a9e7d',radius:7,paper:230});
       ui.label(skills,t.name,12,sy,w-134,21,{size:13,bold:true,color:t.active?P.ink:P.muted});ui.label(skills,t.active?'被动 · Lv.'+t.rank:'Lv.'+t.level+' 解锁',w-126,sy,113,21,{size:10,color:P.muted,align:'right'});sy+=25;
       const h=contentHeight(t.desc,w-24,12);line(ui,skills,t.desc,12,sy,w-24,12,t.active?P.ink:P.muted,h);sy+=h+12;
     });
     y+=skillH+10;
     const bq=G.breakthroughQuote(state,id),next=bq.maxed?'技能已满级':'下一级：'+skillSummary(id,bq.rank+1),studyH=42+contentHeight(next,w-24,11)+94;
-    const study=ui.panel(content,0,y,w,studyH,{fill:'#d6c3a1',stroke:P.rim,radius:8});
-    ui.label(study,'绝活研习 · '+SKILL_STUDY[id].name,10,9,w-20,23,{size:13,bold:true,color:P.ink});
-    const nh=contentHeight(next,w-24,11);line(ui,study,next,12,37,w-24,11,P.muted,nh);
-    const cy=42+nh;costs(ui,study,state,{badges:bq.cost,notes:bq.notes,seals:bq.seals},id,10,cy,w-20,(t,d)=>this.open(t,d));
-    ui.button(study,bq.maxed?'已满级':bq.canAfford?'研习':'材料不足',10,cy+53,w-20,32,()=>this.act(()=>s.breakthrough(id)),{primary:true,disabled:bq.maxed||!bq.canAfford,name:'breakthrough-'+id,size:12});
+    const study=ui.panel(content,0,y,w,studyH,{fill:'#54736c',stroke:'#35453d',radius:8,paper:230});
+    ui.label(study,'绝活研习 · '+SKILL_STUDY[id].name,10,9,w-20,23,{size:13,bold:true,color:'#fff0ce'});
+    const nh=contentHeight(next,w-24,11);line(ui,study,next,12,37,w-24,11,'#d0d5cb',nh);
+    const cy=42+nh;costs(ui,study,state,{badges:bq.cost,notes:bq.notes,seals:bq.seals},id,10,cy,w-20,(t,d)=>this.open(t,d),true);
+    ui.button(study,bq.maxed?'已满级':bq.canAfford?'研习':'材料不足',10,cy+53,w-20,32,()=>this.act(()=>s.breakthrough(id)),{primary:true,disabled:bq.maxed||!bq.canAfford,fill:bq.maxed||!bq.canAfford?'#8c8a79':'#d7a65e',color:'#483124',paper:160,name:'breakthrough-'+id,size:12});
     y+=studyH+10;content.getComponent(UITransform)?.setContentSize(w,y);
   }
   avatars(parent,x,y,w,selected){
@@ -203,21 +207,21 @@ export class Pages {
   equipment(parent,top){
     const {ui,session:s}=this,state=s.state,id=s.selected,w=this.width-20,c=cat(id),bagW=Math.max(125,w*.40),leftW=w-bagW-10;
     const body=ui.scroll(parent,10,top,w,this.height-top-8,253);body.name='equipment-detail-scroll';const layout=ui.group(body,0,0,w,253,'crew-equipment');
-    const stage=ui.panel(layout,0,0,leftW,165,{fill:'#d7c19a',stroke:'#846446',radius:11});stage.name='equipment-stage';
+    const stage=ui.panel(layout,0,0,leftW,165,{fill:'#d7c19a',stroke:'#846446',radius:11,paper:240,paperCenter:true});stage.name='equipment-stage';
     ui.panel(stage,7,7,leftW-14,151,{fill:'#00000000',stroke:'#a4875b80',radius:6});
     ui.label(stage,c.name,leftW/2-35,21,70,22,{size:14,bold:true,color:'#513c2b',align:'center'});ui.label(stage,'Lv.'+state.levels[id],leftW/2-35,44,70,14,{size:9,color:'#7e6547',align:'center'});
     ui.character(stage,id,leftW*.5,111,this.ui.fullBodyUnit||62);
     const pos={claw:[10,13],collar:[leftW-50,13],coat:[10,69],brace:[leftW-50,69],rune:[leftW/2-20,115]};
     E.GEAR_SLOTS.forEach(slot=>{const e=state.inventory.items.find(e=>e.id===state.inventory.equipped[id]?.[slot.id]),[x,y]=pos[slot.id],node=gearTile(ui,stage,e,x,y,40,n=>{if(e)this.open('equipment',{uid:e.id,id,anchor:this.anchor(n)});else{this.equipSlot=this.equipSlot===slot.id?'':slot.id;this.refresh();}},'equipped-'+slot.id);if(!e)ui.label(node,'＋',0,2,40,34,{size:23,color:'#957448',align:'center'});});
-    const bag=ui.panel(layout,leftW+10,0,bagW,253,{fill:'#233848',stroke:'#687f8a',radius:9});bag.name='equipment-bag';
+    const bag=ui.panel(layout,leftW+10,0,bagW,253,{fill:'#3e5661',stroke:'#293d45',radius:9,paper:260});bag.name='equipment-bag';
     ui.label(bag,'背包',9,8,44,22,{size:12,bold:true,color:'#f1d7a6'});ui.button(bag,this.equipSlot?E.GEAR_SLOTS.find(x=>x.id===this.equipSlot).name:'全部',56,6,bagW-64,26,()=>{this.equipSlot='';this.refresh();},{size:10,name:'equipment-clear-filter',fill:'#00000000',stroke:'#00000000',color:'#f1d7a6'});
     const items=ownedGear(state,this.equipSlot),size=(bagW-19)/2,grid=ui.scroll(bag,7,38,bagW-14,207,Math.max(207,Math.ceil(Math.max(items.length,6)/2)*(size+5)));grid.name='equipment-bag-grid';
     for(let i=0;i<Math.max(6,items.length);i++)gearTile(ui,grid,items[i],i%2*(size+5),Math.floor(i/2)*(size+5),size,n=>items[i]&&this.open('equipment',{uid:items[i].id,id,anchor:this.anchor(n)}));
     const bonus=E.gearBonuses(state,id),effects=E.GEAR_SETS.filter(x=>bonus.counts[x.id]>=2).flatMap(set=>[{set,pieces:2,text:set.two},...(bonus.counts[set.id]>=4?[{set,pieces:4,text:set.four}]:[])]);
-    if(effects.length){const strip=ui.panel(layout,0,173,leftW,Math.max(43,effects.length*34+10),{fill:'#d6d6b9',stroke:'#7b8667',radius:7});strip.name='equipment-set-strip';effects.forEach((effect,i)=>{const n=ui.button(strip,'',6,5+i*34,leftW-12,31,()=>this.open('set',{id:effect.set.id,companion:id}),{fill:'#00000000',stroke:'#00000000',name:'set-'+effect.set.id+'-'+effect.pieces});ui.label(n,effect.set.name+' · '+effect.pieces+'件  ›',0,0,leftW-12,14,{size:9,bold:true,color:'#526046'});ui.label(n,effect.text,0,14,leftW-12,17,{size:10,color:'#5c6048',wrap:false});});}
+    if(effects.length){const strip=ui.panel(layout,0,173,leftW,Math.max(43,effects.length*34+10),{fill:'#d6d6b9',stroke:'#7b8667',radius:7,paper:240,paperCenter:true});strip.name='equipment-set-strip';effects.forEach((effect,i)=>{const n=ui.button(strip,'',6,5+i*34,leftW-12,31,()=>this.open('set',{id:effect.set.id,companion:id}),{fill:'#00000000',stroke:'#00000000',name:'set-'+effect.set.id+'-'+effect.pieces});ui.label(n,effect.set.name+' · '+effect.pieces+'件  ›',0,0,leftW-12,14,{size:9,bold:true,color:'#526046'});ui.label(n,effect.text,0,14,leftW-12,17,{size:10,color:'#5c6048',wrap:false});});}
   }
   formation(parent,top){
-    const {ui,session:s}=this,w=this.width-20,columns=Math.max(1,Math.floor((w-11)/55)),boardH=Math.min(350,Math.max(270,this.height-top-360)),benchH=49+Math.ceil(G.unlocked(s.state).length/columns)*55,contentH=429+boardH+benchH;
+    const {ui,session:s}=this,w=this.width-20,columns=Math.max(1,Math.floor((w-11)/55)),boardH=view.getFrameSize().width<=350?280:300,benchH=49+Math.ceil(G.unlocked(s.state).length/columns)*55,contentH=429+boardH+benchH;
     const content=ui.scroll(parent,10,top,w,this.height-top-5,contentH);content.name='formation-scroll';this.formationNodes=new Map();
     TEAM_PLANS.forEach((plan,i)=>{
       const card=ui.panel(content,0,i*186,w,176,{fill:i===0?'#d6c3a4':'#c7c5aa',stroke:P.rim,radius:9});
@@ -227,8 +231,8 @@ export class Pages {
       ui.button(card,s.state.teamPlan===plan.id?'重新上阵已结识伙伴':'采用这套阵容',12,141,w-24,28,()=>this.act(()=>s.applyTeam(plan.id)),{primary:true,size:11,name:'team-plan-'+plan.id});
     });
     const by=379,board=ui.panel(content,0,by,w,boardH,{fill:'#73533e',stroke:P.rim,radius:10});
-    ui.image(board,'assets/scenes/formation-room-v02620.webp',0,0,w,boardH);
-    ui.label(board,'后排',15,10,80,23,{size:13,bold:true,color:'#553b29'});ui.label(board,'前排',w-95,10,80,23,{size:13,bold:true,color:'#553b29',align:'right'});
+    const ground=ui.clip(board,1,1,w-2,boardH-2,10);ui.image(ground,'assets/scenes/formation-ground-v02646.webp',0,0,w-2,boardH-2);
+    for(const [title,px]of [['后排',31],['前排',69]]){const label=ui.panel(board,w*px/100-28,10,56,23,{fill:'#e1cc9e',stroke:'#9f7851',radius:5,paper:160,paperBlend:'normal'});ui.label(label,title,0,0,56,23,{size:12,bold:true,color:'#64472f',align:'center'});}
     const slots=[[69,42],[69,75],[31,29],[31,56],[31,83]],hitNodes=[];
     slots.forEach(([px,py],i)=>{
       const id=s.state.party[i],x=w*px/100,y=boardH*py/100;
@@ -241,11 +245,11 @@ export class Pages {
       if(id){ui.character(b,id,42,61,this.ui.fullBodyUnit||62);ui.label(b,cat(id).name,0,61,84,18,{size:10,bold:true,color:'#503726',align:'center'});}
       else ui.label(b,'＋',0,14,84,48,{size:30,color:'#c9b18b',align:'center'});
     });
-    const benchY=by+boardH+11,bench=ui.panel(content,0,benchY,w,benchH,{fill:'#cbb28a',stroke:'#805e40',radius:8});
-    ui.label(bench,this.formationSelected?'已选 '+cat(this.formationSelected).name:'伙伴',10,7,w-110,24,{size:12,bold:true,color:P.ink});
-    ui.button(bench,'下场',w-83,6,73,27,()=>{if(this.formationSelected){const id=this.formationSelected;this.formationSelected=null;this.act(()=>s.removeParty(id));}},{disabled:!this.formationSelected,size:11,name:'formation-dismiss'});
+    const benchY=by+boardH+11,bench=ui.panel(content,0,benchY,w,benchH,{fill:'#344d58',stroke:'#849080',radius:8,paper:240});
+    ui.label(bench,this.formationSelected?'已选 '+cat(this.formationSelected).name:'伙伴',10,7,w-110,24,{size:12,bold:true,color:'#efddb9'});
+    ui.button(bench,'下场',w-83,6,73,27,()=>{if(this.formationSelected){const id=this.formationSelected;this.formationSelected=null;this.act(()=>s.removeParty(id));}},{disabled:!this.formationSelected,fill:'#665362',stroke:'#a58b94',color:'#edddc2',paper:384,size:11,name:'formation-dismiss'});
     G.unlocked(s.state).forEach((c,i)=>{
-      const b=ui.button(bench,'',9+i%columns*55,40+Math.floor(i/columns)*55,48,48,()=>{if(this.draggingId||Date.now()-this.lastDrag<350)return;this.formationSelected=this.formationSelected===c.id?null:c.id;this.refresh();},{primary:this.formationSelected===c.id,name:'formation-bench-'+c.id});
+      const b=ui.button(bench,'',9+i%columns*55,40+Math.floor(i/columns)*55,48,48,()=>{if(this.draggingId||Date.now()-this.lastDrag<350)return;this.formationSelected=this.formationSelected===c.id?null:c.id;this.refresh();},{primary:this.formationSelected===c.id,fill:this.formationSelected===c.id?'#d6a55f':'#d7c09a',paper:160,name:'formation-bench-'+c.id});
       ui.portrait(b,c.id,2,2,44);if(s.state.party.includes(c.id))ui.label(b,'出战',13,33,34,13,{size:8,color:'#fff2d5',align:'center'});
       this.bindDrag(b,c.id,false,content,hitNodes,bench);
     });
@@ -283,25 +287,26 @@ export class Pages {
   }
   bag(parent){
     const {ui,session:s}=this,state=s.state,w=this.width-20;
-    const wallet=ui.panel(parent,10,10,w,48,{fill:'#e6ceaa',stroke:'#af8759',radius:9});
-    materialArt(ui,wallet,'gold',10,11,26);ui.label(wallet,fmt(state.gold),41,7,w*.48-41,23,{size:16,bold:true,color:P.ink}).node.name='wallet-gold';ui.label(wallet,'鱼币',41,29,55,14,{size:9,color:P.muted});
-    materialArt(ui,wallet,'badges',w*.53,11,26);ui.label(wallet,fmt(state.badges),w*.53+31,7,w*.47-38,23,{size:16,bold:true,color:P.ink}).node.name='wallet-badges';ui.label(wallet,'护送勋章',w*.53+31,29,90,14,{size:9,color:P.muted});
-    [['equipment','装备'],['materials','材料'],['keepsakes','信物']].forEach(([id,title],i)=>ui.button(parent,title,10+i*(w+5)/3,68,(w-10)/3,35,()=>{this.bagTab=id;this.refresh();},{primary:this.bagTab===id,name:'bag-tab-'+id,size:12}));
+    const wallet=ui.panel(parent,10,10,w,48,{fill:'#62535e',stroke:'#463b3e',radius:9,paper:230});
+    materialArt(ui,wallet,'gold',10,11,26);ui.label(wallet,fmt(state.gold),41,7,w*.48-41,23,{size:16,bold:true,color:'#f2cd84'}).node.name='wallet-gold';ui.label(wallet,'鱼币',41,29,55,14,{size:9,color:'#d9cabc'});
+    materialArt(ui,wallet,'badges',w*.53,11,26);ui.label(wallet,fmt(state.badges),w*.53+31,7,w*.47-38,23,{size:16,bold:true,color:'#f2cd84'}).node.name='wallet-badges';ui.label(wallet,'护送勋章',w*.53+31,29,90,14,{size:9,color:'#d9cabc'});
+    ui.panel(parent,10,63,w,45,{fill:'#62535e',stroke:'#463b3e',radius:9,paper:230});
+    [['equipment','装备'],['materials','材料'],['keepsakes','信物']].forEach(([id,title],i)=>ui.button(parent,title,10+i*(w+5)/3,68,(w-10)/3,35,()=>{this.bagTab=id;this.refresh();},{fill:this.bagTab===id?'#d8ac64':'#00000000',stroke:'#00000000',paper:this.bagTab===id?180:undefined,color:this.bagTab===id?'#422f27':'#f1dfc4',name:'bag-tab-'+id,size:12}));
     const sy=114,h=this.height-sy-8;
-    const body=ui.panel(parent,10,sy,w,h,{fill:'#d9bd96',stroke:'#ad8354',radius:10});
+    const body=ui.panel(parent,10,sy,w,h,{fill:'#3e5661',stroke:'#293d45',radius:10,paper:260});
     if(this.bagTab==='equipment'){
       const filters=[{id:'',name:'全部'},...E.GEAR_SLOTS],fw=(w-18)/3;
-      filters.forEach((f,i)=>ui.button(body,f.name,6+i%3*fw,7+Math.floor(i/3)*30,fw-4,26,()=>{this.bagSlot=f.id;this.refresh();},{primary:this.bagSlot===f.id,name:'bag-filter-'+(f.id||'all'),size:10}));
+      filters.forEach((f,i)=>ui.button(body,f.name,6+i%3*fw,7+Math.floor(i/3)*30,fw-4,26,()=>{this.bagSlot=f.id;this.refresh();},{fill:this.bagSlot===f.id?'#a76c50':'#425e68',stroke:this.bagSlot===f.id?'#d6aa76':'#819186',color:this.bagSlot===f.id?'#fff0d0':'#e8dfc5',paper:150,name:'bag-filter-'+(f.id||'all'),size:10}));
       const items=ownedGear(state,this.bagSlot),size=(w-40)/5,grid=ui.scroll(body,9,75,w-18,h-85,Math.max(h-85,Math.ceil(Math.max(items.length,20)/5)*(size+6)));
       for(let i=0;i<Math.max(items.length,20);i++)gearTile(ui,grid,items[i],i%5*(size+5),Math.floor(i/5)*(size+6),size,n=>items[i]&&this.open('equipment',{uid:items[i].id,id:s.selected,anchor:this.anchor(n)}));
     }else if(this.bagTab==='materials'){
       const rows=E.materialRows(state).filter(r=>r.count>0),cw=(w-28)/2,grid=ui.scroll(body,9,10,w-18,h-20,Math.max(h-20,Math.ceil(rows.length/2)*105));
-      rows.forEach((m,i)=>{const n=ui.button(grid,'',i%2*(cw+9),Math.floor(i/2)*105,cw,97,()=>this.open('material',{id:m.id}),{fill:'#e9d6b4',name:'material-'+m.id});materialArt(ui,n,m.id,cw/2-19,7,38);ui.label(n,m.name,4,49,cw-8,20,{size:12,bold:true,color:P.ink,align:'center'});ui.label(n,fmt(m.count),4,72,cw-8,18,{size:12,color:P.muted,align:'center'});});
-      if(!rows.length)ui.label(grid,'还没有材料',0,40,w-18,30,{size:13,color:P.muted,align:'center'});
+      rows.forEach((m,i)=>{const n=ui.button(grid,'',i%2*(cw+9),Math.floor(i/2)*105,cw,97,()=>this.open('material',{id:m.id}),{fill:['#dfccab','#d8c6c4','#cbd1b6'][i%3],paper:160,name:'material-'+m.id});materialArt(ui,n,m.id,cw/2-19,7,38);ui.label(n,m.name,4,49,cw-8,20,{size:12,bold:true,color:P.ink,align:'center'});ui.label(n,fmt(m.count),4,72,cw-8,18,{size:12,color:P.muted,align:'center'});});
+      if(!rows.length)ui.label(grid,'还没有材料',0,40,w-18,30,{size:13,color:'#e8dfc5',align:'center'});
     }else{
-      const rows=Object.entries(KEEPSAKES).filter(([id])=>state.roster.shards[id]>0),cw=(w-39)/4,grid=ui.scroll(body,9,10,w-18,h-20,Math.max(h-20,Math.ceil(rows.length/4)*109));
-      rows.forEach(([id,[owner,name]],i)=>{const n=ui.button(grid,'',i%4*(cw+7),Math.floor(i/4)*109,cw,101,()=>this.open('keepsake',{id}),{fill:'#ead4b0',name:'keepsake-'+id});keepsakeArt(ui,n,id,cw/2-22,7,44);ui.label(n,name,3,54,cw-6,24,{size:10,bold:true,color:P.ink,align:'center'});ui.label(n,owner+' · '+fmt(state.roster.shards[id]),2,80,cw-4,18,{size:9,color:P.muted,align:'center'});});
-      if(!rows.length)line(ui,grid,'去失物追寻带回伙伴信物。',20,40,w-58,13,P.muted,55);
+      const rows=Object.entries(KEEPSAKES).filter(([id])=>state.roster.shards[id]>0),cw=(w-39)/4,grid=ui.scroll(body,9,10,w-18,h-20,Math.max(h-20,Math.ceil(rows.length/4)*132));
+      rows.forEach(([id,[owner,name]],i)=>{const n=ui.button(grid,'',i%4*(cw+7),Math.floor(i/4)*132,cw,124,()=>this.open('keepsake',{id}),{fill:'#f1dfb7',stroke:'#a98150',name:'keepsake-'+id});keepsakeArt(ui,n,id,cw/2-22,7,44);ui.label(n,name,3,54,cw-6,32,{size:11,bold:true,color:P.ink,align:'center'});ui.label(n,owner+' · '+fmt(state.roster.shards[id]),2,88,cw-4,32,{size:11,color:P.muted,align:'center'});});
+      if(!rows.length)line(ui,grid,'去失物追寻带回伙伴信物。',20,40,w-58,13,'#e8dfc5',55);
     }
   }
   map(parent){

@@ -4,6 +4,8 @@
 
 请先阅读 [工程使用方法](cocos/README.md)、[迁移验收状态](cocos/docs/MIGRATION-STATUS.md) 和 [接续规则](AGENTS.md)。迁移前主线和 Preview11 源码均已建立独立备份分支；根目录旧 H5 文件继续作为备份与对照保留，新增功能进入 `cocos/`。
 
+实际 Cocos 试玩入口：[罐头远征队 · Cocos 3.8.8](https://heitamu.github.io/can-club-play/cocos-preview/play.html)。页面使用同一份 TypeScript 业务和原生 Cocos 节点；工程、浏览器及微信的验证状态分别记录在迁移验收文档中。
+
 以下内容是旧版本开发记录，不能作为当前玩法数值、引擎或发布状态的说明。
 
 ---

@@ -1,0 +1,14 @@
+{
+  "version": "0.28.0-preview.11-cocos.1",
+  "sourceCommit": "28eb867",
+  "rewardedAdUnitId": "",
+  "sourceRuntime": true,
+  "creatorEditorBuild": false,
+  "engineVersion": "3.8.8",
+  "engineCommit": "411f98df047c25902f93440d4b22925c2fb65461",
+  "assets": 114,
+  "assetBytes": 32650761,
+  "originalWebpFiles": 53,
+  "entry": "bootGame",
+  "canvas": "Cocos WebGL native nodes"
+}

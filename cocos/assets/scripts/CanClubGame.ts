@@ -1,5 +1,6 @@
 // @ts-nocheck
 // Cocos Creator 3.8.8 entry. The editor, Web and WeChat builds all use this scene.
+import './platform/Compatibility';
 import { _decorator, Component, Node, Scene, Canvas, Camera, Layers, UITransform, Label, Button, ScrollView, BlockInputEvents, Graphics, Vec2, Vec3, Color, Director, director, view, ResolutionPolicy, input, Input, KeyCode, isValid } from 'cc';
 import { GameSession } from './game/GameSession';
 import { createSessionServices } from './platform/Services';

@@ -18,7 +18,12 @@ export class Effects{
  render(particles){let used=0;for(const p0 of particles){const list=p0.art==='shidun'?shidun(p0):[p0];for(const p of list){
    let v=this.pool[used++];if(!v){const node=new Node('effect');node.layer=this.front.layer;const tr=node.addComponent(UITransform);tr.setAnchorPoint(.5,.5);const sprite=node.addComponent(Sprite);sprite.sizeMode=Sprite.SizeMode.CUSTOM;const graphicChild=new Node('healing-stream');graphicChild.layer=node.layer;node.addChild(graphicChild);graphicChild.addComponent(UITransform);const g=null;v={node,sprite,standard:sprite,tr,graphicChild,g,strip:null,stripChild:null};this.pool.push(v);}
    const parent=p.layer===0?this.back:this.front;if(v.node.parent!==parent)parent.addChild(v.node);v.node.active=true;v.node.setPosition(p.x,-p.y);v.node.setRotationFromEuler(0,0,-(p.angle||0)*180/Math.PI);v.node.setScale(p.width<0?-1:1,1,1);
-   const stream=p.art==='heal-stream';v.standard.enabled=!stream;v.graphicChild.active=stream;if(v.stripChild)v.stripChild.active=false;v.sprite=v.standard;if(stream){if(!v.g)v.g=v.graphicChild.addComponent(HealingRibbon);this.stream(v.g,p);continue;}
+   const stream=p.art==='heal-stream';v.standard.enabled=!stream;v.graphicChild.active=stream;if(v.stripChild)v.stripChild.active=false;v.sprite=v.standard;if(stream){
+    // Cocos cascades a node's uiComp.color.a even while its Sprite is disabled.
+    // This reused parent is now only a container; the ribbon owns p.alpha.
+    v.standard.color=Color.WHITE;
+    if(!v.g)v.g=v.graphicChild.addComponent(HealingRibbon);this.stream(v.g,p);continue;
+   }
    let path,rect,width=Math.abs(p.width),height=p.height,generic=false;
    if(p.art==='texture'){path=p.path;rect=p.rect;}
    else if(p.art.startsWith('heal-')){path='assets/cocos/effects/'+p.art+(p.vertical?'-vertical':'')+'.png';if(p.art!=='heal-light'){width*=2;height*=2;v.node.setRotationFromEuler(0,0,-Math.sin(p.phase||0)*.09*180/Math.PI);}}
@@ -27,7 +32,7 @@ export class Effects{
    v.tr.setContentSize(width,height);
    if(generic&&(p.deform||p.reveal!==undefined)){
     if(!v.strip){const n=new Node('original-twelve-strip-effect');n.layer=v.node.layer;v.node.addChild(n);n.addComponent(UITransform).setAnchorPoint(.5,.5);v.strip=n.addComponent(NativeStripSprite);v.strip.sizeMode=Sprite.SizeMode.CUSTOM;v.stripChild=n;}
-    v.standard.enabled=false;v.stripChild.active=true;v.stripChild.getComponent(UITransform).setContentSize(width,height);v.strip.setStripState(width,height,p.deform,p.reveal);v.sprite=v.strip;
+    v.standard.enabled=false;v.standard.color=Color.WHITE;v.stripChild.active=true;v.stripChild.getComponent(UITransform).setContentSize(width,height);v.strip.setStripState(width,height,p.deform,p.reveal);v.sprite=v.strip;
    }
    v.sprite.color=new Color(255,255,255,Math.round(Math.max(0,Math.min(1,p.alpha))*255));const key=path+'|'+JSON.stringify(rect);v.key=key;this.frame(path,rect,v,key);
  }}for(let i=used;i<this.pool.length;i++)this.pool[i].node.active=false;

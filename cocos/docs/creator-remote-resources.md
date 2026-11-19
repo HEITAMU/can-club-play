@@ -28,6 +28,12 @@ Cocos 3.8.8 的微信适配器将远程 Bundle 地址组成 `server + 'remote/' 
 
 构建脚本会检查实际输出的 `assets.remoteBundles` 包含 `resources`，`assets.server` 与请求地址一致，远程配置存在，没有遗留本地 `assets/resources`。任何一项不符都会失败。然后递归核算主包和分包文件；显式文件/目录打包忽略项与 DevTools 配置一致。
 
+## 正式入口的运行配置
+
+`WECHAT_REWARDED_AD_UNIT_ID` 在调用编辑器前校验；未填写时广告不可用。正式产物检查通过后，脚本在固定入口 `game.js` 的字符串指令序言之后、首个执行语句之前注入 `CAN_CLUB_CONFIG`，保留 `"use strict"` 的作用。正式标志固定为 `sourceRuntime: false`、`creatorEditorBuild: true`，不会合并残留的开发配置。
+
+只修改固定入口，不改动带哈希的 settings 或 bundle 脚本。报告中的 `runtimeEntry` 记录修改前后 SHA-256 与增加字节数，主包预算包含这些字节。缺少入口、不能解析或对同一产物重复应用配置都会失败；应从编辑器重新构建后再配置。验证采用可执行的产物夹具与真实广告适配器，不代表已完成真实微信广告验收。
+
 ## 命令行与验证边界
 
 [Creator 命令行构建文档](https://docs.cocos.com/creator/3.8/manual/en/editor/publish/publish-in-command-line.html) 规定 `--project` 与 `--build configPath=...` 的用法，并将 `36` 定义为构建成功退出码，`32`/`34` 为失败。脚本接受 `36`，也接受外层启动器映射成的 `0`，两者都必须继续通过实际产物检查。

@@ -89,6 +89,10 @@ try {
     await page.addInitScript(() => { globalThis.__CAN_CLUB_BROWSER_SMOKE__ = { isolated: true, developmentFixtures: true }; });
 
     const frames = () => page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    const drawFrames = () => page.evaluate(async () => {
+      const cc = globalThis.__CAN_CLUB_ENGINE__;
+      for (let i = 0; i < 2; i++) await new Promise(resolve => cc.director.once(cc.Director.EVENT_AFTER_DRAW, resolve));
+    });
     const state = () => page.evaluate(() => {
       const app = globalThis.__CAN_CLUB_APP__, s = app.session, cc = globalThis.__CAN_CLUB_ENGINE__;
       const canvas = document.querySelector('#GameCanvas');
@@ -173,7 +177,7 @@ try {
 
     // Scroll the real Cocos ScrollView if necessary, then dispatch browser touch
     // at the native button's reported CSS screen rectangle. No DOM button proxy.
-    const nativePoint = async (name, { reveal = true } = {}) => {
+    const nativePoint = async (name, { reveal = true, allowNonButton = false } = {}) => {
       await page.waitForFunction(() => globalThis.__CAN_CLUB_APP__?.inspect().loading === false);
       await page.waitForFunction(name => globalThis.__CAN_CLUB_APP__?.inspect().nodeNames.includes(name), name);
       if (name === 'guide-continue') await page.waitForFunction(() => {
@@ -196,11 +200,11 @@ try {
         app.revealTarget(target);
       }, name);
       await frames();
-      const hit = await page.evaluate(name => {
+      const hit = await page.evaluate(({ name, allowNonButton }) => {
         const app = globalThis.__CAN_CLUB_APP__, cc = globalThis.__CAN_CLUB_ENGINE__;
         const inspected = app.inspect();
         if (!Array.isArray(inspected.buttons)) throw new Error('inspect().buttons must expose native CSS screen rectangles');
-        const button = [...inspected.buttons].reverse().find(button => button.name === name);
+        let button = [...inspected.buttons].reverse().find(button => button.name === name);
         let target;
         const walk = node => {
           if (!node.activeInHierarchy) return;
@@ -208,7 +212,7 @@ try {
           for (const child of node.children) walk(child);
         };
         walk(cc.director.getScene());
-        if (!target || !button) return { button: null, clips: [] };
+        if (!target || (!button && (!allowNonButton || target.getComponent(cc.Button)))) return { button: null, clips: [] };
         const frame = cc.view.getFrameSize(), size = inspected.size;
         const scale = Math.min(frame.width / size.width, frame.height / size.height);
         const dx = (frame.width - size.width * scale) / 2, dy = (frame.height - size.height * scale) / 2;
@@ -224,9 +228,10 @@ try {
           return { name: node.name, x: dx + left * scale, y: dy + top * scale, width: (right - left) * scale, height: (bottom - top) * scale };
         };
         const clips = [];
+        if (!button) button = ownRect(target);
         for (let p = target.parent; p; p = p.parent) if (p.getComponent(cc.Mask)?.enabledInHierarchy) clips.push(ownRect(p));
         return { button, clips };
-      }, name);
+      }, { name, allowNonButton });
       const { button, clips } = hit;
       assert.ok(button, `${label}: missing native button ${name}`);
       assert.notEqual(button.interactable, false, `${label}: disabled native button ${name}`);
@@ -239,8 +244,8 @@ try {
       const x = (visible.left + visible.right) / 2, y = (visible.top + visible.bottom) / 2;
       return { x, y, button, clips, visible };
     };
-    const click = async name => {
-      const point = await nativePoint(name);
+    const click = async (name, options) => {
+      const point = await nativePoint(name, options);
       result.lastAction = { kind: 'tap', name, ...point };
       const { x, y } = point;
       await page.touchscreen.tap(x, y);
@@ -295,13 +300,39 @@ try {
         const ribbon = node.getComponent('HealingRibbon');
         if (ribbon?.enabledInHierarchy) {
           const geometry = ribbon.geometry, count = geometry?.vertexCount || 0, data = ribbon.renderData, vb = data?.chunk?.vb;
-          let geometryAlpha = 0, bufferAlpha = 0;
+          let expectedOpacity = 1;
+          const opacityChain = [], ancestorRenderers = [], ancestorSprites = [];
+          for (let p = node; p; p = p.parent) {
+            const opacity = p.getComponent(cc.UIOpacity), renderer = p._uiProps?.uiComp, sprite = p.getComponent(cc.Sprite);
+            if (opacity) {
+              opacityChain.push({ name: p.name, opacity: opacity.opacity, enabled: opacity.enabledInHierarchy });
+              if (opacity.enabledInHierarchy) expectedOpacity *= opacity.opacity / 255;
+            }
+            if (renderer) ancestorRenderers.push({ name: p.name, renderer: renderer.constructor.name, enabled: renderer.enabledInHierarchy, alpha: renderer.color?.a });
+            if (p !== node && sprite) ancestorSprites.push({ name: p.name, enabled: sprite.enabledInHierarchy, alpha: sprite.color.a });
+          }
+          // Only explicit UIOpacity is allowed to attenuate this effect. Its
+          // particle alpha already lives in geometry; a disabled pooled parent
+          // Sprite must not multiply stale color alpha into the submitted mesh.
+          let geometryAlpha = 0, bufferAlpha = 0, maxAlphaError = 0, alphaMismatchCount = 0;
+          const alphaMismatchSamples = [];
           for (let i = 0; i < count; i++) {
-            geometryAlpha = Math.max(geometryAlpha, geometry.vertices[i * 6 + 5]);
-            if (vb) bufferAlpha = Math.max(bufferAlpha, vb[i * data.floatStride + 8] || 0);
+            const source = geometry.vertices[i * 6 + 5], expected = source * expectedOpacity;
+            const actual = vb?.[i * data.floatStride + 8], finite = Number.isFinite(actual), error = finite ? Math.abs(actual - expected) : 1;
+            geometryAlpha = Math.max(geometryAlpha, source);
+            if (finite) bufferAlpha = Math.max(bufferAlpha, actual);
+            maxAlphaError = Math.max(maxAlphaError, error);
+            if (!finite || error > 2e-5) {
+              alphaMismatchCount++;
+              if (alphaMismatchSamples.length < 3) alphaMismatchSamples.push({ vertex: i, source, expected, actual: finite ? actual : String(actual), error });
+            }
           }
           const b = app.bounds(node), size = app.inspect().size;
           ribbons.push({ name: node.name, vertexCount: count, geometryAlpha, bufferAlpha, bufferLength: vb?.length || 0,
+            expectedOpacity, appliedOpacity: node._uiProps?.opacity, selfColorAlpha: ribbon.color.a,
+            parentSpriteAlpha: node.parent?.getComponent(cc.Sprite)?.color.a,
+            parentSpriteEnabled: node.parent?.getComponent(cc.Sprite)?.enabledInHierarchy,
+            maxAlphaError, alphaMismatchCount, alphaMismatchSamples, opacityChain, ancestorRenderers, ancestorSprites,
             texture: !!ribbon.spriteFrame?.texture, material: !!ribbon.getRenderMaterial(0), bounds: b,
             onScreen: b.width > 0 && b.height > 0 && b.x < size.width && b.y < size.height && b.x + b.width > 0 && b.y + b.height > 0 });
         }
@@ -309,7 +340,9 @@ try {
       };
       walk(cc.director.getScene());
       const healEvents = globalThis.__CAN_CLUB_BROWSER_SMOKE__.healEvents || [];
-      if (freeze && healEvents.length && ribbons.some(r => r.vertexCount > 0 && r.geometryAlpha > .02 && r.onScreen)) {
+      // Capture the original ribbon after its entry fade becomes legible; do
+      // not freeze at the first almost-transparent mesh or alter effect alpha.
+      if (freeze && healEvents.length && ribbons.some(r => r.vertexCount > 0 && r.geometryAlpha > .3 && r.onScreen)) {
         s.pause(); app.refresh();
       }
       return { paused: s.paused, battleTime: s.battle.time, ribbons, healEvents: [...healEvents] };
@@ -345,6 +378,7 @@ try {
       await click('guide-continue'); await waitState({ guideStep: 12 });
       await click('open-can'); await waitState({ guideStep: 13 });
       await click('guide-continue'); await waitState({ guideStep: 9, modal: 'quests' });
+      await capture('growth-notebook');
       await click('modal-close');
       await waitState({ running: true, guideActive: false });
       result.checks.push('Entire initial tutorial through real native buttons; training, equipment inspection, can practice and growth-goals modal');
@@ -410,7 +444,53 @@ try {
       assert.equal((await state()).guideActive, false, 'tutorial must not intercept the restored report');
       result.checks.push('Native street/salvage flow; real combat reward; settlement persists, survives reload and blocks tutorial interception');
 
-      await click('result-close'); await waitState({ report: false, tab: 'cats', mode: 'equipment', guideStep: 20 });
+      await click('result-gear'); await waitState({ report: true, modal: 'equipment', guideActive: false });
+      assert.deepEqual((await state()).report, settledReport, 'opening reward details must preserve the settlement');
+      await click('modal-close'); await waitState({ report: true, modal: 'report', guideActive: false });
+      assert.deepEqual((await state()).report, settledReport, 'closing reward details must return to the same settlement');
+      // A real gesture over decorative report content must not act as a tap.
+      const crest = await nativePoint('result-crest', { allowNonButton: true });
+      const reportPanel = await nativePoint('result-layer', { allowNonButton: true });
+      const outside = { x: viewport.width / 2, y: Math.max(3, Math.min(20, reportPanel.visible.top / 2)) };
+      assert.ok(outside.y < reportPanel.visible.top, 'background gesture must start outside the settlement panel');
+      result.lastAction = { kind: 'report-swipe', name: 'result-crest', ...crest };
+      const reportTouch = await context.newCDPSession(page);
+      try {
+        await reportTouch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...outside, id: 1 }] });
+        await frames();
+        await reportTouch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: outside.x + 45, y: outside.y, id: 1 }] });
+        await frames();
+        await reportTouch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+        await frames();
+        assert.deepEqual((await state()).report, settledReport, 'swiping the outside backdrop must not dismiss the report');
+        await reportTouch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...outside, id: 1 }] });
+        await frames();
+        await reportTouch.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
+        await frames();
+        assert.deepEqual((await state()).report, settledReport, 'a cancelled backdrop touch must not dismiss the report');
+        await reportTouch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...outside, id: 1 }, { x: crest.x, y: crest.y, id: 2 }] });
+        await frames();
+        await reportTouch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+        await frames();
+        assert.deepEqual((await state()).report, settledReport, 'two fingers split across backdrop and panel must not dismiss the report');
+        await reportTouch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: crest.x, y: crest.y, id: 1 }] });
+        await frames();
+        await reportTouch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: crest.x, y: Math.max(crest.visible.top + 4, crest.y - 40), id: 1 }] });
+        await frames();
+        await reportTouch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+        await frames();
+      } finally { await reportTouch.detach(); }
+      assert.deepEqual((await state()).report, settledReport, 'swiping decorative settlement content must not dismiss the report');
+      await page.evaluate(() => {
+        const app = globalThis.__CAN_CLUB_APP__, cc = globalThis.__CAN_CLUB_ENGINE__;
+        const content = app.find('result-content'), scroll = content?.parent?.getComponent(cc.ScrollView);
+        if (!scroll) throw new Error('Missing native report ScrollView');
+        scroll.stopAutoScroll(); scroll.scrollToTop(0);
+      });
+      await frames();
+      await click('result-crest', { allowNonButton: true });
+      await waitState({ report: false, tab: 'cats', mode: 'equipment', guideStep: 20 });
+      result.checks.push('Settlement reward details preserve the report; inside/outside swipe, touch cancellation and cross-surface multitouch do not dismiss it; real crest tap closes it and resumes equipment teaching');
       await click('guide-continue'); await waitState({ guideStep: 21 });
       await click('gear-' + settledReport.gearUid); await waitState({ modal: 'equipment', guideStep: 22 });
       await click('gear-equip'); await waitState({ guideStep: 23 });
@@ -436,6 +516,30 @@ try {
       await capture('07-materials');
       await click('bag-tab-keepsakes');
       await capture('08-keepsakes');
+      await click('tab-map'); await waitState({ tab: 'map', guideActive: false });
+      await click('district-board'); await waitState({ modal: 'arena', guideActive: false });
+      await capture('commission-board');
+      await click('street-group-equipment'); await waitState({ modal: 'street', guideActive: false });
+      await capture('equipment-list');
+      await click('street-choice-salvage');
+      await click('street-fight'); await waitState({ tab: 'battle', loading: false });
+      await page.evaluate(async () => {
+        const app = globalThis.__CAN_CLUB_APP__;
+        for (let i = 0; i < 3000 && !app.session.report; i++) {
+          app.advance(.1); if (i % 12 === 0) await new Promise(resolve => requestAnimationFrame(resolve));
+        }
+        if (!app.session.report) throw new Error('Repeat salvage did not settle');
+      });
+      await waitState({ report: true });
+      const repeated = (await state()).report;
+      assert.equal(repeated.win, true);
+      const repeatPanel = await nativePoint('result-layer', { allowNonButton: true });
+      const backgroundY = Math.max(3, Math.min(20, repeatPanel.visible.top / 2));
+      assert.ok(backgroundY < repeatPanel.visible.top);
+      await page.touchscreen.tap(viewport.width / 2, backgroundY);
+      await waitState({ report: false, tab: 'map', modal: 'street' });
+      await click('modal-close'); await waitState({ modal: '' });
+      result.checks.push('A second real salvage settles normally; a genuine outside tap closes its report and restores the original commission route');
       await click('tab-battle'); await waitState({ tab: 'battle' });
       await capture('09-battle');
       result.checks.push('Native equipment enhancement, material bag and companion-keepsake bag');
@@ -501,19 +605,29 @@ try {
       assert.ok(healing.healEvents.length > 0, 'actual game combat must emit milk healing events');
       // Freeze only simulation time so two real rendering frames can submit the
       // gradient before inspection and capture; do not open a pause overlay.
-      await frames();
       await assetsReady();
+      await drawFrames();
       healing = await page.evaluate(healingState);
+      result.lastHealingAudit = healing;
       assert.ok(healing.ribbons.length > 0, 'native healing streams must remain visible while simulation is frozen');
       assert.ok(healing.ribbons.every(r => r.name === 'healing-stream' && r.vertexCount > 0 && r.texture && r.material));
       assert.ok(healing.ribbons.some(r => r.onScreen && r.bufferLength > 0 && r.bufferAlpha > .02), 'healing assembler must submit visible nontransparent vertex data');
+      for (const ribbon of healing.ribbons.filter(r => r.onScreen && r.geometryAlpha > 0)) {
+        const detail = JSON.stringify(ribbon);
+        assert.equal(ribbon.selfColorAlpha, 255, `healing alpha belongs to vertex geometry: ${detail}`);
+        assert.equal(ribbon.parentSpriteEnabled, false, `healing must disable the pooled standard sprite: ${detail}`);
+        assert.equal(ribbon.parentSpriteAlpha, 255, `pooled parent sprite must reset its previous particle alpha: ${detail}`);
+        assert.ok(ribbon.ancestorSprites.every(parent => parent.alpha === 255), `healing has an unintended ancestor sprite fade: ${detail}`);
+        assert.ok(Math.abs(ribbon.appliedOpacity - ribbon.expectedOpacity) <= 2e-5, `healing inherited opacity must match explicit UIOpacity components: ${detail}`);
+        assert.equal(ribbon.alphaMismatchCount, 0, `submitted healing alpha must equal each geometry alpha times explicit ancestor opacity: ${detail}`);
+      }
       result.healing = healing;
       await capture('11-healing-ribbon');
       await page.evaluate(() => {
         globalThis.__CAN_CLUB_BROWSER_SMOKE__.stopHealingCapture?.();
         const app = globalThis.__CAN_CLUB_APP__; app.session.resume(); app.refresh();
       });
-      result.checks.push('Actual milk skill emits healing; native HealingRibbon has geometry, texture, material and nontransparent submitted vertices after two draw frames');
+      result.checks.push('Actual milk skill emits healing; after two Cocos draw events each visible HealingRibbon submitted vertex alpha matches geometry times explicit ancestor opacity, with pooled parent sprite alpha reset');
       await assetsReady();
       await page.waitForLoadState('networkidle');
       const final = await healthy();

@@ -10,7 +10,11 @@ CI 的 `cocos-creator-project-*` 产物内提供 **CanClub-Creator-3.8.8.zip**�
 
 入口场景为 `assets/scenes/Main.scene`，启动组件为 `assets/scripts/CanClubGame.ts`。设计宽度 390、高度 844，按宽适配并根据可视区域计算高度。`package.json` 锁定 Creator 版本，场景与脚本的 UUID 由构建脚本稳定生成。
 
+用户确认的原画与设定页对应见 [美术基线](docs/art-baseline.md)。实际 Cocos Web 试玩入口为仓库的 [`cocos-preview/play.html`](../cocos-preview/play.html)，由下面的同一份源引擎构建生成；它不是 Creator 编辑器正式导出。
+
 `assets/scripts/domain/` 存放迁移的纯逻辑；`game/` 管理会话；`render/` 与 `ui/` 负责原生显示和输入；`platform/` 处理存档、音频、广告和平台生命周期。Web 与微信都调用同一份 `bootGame`。
+
+`platform/Compatibility.ts` 由同一个场景入口先行导入，给缺少 `Array.prototype.at` 或 `structuredClone` 的运行环境提供原游戏需要的兼容行为。快照克隆的备用实现仅用于本工程的普通 JSON 位置数据；已有原生实现不会被覆盖。正式 Creator 场景与源码引擎开发版本共用它。
 
 ## 开发构建
 
@@ -31,6 +35,8 @@ npm run build:wechat
 - `build/web-mobile/`：真实 Cocos 3.8.8 WebGL 引擎的独立开发版本，可由静态服务器托管。
 - `build/wechatgame/`：同一业务入口对应的微信源引擎开发主包。
 - `build/remote-art/`：微信完整尺寸资源，与主包分开。
+
+完成 Web 构建后，`npm run build:preview` 生成仓库根目录的 `cocos-preview/play.html`。它复用已保存的原始 WebP、生成表情和治疗 PNG，并为运行文件及派生图片使用内容指纹路径。CI 重建后检查入口指纹一致，再直接打开此路径验证原生场景与触摸流程；原来的 H5 页面继续保留。
 
 这些脚本在没有 Creator 编辑器的环境中使用 **官方 3.8.8 源码编译的引擎**。它们不伪装为 Creator 编辑器正式构建。`vendor/engine-manifest.json` 记录引擎版本、提交、模块及 SHA-256。正式发布前仍须在 Creator 3.8.8 中打开工程、导入资源、构建，并用微信开发者工具及真机核验。
 
@@ -84,6 +90,8 @@ node scripts/build.mjs --wechat
 
 激励广告只有 SDK 明确返回 `isEnded === true` 才完成；提前关闭、SDK 出错、缺少广告位、忙碌及超时均不给奖励。每次观看有独立实例与监听，旧请求的重复/延迟回调不能完成新请求；超时后服务退役以避免继续接收不明来源回调。业务会话继续执行奖品单次领取约束。
 
+正式微信构建同样读取 `WECHAT_REWARDED_AD_UNIT_ID`。`npm run build:creator:wechat` 在校验 Creator 实际输出后，将配置写入固定入口 `game.js`，保留原严格模式、哈希脚本和资源索引，并把增加的字节计入主包预算。空广告位保持不可用；非法非空值会在调用编辑器前失败。通过 Creator 面板直接导出的原始目录尚未经过该配置与资源移出步骤，应使用上述构建脚本生成交付目录。
+
 `platform/Audio.ts` 复用原音乐谱、合成器与音效配方，浏览器使用 AudioContext，微信使用 wx.createWebAudioContext，设置开关与前后台状态由同一服务处理。
 
 ## 原画姿态过渡
@@ -102,7 +110,7 @@ node scripts/build.mjs --wechat
 
 ## 持续验证
 
-`.github/workflows/cocos-migration-ci.yml` 在 `migration/cocos-3.8.8` 分支推送时运行，也可手动触发。它依次安装锁定依赖、对照官方引擎声明检查类型、对照冻结 Preview11 验证业务和形变几何、构建 Web/微信共同入口，再在真实 Chromium 中运行 Cocos 场景和原生触控流程。工作流只有 `contents: read` 权限。
+`.github/workflows/cocos-migration-ci.yml` 在 `main` 或 `migration/cocos-3.8.8` 的 Cocos 工程、试玩或工作流更新时运行，也可手动触发。它依次安装锁定依赖、对照官方引擎声明检查类型、对照冻结 Preview11 验证业务和形变几何、构建 Web/微信共同入口，再在真实 Chromium 中运行 Cocos 场景和原生触控流程。工作流只有 `contents: read` 权限。
 
 `npm run test:domain` 可独立运行业务对照；`npm run test:painted` 包括姿态合成与原治疗流带几何/渐变对照。`npm run test:build` 验证超预算时命令确实失败、单分包没有错误的 4 MiB 限制，以及正式输出配置检查；其中 Creator 输出使用文件夹 fixture，不冒充编辑器真实导出。`npm run test:browser` 需要已构建并由静态服务器托管的 Web 版本，默认地址为 `http://127.0.0.1:8765/cocos/build/web-mobile/`，可用 `CAN_CLUB_URL` 覆盖。测试创建独立浏览器上下文，不读取玩家的实际存档。
 
