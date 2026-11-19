@@ -550,17 +550,31 @@ try {
       }, { name, tag });
       const readPress = tag => page.evaluate(tag => globalThis.__CAN_CLUB_BROWSER_SMOKE__.presses[tag], tag);
       const pressAcrossPatrol = async (name, tag) => {
-        const point = await nativePoint(name);
-        await armPress(name, tag);
-        result.lastAction = { kind: 'hold-through-patrol', name, ...point };
-        const cdp = await context.newCDPSession(page);
+        // Freeze only probe setup. Settlement may otherwise replace a page
+        // button between binding the listener and the first physical START.
+        // Resume real patrol while the finger is down; all continuity checks
+        // below still span actual settlement and next-battle preparation.
+        const wasPaused = await page.evaluate(() => {
+          const s = globalThis.__CAN_CLUB_APP__.session, paused = s.paused;
+          s.paused = true;
+          return paused;
+        });
+        let cdp;
         let held = false;
         try {
+          assert.equal(wasPaused, false, name + ': continuity fixture must begin with patrol running');
+          await waitState({ loading: false });
+          await frames();
+          const point = await nativePoint(name);
+          await armPress(name, tag);
+          result.lastAction = { kind: 'hold-through-patrol', name, ...point };
+          cdp = await context.newCDPSession(page);
           await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: point.x, y: point.y, id: 1 }] }); held = true;
           await frames();
           assert.equal((await readPress(tag)).starts, 1, name + ': native START must reach the target before advancing combat');
-          const transition = await page.evaluate(async ({ name, tag }) => {
+          const transition = await page.evaluate(async ({ name, tag, wasPaused }) => {
             const app = globalThis.__CAN_CLUB_APP__, s = app.session, probe = globalThis.__CAN_CLUB_BROWSER_SMOKE__;
+            s.paused = wasPaused;
             const before = s.battleRevision;
             for (let i = 0; i < 600 && s.battleRevision === before; i++) {
               app.advance(.1);
@@ -568,7 +582,7 @@ try {
             }
             if (s.battleRevision <= before) throw new Error('Patrol did not naturally settle and start the next battle while pressed');
             return { before, after: s.battleRevision, sameTarget: probe.pressTargets[tag] === app.find(name) };
-          }, { name, tag });
+          }, { name, tag, wasPaused });
           await waitState({ loading: false });
           assert.equal(transition.sameTarget, true, name + ': background settlement must retain the pressed node');
           assert.equal(await page.evaluate(({ name, tag }) => {
@@ -581,9 +595,22 @@ try {
           assert.deepEqual([trace.starts, trace.ends, trace.cancels, trace.clicks], [1, 1, 0, 1], name + ': one real press must produce one click');
           assert.deepEqual((await state()).activeTouches, [], 'physical release must flush deferred UI work');
           return { ...trace, transition };
+        } catch (error) {
+          result.failedPress = await page.evaluate(({ name, tag }) => {
+            const app = globalThis.__CAN_CLUB_APP__, probe = globalThis.__CAN_CLUB_BROWSER_SMOKE__;
+            return { ...probe.presses?.[tag], currentUuid: app.find(name)?.uuid, sameTarget: probe.pressTargets?.[tag] === app.find(name) };
+          }, { name, tag }).catch(() => ({ name, tag, unavailable: true }));
+          throw error;
         } finally {
-          if (held) await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-          await cdp.detach();
+          try {
+            if (held) await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+          } finally {
+            try {
+              await page.evaluate(paused => { globalThis.__CAN_CLUB_APP__.session.paused = paused; }, wasPaused);
+            } finally {
+              if (cdp) await cdp.detach();
+            }
+          }
         }
       };
       result.inputContinuity = {};
