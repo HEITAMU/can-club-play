@@ -47,7 +47,7 @@ try {
   report.browser = {version: browser.version(), channel: process.env.CAN_CLUB_BROWSER_CHANNEL || 'playwright-chromium'};
   for (const viewport of [{ width: 390, height: 844 }, { width: 320, height: 740 }]) {
     const label = `${viewport.width}x${viewport.height}`;
-    const result = { viewport, status: 'running', checks: [], captures: [], errors: [], expectedEngineDiagnostics: [], fixture: 'Fresh account initially; isolated unlocked stage 3, rank-5 Lv.80 starters and resources for equipment/recruitment; temporary stage 101 with one original network response delayed to verify navigation, then prior encounter restored; isolated Lv.1 injured team and full milk energy for healing render capture; isolated rank-2 Lv.30 orange for native ascension, training and level-gated study' };
+    const result = { viewport, status: 'running', checks: [], captures: [], errors: [], expectedEngineDiagnostics: [], fixture: 'Fresh account initially; isolated unlocked stage 3, rank-5 Lv.80 starters and resources for equipment/recruitment; temporary stage 101 with one original network response delayed to verify navigation, then prior encounter restored; isolated Lv.1 injured team and full milk energy for healing render capture; isolated rank-2 Lv.30 orange for native ascension, training and automatic skill unlock at Lv.40/80/120' };
     report.viewports.push(result);
     const context = await browser.newContext({ viewport, deviceScaleFactor: 1, isMobile: true, hasTouch: true, locale: 'zh-CN', timezoneId: 'Asia/Shanghai' });
     const initialStorage = await context.storageState();
@@ -785,8 +785,8 @@ try {
       });
       result.checks.push('Actual milk skill emits healing; after two Cocos draw events each visible HealingRibbon submitted vertex alpha matches geometry times explicit ancestor opacity, with pooled parent sprite alpha reset');
 
-      // A separate, legal new-rule fixture isolates the growth gates from patrol.
-      // Every promotion, purchased level and learned skill below uses real touch.
+      // Native workflow: stars raise the cap; level milestones now award
+      // skill ranks automatically without consuming study resources.
       await page.evaluate(() => {
         const app = globalThis.__CAN_CLUB_APP__, s = app.session;
         s.paused = true; s.mode = 'profile'; s.selected = 'orange';
@@ -800,17 +800,23 @@ try {
       const growthState = () => page.evaluate(() => {
         const app = globalThis.__CAN_CLUB_APP__, s = app.session.state;
         const hero = app.session.battle.heroes.find(h => h.catId === 'orange');
-        return { level: s.levels.orange, rank: s.roster.stars.orange, study: s.breakthroughs.orange, gold: s.gold, shards: s.roster.shards.orange, notes: s.growth.notes, badges: s.badges, seals: s.growth.seals, legacyCap: s.legacyLevelCaps.orange, hp: hero?.maxHp, atk: hero?.atk };
+        return { level: s.levels.orange, rank: s.roster.stars.orange, skill: s.breakthroughs.orange, gold: s.gold, shards: s.roster.shards.orange, notes: s.growth.notes, badges: s.badges, seals: s.growth.seals, legacyCap: s.legacyLevelCaps.orange, hp: hero?.maxHp, atk: hero?.atk, heroSkill: hero?.skillRank, skillRule: s.skillUnlockRuleVersion };
       });
       const buttonState = name => page.evaluate(name => {
         const app = globalThis.__CAN_CLUB_APP__, cc = globalThis.__CAN_CLUB_ENGINE__, node = app.find(name);
         if (!node) throw new Error('Missing growth control: ' + name);
         return { enabled: node.getComponent(cc.Button)?.interactable, text: node.getComponentsInChildren(cc.Label).map(l => l.string).join(' ') };
       }, name);
+      const readDialog = () => page.evaluate(() => {
+        const app = globalThis.__CAN_CLUB_APP__, cc = globalThis.__CAN_CLUB_ENGINE__;
+        const root = app.find('dialog-content');
+        if (!root) throw new Error('Missing native skill dialog content');
+        return root.getComponentsInChildren(cc.Label).map(l => l.string).join(' ');
+      });
       const atCap = await growthState();
       assert.equal((await buttonState('upgrade-orange')).enabled, false);
       await click('upgrade-orange', { allowDisabled: true });
-      assert.deepEqual(await growthState(), atCap, 'a real tap at the level cap spends nothing');
+      assert.deepEqual(await growthState(), atCap, 'native tap at level cap must be inert');
       await click('cat-tag-orange'); await waitState({ modal: 'cat-tag' });
       const capLabels = await page.evaluate(() => {
         const app = globalThis.__CAN_CLUB_APP__, cc = globalThis.__CAN_CLUB_ENGINE__;
@@ -820,46 +826,65 @@ try {
       await capture('12-growth-ascension');
       await click('cat-tag-upgrade');
       const promoted = await growthState();
-      assert.equal(promoted.rank, 3); assert.equal(promoted.level, 30); assert.equal(promoted.study, 0);
+      assert.equal(promoted.rank, 3); assert.equal(promoted.level, 30); assert.equal(promoted.skill, 0);
       assert.equal(promoted.shards, atCap.shards - 20); assert.equal(promoted.hp, atCap.hp); assert.equal(promoted.atk, atCap.atk);
       await click('modal-close'); await waitState({ modal: '' });
       for (let i = 0; i < 9; i++) await click('upgrade-orange');
-      const belowStudy = await growthState(); assert.equal(belowStudy.level, 39); assert.ok(belowStudy.gold < promoted.gold);
-      assert.deepEqual(await buttonState('breakthrough-orange'), { enabled: false, text: '需角色 Lv.40' });
-      await click('breakthrough-orange', { allowDisabled: true });
-      assert.deepEqual(await growthState(), belowStudy);
-      await capture('13-growth-study-locked');
+      const belowUnlock = await growthState();
+      assert.equal(belowUnlock.level, 39); assert.equal(belowUnlock.skill, 0);
+      assert.equal((await state()).nodeNames.includes('breakthrough-orange'), false, 'manual study button must not exist');
+      await capture('13-growth-auto-locked');
       await click('skill-level-orange'); await waitState({ modal: 'skill' });
-      assert.deepEqual(await buttonState('study-skill'), { enabled: false, text: '需角色 Lv.40' });
-      await click('study-skill', { allowDisabled: true });
-      assert.deepEqual(await growthState(), belowStudy, 'the skill dialog must obey the same level gate');
-      await capture('14-growth-skill-requirements');
+      assert.equal((await state()).nodeNames.includes('study-skill'), false, 'dialog must not contain manual study');
+      assert.match(await readDialog(), /Lv\.40 自动解锁/, 'dialog tells the player when the next effect is automatic');
+      await capture('14-growth-auto-details');
       await click('modal-close'); await waitState({ modal: '' });
-      await click('upgrade-orange'); assert.equal((await growthState()).level, 40);
+      const resources = { badges: belowUnlock.badges, notes: belowUnlock.notes, seals: belowUnlock.seals };
+      await click('upgrade-orange');
+      const unlocked40 = await growthState();
+      assert.equal(unlocked40.level, 40); assert.equal(unlocked40.skill, 1); assert.equal(unlocked40.heroSkill, 1);
+      assert.equal(unlocked40.rank, 3);
+      for (const [key, val] of Object.entries(resources)) assert.equal(unlocked40[key], val, key + ' unchanged by automatic unlock');
       await click('skill-level-orange'); await waitState({ modal: 'skill' });
-      assert.equal((await buttonState('study-skill')).enabled, true);
-      const beforeLearning = await growthState();
-      await click('study-skill');
-      const learned = await growthState();
-      assert.equal(learned.study, 1); assert.equal(learned.level, 40); assert.equal(learned.rank, 3);
-      assert.equal(learned.badges, beforeLearning.badges - 8); assert.equal(learned.notes, beforeLearning.notes - 50); assert.equal(learned.seals, beforeLearning.seals);
-      assert.deepEqual(await buttonState('study-skill'), { enabled: false, text: '需角色 Lv.80' });
-      await capture('15-growth-skill-learned');
+      assert.match(await readDialog(), /Lv\.80 自动解锁/, 'next milestone must show Lv.80');
+      assert.equal((await state()).nodeNames.includes('study-skill'), false);
+      await capture('15-growth-auto-unlocked');
       const persistedGrowth = await page.evaluate(() => {
         const envelope = JSON.parse(localStorage.getItem('can-club-growth-preview-v1'));
         const s = JSON.parse(envelope.payload);
-        return { level: s.levels.orange, rank: s.roster.stars.orange, study: s.breakthroughs.orange, gold: s.gold, shards: s.roster.shards.orange, notes: s.growth.notes, badges: s.badges, seals: s.growth.seals, legacyCap: s.legacyLevelCaps.orange };
+        return { level: s.levels.orange, rank: s.roster.stars.orange, skill: s.breakthroughs.orange, gold: s.gold, shards: s.roster.shards.orange, notes: s.growth.notes, badges: s.badges, seals: s.growth.seals, legacyCap: s.legacyLevelCaps.orange, skillRule: s.skillUnlockRuleVersion };
       });
-      for (const [key, value] of Object.entries(persistedGrowth)) assert.equal(value, learned[key], `growth state saved: ${key}`);
+      for (const [key,value] of Object.entries(persistedGrowth)) assert.equal(value, unlocked40[key], 'saved: ' + key);
       intentionalReload = true;
       try { await page.reload({ waitUntil: 'domcontentloaded' }); await ready(); }
       finally { intentionalReload = false; }
       const reloaded = await growthState();
-      // Patrol resumes after a normal reload and may legitimately earn materials.
-      // Exact saved costs are checked above; persistent growth must stay unchanged.
-      for (const key of ['level', 'rank', 'study', 'legacyCap']) assert.equal(reloaded[key], learned[key], `growth save reload: ${key}`);
-      result.growthRules = { atCap, capLabels, promoted, belowStudy, learned, persistedGrowth, reloaded };
-      result.checks.push('Native level-cap rejection, ascension without instant stats, ten purchased levels, both study controls gated at Lv.39/40, one paid skill rank and persistent reload');
+      for (const key of ['level','rank','skill','legacyCap','skillRule']) assert.equal(reloaded[key], unlocked40[key], 'reload: ' + key);
+      // Check the other two threshold crossings through real native training
+      // controls. High-rank, below-threshold fixtures are confined to QA.
+      await click('tab-cats'); await waitState({ tab: 'cats' });
+      const furtherUnlocks = [];
+      for (const [level,rank] of [[79,2],[119,3]]) {
+        await page.evaluate(({level,rank}) => {
+          const app = globalThis.__CAN_CLUB_APP__, s = app.session;
+          s.paused = true; s.mode = 'profile';
+          s.state.roster.stars.orange = 9; s.state.levels.orange = level;
+          s.state.breakthroughs.orange = rank-1;
+          s.battle.syncStats(s.state, { preserveHealthRatio: true }); app.refresh();
+        }, {level,rank});
+        await waitState({ mode:'profile', tab:'cats', loading:false });
+        const before = await growthState();
+        assert.equal(before.heroSkill, rank-1);
+        await click('upgrade-orange');
+        const after = await growthState();
+        assert.ok(after.level >= level+1, 'native training must cross level threshold');
+        assert.equal(after.skill, rank); assert.equal(after.heroSkill, rank);
+        for(const key of ['badges','notes','seals']) assert.equal(after[key],before[key], 'automatic unlock does not spend '+key);
+        furtherUnlocks.push({ before, after });
+      }
+      await capture('16-growth-auto-max');
+      result.growthRules = { atCap, capLabels, promoted, belowUnlock, unlocked40, persistedGrowth, reloaded, furtherUnlocks };
+      result.checks.push('Native level cap/ascension, no manual skill actions, Lv.40/80/120 auto-unlocks without spending notes/badges/seals, and save/reload consistency');
       await assetsReady();
       await page.waitForLoadState('networkidle');
       const final = await healthy();
