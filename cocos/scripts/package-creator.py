@@ -12,7 +12,7 @@ for key, entry in manifest["assets"].items():
     file = root / "assets" / "resources" / entry["path"]
     if not file.is_file() or not Path(str(file) + ".meta").is_file():
         raise RuntimeError(f"Prepared Creator image or metadata missing: {key}")
-for name in ["assets/scenes/Main.scene", "assets/resources/effects/canclub-painted-blend.effect", "package.json", "settings/v2/packages/project.json"]:
+for name in ["assets/scenes/Main.scene", "assets/resources/effects/canclub-painted-blend.effect", "assets/resources.meta", "package.json", "settings/v2/packages/project.json", "settings/v2/packages/builder.json", "scripts/build-creator.mjs"]:
     if not (root / name).is_file():
         raise RuntimeError(f"Required project file missing: {name}")
 files = [file for file in sorted(root.rglob("*")) if file.is_file() and not file.is_symlink()

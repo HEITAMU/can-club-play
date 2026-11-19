@@ -18,7 +18,10 @@ let effectPromise:Promise<EffectAsset>|null=null;
 function paintedEffect():Promise<EffectAsset>{
  const registered=EffectAsset.get('canclub-painted-blend');
  if(registered)return Promise.resolve(registered);
- if(!effectPromise)effectPromise=new Promise<EffectAsset>((resolve,reject)=>resources.load('effects/canclub-painted-blend',EffectAsset,(error,effect)=>{if(error){effectPromise=null;reject(error);}else {effect.addRef();resolve(effect);}}));
+ if(!effectPromise){
+  effectPromise=assets.ensureCreatorResources().then(()=>new Promise<EffectAsset>((resolve,reject)=>resources.load('effects/canclub-painted-blend',EffectAsset,(error,effect)=>{if(error)reject(error);else {effect.addRef();resolve(effect);}})));
+  effectPromise.catch(()=>{effectPromise=null;});
+ }
  return effectPromise;
 }
 const xs=[0,110,256,512],ys=[0,258,335,420,470,518,544],indices=[];
@@ -58,6 +61,12 @@ export class PaintedMeshSprite extends Sprite{
  onDestroy(){const material=this.ownedMaterial;this.ownedMaterial=null;super.onDestroy();material?.destroy();}
 }
 const foes={dust:['a',0],box:['a',1],mop:['a',2],battery:['a',3],bag:['b',0],drone:['b',1],vacuum:['b',2],fridge:['b',3],sign:['c',0],boxBoss:['c',1],clock:['c',2],vendor:['c',3]};
+export function paintedAtlasFor(id:string):string{
+ if(FINISHED_ROSTER[id])return FINISHED_ROSTER[id].atlas;
+ if(id==='spark')return FINISHED_SPARK.atlas;
+ if(CARRIER_ART[id])return CARRIER_ATLAS;
+ return `assets/painted/enemies-${(foes[id]||foes.dust)[0]}.webp`;
+}
 export class PaintedActor{
  node:Node; id:string; controlled=false; layers:PaintedMeshSprite[]=[]; frames=new Map<string,SpriteFrame>(); pending=new Set<string>();
  width=90;height=86;clock=-1;pose:any;face:any; flip=1;unit=62;disposed=false;outcome:any;ui:any;

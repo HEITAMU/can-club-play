@@ -5,6 +5,10 @@
   "outputName": "wechatgame",
   "debug": false,
   "md5Cache": true,
+  "server": "",
+  "useBuiltinServer": false,
+  "mainBundleIsRemote": false,
+  "mainBundleCompressionType": "merge_dep",
   "startScene": "6e16d352-1e7c-5cff-96e2-86576ebde448",
   "scenes": [
     {
@@ -26,7 +30,8 @@
   "packages": {
     "wechatgame": {
       "appid": "wx43da24c6ac1e5a12",
-      "orientation": "portrait"
+      "orientation": "portrait",
+      "remoteServerAddress": ""
     }
   }
 }

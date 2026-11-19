@@ -42,15 +42,23 @@ jobs:
         run: npm run test:domain
       - name: Compare painted texture composition with the original Canvas
         run: npm run test:painted
+      - name: Verify package budgets and Creator remote export checks
+        run: npm run test:build
       - name: Build shared Web entry and full-resolution resources
         run: node scripts/build.mjs --web --debug --faces
       - name: Build shared WeChat entry
         run: node scripts/build.mjs --wechat --code-only
       - name: Package complete Creator project with prepared PNG imports
         run: python3 scripts/package-creator.py
-      - name: Install Chromium and CJK fonts
+      - name: Prepare a real browser and CJK fonts
+        timeout-minutes: 5
         run: |
-          npx playwright install --with-deps chromium
+          if command -v google-chrome > /dev/null; then
+            google-chrome --version
+            echo 'CAN_CLUB_BROWSER_CHANNEL=chrome' >> "$GITHUB_ENV"
+          else
+            npx playwright install --with-deps --only-shell chromium
+          fi
           sudo apt-get update
           sudo apt-get install -y fonts-noto-cjk
       - name: Exercise native scene, touch, save and page flows

@@ -11,11 +11,13 @@
     "build": "node scripts/build.mjs",
     "build:web": "node scripts/build.mjs --web",
     "build:wechat": "node scripts/build.mjs --wechat",
+    "build:creator:wechat": "node scripts/build-creator.mjs",
     "prepare:assets": "node scripts/build-assets.mjs",
     "prepare:project": "node scripts/prepare-project.mjs",
     "typecheck": "tsc --project tsconfig.check.json --noEmit",
     "test:domain": "node --test tests/domain-parity.test.mjs",
     "test:painted": "node --test tests/painted-blend.test.mjs tests/healing-ribbon.test.mjs",
+    "test:build": "node --test tests/build-package.test.mjs",
     "test:browser": "node tests/browser-smoke.mjs"
   },
   "devDependencies": {

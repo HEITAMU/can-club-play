@@ -40,11 +40,13 @@ let browser;
 try {
   browser = await chromium.launch({
     headless: process.env.CAN_CLUB_HEADED !== '1',
+    ...(process.env.CAN_CLUB_BROWSER_CHANNEL ? { channel: process.env.CAN_CLUB_BROWSER_CHANNEL } : {}),
     ...(process.env.CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.CHROMIUM_EXECUTABLE_PATH } : {}),
   });
+  report.browser = {version: browser.version(), channel: process.env.CAN_CLUB_BROWSER_CHANNEL || 'playwright-chromium'};
   for (const viewport of [{ width: 390, height: 844 }, { width: 320, height: 740 }]) {
     const label = `${viewport.width}x${viewport.height}`;
-    const result = { viewport, status: 'running', checks: [], captures: [], errors: [], fixture: 'Fresh account initially; test-only unlocked stage 3, Lv.80 starter team and resources for equipment flow' };
+    const result = { viewport, status: 'running', checks: [], captures: [], errors: [], fixture: 'Fresh account initially; isolated unlocked stage 3, Lv.80 starters and resources for equipment/recruitment; isolated Lv.1 injured team and full milk energy for healing render capture' };
     report.viewports.push(result);
     const context = await browser.newContext({ viewport, deviceScaleFactor: 1, isMobile: true, hasTouch: true, locale: 'zh-CN', timezoneId: 'Asia/Shanghai' });
     const initialStorage = await context.storageState();
@@ -95,6 +97,7 @@ try {
         engineVersion: cc?.VERSION,
         realScene: !!cc?.director?.getScene() && cc.director.getScene() instanceof cc.Scene,
         stage: s.state.stage, highest: s.state.highest, levels: { ...s.state.levels },
+        roster: { owned: [...s.state.roster.owned], shards: { ...s.state.roster.shards } },
         party: [...s.state.party], heroIds: s.battle?.heroes.map(h => h.catId), heroLevels: s.battle?.heroes.map(h => h.level),
         battleTime: s.battle?.time || 0, battleRevision: s.battleRevision,
         mode: s.mode, paused: s.paused, guideActive: s.guideActive, gearGuide: s.state.gearGuide,
@@ -170,14 +173,14 @@ try {
 
     // Scroll the real Cocos ScrollView if necessary, then dispatch browser touch
     // at the native button's reported CSS screen rectangle. No DOM button proxy.
-    const click = async name => {
+    const nativePoint = async (name, { reveal = true } = {}) => {
       await page.waitForFunction(() => globalThis.__CAN_CLUB_APP__?.inspect().loading === false);
       await page.waitForFunction(name => globalThis.__CAN_CLUB_APP__?.inspect().nodeNames.includes(name), name);
       if (name === 'guide-continue') await page.waitForFunction(() => {
         const app = globalThis.__CAN_CLUB_APP__;
         return app.session.time - (app.guideTouchAt ?? -Infinity) >= 0.25;
       });
-      await page.evaluate(name => {
+      if (reveal) await page.evaluate(name => {
         const app = globalThis.__CAN_CLUB_APP__, cc = globalThis.__CAN_CLUB_ENGINE__;
         let target;
         const walk = node => {
@@ -234,9 +237,42 @@ try {
       }
       assert.ok(button.width > 0 && button.height > 0 && visible.right - visible.left > 1 && visible.bottom - visible.top > 1, `${label}: button ${name} is clipped outside its visible viewport: ${JSON.stringify(hit)}`);
       const x = (visible.left + visible.right) / 2, y = (visible.top + visible.bottom) / 2;
-      result.lastAction = { name, x, y, button, clips, visible };
+      return { x, y, button, clips, visible };
+    };
+    const click = async name => {
+      const point = await nativePoint(name);
+      result.lastAction = { kind: 'tap', name, ...point };
+      const { x, y } = point;
       await page.touchscreen.tap(x, y);
       await frames();
+    };
+    const drag = async (from, to) => {
+      // Bring both pieces into the real ScrollView, then remeasure without
+      // scrolling between touch-down and release.
+      await nativePoint(from); await nativePoint(to);
+      const start = await nativePoint(from, { reveal: false }), end = await nativePoint(to, { reveal: false });
+      const b = start.button;
+      assert.ok(end.x < b.x || end.x > b.x + b.width || end.y < b.y || end.y > b.y + b.height, 'formation drop must release outside the source node');
+      result.lastAction = { kind: 'drag', from, to, start, end };
+      const cdp = await context.newCDPSession(page);
+      let pressed = false;
+      try {
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: start.x, y: start.y, id: 1 }] });
+        pressed = true;
+        await frames();
+        for (let step = 1; step <= 12; step++) {
+          const t = step / 12;
+          await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: start.x + (end.x - start.x) * t, y: start.y + (end.y - start.y) * t, id: 1 }] });
+          await frames();
+        }
+        assert.equal(await page.evaluate(() => globalThis.__CAN_CLUB_APP__.inspect().nodeNames.includes('formation-drag-ghost')), true, 'native touch move must create the formation drag visual');
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+        pressed = false;
+        await frames();
+      } finally {
+        if (pressed) await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }).catch(() => {});
+        await cdp.detach();
+      }
     };
     const advance = async ticks => {
       await page.evaluate(async ticks => {
@@ -247,6 +283,36 @@ try {
         }
       }, ticks);
       await frames();
+    };
+    // Passed directly to page.evaluate. Inspect the live native renderer, not
+    // just the effect sampler or a fabricated node.
+    const healingState = ({ tick = 0, freeze = false } = {}) => {
+      const app = globalThis.__CAN_CLUB_APP__, cc = globalThis.__CAN_CLUB_ENGINE__, s = app.session;
+      if (tick) app.advance(tick);
+      const ribbons = [];
+      const walk = node => {
+        if (!node.activeInHierarchy) return;
+        const ribbon = node.getComponent('HealingRibbon');
+        if (ribbon?.enabledInHierarchy) {
+          const geometry = ribbon.geometry, count = geometry?.vertexCount || 0, data = ribbon.renderData, vb = data?.chunk?.vb;
+          let geometryAlpha = 0, bufferAlpha = 0;
+          for (let i = 0; i < count; i++) {
+            geometryAlpha = Math.max(geometryAlpha, geometry.vertices[i * 6 + 5]);
+            if (vb) bufferAlpha = Math.max(bufferAlpha, vb[i * data.floatStride + 8] || 0);
+          }
+          const b = app.bounds(node), size = app.inspect().size;
+          ribbons.push({ name: node.name, vertexCount: count, geometryAlpha, bufferAlpha, bufferLength: vb?.length || 0,
+            texture: !!ribbon.spriteFrame?.texture, material: !!ribbon.getRenderMaterial(0), bounds: b,
+            onScreen: b.width > 0 && b.height > 0 && b.x < size.width && b.y < size.height && b.x + b.width > 0 && b.y + b.height > 0 });
+        }
+        for (const child of node.children) walk(child);
+      };
+      walk(cc.director.getScene());
+      const healEvents = globalThis.__CAN_CLUB_BROWSER_SMOKE__.healEvents || [];
+      if (freeze && healEvents.length && ribbons.some(r => r.vertexCount > 0 && r.geometryAlpha > .02 && r.onScreen)) {
+        s.pause(); app.refresh();
+      }
+      return { paused: s.paused, battleTime: s.battle.time, ribbons, healEvents: [...healEvents] };
     };
 
     try {
@@ -373,6 +439,81 @@ try {
       await click('tab-battle'); await waitState({ tab: 'battle' });
       await capture('09-battle');
       result.checks.push('Native equipment enhancement, material bag and companion-keepsake bag');
+
+      // Spend only the 20 milk keepsakes granted by the isolated fixture above.
+      await click('tab-bag'); await waitState({ tab: 'bag' });
+      await click('bag-tab-keepsakes');
+      const beforeRecruit = await state();
+      assert.equal(beforeRecruit.roster.owned.includes('milk'), false);
+      assert.equal(beforeRecruit.roster.shards.milk, 20);
+      await click('keepsake-milk'); await waitState({ modal: 'keepsake' });
+      await click('recruit-milk'); await waitState({ modal: 'recruit', loading: false });
+      const recruited = await state();
+      assert.equal(recruited.roster.owned.includes('milk'), true);
+      assert.equal(recruited.roster.shards.milk, 0);
+      assert.equal(recruited.party[2], 'milk', 'recruitment automatically fills the first empty party position');
+      await click('recruit-ok'); await waitState({ modal: '' });
+      await click('tab-cats'); await waitState({ tab: 'cats' });
+      await click('crew-mode-formation'); await waitState({ mode: 'formation' });
+      // First remove the automatic placement through native controls. Without
+      // this, a broken drag could falsely pass the final party[2] assertion.
+      await click('formation-bench-milk'); await click('formation-dismiss');
+      await waitState({ loading: false });
+      assert.equal((await state()).party.includes('milk'), false);
+      await drag('formation-bench-milk', 'formation-slot-2');
+      await page.waitForFunction(() => globalThis.__CAN_CLUB_APP__.session.state.party[2] === 'milk');
+      await waitState({ loading: false });
+      assert.deepEqual((await state()).party, ['orange', 'ink', 'milk']);
+      assert.equal((await state()).nodeNames.includes('formation-drag-ghost'), false);
+      await capture('10-formation-drag');
+      result.checks.push('Native keepsake recruitment; remove auto-placement and drag milk outside the source node into the third formation position');
+
+      await click('tab-battle'); await waitState({ tab: 'battle', loading: false });
+      // Reset only this disposable test's combat setup. Injured Lv.1 actors and
+      // full milk energy make the original skill emit real heal events before
+      // the two starters can end the encounter; no effect is manually spawned.
+      await page.evaluate(() => {
+        const app = globalThis.__CAN_CLUB_APP__, s = app.session;
+        Object.assign(s.state, { stage: 4, runCleared: 3, speed: 1 });
+        for (const id of ['orange', 'ink', 'milk']) s.state.levels[id] = 1;
+        if (!s.startBattle({ seed: 7388 })) throw new Error('Could not start isolated healing encounter');
+        app.refresh();
+      });
+      await waitState({ tab: 'battle', loading: false, running: true });
+      await page.evaluate(() => {
+        const app = globalThis.__CAN_CLUB_APP__, s = app.session, probe = globalThis.__CAN_CLUB_BROWSER_SMOKE__;
+        const milk = s.battle.heroes.find(h => h.catId === 'milk');
+        if (!milk) throw new Error('Recruited milk is absent from the real battle');
+        for (const h of s.battle.heroes) { h.hp = Math.floor(h.maxHp * .55); h.energy = h === milk ? 100 : 0; }
+        probe.healEvents = [];
+        probe.stopHealingCapture = s.subscribe(e => {
+          if (e.type === 'combat') probe.healEvents.push(...e.events.filter(hit => hit.type === 'heal' && hit.from === milk.id && hit.value > 0));
+        });
+      });
+      let healing;
+      for (let i = 0; i < 240; i++) {
+        healing = await page.evaluate(healingState, { tick: .1, freeze: true });
+        result.lastHealingAudit = healing;
+        if (healing.paused) break;
+        await frames();
+      }
+      assert.equal(healing?.paused, true, 'real milk healing must create visible native HealingRibbon geometry');
+      assert.ok(healing.healEvents.length > 0, 'actual game combat must emit milk healing events');
+      // Freeze only simulation time so two real rendering frames can submit the
+      // gradient before inspection and capture; do not open a pause overlay.
+      await frames();
+      await assetsReady();
+      healing = await page.evaluate(healingState);
+      assert.ok(healing.ribbons.length > 0, 'native healing streams must remain visible while simulation is frozen');
+      assert.ok(healing.ribbons.every(r => r.name === 'healing-stream' && r.vertexCount > 0 && r.texture && r.material));
+      assert.ok(healing.ribbons.some(r => r.onScreen && r.bufferLength > 0 && r.bufferAlpha > .02), 'healing assembler must submit visible nontransparent vertex data');
+      result.healing = healing;
+      await capture('11-healing-ribbon');
+      await page.evaluate(() => {
+        globalThis.__CAN_CLUB_BROWSER_SMOKE__.stopHealingCapture?.();
+        const app = globalThis.__CAN_CLUB_APP__; app.session.resume(); app.refresh();
+      });
+      result.checks.push('Actual milk skill emits healing; native HealingRibbon has geometry, texture, material and nontransparent submitted vertices after two draw frames');
       await assetsReady();
       await page.waitForLoadState('networkidle');
       const final = await healthy();

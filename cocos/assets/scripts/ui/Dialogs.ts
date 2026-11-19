@@ -152,7 +152,11 @@ export class Dialogs {
     GROUPS.forEach((g,i)=>{const request=requestFor(g.id,g.id==='equipment'?'salvage':''),card=ui.button(body,'',i%2*(cw+9),Math.floor(i/2)*(cardH+10),cw,cardH,()=>{this.session.guideEvent(g.id==='equipment'?'equipment-source':g.id);this.open('street',{group:g.id,detail:false});},{fill:'#ddc29a',name:'street-group-'+g.id});sceneCard(ui,card,request,3,3,cw-6,79);ui.label(card,g.name,8,88,cw-16,24,{size:13,bold:true,color:P.ink});line(ui,card,g.copy,8,116,cw-16,9,P.muted,25);});
     const y=Math.ceil(GROUPS.length/2)*(cardH+10);this.chapterLink(body,w,y,'journal','猫巷手账');this.chapterLink(body,w,y+89,'challenges','街头挑战');this.heightOf(body,w,y+180);
   }
-  chapterLink(body,w,y,kind,title){const {ui}=this,n=ui.button(body,'',0,y,w,79,()=>this.open(kind),{name:'open-'+kind,fill:'#ddc5a0'});ui.image(n,'assets/ui/journal-challenge-v02677.webp',0,0,73,79,[kind==='journal'?3:771,3,762,1018]);ui.label(n,title,88,23,w-100,30,{size:17,bold:true,color:P.ink});}
+  chapterLink(body,w,y,kind,title){const {ui}=this,n=ui.button(body,'',0,y,w,79,()=>this.open(kind),{name:'open-'+kind,fill:'#ddc5a0'});
+    // chapter-entry-art.mjs uses a 1536×1024 SVG image coordinate system;
+    // this original atlas is 1152×768, so convert the preserved crop by 3/4.
+    const rect=[kind==='journal'?3:771,3,762,1018].map(value=>value*.75);
+    ui.image(n,'assets/ui/journal-challenge-v02677.webp',0,0,73,79,rect);ui.label(n,title,88,23,w-100,30,{size:17,bold:true,color:P.ink});}
   street(body,w,h,data){
     const {ui,session:s}=this,state=s.state,view={group:'recruit',tier:1,detail:true,runeSearch:false,...data};
     if(view.group==='materials')view.group=groupFor(view.id);if(view.group==='hunt')view.group='equipment';

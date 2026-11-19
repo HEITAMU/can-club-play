@@ -10,9 +10,21 @@ export class Assets {
   private textures = new Map<string, Promise<Texture2D>>();
   private frames = new Map<string, Promise<SpriteFrame>>();
   private packages = new Map<string, Promise<void>>();
+  private creatorResources: Promise<void> | null = null;
   private runtime: RuntimeManifest | null = null;
   configure(manifest: RuntimeManifest) { this.runtime = manifest; }
   private manifest(): RuntimeManifest | null { return this.runtime || root.CAN_CLUB_ASSET_MANIFEST || null; }
+  /** Loads bundle metadata only; its full-resolution textures remain on demand. */
+  ensureCreatorResources(): Promise<void> {
+    if (this.manifest() || assetManager.getBundle('resources')) return Promise.resolve();
+    if (!this.creatorResources) {
+      this.creatorResources = new Promise<void>((resolve, reject) => {
+        assetManager.loadBundle('resources', error => error ? reject(error) : resolve());
+      });
+      this.creatorResources.catch(() => { this.creatorResources = null; });
+    }
+    return this.creatorResources;
+  }
   private async ensurePackage(name?: string) {
     if (!name || !root.wx?.loadSubpackage) return;
     if (!this.packages.has(name)) {
@@ -48,6 +60,7 @@ export class Assets {
       texture.addRef();
       return texture;
     }
+    await this.ensureCreatorResources();
     // Creator's importer creates the image's Texture2D sub-asset under /texture.
     const resource = 'art/' + key.replace(/^assets\//, '').replace(/\.(webp|png|jpe?g)$/i, '');
     return new Promise<Texture2D>((resolve, reject) => {

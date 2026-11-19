@@ -12,13 +12,14 @@ import { BattleView } from './render/BattleView';
 import { Pages } from './ui/Pages';
 import { Dialogs, groupFor } from './ui/Dialogs';
 import { CATS, unlocked } from './domain/core';
-import { FINISHED_ROSTER } from './domain/finished-roster-data';
-import { FINISHED_SPARK } from './domain/finished-spark-data';
-import { CARRIER_ATLAS } from './domain/carrier-art';
+import { carrierId } from './domain/carrier-art';
+import { paintedAtlasFor } from './render/PaintedActor';
 import { skillAudioEvents } from './domain/sound-effects';
 import { guideCardTop, guideNumber } from './domain/onboarding';
 const {ccclass} = _decorator;
-const COMMON_ART = ['painted/items.webp','ui/income-stall-v0272.webp','scenes/neighborhood-v0220.webp','scenes/formation-room-v02620.webp','scenes/formation-ground-v02646.webp','ui/paper-grain-v02642.webp','ui/cat-tag-wide-v02679.webp','ui/equipment-slots-v0281.webp','ui/companion-keepsakes-v0282.webp','materials/harbor-materials-v02641.webp','materials/scrap-v02643.webp','ui/equipment-v02643.webp','ui/runes-v02643.webp','ui/skills-v02644.webp','ui/crew-props-v02642.webp','ui/commission-board-v02641.webp','ui/journal-challenge-v02677.webp','ui/battle-results-v02641.webp','ui/critical-physical-v02658.webp','ui/critical-magic-v02658.webp','vfx/effects-v0216.webp','vfx/can-rescue-v0192.webp'].map(p=>'assets/'+p);
+// Page-only artwork is requested by its native UI when that page first opens.
+// Keep battle, navigation and rescue assets ready without decoding every page.
+const COMMON_ART = ['painted/items.webp','ui/income-stall-v0272.webp','materials/harbor-materials-v02641.webp','ui/critical-physical-v02658.webp','ui/critical-magic-v02658.webp','vfx/effects-v0216.webp','vfx/can-rescue-v0192.webp'].map(p=>'assets/'+p);
 const allNodes = (root:Node):Node[] => [root,...root.children.flatMap(allNodes)];
 const afterDraw = () => new Promise<void>(resolve=>director.once(Director.EVENT_AFTER_DRAW,resolve));
 let currentApp:any = null, starting:Promise<any>|null = null;
@@ -124,11 +125,13 @@ class CanClubRuntime extends Component {
     else if(!target)this.ui.button(p,'返回当前引导',12,h-37,w-24,28,()=>{this.modal=null;this.session.restoreGuide();this.navigate(this.session.navigation);this.refresh();},{name:'guide-restore',primary:true,size:12});
     else this.ui.label(p,'点击高亮处继续',12,h-34,w-24,23,{size:11,bold:true,color:'#927041',align:'center'});
   }
-  battleArt(startup=false){
-    const paths=[...COMMON_ART,'assets/scenes/commissions-v02646.webp','assets/painted/enemies-a.webp','assets/painted/enemies-b.webp','assets/painted/enemies-c.webp',CARRIER_ATLAS,'assets/vfx/shidun-impact-v0211.webp',...['heal-light','heal-light-vertical','heal-mote','heal-cross'].map(id=>'assets/cocos/effects/'+id+'.png')];
-    const owned=startup?unlocked(this.session.state).map(c=>c.id):this.session.state.party.filter(Boolean);
-    for(const id of owned){const art=id==='spark'?FINISHED_SPARK:FINISHED_ROSTER[id];if(art)paths.push(art.atlas,id==='spark'?'assets/finished/spark-portrait-v0211.webp':art.portrait);if(id==='spark'){for(let cel=0;cel<9;cel++)for(const face of ['blink','hurt','victory','attack'])paths.push(`assets/cocos/expressions/spark-${cel}-${face}.png`);}else for(const face of ['blink','hurt','victory'])paths.push(`assets/cocos/expressions/${id}-0-${face}.png`);}
-    paths.push(`assets/mobile/street-${Math.floor((this.session.battle.stage-1)/20)%6}-v02684.webp`);return [...new Set(paths.filter(Boolean))];
+  battleArt(_startup=false){
+    const battle=this.session.battle,actors=[...battle.heroes,...battle.enemies];
+    const ids=actors.map(a=>carrierId(a)||a.catId||(a.boss&&a.type==='box'?'boxBoss':a.type));
+    const paths=[...COMMON_ART,...ids.map(paintedAtlasFor),...['heal-light','heal-light-vertical','heal-mote','heal-cross'].map(id=>'assets/cocos/effects/'+id+'.png')];
+    if(ids.includes('pudding'))paths.push('assets/vfx/shidun-impact-v0211.webp');
+    for(const id of new Set(battle.heroes.map(a=>a.catId).filter(Boolean))){if(id==='spark'){for(let cel=0;cel<9;cel++)for(const face of ['blink','hurt','victory','attack'])paths.push(`assets/cocos/expressions/spark-${cel}-${face}.png`);}else for(const face of ['blink','hurt','victory'])paths.push(`assets/cocos/expressions/${id}-0-${face}.png`);}
+    paths.push(battle.activity?'assets/scenes/commissions-v02646.webp':`assets/mobile/street-${Math.floor((battle.stage-1)/20)%6}-v02684.webp`);return [...new Set(paths.filter(Boolean).map(p=>p.replace(/^\.\//,'')))];
   }
   renderLoading(){this.ui.clear(this.loadingRoot);this.loadingRoot.active=this.session.loading;if(!this.session.loading)return;this.ui.blocker(this.loadingRoot,this.w,this.h);this.ui.panel(this.loadingRoot,0,0,this.w,this.h,{fill:'#293f51',stroke:'#00000000',radius:0});const y=this.h*.4;this.ui.icon(this.loadingRoot,'can',this.w/2-23,y-55,46);this.ui.label(this.loadingRoot,'罐头远征队',20,y+4,this.w-40,40,{size:26,bold:true,color:'#f1deb8',align:'center'});this.loadMessage=this.ui.label(this.loadingRoot,'正在准备本场冒险',20,y+59,this.w-40,28,{size:13,color:'#e3cc9f',align:'center'});this.loadProgress=this.ui.label(this.loadingRoot,'0%',20,y+98,this.w-40,26,{size:16,bold:true,color:'#f4d69a',align:'center'});this.loadingRetry=this.ui.button(this.loadingRoot,'重新加载',60,y+145,this.w-120,38,()=>{void this.prepareBattle(!this.ready);},{name:'loading-retry',primary:true});this.loadingRetry.active=false;}
   async prepareBattle(startup=false){

@@ -105,7 +105,10 @@ export function sceneCard(ui,parent,q,x,y,w,h) {
   const hard=['coldstore','lifeline','ironwall','alarm','blackout','clockwork'];
   const special=q.kind==='hard',file=special?'quest-locations-v02672.webp':'commissions-v02646.webp';
   const index=special?Math.max(0,hard.indexOf(q.id)):q.kind==='hunt'?({market:1,depot:2,station:4}[q.id]??4):({sweep:0,escort:1,salvage:2,wardrobe:2,nightwatch:2,parts:0,polish:2,recruit:3,hunt:4,hard:5}[q.kind]??3);
-  return ui.image(parent,'assets/scenes/'+file,x,y,w,h,[index%3*512+3,Math.floor(index/3)*512+3,506,special?506:300]);
+  // The frozen SVG declares a 1536×1024 image, but the hard-job atlas is
+  // authored at 1152×768. SpriteFrame crops use physical pixels, not SVG units.
+  const rect=[index%3*512+3,Math.floor(index/3)*512+3,506,special?506:300].map(value=>value*(special?.75:1));
+  return ui.image(parent,'assets/scenes/'+file,x,y,w,h,rect);
 }
 
 export class Pages {

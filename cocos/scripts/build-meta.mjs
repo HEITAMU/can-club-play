@@ -13,6 +13,9 @@ async function write(relative,isDir){
  let importer=isDir?'directory':ext==='.ts'?'typescript':ext==='.scene'?'scene':ext==='.effect'?'effect':ext==='.json'?'json':/\.(png|jpe?g)$/.test(ext)?'image':'text';
  let meta={ver:isDir?'1.2.0':importer==='typescript'?'4.0.24':importer==='scene'?'1.1.50':importer==='image'?'1.0.27':importer==='effect'?'1.7.1':'1.0.0',importer,imported:true,uuid:id,files:[],subMetas:{},userData:{}};
  if(importer==='typescript')meta.userData={isPlugin:false,loadPluginInWeb:true,loadPluginInNative:true,loadPluginInEditor:false};
+ // Creator 3.8 moved per-platform bundle settings into builder.bundleConfig.
+ // This binding matches the official cocos-test-projects v3.8.8 schema.
+ if(relative==='assets/resources'&&isDir)meta.userData={isBundle:true,bundleName:'resources',priority:8,bundleConfigID:'canclub_resources'};
  if(importer==='image'){
   const info=imageInfo.get(relative)||{};
   meta.files=['.json',ext];
