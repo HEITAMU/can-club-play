@@ -15,7 +15,9 @@ concurrency:
 jobs:
   source-runtime:
     name: Types, parity and real-engine browser flow
-    runs-on: ubuntu-latest
+    # Playwright 1.56.1 has browser/dependency tables for 24.04, not 26.04.
+    # Keep the OS paired with the locked browser revision; latest is moving.
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     defaults:
       run:

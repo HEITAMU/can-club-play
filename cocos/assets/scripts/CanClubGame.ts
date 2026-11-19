@@ -45,7 +45,7 @@ class CanClubRuntime extends Component {
     this.buildLayout();if(this.session.navigation)this.navigate(this.session.navigation);if(this.session.notice)this.toast(this.session.notice);this.render();
   }
   unlock(){this.configureAudio();audio.unlock();}
-  key(e){this.unlock();if(e.keyCode===KeyCode.ESCAPE&&!this.session.guideActive){if(this.modal)this.close();else if(this.session.report)this.closeReport();}}
+  key(e){this.unlock();if(e.keyCode===KeyCode.ESCAPE&&!this.session.guideActive){if(this.modal)this.dialogs.dismiss();else if(this.session.report)this.closeReport();}}
   resize(){this.resizePending=true;}
   configureAudio(){audio.configure({music:this.session.state.music,effects:this.session.state.sound,hidden:this.session.hidden,scene:this.session.tab==='battle'&&!this.visibleModal()?'battle':'alley'});}
   buildLayout(){
@@ -88,7 +88,7 @@ class CanClubRuntime extends Component {
     if(e.type==='state'&&e.reason==='can')audio.play('can');
     this.refresh();this.configureAudio();
   }
-  scrollState(parent){return allNodes(parent).filter(n=>n.getComponent(ScrollView)).map(n=>n.getComponent(ScrollView).getScrollOffset());}
+  scrollState(parent){return allNodes(parent).filter(n=>n.getComponent(ScrollView)).map(n=>{const offset=n.getComponent(ScrollView).getScrollOffset();return new Vec2(-offset.x,offset.y);});}
   restoreScroll(parent,offsets){const views=allNodes(parent).filter(n=>n.getComponent(ScrollView));views.forEach((n,i)=>{if(offsets[i])n.getComponent(ScrollView).scrollToOffset(offsets[i],0);});}
   render(){
     const pageKey=this.session.tab+':'+this.session.mode+':'+this.session.selected,modalKey=this.visibleModal();
@@ -107,7 +107,7 @@ class CanClubRuntime extends Component {
   find(name){return allNodes(this.root).find(n=>n.name===name&&n.activeInHierarchy);}
   targetName(){const s=this.session.state.guideStep;return ({1:'battle-label',2:'tab-cats',3:'upgrade-orange',4:'crew-mode-equipment',5:'equipped-claw',6:'dialog-content',7:'tab-battle',8:'battle-label',11:'open-can',12:'open-can',13:'open-can',14:'battle-label',15:'tab-map',16:'district-board',17:'street-group-equipment',18:'street-choice-salvage',19:'street-fight',20:'equipment-bag',21:'gear-'+this.session.state.gearGuideItem,22:'gear-equip',23:'crew-equipment'})[s];}
   bounds(node:Node){const box=worldRect(node),p=this.root.getComponent(UITransform).convertToNodeSpaceAR(new Vec3(box.x,box.y+box.height,0));return {x:p.x,y:-p.y,width:box.width,height:box.height,top:-p.y,bottom:-p.y+box.height};}
-  revealTarget(target){let p=target.parent;while(p&&p!==this.root){const scroll=p.getComponent(ScrollView);if(scroll){const b=worldRect(target),v=worldRect(p);if(b.y<v.y+4||b.y+b.height>v.y+v.height-4){const local=scroll.content.getComponent(UITransform).convertToNodeSpaceAR(new Vec3(b.x+b.width/2,b.y+b.height/2,0)),wanted=Math.max(0,-local.y-v.height/2);scroll.scrollToOffset(new Vec2(scroll.getScrollOffset().x,wanted),0);}break;}p=p.parent;}}
+  revealTarget(target){let p=target.parent;while(p&&p!==this.root){const scroll=p.getComponent(ScrollView);if(scroll){const b=worldRect(target),v=worldRect(p);if(b.y<v.y+4||b.y+b.height>v.y+v.height-4){const local=scroll.content.getComponent(UITransform).convertToNodeSpaceAR(new Vec3(b.x+b.width/2,b.y+b.height/2,0)),wanted=Math.max(0,-local.y-v.height/2);scroll.scrollToOffset(new Vec2(-scroll.getScrollOffset().x,wanted),0);}break;}p=p.parent;}}
   advanceGuide(){if(this.session.time-this.guideTouchAt<.24)return;this.guideTouchAt=this.session.time;const step=this.session.state.guideStep;if(step===6||step===23)this.modal=null;this.session.guideEvent('continue');this.refresh();}
   renderGuide(){
     this.ui.clear(this.guideRoot);this.guideDirty=false;if(this.session.loading||this.session.report||this.session.intro||!this.session.guideActive)return;
