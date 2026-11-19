@@ -107,6 +107,8 @@ Session 修改成功发出的 `state` 和 `navigation` 应由宿主合并到下�
 
 同批按截图核对 `expedition-flow.css` / `battle-result.mjs`：胜败奖章恢复 168×168 正方形，CSS 窗口高 ≤650 时采用原 120×120；胜败底色恢复 #314b53 / #484656，装备奖励显示数量 1 与实际品质名。结算内容使用 `result-content` 原生 ScrollView，短屏下动作不会与奖励重叠。信物卡名字和拥有量恢复 `illustrated-ui.css` `.keepsake-grid` 的 11 px 字级并容纳换行。断点读取 `view.getFrameSize()`，节点布局仍使用宿主逻辑坐标。共享文字显式使用系统 `sans-serif`，不下载新字体。
 
+装备图标的强化等级保留浅金色，增加深色 1.5 px 描边，避免在纸色上消失。`sceneCard` 与 `chapterLink` 使用 `coverRect` 复现原 SVG 的 `preserveAspectRatio="xMidYMid slice"`：按目标宽高等比覆盖、居中裁切源片，不挤压整张原画。108×126 的仓库缩略图从原 506×300 裁片取居中的约 257.143×300 区域；硬仗和手账图集仍先将原 SVG 坐标乘 0.75 转为物理像素，再计算裁切。
+
 两个宽度的烟测另核对六个胜利 / 失败 / 信物结算奖章的正方形尺寸和两个装备奖励的数量 / 品质文字。此为构造与数据检查，实际纸纹、字体和遮罩显示仍交由真实引擎截图验收。
 
 ## 仍需真机 / 渲染验收的边界
