@@ -66,7 +66,7 @@ export class FourfoldGame extends Component {
 
     this.btn('‹',20,89+T,38,38,()=>{this.inHome=true;this.draw();},false,22);
     this.btn('✦ 闯关档案',20,135+T,169,39,()=>this.startGame('story',String(this.storeRead('unlocked',1))),this.mode==='story',13);
-    this.btn('◈ 每日同题',200,135+T,170,39,()=>this.startGame('daily',todayCN()),this.mode==='daily',13);
+    this.btn('◈ 每日挑战',200,135+T,170,39,()=>this.startGame('daily',todayCN()),this.mode==='daily',13);
     const y=180+T,cardH=h-y-100;
     this.shape(16,y,w-32,cardH,C.surface,'#60708B',18);
     this.txt(this.mode==='story'?`ARCHIVE ${String(this.key).padStart(2,'0')} / 18`:`DAILY · ${this.key}`,30,y+12,170,20,11,C.muted);
@@ -165,9 +165,9 @@ export class FourfoldGame extends Component {
       this.txt(`${this.moves} 步 · 最优 ${this.puzzle.par} 步 · ${Math.floor(this.elapsed)} 秒`,38,top+210,w-76,26,16,C.gold,true);
       this.txt(this.hints?'使用过提示：本局成绩不入好友榜':'你的最佳成绩已记录。',38,top+243,w-76,29,12,C.muted);
       this.btn(this.mode==='daily'?'回去闯关':'挑战下一关',43,top+298,w-86,52,()=>this.nextLevel(),true,16);
-      this.btn('分享此题给好友',43,top+367,w-86,40,()=>this.share(),false,13);
+      this.btn('分享此关给好友',43,top+367,w-86,40,()=>this.share(),false,13);
     } else {
-      this.txt('♛ 好友同题榜',39,top+30,w-78,45,25,C.gold,true);
+      this.txt('♛ 好友同关榜',39,top+30,w-78,45,25,C.gold,true);
       this.txt(`今天 ${todayCN()} · 好友成绩`,39,top+77,w-78,23,13,C.muted);
       const best=this.storeRead('best:daily:'+todayCN(),null);
       this.txt(best?`我的成绩 ${best.moves} 步 · ${best.seconds} 秒`:'我今天还没有通关记录',45,top+114,w-90,34,13,C.white);
@@ -175,7 +175,7 @@ export class FourfoldGame extends Component {
       if(sdk?.getOpenDataContext){
         try{const n=this.node('OpenDataRank',42,top+158,w-84,190);n.addComponent(SubContextView);}catch(e){this.txt('好友排行初始化失败，请检查开放数据域',44,top+198,w-88,40,12,C.muted);}
       }else this.txt('真实微信好友榜仅在微信小游戏内展示\n浏览器试玩不展示虚构好友',44,top+208,w-88,70,14,C.muted);
-      this.btn('挑战今日同题',44,top+368,w-88,47,()=>this.startGame('daily',todayCN()),true,15);
+      this.btn('挑战今日关卡',44,top+368,w-88,47,()=>this.startGame('daily',todayCN()),true,15);
     }
   }
   private toast(message:string){const serial=++this.toastSerial;const n=this.shape(31,this.height-167,this.width-62,48,C.gold,C.gold2,15);this.txt(message,36,this.height-163,this.width-72,42,11,C.dark,true);this.scheduleOnce(()=>{if(serial===this.toastSerial)this.draw();},2.3);}

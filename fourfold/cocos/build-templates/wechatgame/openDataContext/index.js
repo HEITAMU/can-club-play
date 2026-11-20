@@ -6,7 +6,7 @@ const WIDTH=650,HEIGHT=380;
 sharedCanvas.width=WIDTH;sharedCanvas.height=HEIGHT;
 function draw(status,records=[]){
   ctx.clearRect(0,0,WIDTH,HEIGHT);ctx.fillStyle='#142139';ctx.fillRect(0,0,WIDTH,HEIGHT);
-  ctx.fillStyle='#d8bb83';ctx.font='bold 26px sans-serif';ctx.fillText('微信好友 · 今日同题榜',22,40);
+  ctx.fillStyle='#d8bb83';ctx.font='bold 26px sans-serif';ctx.fillText('微信好友 · 今日同关榜',22,40);
   ctx.fillStyle='#718ba7';ctx.font='18px sans-serif';ctx.fillText('按最少步数，其次用时排序',22,69);
   if(status){ctx.fillStyle='#a3b6cc';ctx.font='21px sans-serif';ctx.fillText(status,26,155);return;}
   records.slice(0,5).forEach((row,i)=>{
@@ -33,4 +33,4 @@ wx.onMessage(message=>{
   },fail(err){console.warn('getFriendCloudStorage failed',err);draw('好友关系权限未就绪，请检查隐私授权配置。');}});
   }catch(e){console.warn(e);draw('好友榜暂不可用，请稍后再试。');}
 });
-draw('完成今天的谜题后，好友成绩会显示在这里。');
+draw('完成今天的关卡后，好友成绩会显示在这里。');

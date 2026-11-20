@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
 <meta name="theme-color" content="#0b1329"/><meta name="description" content="四格诡局：与朋友比一比，谁能用最少步数复原失落星图。"/>
-<title>四格诡局 · 每日同题脑力挑战</title><link rel="icon" type="image/svg+xml" href="assets/icon.svg"/><link rel="stylesheet" href="style.css?v=0.5.2" />
+<title>四格诡局 · 每日挑战脑力挑战</title><link rel="icon" type="image/svg+xml" href="assets/icon.svg"/><link rel="stylesheet" href="style.css?v=0.5.3" />
 </head><body>
 <div class="aurora a1"></div><div class="aurora a2"></div>
 <main class="shell" id="app">
@@ -14,7 +14,7 @@
 <div id="gameScreen" class="game-screen" hidden>
 <header class="top compact-top"><button id="backHome" class="home-back" aria-label="返回主界面">‹</button><button id="settingsBtn" class="settings-gear" aria-label="设置">⚙</button></header>
 
-<nav class="mode-select" aria-label="关卡模式"><button id="storyTab" class="active">✦ 闯关档案</button><button id="dailyTab">◈ 每日同题 <i id="dailyDot"></i></button></nav>
+<nav class="mode-select" aria-label="关卡模式"><button id="storyTab" class="active">✦ 闯关档案</button><button id="dailyTab">◈ 每日挑战 <i id="dailyDot"></i></button></nav>
 <section class="game-panel"><div class="game-topline"><span class="difficulty" id="difficulty">入门</span><span id="chapterCaption" hidden></span><span id="puzzleTitle" hidden></span></div>
 <div class="metric-row"><div><small>当前步数</small><strong id="moves">00</strong></div><div><small>理论最优</small><strong id="par">--</strong></div><div><small>本局用时</small><strong id="clock">00:00</strong></div></div>
 <div class="target" id="target" aria-label="目标星图" hidden></div>
@@ -23,7 +23,7 @@
 <div class="direction"><button class="selected" id="cwBtn">↻ 顺时针</button><button id="ccwBtn">↺ 逆时针</button></div>
 <div class="tools"><button id="hintBtn">✧ 提示</button></div>
 </section>
-<div class="bottom-actions"><button class="share" id="shareBtn"><span>✦</span> 发起同题挑战</button><button id="nextBtn" hidden></button></div>
+<div class="bottom-actions"><button class="share" id="shareBtn"><span>✦</span> 发起同关挑战</button><button id="nextBtn" hidden></button></div>
 </div>
 </main>
 <div id="settingsOverlay" class="settings-overlay" hidden><div class="settings-card" role="dialog" aria-modal="true" aria-label="游戏设置"><div class="settings-head"><strong>⚙ 设置</strong><button id="settingsClose" aria-label="关闭设置">×</button></div><button id="settingsSound">♫　音乐与音效：开</button><button id="settingsReset">↺　重开本局</button><button id="settingsHome">⌂　返回主界面</button></div></div>
@@ -41,5 +41,5 @@ window.addEventListener('error',function(e){var n=document.getElementById('start
 window.addEventListener('unhandledrejection',function(){var n=document.getElementById('startupNotice');if(n){n.hidden=false;n.textContent='加载失败，请刷新页面';}});
 </script>
 <div id="startupNotice" hidden role="status" style="position:fixed;z-index:100;left:15%;right:15%;top:45%;padding:14px;border-radius:14px;background:#fff1d2;color:#70462d;text-align:center;border:2px solid #9d724c"></div>
-<script type="module" src="app.js?v=0.5.2"></script>
+<script type="module" src="app.js?v=0.5.3"></script>
 </body></html>
