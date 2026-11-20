@@ -2,8 +2,8 @@
 /** Cocos Creator 3.8.8 主域：已确认原画拆分为 Sprite，操作、棋盘和数值仍为原生节点。 */
 import {
   _decorator,Component,Node,Canvas,Camera,Layers,UITransform,Label,LabelOutline,
-  Graphics,Color,view,ResolutionPolicy,director,SubContextView,tween,Tween,Vec3,
-  Sprite,SpriteFrame,Texture2D,ImageAsset,JsonAsset,Rect,Size,resources,BlockInputEvents,Mask,
+  Graphics,Color,view,screen,ResolutionPolicy,director,SubContextView,tween,Tween,Vec2,Vec3,
+  Sprite,SpriteFrame,Texture2D,ImageAsset,JsonAsset,Rect,Size,resources,BlockInputEvents,Mask,ScrollView,
 } from 'cc';
 import {GOAL,SQUARES,makePuzzle,todayCN,rotate,isSolved,shortestPath,honor,resultScore} from './Core';
 const {ccclass}=_decorator;
@@ -26,21 +26,16 @@ export class FourfoldGame extends Component {
   private assetsReady=false;private loading=false;private loadError='';private loadProgress=0;private loadSerial=0;
   private textures:Record<string,Texture2D>={};private frames:Record<string,SpriteFrame>={};private images:ImageAsset[]=[];private manifest:any=null;private reference:any=null;
   private tileNodes:Node[]=[];private boardLayout={x:0,y:0,size:0,unit:0};private launchQuery:any={};
+  private pageScroll:ScrollView|null=null;private pageScrollKey='';private scrollOffsets:Record<string,number>={};
 
   onLoad(){
-    view.setDesignResolutionSize(this.width,this.height,ResolutionPolicy.SHOW_ALL);
+    this.fitViewport();
     const sdk=wxSDK();
     if(sdk){
       try{
-        const info=sdk.getWindowInfo?.()||sdk.getSystemInfoSync?.()||{};
-        const ww=Number(info.windowWidth)||this.width,wh=Number(info.windowHeight)||this.height;
-        const scale=Math.min(ww/this.width,wh/this.height),letterbox=(wh-this.height*scale)/2;
-        const cap=sdk.getMenuButtonBoundingClientRect?.();
-        this.safeTop=Math.min(90,Math.max(0,((cap?.bottom||info.safeArea?.top||0)+6-letterbox)/scale));
-        this.safeBottom=Math.min(42,Math.max(0,(wh-(info.safeArea?.bottom||wh)-letterbox)/scale));
         this.launchQuery=(sdk.getLaunchOptionsSync?.()||{}).query||{};
         sdk.showShareMenu?.({withShareTicket:false});
-      }catch(e){console.warn('window safe area unavailable',e);}
+      }catch(e){console.warn('launch context unavailable',e);}
     }
     const scene=director.getScene();
     this.canvasNode=new Node('Canvas');scene.addChild(this.canvasNode);this.canvasNode.layer=Layers.Enum.UI_2D;
@@ -52,8 +47,27 @@ export class FourfoldGame extends Component {
     this.canvasNode.setPosition(this.width/2,this.height/2);
     this.root=new Node('UIRoot');this.root.layer=Layers.Enum.UI_2D;this.root.addComponent(UITransform).setContentSize(this.width,this.height);
     this.canvasNode.addChild(this.root);this.root.setPosition(-this.width/2,this.height/2);
+    screen.on('window-resize',this.onWindowResize,this);
     this.schedule(()=>this.updateClock(),.2);
     this.loadArt();
+  }
+
+  private fitViewport(){
+    const sdk=wxSDK(),frame=view.getFrameSize();let info:any={},cap:any=null;
+    try{info=sdk?.getWindowInfo?.()||sdk?.getSystemInfoSync?.()||{};cap=sdk?.getMenuButtonBoundingClientRect?.();}catch(e){console.warn('window safe area unavailable',e);}
+    const ww=Number(info.windowWidth)||frame.width||this.width,wh=Number(info.windowHeight)||frame.height||this.height;
+    const scale=this.width/ww;this.height=wh*scale;
+    const top=Math.max(Number(cap?.bottom)||0,Number(info.safeArea?.top)||0);
+    this.safeTop=top?Math.max(0,(top+6)*scale):0;
+    this.safeBottom=Math.max(0,(wh-(Number(info.safeArea?.bottom)||wh))*scale);
+    // 固定逻辑宽度，按真实窗口推导高度；不再把整个390×844画面缩成两边留白的窄条。
+    view.setDesignResolutionSize(this.width,this.height,ResolutionPolicy.FIXED_WIDTH);
+  }
+  private onWindowResize(){
+    this.fitViewport();if(!this.canvasNode||!this.root)return;
+    this.canvasNode.getComponent(UITransform).setContentSize(this.width,this.height);this.canvasNode.setPosition(this.width/2,this.height/2);
+    this.root.getComponent(UITransform).setContentSize(this.width,this.height);this.root.setPosition(-this.width/2,this.height/2);
+    this.cam.orthoHeight=this.height/2;this.draw();
   }
 
   private storageKey(){return `${this.mode}:${this.key}`;}
@@ -116,6 +130,10 @@ export class FourfoldGame extends Component {
     for(const key of ['date','moves','timer'])add('referencePatch'+key,r.dynamicPatches[key]);
     add('referenceBoardFrame',r.boardOuter,original);
     add('referenceMovesCard',r.components.movesCard);add('referenceTimerCard',r.components.timerCard);
+    add('referenceBanner',r.components.banner,original);
+    for(const key of ['back','settings','clockwise','counterclockwise','hint','share'])add('referenceControl'+key,r.components[key],original);
+    this.frames.homeHero=this.makeFrame(this.textures.home,0,0,this.textures.home.width,1140);
+    this.frames.homeHeroCompact=this.makeFrame(this.textures.home,0,128,this.textures.home.width,1012);
     const a=r.tileArea,slots=r.slotRects;
     r.seams=[];
     for(let i=0;i<2;i++){
@@ -135,9 +153,24 @@ export class FourfoldGame extends Component {
     this.mode=mode;this.key=key;this.inHome=home;this.board=this.puzzle.board;this.direction=1;this.moves=0;this.hints=0;this.startAt=0;this.elapsed=0;this.won=false;this.busy=false;this.modal='';this.hideBanner();this.draw();
   }
   private updateClock(){if(this.startAt&&!this.won&&!this.inHome)this.elapsed=(at()-this.startAt)/1000;if(this.clockLabel)this.clockLabel.string=clock(this.elapsed);}
-  private clear(){this.clockLabel=null;this.tileNodes=[];this.toastNode=null;for(const n of [...this.root.children]){n.active=false;n.removeFromParent();n.destroy();}}
+  private clear(){
+    if(this.pageScroll){this.scrollOffsets[this.pageScrollKey]=Math.max(0,this.pageScroll.getScrollOffset().y);this.pageScroll=null;}
+    this.clockLabel=null;this.tileNodes=[];this.toastNode=null;for(const n of [...this.root.children]){n.active=false;n.removeFromParent();n.destroy();}
+  }
   private node(name:string,x:number,y:number,w:number,h:number,parent:Node=this.root){const n=new Node(name);n.layer=Layers.Enum.UI_2D;parent.addChild(n);n.addComponent(UITransform).setContentSize(w,h);n.setPosition(x+w/2,-y-h/2);return n;}
   private group(name:string,x:number,y:number,w:number,h:number,parent:Node=this.root){const n=this.node(name,x,y,w,h,parent),content=new Node('Content');content.layer=Layers.Enum.UI_2D;content.addComponent(UITransform).setContentSize(w,h);n.addChild(content);content.setPosition(-w/2,h/2);return {node:n,content};}
+  private pageContent(name:string,height:number,center=false){
+    const available=Math.max(1,this.height-this.safeTop-this.safeBottom),overflow=height>available+.01;
+    if(!overflow)return this.group(name,0,this.safeTop+(center?(available-height)/2:0),this.width,height).content;
+    // 极短窗口仅纵向滚动；棋盘和按钮仍按屏幕宽度排布，不把整页缩成窄条。
+    const viewport=this.node(name+' viewport',0,this.safeTop,this.width,available),mask=viewport.addComponent(Mask);mask.type=Mask.Type.RECT;
+    const content=new Node(name+' content');content.layer=Layers.Enum.UI_2D;viewport.addChild(content);
+    const transform=content.addComponent(UITransform);transform.setContentSize(this.width,height);transform.setAnchorPoint(0,1);content.setPosition(-this.width/2,available/2);
+    const scroll=viewport.addComponent(ScrollView);scroll.content=content;scroll.horizontal=false;scroll.vertical=true;scroll.elastic=false;scroll.inertia=true;scroll.cancelInnerEvents=true;
+    this.pageScroll=scroll;this.pageScrollKey=this.inHome?'home':this.mode+':'+this.key;
+    scroll.scrollToOffset(new Vec2(0,Math.min(height-available,this.scrollOffsets[this.pageScrollKey]||0)),0);
+    return content;
+  }
   private shape(x:number,y:number,w:number,h:number,fill:string,stroke='',radius=10,parent:Node=this.root){
     const n=this.node('Panel',x,y,w,h,parent),g=n.addComponent(Graphics);g.fillColor=ink(fill);g.roundRect(-w/2,-h/2,w,h,radius);g.fill();
     if(stroke){g.strokeColor=ink(stroke);g.lineWidth=1.2;g.stroke();}return n;
@@ -158,8 +191,8 @@ export class FourfoldGame extends Component {
     n.on(Node.EventType.TOUCH_END,(e:any)=>{e.propagationStopped=true;if(!pressed)return;pressed=false;Tween.stopAllByTarget(n);n.setScale(1,1,1);if(!this.busy)action();});
     return n;
   }
-  private btn(value:string,x:number,y:number,w:number,h:number,action:()=>void,kind='creamButton',size=16){
-    const g=this.group(value||kind,x,y,w,h);
+  private btn(value:string,x:number,y:number,w:number,h:number,action:()=>void,kind='creamButton',size=16,parent:Node=this.root){
+    const g=this.group(value||kind,x,y,w,h,parent);
     if(this.assetsReady)this.art(kind,0,0,w,h,g.content);else this.shape(0,0,w,h,C.surface,C.edge,14,g.content);
     if(value)this.txt(value,8,0,w-16,h-3,size,C.dark,true,g.content);return this.bindButton(g.node,action);
   }
@@ -178,39 +211,62 @@ export class FourfoldGame extends Component {
     if(this.inHome)this.drawHome();else this.drawGame();
     if(this.modal)this.drawModal();
   }
+  private homeGeometry(width:number,height:number){
+    const menuW=width*.8,entries=['goldButton','creamButton','lavenderButton'];
+    const buttonHeights=entries.map(key=>{const r=this.manifest.atlas.frames[key];return Math.max(44,menuW*r.h/r.w);});
+    const menuH=buttonHeights.reduce((sum,h)=>sum+h,0)+10,regularH=width*1140/854+16+menuH+16;
+    const compact=regularH>height,heroW=compact?width-8:width,cropTop=compact?128:0,heroH=heroW*(1140-cropTop)/854;
+    const gap=compact?4:16,contentH=heroH+gap+menuH+(compact?8:16),y=compact?4+Math.max(0,(height-contentH)/2):0;
+    let menuY=y+heroH+gap;
+    const buttons=buttonHeights.map(h=>{const rect={x:(width-menuW)/2,y:menuY,w:menuW,h};menuY+=h+5;return rect;});
+    return {compact,contentH:Math.max(height,contentH),hero:{x:(width-heroW)/2,y,w:heroW,h:heroH},cropTop,buttons,settings:{x:12,y:compact?Math.max(10,y+3):14,w:44,h:44}};
+  }
+  private dailyGeometry(width:number,height:number){
+    // 与网页layout.mjs共用同一组公式：可用高度只选择排布，不缩整张原画。
+    const box=(x:number,y:number,w:number,h:number)=>({x,y,w,h}),fit=(w:number,sw:number,sh:number)=>w*sh/sw;
+    const c=width-16,cardW=(c-8)/2,directionW=(c-8)/2,statsH=fit(cardW,380,181),boardH=fit(c,817,765);
+    const directionH=Math.max(44,fit(directionW,412,123)),hintW=c*401/817,shareW=c*764/817;
+    const hintH=Math.max(44,fit(hintW,401,92)),shareH=Math.max(44,fit(shareW,764,143));
+    const regularHeights=[44,fit(c,807,213),statsH,boardH,directionH,hintH,shareH],regularTotal=regularHeights.reduce((a,b)=>a+b,0)+6*6+16;
+    const compact=regularTotal>height,gap=compact?3:6,pad=compact?6:8,bannerW=compact?c-72:c,bannerH=fit(bannerW,807,213);
+    const footerHintW=(c-8)*.36,footerShareW=(c-8)*.64,footerH=Math.max(44,fit(footerHintW,401,92),fit(footerShareW,764,143));
+    const heights=compact?[Math.max(44,bannerH),statsH,boardH,directionH,footerH]:regularHeights,total=heights.reduce((a,b)=>a+b,0)+gap*(heights.length-1)+pad*2;
+    let y=pad+Math.max(0,(height-total)/2);
+    const rows=heights.map(h=>{const rect=box(8,y,c,h);y+=h+gap;return rect;});
+    const bannerRow=compact?rows[0]:rows[1],statsRow=compact?rows[1]:rows[2],boardRow=compact?rows[2]:rows[3],directionRow=compact?rows[3]:rows[4],navY=rows[0].y+(rows[0].h-44)/2;
+    const hint=compact?box(8,rows[4].y,footerHintW,footerH):box((width-hintW)/2,rows[5].y,hintW,hintH);
+    const share=compact?box(16+footerHintW,rows[4].y,footerShareW,footerH):box((width-shareW)/2,rows[6].y,shareW,shareH);
+    return {compact,contentH:Math.max(height,total),back:box(compact?0:8,navY,44,44),settings:box(width-(compact?44:52),navY,44,44),iconWidth:compact?32:40,
+      banner:box((width-bannerW)/2,bannerRow.y+(bannerRow.h-bannerH)/2,bannerW,bannerH),moves:box(8,statsRow.y,cardW,statsH),
+      timer:box(16+cardW,statsRow.y+(statsH-fit(cardW,379,180))/2,cardW,fit(cardW,379,180)),board:boardRow,
+      cw:box(8,directionRow.y,directionW,directionH),ccw:box(16+directionW,directionRow.y,directionW,directionH),hint,share};
+  }
   private drawHome(){
-    const w=this.width,h=this.height;
-    // 原画与按钮都按素材宽高比缩放；短屏/安全区只改变整体大小，不能压扁书、窗或星仪。
-    const source=this.textures.home,sceneTop=Math.max(0,this.safeTop-58),bottom=h-this.safeBottom-12;
-    const scale=Math.min(w/source.width,Math.max(1,bottom-sceneTop)/source.height);
-    const sceneW=source.width*scale,sceneH=source.height*scale,sceneX=(w-sceneW)/2,uiScale=sceneW/390;
-    this.art('home',sceneX,sceneTop,sceneW,sceneH);
-    this.iconButton('settingsButton',16,Math.max(14,this.safeTop+6),42,()=>{this.modal='settings';this.draw();});
-    // 插画在原图上部结束，下部36%为空白纸面；菜单跟随插画比例排在其下。
-    const menuW=sceneW*(320/390),menuX=(w-menuW)/2,gap=12*uiScale;
-    let y=sceneTop+sceneH*.64;
+    const w=this.width,uiScale=w/390,layout=this.homeGeometry(w,this.height-this.safeTop-this.safeBottom),parent=this.pageContent('Home',layout.contentH);
     const entries=[
       {text:'✦ 进入星图',frame:'goldButton',size:22,action:()=>this.startGame('story',String(this.unlocked()))},
       {text:'◇ 每日挑战',frame:'creamButton',size:21,action:()=>this.startGame('daily',todayCN())},
       {text:'♛ 好友荣誉榜',frame:'lavenderButton',size:21,action:()=>this.showRank()},
     ];
-    for(const entry of entries){
-      const r=this.manifest.atlas.frames[entry.frame],buttonH=menuW*r.h/r.w;
-      const button=this.btn(entry.text,menuX,y,menuW,buttonH,entry.action,entry.frame,entry.size*uiScale);
+    // 只裁掉顶部装饰和底部空白，标题/书本保持完整；短屏菜单独立占80%屏宽。
+    const hero=layout.hero;this.art(layout.compact?'homeHeroCompact':'homeHero',hero.x,hero.y,hero.w,hero.h,parent);
+    entries.forEach((entry,i)=>{
+      const r=this.manifest.atlas.frames[entry.frame],rect=layout.buttons[i],buttonH=rect.w*r.h/r.w;
+      const button=this.btn(entry.text,rect.x,rect.y+(rect.h-buttonH)/2,rect.w,buttonH,entry.action,entry.frame,entry.size*uiScale,parent);
       // 点击范围可扩大，内部原画仍按素材比例绘制。
-      if(buttonH<44)button.getComponent(UITransform).setContentSize(menuW,44);
-      y+=buttonH+gap;
-    }
+      if(buttonH<44)button.getComponent(UITransform).setContentSize(rect.w,44);
+    });
+    const settings=layout.settings;this.iconButton('settingsButton',settings.x,this.safeTop+settings.y,44,()=>{this.modal='settings';this.draw();});
   }
-  private referenceNumber(value:string,x:number,y:number,w:number,h:number,color=C.dark){
-    const l=this.txt(value,x,y,w,h,h*.94,color,true);l.fontFamily='Georgia';l.lineHeight=h;return l;
+  private referenceNumber(value:string,x:number,y:number,w:number,h:number,color=C.dark,parent:Node=this.root){
+    const l=this.txt(value,x,y,w,h,h*.94,color,true,parent);l.fontFamily='Georgia';l.lineHeight=h;return l;
   }
-  private statCard(frame:string,label:string,value:string,x:number,y:number,w:number,h:number,isClock=false){
+  private statCard(frame:string,label:string,value:string,x:number,y:number,w:number,h:number,isClock=false,parent:Node=this.root){
     const timer=frame==='timeCard',card=this.reference.components[timer?'timerCard':'movesCard'];
     const patch=this.reference.dynamicPatches[timer?'timer':'moves'],scale=Math.min(w/card[2],h/card[3]);
     const dx=x+(w-card[2]*scale)/2,dy=y+(h-card[3]*scale)/2;
-    this.art(timer?'referenceTimerCard':'referenceMovesCard',dx,dy,card[2]*scale,card[3]*scale);
-    const l=this.referenceNumber(value,dx+(patch[0]-card[0])*scale,dy+(patch[1]-card[1])*scale,patch[2]*scale,patch[3]*scale);
+    this.art(timer?'referenceTimerCard':'referenceMovesCard',dx,dy,card[2]*scale,card[3]*scale,parent);
+    const l=this.referenceNumber(value,dx+(patch[0]-card[0])*scale,dy+(patch[1]-card[1])*scale,patch[2]*scale,patch[3]*scale,C.dark,parent);
     if(isClock){this.clockLabel=l;this.updateClock();}
   }
   private drawGame(){
@@ -231,9 +287,9 @@ export class FourfoldGame extends Component {
     this.btn('✧ 提示',88,hintY,w-176,36,()=>this.askHint(),'creamButton',16);
     this.btn('✦ 发起同关挑战',16,shareY,w-32,52,()=>this.share(),'goldButton',20);
   }
-  private referenceControl(name:string,rect:number[],ox:number,oy:number,scale:number,action:()=>void,selected=false,dim=false){
+  private referenceControl(name:string,rect:number[],ox:number,oy:number,scale:number,action:()=>void,selected=false,dim=false,parent:Node=this.root){
     const [rx,ry,rw,rh]=rect,w=rw*scale,h=rh*scale,hitW=Math.max(44,w),hitH=Math.max(44,h);
-    const n=this.node(name,ox+rx*scale-(hitW-w)/2,oy+ry*scale-(hitH-h)/2,hitW,hitH),g=n.addComponent(Graphics);
+    const n=this.node(name,ox+rx*scale-(hitW-w)/2,oy+ry*scale-(hitH-h)/2,hitW,hitH,parent),g=n.addComponent(Graphics);
     let pressed=false;
     const feedback=()=>{
       g.clear();if(!pressed&&!selected&&!dim)return;
@@ -248,26 +304,33 @@ export class FourfoldGame extends Component {
     return n;
   }
   private drawReferenceDaily(){
-    const r=this.reference,bottom=this.height-this.safeBottom-12,navY=Math.min(r.components.back[1],r.components.settings[1]);
-    const scale=Math.min(this.width/r.size[0],bottom/r.size[1],Math.max(1,bottom-this.safeTop)/(r.size[1]-navY));
-    const ox=(this.width-r.size[0]*scale)/2,oy=Math.max(0,this.safeTop-navY*scale);
-    // 静态部分直接使用用户指明的原稿；只覆盖被清理的日期和两个实时数字。
-    this.art('referenceOriginal',ox,oy,r.size[0]*scale,r.size[1]*scale);
-    const dateParts=this.key.split('-'),values={date:`${Number(dateParts[1])}月${Number(dateParts[2])}日`,moves:String(this.moves).padStart(2,'0'),timer:clock(this.elapsed)};
-    for(const key of ['date','moves','timer']){
-      const p=r.dynamicPatches[key],x=ox+p[0]*scale,y=oy+p[1]*scale,w=p[2]*scale,h=p[3]*scale;
-      this.art('referencePatch'+key,x,y,w,h);
-      const l=this.referenceNumber(values[key],x,y,w,h,key==='date'?C.white:C.dark);
-      if(key==='timer'){this.clockLabel=l;this.updateClock();}
-    }
-    this.drawReferenceBoard(ox,oy,scale);
-    const c=r.components;
-    this.referenceControl('返回主页',c.back,ox,oy,scale,()=>{this.inHome=true;this.modal='';this.hideBanner();this.draw();});
-    this.referenceControl('设置',c.settings,ox,oy,scale,()=>{this.modal='settings';this.draw();});
-    this.referenceControl('↻ 顺时针',c.clockwise,ox,oy,scale,()=>{this.direction=1;this.draw();},false,this.direction<0);
-    this.referenceControl('↺ 逆时针',c.counterclockwise,ox,oy,scale,()=>{this.direction=-1;this.draw();},this.direction<0);
-    this.referenceControl('✧ 提示',c.hint,ox,oy,scale,()=>this.askHint());
-    this.referenceControl('✦ 发起同关挑战',c.share,ox,oy,scale,()=>this.share());
+    const r=this.reference,layout=this.dailyGeometry(this.width,this.height-this.safeTop-this.safeBottom),parent=this.pageContent('Daily',layout.contentH);
+    const piece=(key:string,rect:any,maxWidth=rect.w)=>{
+      const source=r.components[key],scale=Math.min(maxWidth/source[2],rect.h/source[3]);
+      const w=source[2]*scale,h=source[3]*scale,x=rect.x+(rect.w-w)/2,y=rect.y+(rect.h-h)/2;
+      this.art(key==='banner'?'referenceBanner':'referenceControl'+key,x,y,w,h,parent);
+      return {ox:x-source[0]*scale,oy:y-source[1]*scale,scale};
+    };
+    const control=(key:string,name:string,rect:any,action:()=>void,selected=false,dim=false,maxWidth=rect.w)=>{
+      const p=piece(key,rect,maxWidth);this.referenceControl(name,r.components[key],p.ox,p.oy,p.scale,action,selected,dim,parent);
+    };
+    control('back','返回主页',layout.back,()=>{this.inHome=true;this.modal='';this.hideBanner();this.draw();},false,false,layout.iconWidth);
+    control('settings','设置',layout.settings,()=>{this.modal='settings';this.draw();},false,false,layout.iconWidth);
+    // 横幅、信息牌和按钮都是原稿独立裁片；仅各组件内的实时文字覆盖清理区域。
+    const banner=piece('banner',layout.banner),date=r.dynamicPatches.date,dateParts=this.key.split('-');
+    const dateX=banner.ox+date[0]*banner.scale,dateY=banner.oy+date[1]*banner.scale,dateW=date[2]*banner.scale,dateH=date[3]*banner.scale;
+    this.art('referencePatchdate',dateX,dateY,dateW,dateH,parent);
+    this.referenceNumber(`${Number(dateParts[1])}月${Number(dateParts[2])}日`,dateX,dateY,dateW,dateH,C.white,parent);
+    const moves=layout.moves,timer=layout.timer;
+    this.statCard('stepsCard','当前步数',String(this.moves).padStart(2,'0'),moves.x,moves.y,moves.w,moves.h,false,parent);
+    this.statCard('timeCard','本局用时',clock(this.elapsed),timer.x,timer.y,timer.w,timer.h,true,parent);
+    const board=layout.board,outer=r.boardOuter,boardScale=board.w/outer[2];
+    this.art('referenceBoardFrame',board.x,board.y,board.w,board.h,parent);
+    this.drawReferenceBoard(board.x-outer[0]*boardScale,board.y-outer[1]*boardScale,boardScale,parent);
+    control('clockwise','↻ 顺时针',layout.cw,()=>{this.direction=1;this.draw();},false,this.direction<0);
+    control('counterclockwise','↺ 逆时针',layout.ccw,()=>{this.direction=-1;this.draw();},this.direction<0);
+    control('hint','✧ 提示',layout.hint,()=>this.askHint());
+    control('share','✦ 发起同关挑战',layout.share,()=>this.share());
   }
   private drawBoard(bx:number,by:number,size:number){
     const outer=this.reference.boardOuter,outerW=Math.min(this.width-16,size+14),scale=outerW/outer[2],outerH=outer[3]*scale;
@@ -275,10 +338,10 @@ export class FourfoldGame extends Component {
     this.art('referenceBoardFrame',x,y,outerW,outerH);
     this.drawReferenceBoard(x-outer[0]*scale,y-outer[1]*scale,scale);
   }
-  private drawReferenceBoard(ox:number,oy:number,scale:number){
+  private drawReferenceBoard(ox:number,oy:number,scale:number,parent:Node=this.root){
     const r=this.reference,a=r.tileArea,w=a[2]*scale,h=a[3]*scale,bx=ox+a[0]*scale,by=oy+a[1]*scale;
     this.boardLayout={x:bx,y:by,size:w,unit:w/3,height:h};
-    const boardLayer=this.group('Reference board',bx,by,w,h),mask=boardLayer.node.addComponent(Mask);mask.type=Mask.Type.RECT;
+    const boardLayer=this.group('Reference board',bx,by,w,h,parent),mask=boardLayer.node.addComponent(Mask);mask.type=Mask.Type.RECT;
     // 遮住底图所有旧棋子和旋钮，换位动画的空隙也不会透出固定数字。
     this.shape(0,0,w,h,C.night,'',0,boardLayer.content);
     for(const seam of r.seams){const p=seam.rect;this.art(seam.name,(p[0]-a[0])*scale,(p[1]-a[1])*scale,p[2]*scale,p[3]*scale,boardLayer.content);}
@@ -381,5 +444,5 @@ export class FourfoldGame extends Component {
     this.shape(0,0,this.width-50,50,C.surface,C.edge,15,g.content);this.txt(message,10,3,this.width-70,44,13,C.dark,true,g.content);
     this.scheduleOnce(()=>{if(this.toastNode===g.node)this.toastNode=null;if(g.node.isValid)g.node.destroy();},2.5);
   }
-  onDestroy(){this.loadSerial++;this.hideBanner();try{this.rewardAd?.destroy?.();}catch{}this.disposeArt();}
+  onDestroy(){screen.off('window-resize',this.onWindowResize,this);this.loadSerial++;this.hideBanner();try{this.rewardAd?.destroy?.();}catch{}this.disposeArt();}
 }

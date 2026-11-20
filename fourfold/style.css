@@ -6,17 +6,20 @@ body{min-height:100svh;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inse
 button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none}
 button:focus-visible{outline:3px solid #534386;outline-offset:3px}button:disabled{cursor:wait}[hidden]{display:none!important}
 .sr-only{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;margin:-1px;padding:0;border:0}
-.shell{position:relative;width:min(100%,460px);height:var(--available-height);min-height:540px;margin:0 auto;isolation:isolate;overflow:hidden;box-shadow:0 0 60px #95613716}
-/* The whole home composition keeps the source ratio, including in short in-app browsers. */
-.home-screen{--home-width:min(100vw,460px,calc(var(--available-height) * 854 / 1840));--home-u:calc(var(--home-width) / 390);position:absolute;left:50%;top:50%;width:var(--home-width);height:auto;aspect-ratio:854 / 1840;transform:translate(-50%,-50%)}
-.home-scene{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;user-select:none;pointer-events:none}
+.shell{position:relative;width:min(100%,460px);height:var(--available-height);min-height:0;margin:0 auto;isolation:isolate;overflow:hidden;box-shadow:0 0 60px #95613716}
+/* Width follows the phone. Only empty decoration is cropped on shorter screens. */
+.home-screen{--home-u:1px;position:absolute;inset:0;width:100%;height:100%;overflow-x:hidden;overflow-y:auto;background:#fbd1a4;isolation:isolate}
+.home-screen:before{content:"";position:absolute;inset:0;min-height:var(--home-content-height,100%);background:radial-gradient(ellipse at 50% 25%,#ffe5c3,#fbd2a8 64%,#f8cc9b);z-index:-2}
+.home-screen:after{content:"";position:absolute;left:0;bottom:0;width:100%;height:20%;background:url('assets/art/home-scene.webp') center bottom / 100% auto no-repeat;mask-image:linear-gradient(transparent,#000 70%);pointer-events:none;z-index:-1}
+.home-hero{position:absolute;overflow:hidden;pointer-events:none}
+.home-scene{display:block;position:absolute;max-width:none;object-fit:contain;user-select:none;pointer-events:none}
 .skin{position:absolute;inset:0;display:block;background-image:url('assets/art/ui-atlas.webp');background-repeat:no-repeat;pointer-events:none}
 .icon-button{display:block;position:relative;width:calc(48 * var(--u));height:calc(48 * var(--u));min-width:38px;min-height:38px;padding:0;border:0;background:none;border-radius:28%;flex-shrink:0;transition:transform .12s ease;z-index:3}
-.icon-button:active{transform:translateY(2px) scale(.96)}.home-settings{position:absolute;top:2%;left:4%;width:10.5%;height:auto;aspect-ratio:1}
-.cozy-menu{position:absolute;left:9%;right:9%;top:64%;display:flex;flex-direction:column;gap:max(6px,calc(9 * var(--home-u)))}
+.icon-button:active{transform:translateY(2px) scale(.96)}.home-settings{position:absolute;min-width:44px;min-height:44px;aspect-ratio:1;z-index:3}
+.cozy-menu{display:contents}
 .art-button{display:grid;place-items:center;position:relative;width:100%;padding:0 10px calc(4 * var(--u));border:0;background:none;border-radius:100px;min-height:36px;font-weight:850;font-size:calc(23 * var(--u));text-shadow:0 1px #fff2ce80;transition:transform .1s ease,filter .1s ease}
 .art-button:active,.sprite-button:active{transform:translateY(2px) scale(.98);filter:brightness(.97)}.button-label{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:calc(9 * var(--u));white-space:nowrap;line-height:1.1;pointer-events:none}
-.cozy-menu .art-button{--button-ratio:1114 / 198;flex-shrink:0;height:auto;aspect-ratio:var(--button-ratio);min-height:44px;font-size:clamp(18px,calc(28 * var(--home-u)),31px);padding-bottom:calc(3 * var(--home-u));letter-spacing:.035em}
+.cozy-menu .art-button{--button-ratio:1114 / 198;position:absolute;min-height:44px;z-index:1;font-size:clamp(18px,calc(28 * var(--home-u)),31px);padding-bottom:calc(3 * var(--home-u));letter-spacing:.035em}
 .cozy-menu #enterDaily{--button-ratio:1116 / 196}.cozy-menu #enterRank{--button-ratio:1122 / 196}
 /* Small screens retain a 44px hit target without stretching the button artwork. */
 .cozy-menu .skin{inset:50% 0 auto;width:100%;height:auto;aspect-ratio:var(--button-ratio);transform:translateY(-50%)}
@@ -41,3 +44,5 @@ button:focus-visible{outline:3px solid #534386;outline-offset:3px}button:disable
 @media(min-width:700px){.shell{box-shadow:0 0 70px #9e673726}.home-screen{box-shadow:inset 0 0 0 1px #a87b5230}}
 @media(max-height:600px){.game-screen{gap:4px;padding-top:6px;padding-bottom:8px}.compact-top{height:44px}.game-screen[data-mode=daily] .compact-top{height:36px}.metric-row{height:58px}.daily-banner{height:62px}.direction{margin-top:4px;height:37px}.tools{height:31px}.bottom-actions{height:46px;margin-top:2px}.game-screen .board-frame{width:min(100%,calc(var(--available-height) - 260px))}.game-screen[data-mode=daily] .board-frame{width:min(100%,calc(var(--available-height) - 315px))}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+@supports(height:100dvh){:root{--available-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}}

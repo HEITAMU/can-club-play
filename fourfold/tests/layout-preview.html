@@ -3,38 +3,190 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
-<title>四格诡局 · 界面比例检查</title>
+<title>四格诡局 · 手机界面验收 0.8.1</title>
 <style>
-body{margin:0;padding:20px;background:#e7e3dc;color:#342b23;font:15px system-ui,sans-serif}header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px}h1{font-size:20px;margin:0}select,button{font:inherit;padding:8px}output{padding:8px;border-radius:8px;background:#fff}iframe{display:block;border:0;box-shadow:0 0 0 2px #75634f,0 8px 30px #0002;margin:0 auto;background:#f8d4a5}main{overflow:auto;padding:4px 4px 20px}.pass{color:#176333}.fail{color:#a22621}
+*{box-sizing:border-box}body{margin:0;padding:20px;background:#e7e3dc;color:#342b23;font:15px system-ui,sans-serif}header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:12px}h1{font-size:20px;margin:0}select,button{font:inherit;padding:8px}button{cursor:pointer}button:disabled{cursor:wait;opacity:.55}output{padding:8px;border-radius:8px;background:#fff}.spec{font-size:13px;line-height:1.6;margin:0 0 14px;color:#625347}iframe{display:block;flex:none;border:0;box-shadow:0 0 0 2px #75634f,0 8px 30px #0002;margin:0 auto;background:#f8d4a5}main{overflow:auto;padding:4px 4px 20px}.pass{color:#176333}.fail{color:#a22621}#details{white-space:pre-wrap;overflow-wrap:anywhere;margin:12px 0;font:13px/1.6 system-ui,sans-serif}table{border-collapse:collapse;width:100%;background:#fff;font-size:13px;margin-top:12px}th,td{text-align:left;border:1px solid #d1c6ba;padding:7px}td button{padding:3px 6px;font:inherit}caption{text-align:left;font-weight:700;margin-bottom:6px}.table-wrap{overflow:auto}
 </style>
-<header><h1>界面比例检查</h1><label>可用视口 <select id="size"><option value="390,650">390 × 650 · 内置浏览器短屏</option><option value="390,844">390 × 844 · 常规竖屏</option><option value="320,568">320 × 568 · 小屏</option><option value="460,936">460 × 936 · 桌面容器</option></select></label><label>页面 <select id="mode"><option value="home">主页</option><option value="daily">每日挑战</option><option value="story">普通关</option></select></label><button id="check">重新检查</button><output id="result">加载中…</output></header>
-<main><iframe id="preview" title="真实游戏视口" width="390" height="650" src="../?v=0.8.0"></iframe></main>
+<header>
+<h1>手机界面验收 · 0.8.1</h1>
+<label>可用视口 <select id="size"><option value="390,650">390 × 650 · 内置浏览器短屏</option><option value="390,844">390 × 844 · 常规竖屏</option><option value="320,568">320 × 568 · 小屏</option><option value="390,600">390 × 600 · 紧凑短屏</option><option value="460,936">460 × 936 · 宽屏容器</option></select></label>
+<label>页面 <select id="mode"><option value="home">主页</option><option value="daily">每日挑战</option><option value="story">普通关</option></select></label>
+<button id="check" type="button">检查当前页面</button><button id="runAll" type="button">检查全部 15 个组合</button>
+<output id="result" aria-live="polite">加载中…</output>
+</header>
+<p class="spec">主页／每日验收：容器使用 min(视口宽度, 460px)，每日棋盘至少占宽 90%，素材等比，44px 触区可命中且互不重叠。仅 390×600 允许容器局部纵向滚动，逐个滚到按钮验证。主页检查标题与书主体，允许裁去装饰空白。普通关保留素材、比例与 36px 触区基线；屏幕边界问题单独提示。</p>
+<main><iframe id="preview" title="真实游戏视口" width="390" height="650" src="../?v=0.8.1"></iframe></main>
+<pre id="details" aria-live="polite"></pre>
+<div class="table-wrap"><table id="matrix" hidden><caption>真实页面逐项检查</caption><thead><tr><th>视口</th><th>页面</th><th>结果</th><th>容器宽度</th><th>棋盘占宽</th><th>检查说明</th><th>查看</th></tr></thead><tbody></tbody></table></div>
 <script>
-const frame=document.querySelector('#preview'),size=document.querySelector('#size'),result=document.querySelector('#result');
-function check(){
-  const d=frame.contentDocument,w=frame.contentWindow;
-  if(!d?.querySelector('.home-scene'))return;
-  const art=d.querySelector('.home-scene').getBoundingClientRect(),home=d.querySelector('#home');
-  if(home.hidden){
-    const game=d.querySelector('#gameScreen'),gr=game.getBoundingClientRect(),board=d.querySelector('#board').getBoundingClientRect(),tiles=[...d.querySelectorAll('.tile')];
-    const daily=game.dataset.mode==='daily';
-    const ratioOK=!daily||Math.abs(gr.width/gr.height-854/1842)<.002;
-    const boardOK=Math.abs(board.width/board.height-747/694)<.003&&tiles.length===9&&tiles.every(t=>w.getComputedStyle(t).backgroundImage.includes('reference-clean'));
-    const inside=gr.left>=-.5&&gr.top>=-.5&&gr.right<=w.innerWidth+.5&&gr.bottom<=w.innerHeight+.5;
-    result.className=ratioOK&&boardOK&&inside?'pass':'fail';
-    result.textContent=`${result.className==='pass'?'通过':'未通过'} · ${daily?'每日':'普通'}画面 ${gr.width.toFixed(1)} × ${gr.height.toFixed(1)} · 九块原稿图案 ${boardOK?'✓':'×'}`;
-    return;
-  }
-  const ratios=[1114/198,1116/196,1122/196],buttons=[...d.querySelectorAll('.cozy-menu button')];
-  const artOK=Math.abs(art.width/art.height-854/1840)<.002;
-  const buttonsOK=buttons.every((b,i)=>{const r=b.getBoundingClientRect(),s=b.querySelector('.skin').getBoundingClientRect();return Math.abs(s.width/s.height-ratios[i])<.01&&r.height>=43.9&&r.left>=0&&r.right<=w.innerWidth+.5&&r.top>=0&&r.bottom<=w.innerHeight+.5;});
-  const fit=art.left>=-.5&&art.top>=-.5&&art.right<=w.innerWidth+.5&&art.bottom<=w.innerHeight+.5;
-  result.className=artOK&&buttonsOK&&fit?'pass':'fail';
-  result.textContent=`${result.className==='pass'?'通过':'未通过'} · 原画 ${art.width.toFixed(1)} × ${art.height.toFixed(1)} · 按钮等比且可点 ${buttonsOK?'✓':'×'}`;
+const VERSION='0.8.1';
+const SIZES=[[390,650],[390,844],[320,568],[390,600],[460,936]];
+const MODES=['home','daily','story'];
+const MODE_NAMES={home:'主页',daily:'每日挑战',story:'普通关'};
+const frame=document.querySelector('#preview'),size=document.querySelector('#size'),mode=document.querySelector('#mode');
+const result=document.querySelector('#result'),details=document.querySelector('#details'),matrix=document.querySelector('#matrix');
+const controls=[size,mode,document.querySelector('#check'),document.querySelector('#runAll')];
+let running=false,navigation=0;
+window.layoutResults=[];
+const delay=milliseconds=>new Promise(resolve=>setTimeout(resolve,milliseconds));
+const twoFrames=w=>new Promise(resolve=>w.requestAnimationFrame(()=>w.requestAnimationFrame(resolve)));
+
+function visible(node,w){
+  if(!node||node.closest('[hidden]'))return false;
+  const style=w.getComputedStyle(node),r=node.getBoundingClientRect();
+  return style.display!=='none'&&style.visibility!=='hidden'&&Number(style.opacity)!==0&&r.width>0&&r.height>0;
 }
-frame.addEventListener('load',()=>requestAnimationFrame(check));
-size.addEventListener('change',()=>{const [width,height]=size.value.split(',');frame.width=width;frame.height=height;requestAnimationFrame(()=>requestAnimationFrame(check));});
-document.querySelector('#check').addEventListener('click',check);
-document.querySelector('#mode').addEventListener('change',e=>{frame.src='../?v=0.8.0'+(e.target.value==='home'?'':'&mode='+e.target.value);});
+function nameOf(node){return node?(node.id||node.getAttribute('aria-label')||node.className||node.tagName):'缺失控件';}
+function inside(r,w,tolerance=.75){return r.left>=-tolerance&&r.top>=-tolerance&&r.right<=w.innerWidth+tolerance&&r.bottom<=w.innerHeight+tolerance;}
+function overlaps(a,b){return Math.min(a.right,b.right)-Math.max(a.left,b.left)>.75&&Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)>.75;}
+function sameRatio(r,ratio,tolerance=.015){return Math.abs(r.width/r.height/ratio-1)<=tolerance;}
+function assertRatio(node,ratio,w,errors,label){
+  if(!visible(node,w)){errors.push(label+'不存在或不可见');return;}
+  const r=node.getBoundingClientRect();
+  if(!sameRatio(r,ratio))errors.push(label+'被拉伸：'+r.width.toFixed(1)+' × '+r.height.toFixed(1));
+}
+function assertNoOverlap(nodes,errors,label){
+  for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++)if(overlaps(nodes[i].getBoundingClientRect(),nodes[j].getBoundingClientRect()))errors.push(label+'重叠：'+nameOf(nodes[i])+' / '+nameOf(nodes[j]));
+}
+async function assertControls(nodes,d,w,errors,{scroller,allowScroll=false,minimum=44,warnings=[],strictBounds=true}={}){
+  const originalTop=scroller?.scrollTop||0,scrolled=[];
+  for(const node of nodes){
+    if(!visible(node,w)){errors.push('按钮不可见：'+nameOf(node));continue;}
+    let r=node.getBoundingClientRect();const style=w.getComputedStyle(node);
+    if(!inside(r,w)&&allowScroll&&scroller){
+      const sr=scroller.getBoundingClientRect();
+      scroller.scrollTop+=r.top-sr.top-(scroller.clientHeight-r.height)/2;
+      await twoFrames(w);r=node.getBoundingClientRect();scrolled.push(nameOf(node));
+    }
+    const inView=inside(r,w);
+    if(!inView)(strictBounds?errors:warnings).push('按钮超出屏幕：'+nameOf(node));
+    if(r.width<minimum-.5||r.height<minimum-.5)errors.push('点击区域不足'+minimum+'px：'+nameOf(node)+' '+r.width.toFixed(1)+' × '+r.height.toFixed(1));
+    if(node.disabled||style.pointerEvents==='none')errors.push('按钮无法点击：'+nameOf(node));
+    if(inView){
+      const hit=d.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+      if(!hit||(hit!==node&&!node.contains(hit)))errors.push('按钮中心被遮挡：'+nameOf(node));
+    }
+  }
+  if(scroller){scroller.scrollTop=originalTop;await twoFrames(w);}
+  assertNoOverlap(nodes.filter(node=>visible(node,w)),errors,'点击区域');
+  return scrolled;
+}
+async function waitReady(){
+  const started=performance.now();
+  while(performance.now()-started<30000){
+    const d=frame.contentDocument,w=frame.contentWindow;
+    if(d?.querySelector('#startupNotice .load-retry'))throw new Error('游戏资源加载失败，未执行布局断言');
+    if(d?.documentElement.dataset.gameReady==='true'&&d.documentElement.dataset.layoutReady==='true'){await twoFrames(w);return {d,w};}
+    await delay(80);
+  }
+  throw new Error('等待游戏资源就绪超时');
+}
+async function inspect(d,w){
+  const errors=[],warnings=[],home=d.querySelector('#home'),game=d.querySelector('#gameScreen');
+  const page=home&&!home.hidden?'home':game?.dataset.mode||'story';
+  const container=page==='home'?home:game;
+  container.scrollTop=0;await twoFrames(w);
+  const cr=container.getBoundingClientRect(),allowScroll=page!=='story'&&w.innerWidth===390&&w.innerHeight===600;
+  const expectedWidth=Math.min(w.innerWidth,460);
+  if(Math.abs(cr.width-expectedWidth)>1)errors.push('页面未充分使用横向空间：实际 '+cr.width.toFixed(1)+'px，应为 '+expectedWidth+'px');
+  if(!inside(cr,w))errors.push('页面容器超出视口');
+  const declaredVersion=d.querySelector('meta[name="fourfold-version"]')?.content;
+  if(declaredVersion!==VERSION)errors.push('加载的游戏版本为 '+(declaredVersion||'未知')+'，应为 '+VERSION);
+  const scrollRange=Math.max(0,container.scrollHeight-container.clientHeight);
+  if(page!=='story'&&!allowScroll&&scrollRange>2)errors.push('该视口不应需要滚动：内容多出 '+scrollRange.toFixed(1)+'px');
+  if(page!=='story'&&container.scrollWidth>container.clientWidth+1)errors.push('页面出现横向溢出');
+  let boardCoverage=null,scrolledControls=[];
+  if(page==='home'){
+    const art=d.querySelector('.home-scene'),ar=art.getBoundingClientRect(),fit=w.getComputedStyle(art).objectFit;
+    if(!art.complete||!art.naturalWidth)errors.push('主页原画尚未加载');
+    else if(!['cover','contain','scale-down','none'].includes(fit)&&!sameRatio(ar,art.naturalWidth/art.naturalHeight))errors.push('主页原画被非等比压缩');
+    // The image may extend beyond the viewport: cropping decorative paper is intentional.
+    const hero=d.querySelector('.home-hero'),hr=hero?.getBoundingClientRect();
+    if(!hr)errors.push('主页缺少主体裁切窗');
+    else{
+      if(hr.width<cr.width-8.75)errors.push('主页插画未充分使用横向空间');
+      assertRatio(hero,854/(home.dataset.layout==='compact'?1012:1140),w,errors,'主页主体裁切窗');
+      const scale=Math.min(ar.width/854,ar.height/1840),imageTop=ar.top+(ar.height-1840*scale)/2;
+      const titleTop=imageTop+136*scale,bookBottom=imageTop+1135*scale;
+      if(titleTop<hr.top-.75||bookBottom>hr.bottom+.75||titleTop<-.75||bookBottom>w.innerHeight+.75)errors.push('主页标题或书主体被裁切（原图 y=136…1135）');
+    }
+    const ids=['homeSettings','enterStory','enterDaily','enterRank'];
+    scrolledControls=await assertControls(ids.map(id=>d.getElementById(id)),d,w,errors,{scroller:container,allowScroll});
+    const ratios=[1114/198,1116/196,1122/196];
+    ['enterStory','enterDaily','enterRank'].forEach((id,index)=>assertRatio(d.querySelector('#'+id+' .skin'),ratios[index],w,errors,id+'按钮皮肤'));
+  }else{
+    const boardFrame=d.querySelector('.board-frame'),br=boardFrame.getBoundingClientRect(),board=d.querySelector('#board');
+    boardCoverage=br.width/cr.width;
+    if(page==='daily'&&boardCoverage<.90-.002)errors.push('每日棋盘过窄：占容器 '+(100*boardCoverage).toFixed(1)+'%，要求至少90%');
+    assertRatio(boardFrame,817/765,w,errors,'棋盘外框');
+    assertRatio(board,747/694,w,errors,'九格内盘');
+    if(!inside(br,w))(page==='story'?warnings:errors).push('棋盘超出视口');
+    const tiles=[...d.querySelectorAll('#board .tile')];
+    if(tiles.length!==9||new Set(tiles.map(tile=>tile.dataset.token)).size!==9||tiles.some(tile=>!w.getComputedStyle(tile).backgroundImage.includes('reference-clean')))errors.push('九块原稿棋盘未完整接入');
+    const statCards=[...d.querySelectorAll('.metric-row>.stat-card')];
+    assertRatio(statCards[0],380/181,w,errors,'步数信息牌');
+    assertRatio(statCards[1],379/180,w,errors,'时间信息牌');
+    if(page==='daily'){
+      assertRatio(d.querySelector('#dailyBanner'),807/213,w,errors,'每日横幅');
+      [['backHome',109/106],['settingsBtn',109/106],['cwBtn',412/123],['ccwBtn',411/122],['hintBtn',401/92],['shareBtn',764/143]].forEach(([id,ratio])=>assertRatio(d.querySelector('#'+id+' .skin'),ratio,w,errors,id+'按钮皮肤'));
+    }
+    const buttons=['backHome','settingsBtn','cwBtn','ccwBtn','hintBtn','shareBtn'].map(id=>d.getElementById(id));
+    const knobs=[...d.querySelectorAll('#anchors .spin-node')];
+    if(knobs.length!==4)errors.push('旋转点不是四个');
+    scrolledControls=await assertControls([...buttons,...knobs],d,w,errors,{scroller:container,allowScroll,minimum:page==='story'?36:44,warnings,strictBounds:page!=='story'});
+    knobs.forEach((knob,index)=>assertRatio(knob.querySelector('.spin-art'),1,w,errors,'旋转钮'+(index+1)));
+    const blocks=[d.querySelector(page==='daily'?'#dailyBanner':'#stageTitle'),...statCards,boardFrame,...buttons];
+    assertNoOverlap(blocks.filter(node=>visible(node,w)),errors,'页面组件');
+  }
+  return {viewport:[w.innerWidth,w.innerHeight],page,width:cr.width,expectedWidth,boardCoverage,scrollRange,scrolledControls,scope:page==='story'?'普通关 36px 基线':'主页／每日 44px 验收',pass:errors.length===0,errors,warnings};
+}
+function showReport(report){
+  result.className=report.pass?'pass':'fail';
+  result.textContent=(report.pass?'通过':'未通过')+' · '+MODE_NAMES[report.page]+' '+report.viewport.join(' × ')+' · 容器 '+report.width.toFixed(1)+'px'+(report.boardCoverage===null?'':' · 棋盘 '+(report.boardCoverage*100).toFixed(1)+'%');
+  details.textContent=report.scope+'\n'+(report.pass?'本页规定的宽度、素材比例及触控检查通过。':report.errors.map((message,index)=>(index+1)+'. '+message).join('\n'))+(report.scrolledControls.length?'\n已通过局部滚动命中：'+report.scrolledControls.join('、'):'')+(report.warnings.length?'\n普通关边界提示（不属于本次布局改动）：\n'+report.warnings.join('\n'):'');
+}
+async function checkCurrent(){
+  result.textContent='正在等待资源并检查…';result.className='';
+  try{const {d,w}=await waitReady(),report=await inspect(d,w);showReport(report);return report;}
+  catch(error){result.className='fail';result.textContent='检查未完成';details.textContent=error.message;return null;}
+}
+async function navigate(width,height,page){
+  const serial=++navigation;frame.width=width;frame.height=height;size.value=[width,height].join(',');mode.value=page;
+  const url=new URL('../',location.href);url.searchParams.set('v',VERSION);if(page!=='home')url.searchParams.set('mode',page);
+  await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('页面加载超时')),30000);frame.addEventListener('load',()=>{clearTimeout(timer);resolve();},{once:true});frame.src=url.href;});
+  if(serial!==navigation)return null;
+  const report=await checkCurrent();
+  if(report&&(report.page!==page||report.viewport[0]!==width||report.viewport[1]!==height)){
+    report.errors.push('实际页面／视口与所选组合不符');report.pass=false;showReport(report);
+  }
+  return report;
+}
+function appendReport(report){
+  const row=document.createElement('tr');row.dataset.status=report.pass?'pass':'fail';
+  const notes=[report.scope,...report.errors,...report.warnings.map(message=>'基线提示：'+message)];
+  if(report.scrolledControls.length)notes.push('局部滚动可达：'+report.scrolledControls.join('、'));
+  const values=[report.viewport.join(' × '),MODE_NAMES[report.page],report.pass?'通过':'未通过',report.width.toFixed(1)+' / '+report.expectedWidth+' px',report.boardCoverage===null?'—':(report.boardCoverage*100).toFixed(1)+'%',notes.join('；')];
+  values.forEach((value,index)=>{const cell=document.createElement('td');cell.textContent=value;if(index===2)cell.className=report.pass?'pass':'fail';row.append(cell);});
+  const action=document.createElement('td'),button=document.createElement('button');button.type='button';button.textContent='查看';button.onclick=()=>{if(!running)navigate(...report.viewport,report.page);};action.append(button);row.append(action);matrix.tBodies[0].append(row);
+}
+async function runAll(){
+  if(running)return;running=true;controls.forEach(control=>control.disabled=true);matrix.hidden=false;matrix.tBodies[0].replaceChildren();window.layoutResults=[];
+  try{
+    for(const viewport of SIZES)for(const page of MODES){
+      const report=await navigate(...viewport,page);if(!report)throw new Error('资源或页面加载未完成，已停止矩阵检查');
+      window.layoutResults.push(report);appendReport(report);
+    }
+    const failed=window.layoutResults.filter(report=>!report.pass),total=window.layoutResults.length;
+    result.className=failed.length?'fail':'pass';result.textContent=failed.length?'已检查 '+total+' 组，'+failed.length+' 组未通过':'全部 '+total+' 个组合通过';
+    const warnings=window.layoutResults.filter(report=>report.warnings.length);
+    details.textContent=(failed.length?failed.map(report=>report.viewport.join(' × ')+' '+MODE_NAMES[report.page]+'：\n'+report.errors.join('\n')).join('\n\n'):'5种视口 × 3个页面通过各自验收。主页／每日采用44px触区；仅390×600允许局部滚动。普通关采用36px基线。')+(warnings.length?'\n\n普通关原有边界提示：\n'+warnings.map(report=>report.viewport.join(' × ')+'：'+report.warnings.join('；')).join('\n'):'');
+  }catch(error){result.className='fail';result.textContent='矩阵检查未完成';details.textContent=error.message;}
+  finally{running=false;controls.forEach(control=>control.disabled=false);}
+}
+frame.addEventListener('load',()=>{if(!running)checkCurrent();});
+size.addEventListener('change',()=>{if(!running)navigate(...size.value.split(',').map(Number),mode.value);});
+mode.addEventListener('change',()=>{if(!running)navigate(...size.value.split(',').map(Number),mode.value);});
+document.querySelector('#check').addEventListener('click',checkCurrent);
+document.querySelector('#runAll').addEventListener('click',runAll);
 </script>
 </html>
