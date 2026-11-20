@@ -46,6 +46,7 @@ function rand(seed){let x=seed||0x9e3779b9;return ()=>{x^=x<<13;x^=x>>>17;x^=x<<
 export function makePuzzle(mode='story', key='1'){
   if(mode!=='story'&&mode!=='daily')throw new Error('invalid mode');
   if(!/^[0-9-]{1,14}$/.test(String(key)))throw new Error('invalid key');
+  if(mode==='daily')return dailyBankPuzzle(String(key));
   const level=mode==='story'?Math.max(1,Math.min(18,Number(key)||1)):0;
   const target=mode==='daily'?7:Math.min(8,Math.max(2,2+Math.floor(level*.42)));
   const r=rand(hash(mode+':'+key+':fourfold-v1'));
@@ -63,6 +64,36 @@ export function makePuzzle(mode='story', key='1'){
     if(path.length>=target)break;
   }
   return {...pick,mode,key:String(key),level,difficulty:pick.par<=4?'入门':pick.par<=6?'进阶':pick.par<=8?'高手':'宗师'};
+}
+
+// Verified deterministic daily bank: distinct non-solved permutations without replacement.
+export const DAILY_BANK_START='2026-11-21';
+export const DAILY_BANK_SIZE=25000;
+const BANK_MODULUS=362879; // 9! - 1: exclude the solved state
+const BANK_STEP=7919; // coprime to BANK_MODULUS
+const BANK_OFFSET=104729;
+const FACTORIALS=[40320,5040,720,120,24,6,2,1,1];
+export function dailyBankIndex(date){
+  if(!/^20\d{2}-\d{2}-\d{2}$/.test(date))throw new Error('invalid date');
+  const time=Date.parse(date+'T00:00:00Z'),origin=Date.parse(DAILY_BANK_START+'T00:00:00Z');
+  if(!Number.isFinite(time)||new Date(time).toISOString().slice(0,10)!==date)throw new Error('invalid date');
+  const i=Math.round((time-origin)/86400000);
+  if(i<0||i>=DAILY_BANK_SIZE)throw new Error('daily bank exhausted or date out of range');
+  return i;
+}
+export function dailyBoardAt(index){
+  if(!Number.isInteger(index)||index<0||index>=DAILY_BANK_SIZE)throw new Error('invalid daily index');
+  let rank=1+((BANK_OFFSET+index*BANK_STEP)%BANK_MODULUS);
+  const remaining=['1','2','3','4','5','6','7','8','9'];
+  let board='';
+  for(const f of FACTORIALS){const n=Math.floor(rank/f);rank%=f;board+=remaining.splice(n,1)[0];}
+  return board;
+}
+export function dailyBankPuzzle(date){
+  const index=dailyBankIndex(date),board=dailyBoardAt(index);
+  const path=shortestPath(board),par=path.length;
+  if(par<1||applyPath(board,path)!==GOAL)throw new Error('daily verification failed');
+  return {board,par,mode:'daily',key:date,level:0,difficulty:par<=4?'入门':par<=6?'进阶':par<=8?'高手':'宗师',bankIndex:index+1,bankSize:DAILY_BANK_SIZE};
 }
 export function todayCN(now=Date.now()){return new Date(now+8*3600*1000).toISOString().slice(0,10);}
 export function resultScore(moves,seconds,hints=0){if(hints>0)return 0;return Math.max(0,100-moves)*1000 + (999-Math.min(999,Math.max(0,Math.floor(seconds))));}
