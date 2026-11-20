@@ -93,7 +93,7 @@ export function dailyBoardAt(index){
 export function dailyBankPuzzle(date){
   const index=dailyBankIndex(date),offset=index*11,board=DAILY_VERIFIED_ROWS.slice(offset,offset+9),par=Number(DAILY_VERIFIED_ROWS.slice(offset+9,offset+11));
   if(board.length!==9||!Number.isInteger(par)||par<1)throw new Error('daily bank record invalid');
-  return {board,par,mode:'daily',key:date,level:0,difficulty:par<=4?'入门':par<=6?'进阶':par<=8?'高手':'宗师',bankIndex:index+1,bankSize:DAILY_BANK_SIZE};
+  return {board,par,mode:'daily',key:date,level:0,difficulty:'宗师',bankIndex:index+1,bankSize:DAILY_BANK_SIZE};
 }
 export function todayCN(now=Date.now()){return new Date(now+8*3600*1000).toISOString().slice(0,10);}
 export function resultScore(moves,seconds,hints=0){if(hints>0)return 0;return Math.max(0,100-moves)*1000 + (999-Math.min(999,Math.max(0,Math.floor(seconds))));}
