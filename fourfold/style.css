@@ -73,3 +73,22 @@ html,body{height:100%;overflow:hidden;background:#d9b68d;overscroll-behavior:non
 .home-screen{background:linear-gradient(125deg,#f8e7c7 0%,#efd4b4 58%,#e3bb97 100%)}
 .cozy-menu{margin-top:clamp(98px,16vh,180px)!important;transform:none;position:relative;z-index:3}
 @media(max-height:740px){.cozy-title{margin-top:7%}.cozy-notebook{height:18%;min-height:95px;margin-top:3%}.cozy-menu{margin-top:clamp(45px,8vh,95px)!important;gap:8px}.cozy-menu button{height:43px}}
+
+/* v0.4.7 — night observatory, cohesive fixed-screen layout */
+html,body{background:#f0d1aa!important}
+.shell{background:#f0d1aa!important}
+.home-screen{background:linear-gradient(135deg,#f8e8cb 0%,#f2d7b7 56%,#e7c09d 100%)!important}
+.cozy-window{position:absolute!important;top:16%!important;left:-8%!important;width:55%!important;height:43%!important;transform:rotate(-3deg)!important;border:10px solid #a77b55!important;border-radius:12px!important;background:#192b51!important;box-shadow:inset 0 0 0 5px #e0b88a,9px 13px 22px #704b3438!important;overflow:hidden;pointer-events:none}
+.cozy-window:after{content:'';position:absolute;left:49%;top:0;height:100%;border-left:9px solid #a77b55;z-index:5}
+.night-sky{position:absolute;inset:5px;background:radial-gradient(ellipse at 68% 28%,#50658f,#1b305b 49%,#0d1d3e 100%);overflow:hidden}
+.night-stars{position:absolute;inset:0;background-image:radial-gradient(circle,#fff9db 1.4px,transparent 2px),radial-gradient(circle,#c8e7ff 1px,transparent 1.7px),radial-gradient(circle,#ffdf9a 1.8px,transparent 2.3px);background-size:37px 47px,61px 57px,103px 79px;background-position:8px 10px,26px 30px,44px 8px;opacity:.95}
+.night-moon{position:absolute;top:17%;left:17%;width:45px;height:45px;border-radius:50%;background:#fff1bd;box-shadow:0 0 24px 9px #fff0ac6b,0 0 55px #e8c98e55}
+.night-hills{position:absolute;bottom:-12%;left:-15%;width:130%;height:34%;border-radius:50% 50% 0 0;background:#1a2b48;box-shadow:0 -17px 0 #2d4265}
+.cozy-title{position:absolute!important;top:6.5%!important;left:24%!important;right:5%!important;margin:0!important;padding:12px 5px!important;text-align:center;white-space:nowrap;font-size:clamp(25px,7.2vw,36px)!important;z-index:4}
+.cozy-subtitle{position:absolute!important;top:17%!important;right:8%!important;margin:0!important;font-size:10px!important;z-index:4}
+.cozy-notebook{position:absolute!important;top:29%!important;right:10%!important;width:47%!important;height:23%!important;min-height:0!important;max-height:none!important;margin:0!important;transform:rotate(7deg)!important;z-index:3}
+.cozy-ring{font-size:clamp(52px,11vw,82px)!important}
+.cozy-menu{position:absolute!important;left:12%!important;right:12%!important;top:60%!important;width:76%!important;max-width:none!important;margin:0!important;gap:clamp(10px,1.5vh,17px)!important;z-index:6}
+.cozy-menu button{height:clamp(48px,7vh,62px)!important}
+.cozy-desk,.cozy-cat,.cozy-footer,.cozy-progress{display:none!important}
+@media(max-height:720px){.cozy-title{top:5%!important}.cozy-subtitle{top:16%!important}.cozy-notebook{top:28%!important;height:22%!important}.cozy-menu{top:57%!important;gap:9px!important}.cozy-menu button{height:43px!important}}
