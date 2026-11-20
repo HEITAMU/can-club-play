@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
 <meta name="theme-color" content="#0b1329"/><meta name="description" content="四格诡局：与朋友比一比，谁能用最少步数复原失落星图。"/>
-<title>四格诡局 · 星图挑战</title><link rel="icon" type="image/svg+xml" href="assets/icon.svg"/><link rel="stylesheet" href="style.css?v=0.6.1" />
+<title>四格诡局 · 星图挑战</title><link rel="icon" type="image/svg+xml" href="assets/icon.svg"/><link rel="stylesheet" href="style.css?v=0.6.2" />
 </head><body>
 <div class="aurora a1"></div><div class="aurora a2"></div>
 <main class="shell" id="app">
@@ -14,9 +14,9 @@
 <div id="gameScreen" class="game-screen" hidden>
 <header class="top compact-top"><button id="backHome" class="home-back" aria-label="返回主界面">‹</button><button id="settingsBtn" class="settings-gear" aria-label="设置">⚙</button></header>
 
-<nav class="mode-select" aria-label="关卡模式"><button id="storyTab" class="active">✦ 闯关档案</button><button id="dailyTab">◈ 每日挑战 <i id="dailyDot"></i></button></nav>
+<nav class="mode-select" aria-label="关卡模式" hidden><button id="storyTab" class="active">✦ 闯关档案</button><button id="dailyTab">◈ 每日挑战 <i id="dailyDot"></i></button></nav>
 <section class="game-panel"><div class="game-topline"><span class="difficulty" id="difficulty">入门</span><span id="chapterCaption" hidden></span><span id="puzzleTitle" hidden></span></div>
-<div class="metric-row"><div><small>当前步数</small><strong id="moves">00</strong></div><div><small>理论最优</small><strong id="par">--</strong></div><div><small>本局用时</small><strong id="clock">00:00</strong></div></div>
+<div class="metric-row"><div><small>当前步数</small><strong id="moves">00</strong></div><div hidden><small>理论最优</small><strong id="par">--</strong></div><div><small>本局用时</small><strong id="clock">00:00</strong></div></div>
 <div class="target" id="target" aria-label="目标星图" hidden></div>
 <div class="board-frame"><div class="board-halo"></div><div id="board" class="board" role="group" aria-label="九宫格拼图"></div><div id="anchors" class="anchors" aria-label="旋转节点"></div></div>
 <p class="instruction" id="instruction" aria-live="polite"></p>
@@ -41,5 +41,5 @@ window.addEventListener('error',function(e){var n=document.getElementById('start
 window.addEventListener('unhandledrejection',function(){var n=document.getElementById('startupNotice');if(n){n.hidden=false;n.textContent='加载失败，请刷新页面';}});
 </script>
 <div id="startupNotice" hidden role="status" style="position:fixed;z-index:100;left:15%;right:15%;top:45%;padding:14px;border-radius:14px;background:#fff1d2;color:#70462d;text-align:center;border:2px solid #9d724c"></div>
-<script type="module" src="app.js?v=0.6.1"></script>
+<script type="module" src="app.js?v=0.6.2"></script>
 </body></html>

@@ -134,3 +134,8 @@ html,body{background:#f0d1aa!important}
 .home-screen .cozy-menu button{height:clamp(45px,6.4vh,58px)!important;border:4px solid #83533b!important;box-shadow:0 5px 0 #a87250,0 10px 14px #79503a35!important}
 .home-screen .cozy-menu button:active{transform:translateY(3px);box-shadow:0 2px 0 #a87250!important}
 @media(max-height:730px){.home-heading{top:4%!important}.scene-window{top:20%!important;height:36%!important}.scene-book{top:35%!important}.home-screen .cozy-menu{top:66%!important}.home-screen .cozy-menu button{height:43px!important}}
+
+/* v0.6.2: hide old mode switch and theoretical minimum; two-column stats */
+.mode-select[hidden],.metric-row>div[hidden]{display:none!important}
+.metric-row{display:grid!important;grid-template-columns:1fr 1fr!important}
+.metric-row>div:not([hidden]){width:auto!important;min-width:0!important}
