@@ -180,8 +180,8 @@ export class FourfoldGame extends Component {
   }
   private statCard(frame:string,label:string,value:string,x:number,y:number,w:number,h:number,isClock=false){
     this.art(frame,x,y,w,h);
-    this.txt(label,x+w*.37,y+h*.19,w*.55,h*.29,14,C.dark,true);
-    const l=this.txt(value,x+w*.36,y+h*.45,w*.57,h*.40,isClock?26:29,C.dark,true);
+    this.txt(label,x+w*.37,y+h*.26,w*.55,h*.29,14,C.dark,true);
+    const l=this.txt(value,x+w*.36,y+h*.50,w*.57,h*.40,isClock?26:29,C.dark,true);
     if(isClock){this.clockLabel=l;this.updateClock();}
   }
   private drawGame(){
@@ -214,7 +214,7 @@ export class FourfoldGame extends Component {
     for(let i=0;i<9;i++){
       const tok=Number(this.board[i]),x=bx+(i%3)*unit,y=by+Math.floor(i/3)*unit;
       const tile=this.group('Tile '+tok,x+1,y+1,unit-2,unit-2);this.art('tile'+tok,0,0,unit-2,unit-2,tile.content);
-      const l=this.txt(String(tok),unit-29,unit-29,20,22,17,C.white,true,tile.content),outline=l.node.addComponent(LabelOutline);outline.color=ink(C.night);outline.width=1.5;
+      const l=this.txt(String(tok),unit-45,unit-29,20,22,17,C.white,true,tile.content),outline=l.node.addComponent(LabelOutline);outline.color=ink(C.night);outline.width=1.5;
       this.tileNodes[i]=tile.node;
     }
     for(let q=0;q<4;q++){
