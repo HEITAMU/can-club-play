@@ -1,5 +1,5 @@
 {
-  "version": "0.7.0",
+  "version": "0.8.4",
   "atlas": {
     "width": 1254,
     "height": 1254,
@@ -55,6 +55,15 @@
     }
   },
   "images": {
+    "rankScene": {
+      "width": 854,
+      "height": 1842
+    },
+    "resultPanel": {
+      "width": 1086,
+      "height": 1448,
+      "alpha": true
+    },
     "homeScene": {
       "width": 854,
       "height": 1840

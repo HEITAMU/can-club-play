@@ -10,7 +10,7 @@ const {ccclass}=_decorator;
 const HINT_MODE:'free'|'rewarded'='free'; // 未开通广告时，正式上线也免费提示；开通后再显式切换。
 const AD_IDS={rewarded:'',banner:''}; // 接入时只填写微信公众平台提供的真实 adUnitId。
 const C={background:'#F8DEB7',surface:'#FFF1D6',gold:'#F5CB79',gold2:'#C88B4D',white:'#FFF4D7',muted:'#977253',dark:'#5B301F',edge:'#825037',night:'#1B2345',shadow:'#B27C50'};
-const ART_PATHS={home:'art/home-scene',atlas:'art/ui-atlas',referenceOriginal:'art/reference-daily',referenceClean:'art/reference-clean'};
+const ART_PATHS={home:'art/home-scene',atlas:'art/ui-atlas',referenceOriginal:'art/reference-daily',referenceClean:'art/reference-clean',rankScene:'art/rank-scene',resultPanel:'art/result-panel'};
 const REQUIRED_FRAMES=['goldButton','creamButton','lavenderButton','stepsCard','timeCard','rotateKnob','settingsButton','backButton'];
 const at=()=>typeof performance!=='undefined'&&performance.now?performance.now():Date.now();
 const wxSDK=()=>typeof wx!=='undefined'?(wx as any):null;
@@ -24,10 +24,10 @@ export class FourfoldGame extends Component {
   private safeTop=0;private safeBottom=0;private inHome=true;private mode='story';private key='1';private puzzle:any;
   private board=GOAL;private direction=1;private moves=0;private hints=0;private elapsed=0;private startAt=0;private won=false;private modal='';private busy=false;
   private clockLabel:Label|null=null;private rewardAd:any=null;private banner:any=null;private toastNode:Node|null=null;
-  private roundSerial=0;private hintRequest:any=null;private disposed=false;
-  private rankTemplate:Node|null=null;private rankView:Node|null=null;
+  private roundSerial=0;private hintRequest:any=null;private disposed=false;private resultAdvanceRound=-1;
+  private rankTemplate:Node|null=null;private rankView:Node|null=null;private rankSettings=false;
   private assetsReady=false;private loading=false;private loadError='';private loadProgress=0;private loadSerial=0;
-  private textures:Record<string,Texture2D>={};private frames:Record<string,SpriteFrame>={};private images:ImageAsset[]=[];private manifest:any=null;private reference:any=null;
+  private textures:Record<string,Texture2D>={};private frames:Record<string,SpriteFrame>={};private images:ImageAsset[]=[];private manifest:any=null;private reference:any=null;private rankLayout:any=null;
   private tileNodes:Node[]=[];private boardLayout={x:0,y:0,size:0,unit:0};private launchQuery:any={};
   private pageScroll:ScrollView|null=null;private pageScrollKey='';private scrollOffsets:Record<string,number>={};
 
@@ -83,9 +83,9 @@ export class FourfoldGame extends Component {
     if(this.loading)return;
     const serial=++this.loadSerial;this.loading=true;this.loadError='';this.assetsReady=false;this.loadProgress=0;this.draw();
     try{
-      const [manifestAsset,referenceAsset]=await Promise.all([this.loadResource('art/assetManifest',JsonAsset),this.loadResource('art/referenceLayout',JsonAsset)]);
+      const [manifestAsset,referenceAsset,rankAsset]=await Promise.all([this.loadResource('art/assetManifest',JsonAsset),this.loadResource('art/referenceLayout',JsonAsset),this.loadResource('art/rankLayout',JsonAsset)]);
       if(serial!==this.loadSerial)return;
-      this.manifest=manifestAsset.json;this.reference=referenceAsset.json;
+      this.manifest=manifestAsset.json;this.reference=referenceAsset.json;this.rankLayout=rankAsset.json;
       const rects=this.manifest?.atlas?.frames;
       if(!rects||REQUIRED_FRAMES.some(name=>!rects[name]))throw new Error('美术清单缺少必要组件');
       this.disposeArt();
@@ -106,6 +106,7 @@ export class FourfoldGame extends Component {
         this.frames[name]=this.makeFrame(atlas,r.x,r.y,r.w,r.h);
       }
       this.installReferenceFrames();
+      this.validateSceneArtwork();
       this.assetsReady=true;this.loading=false;
       if(!this.puzzle){
         const q=this.launchQuery;
@@ -152,10 +153,21 @@ export class FourfoldGame extends Component {
     for(const texture of Object.values(this.textures))texture.destroy();this.textures={};
     for(const image of this.images)image.decRef();this.images=[];
   }
+  private validateSceneArtwork(){
+    for(const [key,texture] of [['rank',this.textures.rankScene],['result',this.textures.resultPanel]] as any){
+      const layout=this.rankLayout?.[key];
+      if(!layout||layout.width!==texture.width||layout.height!==texture.height)throw new Error(`界面原画尺寸与坐标不一致: ${key}`);
+    }
+    const rank=this.rankLayout.rank,result=this.rankLayout.result;
+    const check=(rect:any,layout:any)=>Array.isArray(rect)&&rect.length===4&&rect.every(Number.isFinite)&&rect[0]>=0&&rect[1]>=0&&rect[2]>0&&rect[3]>0&&rect[0]+rect[2]<=layout.width&&rect[1]+rect[3]<=layout.height;
+    for(const key of ['back','settings','daily','previous','next'])if(!check(rank[key],rank))throw new Error(`榜单热区不完整: ${key}`);
+    for(const key of ['title','honor','movesLabel','movesValue','timeLabel','timeValue','note','primary','share','close'])if(!check(result[key],result))throw new Error(`结算坐标不完整: ${key}`);
+    if(rank.width!==854||rank.height!==1842||rank.podium?.length!==3)throw new Error('榜单开放域设计尺寸不匹配');
+  }
   private startGame(mode:string,key:string,home=false){
     try{this.puzzle=makePuzzle(mode,key);}catch(e){console.warn('unavailable challenge',e);this.toast('这个日期的挑战暂不可用');if(!this.puzzle){this.puzzle=makePuzzle('story','1');mode='story';key='1';home=true;}else return;}
     this.roundSerial++; // 同一关重开也不能领取上一局尚未结束的广告奖励。
-    this.mode=mode;this.key=key;this.inHome=home;this.board=this.puzzle.board;this.direction=1;this.moves=0;this.hints=0;this.startAt=0;this.elapsed=0;this.won=false;this.busy=false;this.modal='';this.hideBanner();this.draw();
+    this.mode=mode;this.key=key;this.inHome=home;this.board=this.puzzle.board;this.direction=1;this.moves=0;this.hints=0;this.startAt=0;this.elapsed=0;this.won=false;this.busy=false;this.modal='';this.rankSettings=false;this.hideBanner();this.draw();
   }
   private updateClock(){if(this.startAt&&!this.won&&!this.inHome)this.elapsed=(at()-this.startAt)/1000;if(this.clockLabel)this.clockLabel.string=clock(this.elapsed);}
   private clear(){
@@ -190,12 +202,17 @@ export class FourfoldGame extends Component {
     const n=this.createNode(name,x,y,w,h,parent),sprite=n.addComponent(Sprite);sprite.sizeMode=Sprite.SizeMode.CUSTOM;sprite.type=Sprite.Type.SIMPLE;sprite.spriteFrame=frame;
     n.getComponent(UITransform).setContentSize(w,h);return n;
   }
-  private bindButton(n:Node,action:()=>void){
+  private bindButton(n:Node,action:()=>void,feedback:Node|null=null){
     let pressed=false;
-    n.on(Node.EventType.TOUCH_START,(e:any)=>{e.propagationStopped=true;if(this.busy)return;pressed=true;Tween.stopAllByTarget(n);tween(n).to(.06,{scale:new Vec3(.975,.975,1)}).start();});
-    n.on(Node.EventType.TOUCH_CANCEL,()=>{pressed=false;Tween.stopAllByTarget(n);tween(n).to(.08,{scale:new Vec3(1,1,1)}).start();});
-    n.on(Node.EventType.TOUCH_END,(e:any)=>{e.propagationStopped=true;if(!pressed)return;pressed=false;Tween.stopAllByTarget(n);n.setScale(1,1,1);if(!this.busy)action();});
+    n.on(Node.EventType.TOUCH_START,(e:any)=>{e.propagationStopped=true;if(this.busy||this.disposed||!n.isValid)return;pressed=true;if(feedback)feedback.active=true;Tween.stopAllByTarget(n);tween(n).to(.06,{scale:new Vec3(.975,.975,1)}).start();});
+    n.on(Node.EventType.TOUCH_CANCEL,()=>{pressed=false;if(feedback)feedback.active=false;Tween.stopAllByTarget(n);tween(n).to(.08,{scale:new Vec3(1,1,1)}).start();});
+    n.on(Node.EventType.TOUCH_END,(e:any)=>{e.propagationStopped=true;if(!pressed)return;pressed=false;if(feedback)feedback.active=false;Tween.stopAllByTarget(n);n.setScale(1,1,1);if(!this.busy&&!this.disposed&&n.isValid&&n.activeInHierarchy!==false)action();});
     return n;
+  }
+  private artHit(name:string,rect:number[],scale:number,parent:Node,action:()=>void,minTop=-Infinity){
+    const [x,y,w,h]=rect.map(v=>v*scale),hitW=Math.max(44,w),hitH=Math.max(44,h),left=x+(w-hitW)/2,top=Math.max(minTop,y+(h-hitH)/2);
+    const g=this.group(name,left,top,hitW,hitH,parent),feedback=this.shape(0,0,hitW,hitH,'#FFF6DD28','',Math.min(18,hitH/3),g.content);feedback.active=false;
+    this.bindButton(g.node,action,feedback);return {node:g.node,x:left,y:top,w:hitW,h:hitH};
   }
   private btn(value:string,x:number,y:number,w:number,h:number,action:()=>void,kind='creamButton',size=16,parent:Node=this.root){
     const g=this.group(value||kind,x,y,w,h,parent);
@@ -214,7 +231,7 @@ export class FourfoldGame extends Component {
     if(!this.root)return;this.clear();
     if(!this.assetsReady){this.drawLoading();return;}
     this.shape(0,0,this.width,this.height,C.background,'',0);
-    if(this.modal==='rank'){this.drawRankPage();return;}
+    if(this.modal==='rank'||(this.modal==='settings'&&this.rankSettings)){this.drawRankPage();if(this.modal==='settings')this.drawModal();return;}
     if(this.inHome)this.drawHome();else this.drawGame();
     if(this.modal)this.drawModal();
   }
@@ -394,7 +411,15 @@ export class FourfoldGame extends Component {
     const value=[todayCN(),String(result.score),String(result.moves),String(result.seconds)].join('|');
     try{sdk.setUserCloudStorage({KVDataList:[{key:KEY,value}],fail:(e:any)=>console.warn('ranking cloud sync unavailable',e)});}catch(e){console.warn('ranking cloud sync failed',e);}
   }
-  private nextLevel(){if(!this.won){this.toast('先完成本关，再解锁后续关卡');return;}if(this.mode==='daily')this.startGame('story',String(this.unlocked()));else if(Number(this.key)<18)this.startGame('story',String(Number(this.key)+1));else this.startGame('daily',todayCN());}
+  private nextLevel(round=this.roundSerial){
+    // 关闭和继续共用同一条通关路由；被销毁弹窗的迟到点击不能再推进新一局。
+    if(this.disposed||round!==this.roundSerial||this.resultAdvanceRound===round||this.modal!=='result'||!this.won)return;
+    this.resultAdvanceRound=round;
+    if(this.mode==='daily')this.startGame('story',String(this.unlocked()));
+    else if(Number(this.key)<18)this.startGame('story',String(Number(this.key)+1));
+    else this.startGame('daily',todayCN());
+    if(this.roundSerial===round)this.resultAdvanceRound=-1; // 日期不可用时保留重试机会。
+  }
   private hintsLeft(){return Math.max(0,hintLimit(this.mode)-this.hints);}
   private applyHint(){
     if(this.won||this.disposed||this.inHome)return;
@@ -462,75 +487,85 @@ export class FourfoldGame extends Component {
     const query=this.mode==='daily'?`mode=daily&day=${encodeURIComponent(this.key)}`:`mode=story&level=${encodeURIComponent(this.key)}`;
     try{sdk.shareAppMessage({title:this.won?`我用了 ${this.moves} 步复原星图，你呢？`:'四格诡局｜来挑战同一关星图',query:query+(this.won?`&beat=${this.moves}`:'')});}catch{this.toast('当前微信环境不支持分享');}
   }
-  private showRank(){this.modal='rank';this.hideBanner();this.draw();}
+  private showRank(){this.rankSettings=false;this.modal='rank';this.hideBanner();this.draw();}
+  private openRankSettings(){if(this.modal!=='rank')return;this.rankSettings=true;this.modal='settings';this.hideBanner();this.draw();}
   private rankPage(delta:number){
-    if(this.modal!=='rank'||!this.rankView)return;
+    if(this.disposed||this.modal!=='rank'||!this.rankView)return;
     try{wxSDK()?.getOpenDataContext?.().postMessage({type:'fourfold-rank-page',delta});}catch(e){console.warn('rank page unavailable',e);this.toast('好友榜暂不可用，请稍后重试');}
   }
   private drawRankPage(){
-    const w=this.width,listW=w-32,listH=listW*640/720,contentH=Math.max(this.height-this.safeTop-this.safeBottom,342+listH);
-    const parent=this.pageContent('Rank',contentH),day=todayCN(),date=day.split('-'),best=this.storeRead('best:daily:'+day,null);
-    this.btn('',16,12,42,42,()=>this.closeModal(),'backButton',16,parent);
-    this.txt('好友荣誉榜',64,11,w-128,44,27,C.dark,true,parent);
-    this.btn('↻',w-58,12,42,42,()=>this.draw(),'creamButton',24,parent);
-    this.txt(`✦ ${Number(date[1])}月${Number(date[2])}日 · 每日挑战 ✦`,24,64,w-48,25,16,C.dark,true,parent);
-    this.txt('步数更少优先 · 同步数比用时',24,91,w-48,22,13,C.muted,false,parent);
-    this.shape(16,126,listW,80,C.surface,C.gold2,18,parent);
-    this.txt('我的今日最佳',32,132,w-64,20,13,C.muted,true,parent);
-    this.txt(best?`${best.moves} 步  ·  ${clock(best.seconds)}`:'今日尚未通关',32,152,w-64,31,24,C.dark,true,parent);
-    this.txt('每日每局可用 2 次提示 · 不影响排行',32,183,w-64,18,12,C.muted,false,parent);
-    const listY=220,sdk=wxSDK(),canUseFriends=typeof sdk?.getOpenDataContext==='function'&&!!this.rankTemplate;
-    this.shape(16,listY,listW,listH,C.surface,C.gold2,18,parent);
+    const r=this.rankLayout.rank,scale=this.width/r.width,height=r.height*scale;
+    // 原画按窗口宽度等比显示；短屏通过原生ScrollView浏览，不再缩成居中窄条。
+    const parent=this.pageContent('Rank',height,true),day=todayCN(),date=day.split('-'),best=this.storeRead('best:daily:'+day,null);
+    this.art('rankScene',0,0,this.width,height,parent);
+    const centered=(value:string,point:number[],width:number,lineHeight:number,size:number,color=C.dark,bold=false)=>this.txt(value,(point[0]-width/2)*scale,(point[1]-lineHeight/2)*scale,width*scale,lineHeight*scale,size*scale,color,bold,parent);
+    centered(`${Number(date[1])}月${Number(date[2])}日 · 每日挑战`,r.date,550,52,36,C.white,true);
+    const hasBest=best&&Number.isFinite(Number(best.moves))&&Number(best.moves)>=1&&Number.isFinite(Number(best.seconds))&&Number(best.seconds)>=0;
+    centered(hasBest?String(best.moves):'—',r.bestMoves,230,86,68,C.dark,true);
+    centered(hasBest?clock(Number(best.seconds)):'—:—',r.bestTime,280,86,62,C.dark,true);
+    const sdk=wxSDK(),canUseFriends=typeof sdk?.getOpenDataContext==='function'&&!!this.rankTemplate;
     const empty=(title:string,note:string)=>{
-      this.txt('名次       好友                   步数     用时',28,listY+9,w-56,22,12,C.muted,true,parent);
-      this.txt('♛',28,listY+listH/2-77,w-56,62,49,'#9F7AB8',true,parent);
-      this.txt(title,30,listY+listH/2-7,w-60,31,19,C.dark,true,parent);
-      this.txt(note,32,listY+listH/2+28,w-64,44,13,C.muted,false,parent);
+      for(const slot of r.podium){centered('—',slot.name,170,44,29);centered('— 步',slot.moves,165,42,29);centered('—:—',slot.time,165,44,31);}
+      this.shape(64*scale,1081*scale,726*scale,80*scale,'#FFF1D7F7','',4*scale,parent);
+      centered(title,[427,1105],650,42,30,C.dark,true);centered(note,[427,1144],650,32,23,C.muted);
+      centered('—',[427,1258],146,28,19,C.muted);
     };
     if(canUseFriends){
       try{
-        // 设计分辨率在场景模板中固定为720×640，与开放域画布和此节点保持同一比例。
+        // 模板与透明开放域均固定854×1842，好友数据与底图共用源像素坐标。
         const node=instantiate(this.rankTemplate);node.name='OpenDataRank';node.layer=Layers.Enum.UI_2D;
-        node.getComponent(UITransform).setContentSize(listW,listH);parent.addChild(node);node.setPosition(16+listW/2,-listY-listH/2);
+        node.getComponent(UITransform).setContentSize(this.width,height);parent.addChild(node);node.setPosition(this.width/2,-height/2);
         this.rankView=node;node.active=true;node.getComponent(SubContextView).fps=10;
         this.scheduleOnce(()=>{
           if(this.disposed||this.modal!=='rank'||this.rankView!==node||!node.isValid)return;
-          try{sdk.getOpenDataContext().postMessage({type:'fourfold-rank',day,key:KEY,width:listW,height:listH,page:0});}
-          catch(e){console.warn('rank context unavailable',e);node.active=false;empty('好友榜暂不可用','请稍后点击右上角刷新');}
+          try{sdk.getOpenDataContext().postMessage({type:'fourfold-rank',day,key:KEY,width:r.width,height:r.height,page:0});}
+          catch(e){console.warn('rank context unavailable',e);node.active=false;empty('好友榜暂时无法读取','请返回后重新打开排行榜');}
         },0);
-      }catch(e){console.warn('rank view unavailable',e);empty('好友榜暂不可用','请稍后点击右上角刷新');}
+      }catch(e){console.warn('rank view unavailable',e);empty('好友榜暂时无法读取','请返回后重新打开排行榜');}
     }else empty('微信好友榜','在微信小游戏中查看好友成绩');
-    const pagerY=listY+listH+9;
-    if(canUseFriends){
-      this.btn('‹ 上一页',16,pagerY,102,36,()=>this.rankPage(-1),'creamButton',14,parent);
-      this.txt('每页 5 位好友',121,pagerY,w-242,36,12,C.muted,false,parent);
-      this.btn('下一页 ›',w-118,pagerY,102,36,()=>this.rankPage(1),'creamButton',14,parent);
-    }else this.txt('完成今日挑战，先记录你的最佳成绩',24,pagerY,w-48,36,13,C.muted,false,parent);
-    this.btn('✧ 挑战今日关卡',16,contentH-63,listW,49,()=>this.startGame('daily',todayCN()),'goldButton',21,parent);
+    this.artHit('Rank back',r.back,scale,parent,()=>this.closeModal());
+    this.artHit('Rank settings',r.settings,scale,parent,()=>this.openRankSettings());
+    this.artHit('Rank previous',r.previous,scale,parent,()=>{if(canUseFriends)this.rankPage(-1);});
+    this.artHit('Rank next',r.next,scale,parent,()=>{if(canUseFriends)this.rankPage(1);});
+    this.artHit('Rank daily',r.daily,scale,parent,()=>this.startGame('daily',todayCN()));
   }
-  private closeModal(){this.modal='';this.hideBanner();this.draw();}
+  private closeModal(){
+    if(this.modal==='result'){this.nextLevel();return;}
+    this.modal=this.modal==='settings'&&this.rankSettings?'rank':'';this.rankSettings=false;this.hideBanner();this.draw();
+  }
   private drawModal(){
-    const w=this.width,h=this.height;
-    const shade=this.shape(0,0,w,h,'#32201CCB','',0);shade.addComponent(BlockInputEvents);shade.on(Node.EventType.TOUCH_END,()=>this.closeModal());
+    if(this.modal==='result'){this.drawResultModal();return;}
+    const w=this.width,h=this.height,close=()=>this.closeModal();
+    const shade=this.shape(0,0,w,h,'#32201CCB','',0);shade.addComponent(BlockInputEvents);shade.on(Node.EventType.TOUCH_END,close);
     const top=Math.max(this.safeTop+24,(h-456)/2),height=456;
     const panel=this.shape(24,top,w-48,height,C.surface,C.edge,20);panel.addComponent(BlockInputEvents);
-    this.btn('×',w-69,top+12,35,35,()=>this.closeModal(),'creamButton',21);
+    this.btn('×',w-69,top+12,35,35,close,'creamButton',21);
     if(this.modal==='settings'){
       this.txt('设置',62,top+29,w-124,44,28,C.dark,true);
       if(!this.inHome)this.btn('重新开始本关',43,top+110,w-86,54,()=>this.startGame(this.mode,this.key),'goldButton',18);
       this.btn('好友荣誉榜',43,top+(this.inHome?112:180),w-86,54,()=>this.showRank(),'creamButton',18);
-      this.btn(this.inHome?'进入星图':'返回主页',43,top+250,w-86,54,()=>{if(this.inHome)this.startGame('story',String(this.unlocked()));else{this.inHome=true;this.modal='';this.hideBanner();this.draw();}},'creamButton',18);
+      this.btn(this.inHome?'进入星图':'返回主页',43,top+250,w-86,54,()=>{if(this.inHome)this.startGame('story',String(this.unlocked()));else{this.inHome=true;this.modal='';this.rankSettings=false;this.hideBanner();this.draw();}},'creamButton',18);
       this.btn('继续',86,top+366,w-172,45,()=>this.closeModal(),'creamButton',17);
-    }else if(this.modal==='result'){
-      this.txt(this.moves===this.puzzle.par?'♛':'✦',50,top+22,w-100,76,57,C.gold2,true);
-      this.txt('星图已复原',40,top+102,w-80,36,28,C.dark,true);
-      this.txt(honor(this.moves,this.puzzle.par,this.hints),40,top+143,w-80,29,18,C.dark,true);
-      this.statCard('stepsCard','当前步数',String(this.moves).padStart(2,'0'),37,top+188,151,66);
-      this.statCard('timeCard','本局用时',clock(this.elapsed),202,top+188,151,66);
-      this.txt(this.hints?'提示不影响成绩与排行':'最佳成绩已记录',38,top+263,w-76,27,13,C.muted);
-      this.btn(this.mode==='daily'?'回去闯关':'挑战下一关',43,top+307,w-86,52,()=>this.nextLevel(),'goldButton',18);
-      this.btn('分享此关给好友',43,top+374,w-86,42,()=>this.share(),'creamButton',16);
     }
+  }
+  private drawResultModal(){
+    const r=this.rankLayout.result,round=this.roundSerial,advance=()=>this.nextLevel(round);
+    const available=Math.max(1,this.height-this.safeTop-this.safeBottom),scale=Math.min((this.width-24)/r.width,Math.max(1,available-20)/r.height);
+    const width=r.width*scale,height=r.height*scale,left=(this.width-width)/2,top=this.safeTop+Math.max(0,(available-height)/2);
+    const shade=this.shape(0,0,this.width,this.height,'#211A32C9','',0);shade.addComponent(BlockInputEvents);shade.on(Node.EventType.TOUCH_END,advance);
+    const panel=this.group('Result artwork',left,top,width,height);panel.node.addComponent(BlockInputEvents);this.art('resultPanel',0,0,width,height,panel.content);
+    const text=(value:string,key:string,size:number,color=C.dark,bold=true)=>{const p=r[key];return this.txt(value,p[0]*scale,p[1]*scale,p[2]*scale,p[3]*scale,size*scale,color,bold,panel.content);};
+    text('星图已复原','title',78,C.white);
+    text(honor(this.moves,this.puzzle.par,this.hints),'honor',44);
+    text('当前步数','movesLabel',38);text('本局用时','timeLabel',38);
+    text(String(this.moves).padStart(2,'0'),'movesValue',78);text(clock(this.elapsed),'timeValue',73);
+    text(`最优步数 ${this.puzzle.par} 步`,'note',38,C.muted,false);
+    const primary=this.mode==='daily'?'继续闯关':Number(this.key)>=18?'挑战每日关卡':'挑战下一关';
+    text(primary,'primary',63);text('分享此关给好友','share',44);
+    this.artHit('Result close',r.close,scale,panel.content,advance);
+    const primaryHit=this.artHit('Result next',r.primary,scale,panel.content,advance);
+    // 小尺寸时分享按钮的点击区向下扩展，和上一个44px点击区保持间隔。
+    this.artHit('Result share',r.share,scale,panel.content,()=>{if(this.modal==='result'&&this.roundSerial===round)this.share();},primaryHit.y+primaryHit.h+2);
   }
   private toast(message:string){
     if(!this.root)return;if(this.toastNode){this.toastNode.active=false;this.toastNode.destroy();}

@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f8d4a5">
 <meta name="description" content="四格诡局：转动四格，复原星图。">
-<meta name="fourfold-version" content="0.8.3">
+<meta name="fourfold-version" content="0.8.4">
 <title>四格诡局 · 星图挑战</title>
 <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
 <link rel="preload" as="image" href="assets/art/home-scene.webp" fetchpriority="high">
 <link rel="preload" as="image" href="assets/art/ui-atlas.webp">
-<link rel="stylesheet" href="assets/art/atlas.css?v=0.8.3">
-<link rel="stylesheet" href="style.css?v=0.8.3">
-<link rel="stylesheet" href="reference.css?v=0.8.3">
+<link rel="stylesheet" href="assets/art/atlas.css?v=0.8.4">
+<link rel="stylesheet" href="style.css?v=0.8.4">
+<link rel="stylesheet" href="reference.css?v=0.8.4">
 </head>
 <body>
-<main class="shell" id="app" data-build="0.8.3">
+<main class="shell" id="app" data-build="0.8.4">
 <section id="home" class="home-screen" aria-label="四格诡局主菜单">
 <h1 class="sr-only">四格诡局</h1>
 <div class="home-hero"><img class="home-scene" src="assets/art/home-scene.webp" width="854" height="1840" alt="夜色星窗前摊开的星图手册" fetchpriority="high" draggable="false"></div>
@@ -53,30 +53,49 @@
 <div class="bottom-actions"><button class="art-button" id="shareBtn"><span class="skin skin-goldButton" aria-hidden="true"></span><span class="button-label">✧ 发起同关挑战</span></button><button id="nextBtn" hidden></button></div>
 </div>
 <section id="rankScreen" class="rank-screen" aria-labelledby="rankTitle" hidden>
-<header class="rank-top">
-<button id="rankBack" class="icon-button" type="button" aria-label="返回上一页"><span class="skin skin-backButton" aria-hidden="true"></span></button>
-<div><h1 id="rankTitle">好友荣誉榜</h1><p id="rankDate" class="rank-date"></p></div>
-<span class="rank-seal" aria-hidden="true">♛</span>
-</header>
-<section class="rank-best" aria-labelledby="rankBestTitle">
-<h2 id="rankBestTitle">本机今日最佳</h2>
-<div class="rank-best-values"><div><span>步数</span><strong id="rankBestMoves">—</strong></div><div><span>用时</span><strong id="rankBestTime">—</strong></div></div>
-<p id="rankBestNote">今天还没有通关记录</p>
-</section>
-<div class="rank-list">
-<table class="rank-table" aria-label="微信好友成绩"><thead><tr><th scope="col">名次</th><th scope="col">好友</th><th scope="col">步数</th><th scope="col">用时</th></tr></thead>
-<tbody><tr><td colspan="4"><div class="rank-empty"><span class="rank-empty-star" aria-hidden="true">✦</span><h2>微信好友榜</h2><p>在微信小游戏中查看好友成绩</p></div></td></tr></tbody></table>
+<h1 id="rankTitle" class="sr-only">好友荣誉榜</h1>
+<div id="rankStage" class="rank-art-stage">
+<img id="rankScene" class="rank-scene" src="assets/art/rank-scene.webp" width="854" height="1842" alt="" draggable="false">
+<button id="rankBack" class="rank-position rank-hotspot" style="--rank-x:81.5;--rank-y:151;--rank-w:101;--rank-h:102" type="button" aria-label="返回上一页"></button>
+<button id="rankSettings" class="rank-position rank-hotspot" style="--rank-x:772.5;--rank-y:151;--rank-w:101;--rank-h:102" type="button" aria-label="设置"></button>
+<p id="rankDate" class="rank-position rank-date" style="--rank-x:427;--rank-y:294;--rank-w:650;--rank-h:48"></p>
+<div class="rank-podium" aria-hidden="true">
+<span class="rank-position rank-podium-name" style="--rank-x:427;--rank-y:653;--rank-w:220;--rank-h:48">虚位以待</span><span class="rank-position rank-podium-value" style="--rank-x:427;--rank-y:703;--rank-w:200;--rank-h:40">— 步</span><span class="rank-position rank-podium-time" style="--rank-x:427;--rank-y:743;--rank-w:200;--rank-h:40">—:—</span>
+<span class="rank-position rank-podium-name" style="--rank-x:190;--rank-y:694;--rank-w:200;--rank-h:42">虚位以待</span><span class="rank-position rank-podium-value" style="--rank-x:190;--rank-y:741;--rank-w:190;--rank-h:38">— 步</span><span class="rank-position rank-podium-time" style="--rank-x:190;--rank-y:777;--rank-w:190;--rank-h:38">—:—</span>
+<span class="rank-position rank-podium-name" style="--rank-x:665;--rank-y:701;--rank-w:210;--rank-h:42">虚位以待</span><span class="rank-position rank-podium-value" style="--rank-x:665;--rank-y:744;--rank-w:190;--rank-h:38">— 步</span><span class="rank-position rank-podium-time" style="--rank-x:665;--rank-y:780;--rank-w:190;--rank-h:38">—:—</span>
 </div>
-<div class="rank-rules"><p>步数更少优先 · 同步数比用时</p><p id="rankHintRule">每日挑战每局可用 2 次提示，成绩照常参与排行</p></div>
-<button id="rankDaily" class="art-button rank-primary" type="button"><span class="skin skin-goldButton" aria-hidden="true"></span><span class="button-label">✧ 挑战今日关卡</span></button>
+<section class="rank-empty" aria-label="微信好友成绩为空">
+<h2 class="rank-position rank-empty-title" style="--rank-x:355;--rank-y:1024;--rank-w:260;--rank-h:58">微信好友榜</h2>
+<p class="rank-position rank-empty-status" style="--rank-x:355;--rank-y:1122;--rank-w:260;--rank-h:58">暂无好友成绩</p>
+<p class="rank-position rank-empty-help" style="--rank-x:355;--rank-y:1220;--rank-w:260;--rank-h:78"><span>在微信小游戏中<br>查看好友成绩</span></p>
+</section>
+<button id="rankPrev" class="rank-position rank-hotspot rank-page-hotspot" style="--rank-x:310.5;--rank-y:1301.5;--rank-w:53;--rank-h:43" type="button" aria-label="上一页好友成绩"></button>
+<button id="rankNext" class="rank-position rank-hotspot rank-page-hotspot" style="--rank-x:543.5;--rank-y:1301.5;--rank-w:53;--rank-h:43" type="button" aria-label="下一页好友成绩"></button>
+<p id="rankBestNote" class="rank-position rank-best-note" style="--rank-x:427;--rank-y:1368;--rank-w:310;--rank-h:24">本机暂无记录</p>
+<strong id="rankBestMoves" class="rank-position rank-best-value" style="--rank-x:297;--rank-y:1538;--rank-w:220;--rank-h:86" aria-label="本机今日最佳步数">—</strong>
+<strong id="rankBestTime" class="rank-position rank-best-value" style="--rank-x:659;--rank-y:1538;--rank-w:240;--rank-h:86" aria-label="本机今日最佳用时">—:—</strong>
+<span class="sr-only">步数更少优先 · 同步数比用时</span>
+<button id="rankDaily" class="rank-position rank-hotspot rank-daily-hotspot" style="--rank-x:428;--rank-y:1730;--rank-w:774;--rank-h:134" type="button" aria-label="挑战今日关卡"></button>
+</div>
+<p id="rankHintRule" class="rank-policy">每日挑战每局可用 2 次提示，成绩照常参与排行</p>
 </section>
 </main>
 <div id="settingsOverlay" class="settings-overlay" hidden><section class="settings-card" role="dialog" aria-modal="true" aria-label="游戏设置"><div class="settings-head"><h2>设置</h2><button id="settingsClose" class="close" aria-label="关闭设置">×</button></div><button id="settingsSound">音乐与音效：开</button><button id="settingsReset">重开本局</button><button id="settingsRank">好友荣誉榜</button><button id="settingsHome">返回主界面</button></section></div>
-<div class="overlay" id="modal" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle"><button id="closeModal" class="close" aria-label="关闭弹窗">×</button><div class="dialog-emblem" id="dialogEmblem">✦</div><div id="dialogOverline" hidden></div><h2 id="dialogTitle">星图已复原</h2><p id="dialogText"></p><div class="dialog-stats" id="dialogStats"></div><button id="dialogPrimary" class="sprite-button skin-goldButton">继续挑战</button><button id="dialogSecondary" class="result-share-btn sprite-button skin-creamButton">分享我的成绩</button></section></div>
+<div class="overlay" id="modal" hidden><section id="dialogPanel" class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+<img id="resultArtwork" class="result-artwork result-only" src="assets/art/result-panel.webp" width="1086" height="1448" alt="" draggable="false">
+<button id="closeModal" class="close result-position" style="--result-x:874;--result-y:90;--result-w:148;--result-h:149" type="button" aria-label="关闭弹窗">×</button>
+<div class="dialog-emblem" id="dialogEmblem">✦</div><div id="dialogOverline" hidden></div>
+<h2 id="dialogTitle" class="result-position" style="--result-x:250;--result-y:292;--result-w:590;--result-h:100">星图已复原</h2>
+<div id="resultHonor" class="result-only result-position" style="--result-x:235;--result-y:517;--result-w:620;--result-h:87"></div>
+<p id="dialogText"></p><div class="dialog-stats" id="dialogStats"></div>
+<p id="resultNote" class="result-only result-position" style="--result-x:220;--result-y:966;--result-w:650;--result-h:60"></p>
+<button id="dialogPrimary" class="sprite-button skin-goldButton result-position" style="--result-x:130;--result-y:1082;--result-w:830;--result-h:143" type="button">继续挑战</button>
+<button id="dialogSecondary" class="result-share-btn sprite-button skin-creamButton result-position" style="--result-x:248;--result-y:1256;--result-w:594;--result-h:94" type="button">分享此关给好友</button>
+</section></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="startupNotice" hidden role="status"></div>
 <noscript>请启用 JavaScript 进入星图。</noscript>
 <script>window.ffOpen=function(which){window.ffPending=which;var n=document.getElementById('startupNotice');n.hidden=false;n.textContent='星图正在准备…';};</script>
-<script type="module" src="layout.mjs?v=0.8.3"></script>
-<script type="module" src="app.js?v=0.8.3"></script>
+<script type="module" src="layout.mjs?v=0.8.4"></script>
+<script type="module" src="app.js?v=0.8.4"></script>
 </body></html>

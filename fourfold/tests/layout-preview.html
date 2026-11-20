@@ -3,30 +3,32 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
-<title>四格诡局 · 手机界面验收 0.8.3</title>
+<title>四格诡局 · 手机界面验收 0.8.4</title>
 <style>
 *{box-sizing:border-box}body{margin:0;padding:20px;background:#e7e3dc;color:#342b23;font:15px system-ui,sans-serif}header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:12px}h1{font-size:20px;margin:0}select,button{font:inherit;padding:8px}button{cursor:pointer}button:disabled{cursor:wait;opacity:.55}output{padding:8px;border-radius:8px;background:#fff}.spec{font-size:13px;line-height:1.6;margin:0 0 14px;color:#625347}iframe{display:block;flex:none;border:0;box-shadow:0 0 0 2px #75634f,0 8px 30px #0002;margin:0 auto;background:#f8d4a5}main{overflow:auto;padding:4px 4px 20px}.pass{color:#176333}.fail{color:#a22621}#details{white-space:pre-wrap;overflow-wrap:anywhere;margin:12px 0;font:13px/1.6 system-ui,sans-serif}table{border-collapse:collapse;width:100%;background:#fff;font-size:13px;margin-top:12px}th,td{text-align:left;border:1px solid #d1c6ba;padding:7px}td button{padding:3px 6px;font:inherit}caption{text-align:left;font-weight:700;margin-bottom:6px}.table-wrap{overflow:auto}
 </style>
 <header>
-<h1>手机界面验收 · 0.8.3</h1>
+<h1>手机界面验收 · 0.8.4</h1>
 <label>可用视口 <select id="size"><option value="390,650">390 × 650 · 内置浏览器短屏</option><option value="390,844">390 × 844 · 常规竖屏</option><option value="320,568">320 × 568 · 小屏</option><option value="390,600">390 × 600 · 紧凑短屏</option><option value="460,936">460 × 936 · 宽屏容器</option></select></label>
-<label>页面 <select id="mode"><option value="home">主页</option><option value="daily">每日挑战</option><option value="story">普通关</option></select></label>
-<button id="check" type="button">检查当前页面</button><button id="runAll" type="button">检查全部 15 个组合</button>
+<label>页面 <select id="mode"><option value="home">主页</option><option value="daily">每日挑战</option><option value="story">普通关</option><option value="rank">好友荣誉榜</option><option value="result">真实通关弹窗</option></select></label>
+<button id="check" type="button">检查当前页面</button><button id="runAll" type="button">检查全部 25 个组合</button>
 <output id="result" aria-live="polite">加载中…</output>
 </header>
 <p class="spec">主页／每日验收：容器使用 min(视口宽度, 460px)，每日棋盘至少占宽 90%，素材等比，44px 触区可命中且互不重叠。仅 390×600 允许容器局部纵向滚动，逐个滚到按钮验证。主页检查标题与书主体，允许裁去装饰空白。普通关保留素材、比例与 36px 触区基线；屏幕边界问题单独提示。</p>
-<main><iframe id="preview" title="真实游戏视口" width="390" height="650" src="../?v=0.8.3"></iframe></main>
+<p class="spec">新增验收：排行榜从主页真实按钮进入，854×1842 原画按容器宽等比显示，允许纵向滚动。通关项会求解第1关并实际点击方向／旋钮，留下正常本机通关记录；随后检查 1086×1448 弹窗原画、关闭／继续／分享的 44px 触区及遮挡。排行榜与通关项会检查触区中心和四个方向的内部采样点。</p>
+<main><iframe id="preview" title="真实游戏视口" width="390" height="650" src="../?v=0.8.4"></iframe></main>
 <pre id="details" aria-live="polite"></pre>
 <div class="table-wrap"><table id="matrix" hidden><caption>真实页面逐项检查</caption><thead><tr><th>视口</th><th>页面</th><th>结果</th><th>容器宽度</th><th>棋盘占宽</th><th>检查说明</th><th>查看</th></tr></thead><tbody></tbody></table></div>
 <script>
-const VERSION='0.8.3';
+const VERSION='0.8.4';
 const SIZES=[[390,650],[390,844],[320,568],[390,600],[460,936]];
-const MODES=['home','daily','story'];
-const MODE_NAMES={home:'主页',daily:'每日挑战',story:'普通关'};
+const MODES=['home','daily','story','rank','result'];
+const MODE_NAMES={home:'主页',daily:'每日挑战',story:'普通关',rank:'好友荣誉榜',result:'真实通关弹窗'};
 const frame=document.querySelector('#preview'),size=document.querySelector('#size'),mode=document.querySelector('#mode');
 const result=document.querySelector('#result'),details=document.querySelector('#details'),matrix=document.querySelector('#matrix');
 const controls=[size,mode,document.querySelector('#check'),document.querySelector('#runAll')];
-let running=false,navigation=0;
+let running=false,navigation=0,corePromise=null;
+const journeys=new WeakMap();
 window.layoutResults=[];
 const delay=milliseconds=>new Promise(resolve=>setTimeout(resolve,milliseconds));
 const twoFrames=w=>new Promise(resolve=>w.requestAnimationFrame(()=>w.requestAnimationFrame(resolve)));
@@ -48,11 +50,13 @@ function assertRatio(node,ratio,w,errors,label){
 function assertNoOverlap(nodes,errors,label){
   for(let i=0;i<nodes.length;i++)for(let j=i+1;j<nodes.length;j++)if(overlaps(nodes[i].getBoundingClientRect(),nodes[j].getBoundingClientRect()))errors.push(label+'重叠：'+nameOf(nodes[i])+' / '+nameOf(nodes[j]));
 }
-async function assertControls(nodes,d,w,errors,{scroller,allowScroll=false,minimum=44,warnings=[],strictBounds=true}={}){
+async function assertControls(nodes,d,w,errors,{scroller,allowScroll=false,minimum=44,warnings=[],strictBounds=true,allowDisabled=false,sampleArea=false}={}){
   const originalTop=scroller?.scrollTop||0,scrolled=[];
   for(const node of nodes){
     if(!visible(node,w)){errors.push('按钮不可见：'+nameOf(node));continue;}
     let r=node.getBoundingClientRect();const style=w.getComputedStyle(node);
+    if(r.width<minimum-.5||r.height<minimum-.5)errors.push('点击区域不足'+minimum+'px：'+nameOf(node)+' '+r.width.toFixed(1)+' × '+r.height.toFixed(1));
+    if(allowDisabled&&(node.disabled||node.getAttribute('aria-disabled')==='true'))continue;
     if(!inside(r,w)&&allowScroll&&scroller){
       const sr=scroller.getBoundingClientRect();
       scroller.scrollTop+=r.top-sr.top-(scroller.clientHeight-r.height)/2;
@@ -60,11 +64,11 @@ async function assertControls(nodes,d,w,errors,{scroller,allowScroll=false,minim
     }
     const inView=inside(r,w);
     if(!inView)(strictBounds?errors:warnings).push('按钮超出屏幕：'+nameOf(node));
-    if(r.width<minimum-.5||r.height<minimum-.5)errors.push('点击区域不足'+minimum+'px：'+nameOf(node)+' '+r.width.toFixed(1)+' × '+r.height.toFixed(1));
     if(node.disabled||style.pointerEvents==='none')errors.push('按钮无法点击：'+nameOf(node));
     if(inView){
-      const hit=d.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
-      if(!hit||(hit!==node&&!node.contains(hit)))errors.push('按钮中心被遮挡：'+nameOf(node));
+      const cx=r.left+r.width/2,cy=r.top+r.height/2,points=[[cx,cy]];
+      if(sampleArea)points.push([r.left+8,cy],[r.right-8,cy],[cx,r.top+8],[cx,r.bottom-8]);
+      if(points.some(([x,y])=>{const hit=d.elementFromPoint(x,y);return !hit||(hit!==node&&!node.contains(hit));}))errors.push((sampleArea?'按钮触区被遮挡：':'按钮中心被遮挡：')+nameOf(node));
     }
   }
   if(scroller){scroller.scrollTop=originalTop;await twoFrames(w);}
@@ -81,13 +85,54 @@ async function waitReady(){
   }
   throw new Error('等待游戏资源就绪超时');
 }
+async function waitFor(check,label,timeout=6000){
+  const started=performance.now();
+  while(performance.now()-started<timeout){if(check())return;await delay(40);}
+  throw new Error(label);
+}
+function readBoard(d){return [...d.querySelectorAll('#board .tile')].map(tile=>tile.dataset.token).join('');}
+async function preparePage(page,d,w){
+  if(page==='rank'){
+    const button=d.querySelector('#enterRank');
+    if(!visible(button,w)||button.disabled)throw new Error('主页排行榜入口不可用');
+    button.click();
+    await waitFor(()=>visible(d.querySelector('#rankScreen'),w),'点击主页入口后没有打开排行榜');
+    journeys.set(d,'通过主页 #enterRank 实际进入排行榜');
+  }else if(page==='result'){
+    result.textContent='正在通过真实旋钮完成第1关…';
+    corePromise ||= import(new URL('../cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v='+VERSION,location.href).href);
+    const {GOAL,makePuzzle,shortestPath,rotate}=await corePromise;
+    const puzzle=makePuzzle('story','1'),path=shortestPath(puzzle.board);
+    if(d.querySelector('#gameScreen')?.dataset.mode!=='story'||d.querySelector('#stageTitle')?.textContent.trim()!=='第1关'||readBoard(d)!==puzzle.board)throw new Error('通关检查未进入第1关真实初始棋盘');
+    if(path.length!==1||puzzle.par!==1)throw new Error('第1关的一步解与预期不符，未执行通关检查');
+    let expected=puzzle.board;
+    for(const move of path){
+      const direction=d.getElementById(move.dir===1?'cwBtn':'ccwBtn'),knob=d.querySelector('#anchors button[data-q="'+move.q+'"]');
+      if(!direction||!knob||direction.disabled||knob.disabled)throw new Error('第1关方向按钮或旋钮不可用');
+      direction.click();
+      if(direction.getAttribute('aria-pressed')!=='true')throw new Error('真实方向按钮没有切换旋转方向');
+      expected=rotate(expected,move.q,move.dir);knob.click();
+      await waitFor(()=>readBoard(d)===expected&&!d.querySelector('#board')?.classList.contains('rotating'),'真实旋钮操作未完成');
+    }
+    await waitFor(()=>visible(d.querySelector('#modal.result-mode'),w),'完成真实棋盘后未出现通关弹窗');
+    if(readBoard(d)!==GOAL||Number(d.querySelector('#moves')?.textContent)!==path.length)throw new Error('通关棋盘或实际步数不匹配');
+    journeys.set(d,'第1关真实操作：'+path.map(move=>(move.dir===1?'顺':'逆')+'时针旋钮'+(move.q+1)).join(' → ')+'；实际 '+path.length+' 步通关');
+  }
+  await twoFrames(w);
+}
+function assertArtwork(image,width,height,w,errors,label){
+  assertRatio(image,width/height,w,errors,label);
+  if(!image?.complete||!image.naturalWidth)errors.push(label+'尚未加载');
+  else if(image.naturalWidth!==width||image.naturalHeight!==height)errors.push(label+'源尺寸不符：'+image.naturalWidth+' × '+image.naturalHeight);
+}
 async function inspect(d,w){
-  const errors=[],warnings=[],home=d.querySelector('#home'),game=d.querySelector('#gameScreen');
-  const page=home&&!home.hidden?'home':game?.dataset.mode||'story';
-  const container=page==='home'?home:game;
+  const errors=[],warnings=[],home=d.querySelector('#home'),game=d.querySelector('#gameScreen'),rank=d.querySelector('#rankScreen'),modal=d.querySelector('#modal');
+  const page=visible(modal,w)&&modal.classList.contains('result-mode')?'result':rank&&!rank.hidden?'rank':home&&!home.hidden?'home':game?.dataset.mode||'story';
+  const container=page==='result'?modal:page==='rank'?rank:page==='home'?home:game;
+  if(!container)throw new Error('页面容器不存在');
   container.scrollTop=0;await twoFrames(w);
-  const cr=container.getBoundingClientRect(),allowScroll=page!=='story'&&w.innerWidth===390&&w.innerHeight===600;
-  const expectedWidth=Math.min(w.innerWidth,460);
+  const cr=container.getBoundingClientRect(),allowScroll=page==='rank'||page==='result'||page!=='story'&&w.innerWidth===390&&w.innerHeight===600;
+  const expectedWidth=page==='result'?w.innerWidth:Math.min(w.innerWidth,460);
   if(Math.abs(cr.width-expectedWidth)>1)errors.push('页面未充分使用横向空间：实际 '+cr.width.toFixed(1)+'px，应为 '+expectedWidth+'px');
   if(!inside(cr,w))errors.push('页面容器超出视口');
   const declaredVersion=d.querySelector('meta[name="fourfold-version"]')?.content;
@@ -95,7 +140,7 @@ async function inspect(d,w){
   const scrollRange=Math.max(0,container.scrollHeight-container.clientHeight);
   if(page!=='story'&&!allowScroll&&scrollRange>2)errors.push('该视口不应需要滚动：内容多出 '+scrollRange.toFixed(1)+'px');
   if(page!=='story'&&container.scrollWidth>container.clientWidth+1)errors.push('页面出现横向溢出');
-  let boardCoverage=null,scrolledControls=[];
+  let boardCoverage=null,scrolledControls=[],artwork=null;
   if(page==='home'){
     const art=d.querySelector('.home-scene'),ar=art.getBoundingClientRect(),fit=w.getComputedStyle(art).objectFit;
     if(!art.complete||!art.naturalWidth)errors.push('主页原画尚未加载');
@@ -114,6 +159,32 @@ async function inspect(d,w){
     scrolledControls=await assertControls(ids.map(id=>d.getElementById(id)),d,w,errors,{scroller:container,allowScroll});
     const ratios=[1114/198,1116/196,1122/196];
     ['enterStory','enterDaily','enterRank'].forEach((id,index)=>assertRatio(d.querySelector('#'+id+' .skin'),ratios[index],w,errors,id+'按钮皮肤'));
+  }else if(page==='rank'){
+    const stage=d.querySelector('#rankStage'),image=d.querySelector('#rankScene');
+    assertRatio(stage,854/1842,w,errors,'排行榜完整画布');
+    assertArtwork(image,854,1842,w,errors,'排行榜原画');
+    if(stage){
+      const sr=stage.getBoundingClientRect();
+      if(Math.abs(sr.width-cr.width)>1)errors.push('排行榜原画未按容器宽度展开');
+      if(sr.left<cr.left-.75||sr.right>cr.right+.75)errors.push('排行榜原画横向超出容器');
+      artwork=[sr.width,sr.height];
+    }
+    const hotspots=['rankBack','rankSettings','rankPrev','rankNext','rankDaily'].map(id=>d.getElementById(id));
+    scrolledControls=await assertControls(hotspots,d,w,errors,{scroller:container,allowScroll:true,allowDisabled:true,sampleArea:true});
+  }else if(page==='result'){
+    const panel=d.querySelector('#dialogPanel'),image=d.querySelector('#resultArtwork');
+    assertRatio(panel,1086/1448,w,errors,'通关弹窗画布');
+    assertArtwork(image,1086,1448,w,errors,'通关弹窗原画');
+    if(panel){
+      const pr=panel.getBoundingClientRect(),panelWidth=Math.min(w.innerWidth-24,436);
+      if(Math.abs(pr.width-panelWidth)>1)errors.push('通关弹窗宽度不符：实际 '+pr.width.toFixed(1)+'px，应为 '+panelWidth+'px');
+      if(pr.left<-.75||pr.right>w.innerWidth+.75||panel.scrollWidth>panel.clientWidth+1)errors.push('通关弹窗出现横向溢出');
+      artwork=[pr.width,pr.height];
+    }
+    const scrollNode=panel&&panel.scrollHeight>panel.clientHeight+2&&['auto','scroll'].includes(w.getComputedStyle(panel).overflowY)?panel:container;
+    const hotspots=['closeModal','dialogPrimary','dialogSecondary'].map(id=>d.getElementById(id));
+    scrolledControls=await assertControls(hotspots,d,w,errors,{scroller:scrollNode,allowScroll:true,sampleArea:true});
+    if(readBoard(d)!=='123456789'||Number(d.querySelector('#moves')?.textContent)!==1)errors.push('当前弹窗不是第1关真实一步通关结果');
   }else{
     const boardFrame=d.querySelector('.board-frame'),br=boardFrame.getBoundingClientRect(),board=d.querySelector('#board');
     boardCoverage=br.width/cr.width;
@@ -138,12 +209,13 @@ async function inspect(d,w){
     const blocks=[d.querySelector(page==='daily'?'#dailyBanner':'#stageTitle'),...statCards,boardFrame,...buttons];
     assertNoOverlap(blocks.filter(node=>visible(node,w)),errors,'页面组件');
   }
-  return {viewport:[w.innerWidth,w.innerHeight],page,width:cr.width,expectedWidth,boardCoverage,scrollRange,scrolledControls,scope:page==='story'?'普通关 36px 基线':'主页／每日 44px 验收',pass:errors.length===0,errors,warnings};
+  const scope={home:'主页 44px 验收',daily:'每日 44px 验收',story:'普通关 36px 基线',rank:'排行榜原画／滚动／44px 触区验收',result:'真实通关／原画／44px 触区验收'}[page];
+  return {viewport:[w.innerWidth,w.innerHeight],page,width:cr.width,expectedWidth,boardCoverage,artwork,scrollRange,scrolledControls,scope,journey:journeys.get(d)||'',pass:errors.length===0,errors,warnings};
 }
 function showReport(report){
   result.className=report.pass?'pass':'fail';
-  result.textContent=(report.pass?'通过':'未通过')+' · '+MODE_NAMES[report.page]+' '+report.viewport.join(' × ')+' · 容器 '+report.width.toFixed(1)+'px'+(report.boardCoverage===null?'':' · 棋盘 '+(report.boardCoverage*100).toFixed(1)+'%');
-  details.textContent=report.scope+'\n'+(report.pass?'本页规定的宽度、素材比例及触控检查通过。':report.errors.map((message,index)=>(index+1)+'. '+message).join('\n'))+(report.scrolledControls.length?'\n已通过局部滚动命中：'+report.scrolledControls.join('、'):'')+(report.warnings.length?'\n普通关边界提示（不属于本次布局改动）：\n'+report.warnings.join('\n'):'');
+  result.textContent=(report.pass?'通过':'未通过')+' · '+MODE_NAMES[report.page]+' '+report.viewport.join(' × ')+' · 容器 '+report.width.toFixed(1)+'px'+(report.boardCoverage===null?'':' · 棋盘 '+(report.boardCoverage*100).toFixed(1)+'%')+(report.artwork?' · 画稿 '+report.artwork.map(value=>value.toFixed(1)).join(' × ')+'px':'');
+  details.textContent=report.scope+'\n'+(report.journey?report.journey+'\n':'')+(report.pass?'本页规定的宽度、素材比例及触控检查通过。':report.errors.map((message,index)=>(index+1)+'. '+message).join('\n'))+(report.scrolledControls.length?'\n已通过局部滚动命中：'+report.scrolledControls.join('、'):'')+(report.warnings.length?'\n普通关边界提示（不属于本次布局改动）：\n'+report.warnings.join('\n'):'');
 }
 async function checkCurrent(){
   result.textContent='正在等待资源并检查…';result.className='';
@@ -152,8 +224,13 @@ async function checkCurrent(){
 }
 async function navigate(width,height,page){
   const serial=++navigation;frame.width=width;frame.height=height;size.value=[width,height].join(',');mode.value=page;
-  const url=new URL('../',location.href);url.searchParams.set('v',VERSION);if(page!=='home')url.searchParams.set('mode',page);
+  result.className='';result.textContent='正在打开 '+MODE_NAMES[page]+'…';
+  const url=new URL('../',location.href);url.searchParams.set('v',VERSION);
+  if(page==='daily')url.searchParams.set('mode','daily');
+  if(page==='story'||page==='result'){url.searchParams.set('mode','story');url.searchParams.set('level','1');}
   await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('页面加载超时')),30000);frame.addEventListener('load',()=>{clearTimeout(timer);resolve();},{once:true});frame.src=url.href;});
+  if(serial!==navigation)return null;
+  const {d,w}=await waitReady();await preparePage(page,d,w);
   if(serial!==navigation)return null;
   const report=await checkCurrent();
   if(report&&(report.page!==page||report.viewport[0]!==width||report.viewport[1]!==height)){
@@ -164,6 +241,8 @@ async function navigate(width,height,page){
 function appendReport(report){
   const row=document.createElement('tr');row.dataset.status=report.pass?'pass':'fail';
   const notes=[report.scope,...report.errors,...report.warnings.map(message=>'基线提示：'+message)];
+  if(report.journey)notes.push(report.journey);
+  if(report.artwork)notes.push('画稿 '+report.artwork.map(value=>value.toFixed(1)).join(' × ')+'px');
   if(report.scrolledControls.length)notes.push('局部滚动可达：'+report.scrolledControls.join('、'));
   const values=[report.viewport.join(' × '),MODE_NAMES[report.page],report.pass?'通过':'未通过',report.width.toFixed(1)+' / '+report.expectedWidth+' px',report.boardCoverage===null?'—':(report.boardCoverage*100).toFixed(1)+'%',notes.join('；')];
   values.forEach((value,index)=>{const cell=document.createElement('td');cell.textContent=value;if(index===2)cell.className=report.pass?'pass':'fail';row.append(cell);});
@@ -179,7 +258,7 @@ async function runAll(){
     const failed=window.layoutResults.filter(report=>!report.pass),total=window.layoutResults.length;
     result.className=failed.length?'fail':'pass';result.textContent=failed.length?'已检查 '+total+' 组，'+failed.length+' 组未通过':'全部 '+total+' 个组合通过';
     const warnings=window.layoutResults.filter(report=>report.warnings.length);
-    details.textContent=(failed.length?failed.map(report=>report.viewport.join(' × ')+' '+MODE_NAMES[report.page]+'：\n'+report.errors.join('\n')).join('\n\n'):'5种视口 × 3个页面通过各自验收。主页／每日采用44px触区；仅390×600允许局部滚动。普通关采用36px基线。')+(warnings.length?'\n\n普通关原有边界提示：\n'+warnings.map(report=>report.viewport.join(' × ')+'：'+report.warnings.join('；')).join('\n'):'');
+    details.textContent=(failed.length?failed.map(report=>report.viewport.join(' × ')+' '+MODE_NAMES[report.page]+'：\n'+report.errors.join('\n')).join('\n\n'):'5种视口 × 5个页面通过各自验收。主页／每日采用44px触区，仅390×600允许局部滚动；普通关采用36px基线。排行榜按宽等比并允许纵向滚动。通关通过真实第1关操作触发，检查等比原画及关闭／继续／分享触区。')+(warnings.length?'\n\n普通关原有边界提示：\n'+warnings.map(report=>report.viewport.join(' × ')+'：'+report.warnings.join('；')).join('\n'):'');
   }catch(error){result.className='fail';result.textContent='矩阵检查未完成';details.textContent=error.message;}
   finally{running=false;controls.forEach(control=>control.disabled=false);}
 }

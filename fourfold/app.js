@@ -1,4 +1,4 @@
-import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.3';
+import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.4';
 
 const el=id=>document.getElementById(id);
 const $={board:el('board'),anchors:el('anchors'),target:el('target'),moves:el('moves'),par:el('par'),clock:el('clock'),instruction:el('instruction'),difficulty:el('difficulty'),chapterCaption:el('chapterCaption'),puzzleTitle:el('puzzleTitle'),storyTab:el('storyTab'),dailyTab:el('dailyTab'),cwBtn:el('cwBtn'),ccwBtn:el('ccwBtn'),modal:el('modal'),toast:el('toast')};
@@ -20,6 +20,7 @@ let audio=null,soundEnabled=read('sound',true),clockTimer=0,bgTimer=0,toastTimer
 let ready=false,bootFailed=false,pendingOpen=window.ffPending||null;
 let rotating=false,motionEpoch=0,activeAnimations=[];
 let rankOrigin='home';
+let roundSerial=0,resultRouteToken=null;
 window.ffReady=false;
 
 function sound(note=440,len=.13,volume=.038){
@@ -89,6 +90,9 @@ el('settingsReset').onclick=()=>{settingsOverlay.hidden=true;reset();};
 el('settingsRank').onclick=()=>openMode('rank');
 el('settingsHome').onclick=showHome;
 el('rankBack').onclick=closeRank;
+el('rankSettings').onclick=openSettings;
+el('rankPrev').onclick=()=>toast('暂无可翻页的好友成绩');
+el('rankNext').onclick=()=>toast('暂无可翻页的好友成绩');
 el('rankDaily').onclick=()=>openMode('daily');
 
 const storageKey=()=>mode+':'+key;
@@ -97,6 +101,7 @@ function startGame(nextMode=mode,nextKey=key){
   const nextPuzzle=makePuzzle(nextMode,String(nextKey));
   if(nextMode==='daily'&&(nextPuzzle.par<9||nextPuzzle.par>11||nextPuzzle.difficulty!=='宗师'))throw new Error('daily puzzle bank validation failed');
   cancelRotation();
+  roundSerial++;resultRouteToken=null;$.modal.classList.remove('result-mode');
   mode=nextMode;puzzle=nextPuzzle;key=puzzle.key;board=puzzle.board;dir=1;
   moves=0;hints=0;elapsed=0;started=0;won=false;highlight=-1;$.modal.hidden=true;
   $.storyTab.classList.toggle('active',mode==='story');$.dailyTab.classList.toggle('active',mode==='daily');
@@ -209,6 +214,7 @@ function finish(){
   render();openResult(metric);
 }
 function openDialog({emblem='✦',title,text='',stats='',primary='继续',secondary='',onPrimary=()=>{},onSecondary=()=>{}}){
+  resultRouteToken=null;el('closeModal').setAttribute('aria-label','关闭弹窗');
   $.modal.classList.remove('result-mode');el('dialogText').hidden=false;el('dialogEmblem').textContent=emblem;
   el('dialogOverline').textContent='';el('dialogOverline').hidden=true;el('dialogTitle').textContent=title;
   el('dialogText').textContent=text;el('dialogStats').textContent=stats;el('dialogPrimary').textContent=primary;
@@ -217,25 +223,43 @@ function openDialog({emblem='✦',title,text='',stats='',primary='继续',second
 }
 function openResult(metric){
   const perfect=metric.moves===metric.par;
-  openDialog({emblem:perfect?'♛':'✦',title:honor(metric.moves,metric.par,metric.hints),primary:mode==='daily'?'返回闯关':'挑战下一关',secondary:'分享这个成绩',onPrimary:nextLevel,onSecondary:share});
+  const route={round:roundSerial,mode,key,consumed:false};
+  const primary=mode==='daily'?'继续闯关':+key<18?'挑战下一关':'挑战每日关卡';
+  openDialog({emblem:perfect?'♛':'✦',title:'星图已复原',primary,secondary:'分享此关给好友',onPrimary:()=>nextLevel(route),onSecondary:share});
+  resultRouteToken=route;el('closeModal').setAttribute('aria-label',primary);
   $.modal.classList.add('result-mode');
+  el('resultHonor').textContent=honor(metric.moves,metric.par,metric.hints);
+  el('resultNote').textContent=claimedBeat===null?`最优步数 ${metric.par} 步`:`最优 ${metric.par} 步 · 好友目标 ${claimedBeat} 步`;
   const stats=el('dialogStats');
-  const fields=[['通关步数',metric.moves],['最优步数',metric.par],['用时',Math.floor(metric.seconds/60)+':'+String(metric.seconds%60).padStart(2,'0')]];
-  stats.replaceChildren(...fields.map(([label,value])=>{
+  const fields=[
+    ['Moves','当前步数',String(metric.moves).padStart(2,'0'),[280,715,220,45],[275,768,230,100]],
+    ['Time','本局用时',String(Math.floor(metric.seconds/60)).padStart(2,'0')+':'+String(metric.seconds%60).padStart(2,'0'),[715,715,220,45],[705,770,242,95]],
+  ];
+  const place=(node,rect)=>['x','y','w','h'].forEach((axis,index)=>node.style.setProperty('--result-'+axis,rect[index]));
+  stats.replaceChildren(...fields.map(([name,label,value,labelRect,valueRect])=>{
     const cell=document.createElement('div');cell.className='result-stat';
-    const l=document.createElement('small');l.textContent=label;
-    const v=document.createElement('strong');v.textContent=String(value);cell.append(l,v);return cell;
+    const l=document.createElement('small');l.id='result'+name+'Label';l.className='result-position';l.textContent=label;place(l,labelRect);
+    const v=document.createElement('strong');v.id='result'+name;v.className='result-position';v.textContent=String(value);place(v,valueRect);cell.append(l,v);return cell;
   }));
-  if(claimedBeat!==null){const note=document.createElement('div');note.className='result-rival';note.textContent='好友挑战目标 '+claimedBeat+' 步';stats.append(note);}
   el('dialogText').hidden=true;
 }
-function nextLevel(){
-  if(!won){toast('先还原星图，才能解锁下一关');return;}
-  claimedBeat=null;
-  if(mode==='daily')startGame('story',unlocked());
-  else if(+key<18)startGame('story',String(+key+1));
-  else{toast('18关全部通关！试试每日挑战');startGame('daily',currentDay());}
-  showGame();
+function nextLevel(route=resultRouteToken){
+  if(!route||route!==resultRouteToken||route.consumed||route.round!==roundSerial||route.mode!==mode||route.key!==key||!won||$.modal.hidden||gameScreen.hidden)return;
+  route.consumed=true;resultRouteToken=null;
+  try{
+    if(route.mode==='daily')startGame('story',unlocked());
+    else if(+route.key<18)startGame('story',String(+route.key+1));
+    else startGame('daily',currentDay());
+    claimedBeat=null;showGame();
+  }catch{
+    route.consumed=false;resultRouteToken=route;
+    toast('下一关暂时无法打开，请重试');
+  }
+}
+function closeDialog(){
+  if($.modal.hidden)return;
+  if($.modal.classList.contains('result-mode')){nextLevel();return;}
+  $.modal.hidden=true;
 }
 function share(){shareChallenge(mode,key);}
 function shareChallenge(challengeMode,challengeKey){
@@ -253,13 +277,14 @@ function showRank(){
   if(rankScreen.hidden)rankOrigin=gameScreen.hidden?'home':'game';
   cancelRotation();if(puzzle)render();
   const local=read('best:daily:'+currentDay(),null);
-  const hasBest=local&&Number.isFinite(Number(local.moves))&&Number(local.moves)>=0&&Number.isFinite(Number(local.seconds))&&Number(local.seconds)>=0;
+  const hasBest=local&&Number.isFinite(Number(local.moves))&&Number(local.moves)>=1&&Number.isFinite(Number(local.seconds))&&Number(local.seconds)>=0;
   const [year,month,day]=currentDay().split('-');
-  el('rankDate').textContent=`${year}年${Number(month)}月${Number(day)}日`;
+  el('rankDate').textContent=`${Number(month)}月${Number(day)}日 · 每日挑战`;
+  el('rankDate').setAttribute('aria-label',`${year}年${Number(month)}月${Number(day)}日，每日挑战`);
   el('rankBestMoves').textContent=hasBest?String(local.moves):'—';
   const seconds=hasBest?Math.floor(Number(local.seconds)):0;
-  el('rankBestTime').textContent=hasBest?`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`:'—';
-  el('rankBestNote').textContent=hasBest?'已记录今日最佳成绩':'今天还没有通关记录';
+  el('rankBestTime').textContent=hasBest?`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`:'—:—';
+  el('rankBestNote').textContent=hasBest?'本机已记录':'本机暂无记录';
   el('rankHintRule').textContent=`每日挑战每局可用 ${hintLimit('daily')} 次提示，成绩照常参与排行`;
   el('home').hidden=true;gameScreen.hidden=true;$.modal.hidden=true;settingsOverlay.hidden=true;
   rankScreen.hidden=false;rankScreen.scrollTop=0;
@@ -284,12 +309,17 @@ function reset(){if(!ready)return;startGame(mode,key);toast('已重置本局');}
 function setDirection(direction){if(!canPlay())return;dir=direction;render();sound(direction===1?390:350);}
 $.anchors.addEventListener('click',event=>{const button=event.target.closest('button[data-q]');if(button)spin(Number(button.dataset.q));});
 el('cwBtn').onclick=()=>setDirection(1);el('ccwBtn').onclick=()=>setDirection(-1);
-el('hintBtn').onclick=hint;el('shareBtn').onclick=share;el('nextBtn').onclick=nextLevel;
+el('hintBtn').onclick=hint;el('shareBtn').onclick=share;el('nextBtn').onclick=()=>nextLevel();
 $.storyTab.onclick=()=>openMode('story');$.dailyTab.onclick=()=>openMode('daily');
-el('closeModal').onclick=()=>{$.modal.hidden=true;};
-$.modal.addEventListener('click',event=>{if(event.target===$.modal)$.modal.hidden=true;});
+el('closeModal').onclick=closeDialog;
+$.modal.addEventListener('click',event=>{if(event.target===$.modal)closeDialog();});
 window.addEventListener('keydown',event=>{
-  if(event.key==='Escape'){if(!rankScreen.hidden){closeRank();return;}$.modal.hidden=true;settingsOverlay.hidden=true;return;}
+  if(event.key==='Escape'){
+    if(!settingsOverlay.hidden){settingsOverlay.hidden=true;return;}
+    if(!$.modal.hidden){closeDialog();return;}
+    if(!rankScreen.hidden)closeRank();
+    return;
+  }
   if(!canPlay())return;
   if(event.key==='r'||event.key==='R')reset();
   else if(/^[1-4]$/.test(event.key))spin(Number(event.key)-1);
@@ -303,7 +333,7 @@ function startTimers(){
 window.addEventListener('pagehide',()=>{cancelRotation();clearInterval(clockTimer);clearInterval(bgTimer);});
 window.addEventListener('pageshow',event=>{if(event.persisted&&ready){render();startTimers();}});
 
-const ART_FILES=['home-scene.webp','celestial-mural.webp','ui-atlas.webp','daily-banner.webp','reference-daily.webp','reference-clean.webp'];
+const ART_FILES=['home-scene.webp','celestial-mural.webp','ui-atlas.webp','daily-banner.webp','reference-daily.webp','reference-clean.webp','rank-scene.webp','result-panel.webp'];
 function preloadArt(file){
   return new Promise((resolve,reject)=>{
     const image=new Image(),timer=setTimeout(()=>reject(new Error('art load timeout')),25000);

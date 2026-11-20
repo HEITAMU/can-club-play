@@ -1,0 +1,38 @@
+{
+  "version": "0.8.4",
+  "coordinateSystem": "Source-image pixels, top-left origin. Keep image aspect ratio; expand touch targets separately.",
+  "rank": {
+    "image": "rank-scene",
+    "width": 854,
+    "height": 1842,
+    "date": [427, 294],
+    "back": [31, 100, 101, 102],
+    "settings": [722, 100, 101, 102],
+    "podium": [
+      {"rank": 1, "avatar": [427, 501, 60], "avatarBottom": 550, "name": [427, 653], "moves": [427, 703], "time": [427, 743]},
+      {"rank": 2, "avatar": [189, 564, 56], "avatarBottom": 611, "name": [190, 694], "moves": [190, 741], "time": [190, 777]},
+      {"rank": 3, "avatar": [664, 577, 56], "avatarBottom": 624, "name": [665, 701], "moves": [665, 744], "time": [665, 780]}
+    ],
+    "list": {"rowCenters": [1024, 1122, 1220], "rankX": 129, "avatarX": 266, "avatarRadius": 30, "nameX": 383, "movesX": 563, "timeX": 708, "pageSize": 3},
+    "previous": [284, 1280, 53, 43],
+    "next": [517, 1280, 53, 43],
+    "bestMoves": [297, 1538],
+    "bestTime": [659, 1538],
+    "daily": [41, 1663, 774, 134]
+  },
+  "result": {
+    "image": "result-panel",
+    "width": 1086,
+    "height": 1448,
+    "title": [250, 292, 590, 100],
+    "honor": [235, 517, 620, 87],
+    "movesLabel": [280, 715, 220, 45],
+    "movesValue": [275, 768, 230, 100],
+    "timeLabel": [715, 715, 220, 45],
+    "timeValue": [705, 770, 242, 95],
+    "note": [220, 966, 650, 60],
+    "primary": [130, 1082, 830, 143],
+    "share": [248, 1256, 594, 94],
+    "close": [874, 90, 148, 149]
+  }
+}

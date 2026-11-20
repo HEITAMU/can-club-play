@@ -2,35 +2,45 @@
 /* global wx */
 const sharedCanvas=wx.getSharedCanvas();
 const ctx=sharedCanvas.getContext('2d');
-// 与主域RankViewTemplate的SubContextView设计分辨率一致，运行时不改变纹理尺寸。
-const CANVAS_WIDTH=720,CANVAS_HEIGHT=640,PAGE_SIZE=5,DEFAULT_KEY='FF_DAILY_V1';
+// 与主域 RankViewTemplate / rank-scene 的设计分辨率一致，保持透明并且不在运行时改变纹理尺寸。
+const CANVAS_WIDTH=854,CANVAS_HEIGHT=1842,PODIUM_COUNT=3,PAGE_SIZE=3,DEFAULT_KEY='FF_DAILY_V1';
 sharedCanvas.width=CANVAS_WIDTH;sharedCanvas.height=CANVAS_HEIGHT;
-const COLORS={paper:'#FFF1D7',light:'#FFF8E9',ink:'#5B301F',muted:'#977253',line:'#D8B37B',gold:'#D8A44D',purple:'#8B699B'};
+const COLORS={ink:'#5B2D19',muted:'#916343',gold:'#E6BC75',avatar:'#342753',avatarText:'#FFF0C8'};
+// 全部使用批准原画的源像素坐标。主域负责底图、日期、个人最佳和点击区域。
+const LAYOUT={
+  podium:[
+    {avatar:{x:427,y:501,r:60,maxY:550},name:{x:427,y:653,w:194,size:31},moves:{x:427,y:703,w:188,size:31},time:{x:427,y:743,w:192,size:35}},
+    {avatar:{x:189,y:564,r:56,maxY:611},name:{x:190,y:694,w:170,size:28},moves:{x:190,y:741,w:154,size:29},time:{x:190,y:777,w:154,size:31}},
+    {avatar:{x:664,y:577,r:56,maxY:624},name:{x:665,y:701,w:170,size:28},moves:{x:665,y:744,w:154,size:29},time:{x:665,y:780,w:154,size:31}}
+  ],
+  list:{centers:[1024,1122,1220],rankX:129,avatarX:266,avatarR:30,nameX:383,nameWidth:170,movesX:563,movesWidth:120,timeX:708,timeWidth:144},
+  state:{x:427,titleY:1105,detailY:1144,width:650},
+  pagination:{x:427,y:1258,w:146,size:19}
+};
 const avatarCache=new Map();
-let logicalWidth=358,logicalHeight=358*CANVAS_HEIGHT/CANVAS_WIDTH,requestSerial=0;
+let requestSerial=0;
 let state={day:'',key:DEFAULT_KEY,page:0,rows:[],status:'idle'};
 
-function roundRect(x,y,w,h,r){
-  r=Math.max(0,Math.min(r,w/2,h/2));
-  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
-  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);
-  ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
-}
-function panel(x,y,w,h,r,fill,stroke=COLORS.line){
-  roundRect(x,y,w,h,r);ctx.fillStyle=fill;ctx.fill();
-  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=.8*logicalWidth/358;ctx.stroke();}
-}
-function text(value,x,y,size,color=COLORS.ink,align='left',bold=false){
-  ctx.font=`${bold?'bold ':''}${size}px sans-serif`;ctx.fillStyle=color;ctx.textAlign=align;ctx.textBaseline='middle';ctx.fillText(String(value),x,y);
+function text(value,x,y,size,color=COLORS.ink,align='center',bold=false){
+  ctx.font=(bold?'bold ':'')+size+'px sans-serif';ctx.fillStyle=color;ctx.textAlign=align;ctx.textBaseline='middle';ctx.fillText(String(value),x,y);
 }
 function fittedText(value,maxWidth){
   const chars=Array.from(String(value));if(ctx.measureText(chars.join('')).width<=maxWidth)return chars.join('');
   while(chars.length&&ctx.measureText(chars.join('')+'…').width>maxWidth)chars.pop();
   return chars.length?chars.join('')+'…':'…';
 }
-function star(x,y,r,color){
-  ctx.beginPath();for(let i=0;i<8;i++){const angle=-Math.PI/2+i*Math.PI/4,d=i%2?r*.3:r;const px=x+Math.cos(angle)*d,py=y+Math.sin(angle)*d;if(i)ctx.lineTo(px,py);else ctx.moveTo(px,py);}
-  ctx.closePath();ctx.fillStyle=color;ctx.fill();
+function nameText(value,field,align='center'){
+  ctx.font='bold '+field.size+'px sans-serif';
+  ctx.save();ctx.beginPath();ctx.rect(align==='left'?field.x:field.x-field.w/2,field.y-field.size*.8,field.w,field.size*1.6);ctx.clip();
+  text(fittedText(value,field.w),field.x,field.y,field.size,COLORS.ink,align,true);
+  ctx.restore();
+}
+function valueText(value,field,color=COLORS.ink){
+  ctx.font='bold '+field.size+'px sans-serif';
+  const width=ctx.measureText(String(value)).width,size=width>field.w?field.size*field.w/width:field.size;
+  ctx.save();ctx.beginPath();ctx.rect(field.x-field.w/2,field.y-field.size*.8,field.w,field.size*1.6);ctx.clip();
+  text(value,field.x,field.y,size,color,'center',true);
+  ctx.restore();
 }
 function validDay(day){
   if(!/^20\d{2}-\d{2}-\d{2}$/.test(day))return false;
@@ -45,15 +55,17 @@ function parseRows(users,day,key){
     const moves=Number(parts[2]),seconds=Number(parts[3]);
     if(!Number.isSafeInteger(moves)||!Number.isSafeInteger(seconds)||moves<1||seconds<0)return;
     const nickname=typeof user.nickname==='string'&&user.nickname.trim()?user.nickname.trim():'微信好友';
-    // 旧score字段和提示次数都不参与筛选、排序；历史0分提示成绩仍按真实步数/用时入榜。
+    // 旧 score 字段和提示次数都不参与筛选、排序；历史 0 分提示成绩仍按真实步数/用时入榜。
     rows.push({nickname,moves,seconds,avatarUrl:typeof user.avatarUrl==='string'?user.avatarUrl:'',index});
   });
   return rows.sort((a,b)=>a.moves-b.moves||a.seconds-b.seconds||a.index-b.index);
 }
-function totalPages(){return Math.ceil(state.rows.length/PAGE_SIZE);}
+function totalPages(){return state.rows.length?Math.max(1,Math.ceil(Math.max(0,state.rows.length-PODIUM_COUNT)/PAGE_SIZE)):0;}
 function clampPage(page){return Math.max(0,Math.min(Math.max(0,totalPages()-1),Number.isFinite(page)?Math.floor(page):0));}
-function pageRows(){return state.rows.slice(state.page*PAGE_SIZE,(state.page+1)*PAGE_SIZE);}
-function timeText(seconds){return `${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`;}
+function podiumRows(){return state.rows.slice(0,PODIUM_COUNT);}
+function pageRows(){const start=PODIUM_COUNT+state.page*PAGE_SIZE;return state.rows.slice(start,start+PAGE_SIZE);}
+function visibleRows(){return podiumRows().concat(pageRows());}
+function timeText(seconds){return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');}
 function avatar(url){
   if(!url||typeof wx.createImage!=='function')return null;
   const cached=avatarCache.get(url);if(cached)return cached.status==='ready'?cached.image:null;
@@ -61,73 +73,67 @@ function avatar(url){
   if(avatarCache.size>40)avatarCache.delete(avatarCache.keys().next().value);
   try{
     const image=wx.createImage();entry.image=image;
-    image.onload=()=>{entry.status='ready';if(state.status==='ready'&&pageRows().some(row=>row.avatarUrl===url))render();};
+    image.onload=()=>{entry.status='ready';if(state.status==='ready'&&visibleRows().some(row=>row.avatarUrl===url))render();};
     image.onerror=()=>{entry.status='failed';};
     image.src=url;
   }catch{entry.status='failed';}
   return null;
 }
-function drawAvatar(row,x,y,size){
-  const r=size/2,image=avatar(row.avatarUrl);
-  ctx.save();ctx.beginPath();ctx.arc(x+r,y+r,r,0,Math.PI*2);ctx.clip();ctx.fillStyle='#EBDCF0';ctx.fillRect(x,y,size,size);
+function drawAvatar(row,field){
+  const {x,y,r}=field,size=r*2,image=avatar(row.avatarUrl);
+  // 领奖台头像底边退让原画上的 1/2/3 徽章，不遮住徽章和缎带。
+  ctx.save();
+  if(Number.isFinite(field.maxY)){ctx.beginPath();ctx.rect(x-r-2,y-r-2,size+4,field.maxY-(y-r-2));ctx.clip();}
+  ctx.save();ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.clip();ctx.fillStyle=COLORS.avatar;ctx.fillRect(x-r,y-r,size,size);
   let painted=false;
-  if(image){try{const w=image.width||size,h=image.height||size,crop=Math.min(w,h);ctx.drawImage(image,(w-crop)/2,(h-crop)/2,crop,crop,x,y,size,size);painted=true;}catch{}}
-  if(!painted)text(Array.from(row.nickname)[0]||'友',x+r,y+r,size*.45,'#7F5D8C','center',true);
-  ctx.restore();ctx.beginPath();ctx.arc(x+r,y+r,r,0,Math.PI*2);ctx.strokeStyle='#CEAC71';ctx.lineWidth=1.2*logicalWidth/358;ctx.stroke();
+  if(image){try{const w=image.width||size,h=image.height||size,crop=Math.min(w,h);ctx.drawImage(image,(w-crop)/2,(h-crop)/2,crop,crop,x-r,y-r,size,size);painted=true;}catch{}}
+  if(!painted)text(Array.from(row.nickname)[0]||'友',x,y,size*.43,COLORS.avatarText,'center',true);
+  ctx.restore();ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.strokeStyle=COLORS.gold;ctx.lineWidth=1.5;ctx.stroke();
+  ctx.restore();
 }
-function drawMedal(rank,x,y,r){
-  const palettes=[['#FFE3A0','#C9913B','#855124'],['#F7F0DE','#C3B4A1','#81705B'],['#EEC59C','#BA8153','#7E4C31']];
-  const [light,dark,ink]=palettes[rank-1],gradient=ctx.createLinearGradient(x,y-r,x,y+r);
-  gradient.addColorStop(0,light);gradient.addColorStop(1,dark);
-  ctx.fillStyle=dark;ctx.beginPath();ctx.moveTo(x-r*.65,y+r*.45);ctx.lineTo(x-r*.64,y+r*1.3);ctx.lineTo(x,y+r*.95);ctx.lineTo(x+r*.64,y+r*1.3);ctx.lineTo(x+r*.65,y+r*.45);ctx.closePath();ctx.fill();
-  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=gradient;ctx.fill();ctx.strokeStyle=ink;ctx.lineWidth=.8;ctx.stroke();
-  ctx.beginPath();ctx.arc(x,y,r*.77,0,Math.PI*2);ctx.strokeStyle=light;ctx.stroke();text(rank,x,y+.2,r*1.15,ink,'center',true);
+function drawPodium(){
+  const rows=podiumRows();
+  LAYOUT.podium.forEach((field,index)=>{
+    const row=rows[index];
+    if(row){drawAvatar(row,field.avatar);nameText(row.nickname,field.name);}
+    else nameText(state.status==='ready'?'待登榜':'—',field.name);
+    valueText(row?row.moves+' 步':'— 步',field.moves);
+    valueText(row?timeText(row.seconds):'—:—',field.time);
+  });
 }
-function drawState(top,bottom,u){
-  const titles={idle:'等待读取好友成绩',loading:'正在读取好友成绩…',empty:'这一天暂无好友成绩',error:'好友榜暂时无法读取',invalid:'挑战日期无效'};
-  const details={idle:'进入排行榜后自动同步',loading:'请稍候',empty:'完成同一天挑战的好友会显示在这里',error:'稍后返回此页重试',invalid:'请返回后重新打开排行榜'};
-  const center=logicalWidth/2,cy=(top+bottom)/2;
-  panel(14*u,top+8*u,logicalWidth-28*u,Math.max(1,bottom-top-16*u),12*u,'#FFF6E4','#E7CBA1');
-  ctx.strokeStyle='#C4AAD0';ctx.lineWidth=1.2*u;ctx.beginPath();ctx.moveTo(center-28*u,cy-24*u);ctx.lineTo(center,cy-38*u);ctx.lineTo(center+26*u,cy-20*u);ctx.stroke();
-  star(center,cy-38*u,10*u,COLORS.gold);star(center-28*u,cy-24*u,4*u,COLORS.purple);star(center+26*u,cy-20*u,4*u,COLORS.purple);
-  text(titles[state.status]||titles.error,center,cy+3*u,16*u,COLORS.ink,'center',true);
-  text(details[state.status]||details.error,center,cy+28*u,11.5*u,COLORS.muted,'center');
+function drawListRow(row,index){
+  const field=LAYOUT.list,y=field.centers[index],rank=PODIUM_COUNT+state.page*PAGE_SIZE+index+1;
+  valueText(rank,{x:field.rankX,y,w:55,size:37});
+  drawAvatar(row,{x:field.avatarX,y,r:field.avatarR});
+  nameText(row.nickname,{x:field.nameX,y,w:field.nameWidth,size:31});
+  valueText(row.moves,{x:field.movesX,y,w:field.movesWidth,size:36});
+  valueText(timeText(row.seconds),{x:field.timeX,y,w:field.timeWidth,size:34});
+}
+function drawState(status=state.status){
+  const titles={idle:'等待读取好友成绩',loading:'正在读取好友成绩…',empty:'这一天暂无好友成绩',more:'暂无更多好友成绩',error:'好友榜暂时无法读取',invalid:'挑战日期无效'};
+  const details={idle:'进入排行榜后自动同步',loading:'请稍候',empty:'完成同一天挑战的好友会显示在这里',more:'前三名已在上方展示',error:'请稍后重新打开排行榜',invalid:'请返回后重新打开排行榜'};
+  const field=LAYOUT.state;
+  // 仅状态文案使用轻薄纸色背衬，避免原画的竖分隔线穿过文字。
+  const paper=ctx.createLinearGradient(64,0,790,0);
+  paper.addColorStop(0,'rgba(255,241,215,0)');paper.addColorStop(.08,'rgba(255,241,215,.97)');
+  paper.addColorStop(.92,'rgba(255,241,215,.97)');paper.addColorStop(1,'rgba(255,241,215,0)');
+  ctx.fillStyle=paper;ctx.fillRect(64,1081,726,80);
+  nameText(titles[status]||titles.error,{x:field.x,y:field.titleY,w:field.width,size:30});
+  text(details[status]||details.error,field.x,field.detailY,23,COLORS.muted);
 }
 function render(){
   ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,CANVAS_WIDTH,CANVAS_HEIGHT);
-  const scale=Math.min(CANVAS_WIDTH/logicalWidth,CANVAS_HEIGHT/logicalHeight);
-  ctx.setTransform(scale,0,0,scale,(CANVAS_WIDTH-logicalWidth*scale)/2,(CANVAS_HEIGHT-logicalHeight*scale)/2);
-  const w=logicalWidth,h=logicalHeight,u=w/358,pad=8*u,headerH=34*u,footerH=24*u,rowsTop=pad+headerH+6*u;
-  const rowsBottom=h-pad-footerH,rowPitch=(rowsBottom-rowsTop)/PAGE_SIZE,rowH=rowPitch-5*u;
-  const paper=ctx.createLinearGradient(0,0,0,h);paper.addColorStop(0,COLORS.light);paper.addColorStop(1,COLORS.paper);
-  panel(.5*u,.5*u,w-u,h-u,14*u,paper,'#D5AD70');
-  panel(pad,pad,w-pad*2,headerH,9*u,'#F7E4BE','#DDBB85');
-  const rankX=27*u,avatarX=51*u,movesX=w-88*u,timeX=w-30*u,avatarSize=Math.min(32*u,Math.max(12*u,rowH-8*u)),nameX=avatarX+avatarSize+9*u;
-  text('名次',rankX,pad+headerH/2,11.5*u,COLORS.muted,'center',true);
-  text('好友',avatarX+3*u,pad+headerH/2,11.5*u,COLORS.muted,'left',true);
-  text('步数',movesX,pad+headerH/2,11.5*u,COLORS.muted,'center',true);
-  text('用时',timeX,pad+headerH/2,11.5*u,COLORS.muted,'center',true);
-  if(state.status==='ready')pageRows().forEach((row,index)=>{
-    const rank=state.page*PAGE_SIZE+index+1,y=rowsTop+index*rowPitch,cy=y+rowH/2;
-    const fills=['#FFF0CB','#F5EAF3','#F8E7D0'],fill=rank<=3?fills[rank-1]:index%2?'#FCEDD7':'#FFF7E8';
-    panel(pad,y,w-pad*2,rowH,8*u,fill,rank===1?'#D6A757':'#E5C89F');
-    if(rank<=3)drawMedal(rank,rankX,cy-1*u,Math.min(10.6*u,rowH*.27));else text(rank,rankX,cy,14*u,COLORS.purple,'center',true);
-    drawAvatar(row,avatarX,cy-avatarSize/2,avatarSize);
-    const fontSize=Math.min(15*u,rowH*.4),nameWidth=Math.max(12*u,movesX-28*u-nameX);
-    ctx.font=`${fontSize}px sans-serif`;const name=fittedText(row.nickname,nameWidth);text(name,nameX,cy,fontSize,COLORS.ink);
-    const numberSize=Math.min(16*u,rowH*.43);ctx.font=`bold ${numberSize}px sans-serif`;
-    text(fittedText(row.moves,46*u),movesX,cy,numberSize,COLORS.ink,'center',true);
-    const timeSize=Math.min(13*u,rowH*.36);ctx.font=`${timeSize}px sans-serif`;
-    text(fittedText(timeText(row.seconds),52*u),timeX,cy,timeSize,COLORS.muted,'center');
-  });else drawState(rowsTop,rowsBottom,u);
-  const pages=totalPages(),footer=state.status==='loading'?'正在同步':`第 ${pages?state.page+1:0} / ${pages} 页`;
-  text(footer,w/2,h-pad-footerH/2,11*u,COLORS.muted,'center');
-  star(w/2-52*u,h-pad-footerH/2,3*u,COLORS.gold);star(w/2+52*u,h-pad-footerH/2,3*u,COLORS.gold);
+  // 不重画标题、纸张、金边或星空；这些都来自主域显示的批准原画。
+  drawPodium();
+  if(state.status==='ready'){
+    const rows=pageRows();if(rows.length)rows.forEach(drawListRow);else drawState('more');
+  }else drawState();
+  const pages=totalPages(),footer=state.status==='ready'?(state.page+1)+' / '+pages:state.status==='loading'?'读取中':'—';
+  valueText(footer,LAYOUT.pagination,COLORS.muted);
 }
 function readFriends(message){
   const serial=++requestSerial,day=String(message.day||''),key=typeof message.key==='string'&&message.key.trim()?message.key.trim():DEFAULT_KEY;
-  const width=Number(message.width),height=Number(message.height);
-  if(Number.isFinite(width)&&Number.isFinite(height)&&width>=200&&height>=200&&width<=2048&&height<=2048){logicalWidth=width;logicalHeight=height;}
+  // width/height 是主域显示尺寸；纹理始终使用源坐标，避免改变 SubContextView 已绑定的 SpriteFrame。
   state={day,key,page:Number.isFinite(message.page)?Math.max(0,Math.floor(message.page)):0,rows:[],status:validDay(day)?'loading':'invalid'};
   render();if(state.status==='invalid')return;
   const failed=err=>{if(serial!==requestSerial)return;console.warn('getFriendCloudStorage failed',err);state.rows=[];state.page=0;state.status='error';render();};
