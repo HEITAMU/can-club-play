@@ -1,11 +1,12 @@
 // @ts-nocheck
 /** Cocos Creator 3.8.8 主域：已确认原画拆分为 Sprite，操作、棋盘和数值仍为原生节点。 */
 import {
-  _decorator,Component,Node,Canvas,Camera,Layers,UITransform,Label,LabelOutline,instantiate,
+  _decorator,Component,Node,Canvas,Camera,Layers,UITransform,UIOpacity,Label,LabelOutline,instantiate,
   Graphics,Color,view,screen,ResolutionPolicy,director,SubContextView,tween,Tween,Vec2,Vec3,
   Sprite,SpriteFrame,Texture2D,ImageAsset,JsonAsset,Rect,Size,resources,BlockInputEvents,Mask,ScrollView,
 } from 'cc';
 import {GOAL,SQUARES,makePuzzle,todayCN,rotate,isSolved,shortestPath,honor,resultScore,hintLimit,isBetterResult} from './Core';
+import {TURN_DURATION_MS,createTurnMotion,sampleTurn} from './TurnMotion';
 const {ccclass}=_decorator;
 const HINT_MODE:'free'|'rewarded'='free'; // 未开通广告时，正式上线也免费提示；开通后再显式切换。
 const AD_IDS={rewarded:'',banner:''}; // 接入时只填写微信公众平台提供的真实 adUnitId。
@@ -28,7 +29,9 @@ export class FourfoldGame extends Component {
   private rankTemplate:Node|null=null;private rankView:Node|null=null;private rankSettings=false;
   private assetsReady=false;private loading=false;private loadError='';private loadProgress=0;private loadSerial=0;
   private textures:Record<string,Texture2D>={};private frames:Record<string,SpriteFrame>={};private images:ImageAsset[]=[];private manifest:any=null;private reference:any=null;private rankLayout:any=null;
-  private tileNodes:Node[]=[];private boardLayout={x:0,y:0,size:0,unit:0};private launchQuery:any={};
+  private tileNodes:Node[]=[];private knobNodes:Node[]=[];private knobArtNodes:Node[]=[];private knobAngles=[0,0,0,0];private boardContent:Node|null=null;
+  private motionSerial=0;private turnMotion:any=null;private hideSDK:any=null;
+  private boardLayout={x:0,y:0,size:0,unit:0};private launchQuery:any={};
   private pageScroll:ScrollView|null=null;private pageScrollKey='';private scrollOffsets:Record<string,number>={};
 
   onLoad(){
@@ -38,6 +41,7 @@ export class FourfoldGame extends Component {
       try{
         this.launchQuery=(sdk.getLaunchOptionsSync?.()||{}).query||{};
         sdk.showShareMenu?.({withShareTicket:false});
+        if(typeof sdk.onHide==='function'){sdk.onHide(this.onAppHide);this.hideSDK=sdk;}
       }catch(e){console.warn('launch context unavailable',e);}
     }
     const scene=director.getScene();
@@ -68,6 +72,7 @@ export class FourfoldGame extends Component {
     view.setDesignResolutionSize(this.width,this.height,ResolutionPolicy.FIXED_WIDTH);
   }
   private onWindowResize(){
+    this.cancelTurnMotion();
     this.fitViewport();if(!this.canvasNode||!this.root)return;
     this.canvasNode.getComponent(UITransform).setContentSize(this.width,this.height);this.canvasNode.setPosition(this.width/2,this.height/2);
     this.root.getComponent(UITransform).setContentSize(this.width,this.height);this.root.setPosition(-this.width/2,this.height/2);
@@ -165,15 +170,17 @@ export class FourfoldGame extends Component {
     if(rank.width!==854||rank.height!==1842||rank.podium?.length!==3)throw new Error('榜单开放域设计尺寸不匹配');
   }
   private startGame(mode:string,key:string,home=false){
+    this.cancelTurnMotion();
     try{this.puzzle=makePuzzle(mode,key);}catch(e){console.warn('unavailable challenge',e);this.toast('这个日期的挑战暂不可用');if(!this.puzzle){this.puzzle=makePuzzle('story','1');mode='story';key='1';home=true;}else return;}
     this.roundSerial++; // 同一关重开也不能领取上一局尚未结束的广告奖励。
-    this.mode=mode;this.key=key;this.inHome=home;this.board=this.puzzle.board;this.direction=1;this.moves=0;this.hints=0;this.startAt=0;this.elapsed=0;this.won=false;this.busy=false;this.modal='';this.rankSettings=false;this.hideBanner();this.draw();
+    this.mode=mode;this.key=key;this.inHome=home;this.board=this.puzzle.board;this.direction=1;this.moves=0;this.hints=0;this.startAt=0;this.elapsed=0;this.won=false;this.busy=false;this.knobAngles=[0,0,0,0];this.modal='';this.rankSettings=false;this.hideBanner();this.draw();
   }
   private updateClock(){if(this.startAt&&!this.won&&!this.inHome)this.elapsed=(at()-this.startAt)/1000;if(this.clockLabel)this.clockLabel.string=clock(this.elapsed);}
   private clear(){
+    this.cancelTurnMotion();if(this.inHome)this.knobAngles=[0,0,0,0];
     this.rankView=null;
     if(this.pageScroll){this.scrollOffsets[this.pageScrollKey]=Math.max(0,this.pageScroll.getScrollOffset().y);this.pageScroll=null;}
-    this.clockLabel=null;this.tileNodes=[];this.toastNode=null;for(const n of [...this.root.children]){n.active=false;n.removeFromParent();n.destroy();}
+    this.clockLabel=null;this.tileNodes=[];this.knobNodes=[];this.knobArtNodes=[];this.boardContent=null;this.toastNode=null;for(const n of [...this.root.children]){n.active=false;n.removeFromParent();n.destroy();}
   }
   private createNode(name:string,x:number,y:number,w:number,h:number,parent:Node=this.root){const n=new Node(name);n.layer=Layers.Enum.UI_2D;parent.addChild(n);n.addComponent(UITransform).setContentSize(w,h);n.setPosition(x+w/2,-y-h/2);return n;}
   private group(name:string,x:number,y:number,w:number,h:number,parent:Node=this.root){const n=this.createNode(name,x,y,w,h,parent),content=new Node('Content');content.layer=Layers.Enum.UI_2D;content.addComponent(UITransform).setContentSize(w,h);n.addChild(content);content.setPosition(-w/2,h/2);return {node:n,content};}
@@ -202,11 +209,11 @@ export class FourfoldGame extends Component {
     const n=this.createNode(name,x,y,w,h,parent),sprite=n.addComponent(Sprite);sprite.sizeMode=Sprite.SizeMode.CUSTOM;sprite.type=Sprite.Type.SIMPLE;sprite.spriteFrame=frame;
     n.getComponent(UITransform).setContentSize(w,h);return n;
   }
-  private bindButton(n:Node,action:()=>void,feedback:Node|null=null){
+  private bindButton(n:Node,action:()=>void,feedback:Node|null=null,allowBusy=false){
     let pressed=false;
-    n.on(Node.EventType.TOUCH_START,(e:any)=>{e.propagationStopped=true;if(this.busy||this.disposed||!n.isValid)return;pressed=true;if(feedback)feedback.active=true;Tween.stopAllByTarget(n);tween(n).to(.06,{scale:new Vec3(.975,.975,1)}).start();});
+    n.on(Node.EventType.TOUCH_START,(e:any)=>{e.propagationStopped=true;if((this.busy&&!allowBusy)||this.disposed||!n.isValid)return;pressed=true;if(feedback)feedback.active=true;Tween.stopAllByTarget(n);tween(n).to(.06,{scale:new Vec3(.975,.975,1)}).start();});
     n.on(Node.EventType.TOUCH_CANCEL,()=>{pressed=false;if(feedback)feedback.active=false;Tween.stopAllByTarget(n);tween(n).to(.08,{scale:new Vec3(1,1,1)}).start();});
-    n.on(Node.EventType.TOUCH_END,(e:any)=>{e.propagationStopped=true;if(!pressed)return;pressed=false;if(feedback)feedback.active=false;Tween.stopAllByTarget(n);n.setScale(1,1,1);if(!this.busy&&!this.disposed&&n.isValid&&n.activeInHierarchy!==false)action();});
+    n.on(Node.EventType.TOUCH_END,(e:any)=>{e.propagationStopped=true;if(!pressed)return;pressed=false;if(feedback)feedback.active=false;Tween.stopAllByTarget(n);n.setScale(1,1,1);if((!this.busy||allowBusy)&&!this.disposed&&n.isValid&&n.activeInHierarchy!==false)action();});
     return n;
   }
   private artHit(name:string,rect:number[],scale:number,parent:Node,action:()=>void,minTop=-Infinity){
@@ -214,12 +221,12 @@ export class FourfoldGame extends Component {
     const g=this.group(name,left,top,hitW,hitH,parent),feedback=this.shape(0,0,hitW,hitH,'#FFF6DD28','',Math.min(18,hitH/3),g.content);feedback.active=false;
     this.bindButton(g.node,action,feedback);return {node:g.node,x:left,y:top,w:hitW,h:hitH};
   }
-  private btn(value:string,x:number,y:number,w:number,h:number,action:()=>void,kind='creamButton',size=16,parent:Node=this.root){
+  private btn(value:string,x:number,y:number,w:number,h:number,action:()=>void,kind='creamButton',size=16,parent:Node=this.root,allowBusy=false){
     const g=this.group(value||kind,x,y,w,h,parent);
     if(this.assetsReady)this.art(kind,0,0,w,h,g.content);else this.shape(0,0,w,h,C.surface,C.edge,14,g.content);
-    if(value)this.txt(value,8,0,w-16,h-3,size,C.dark,true,g.content);return this.bindButton(g.node,action);
+    if(value)this.txt(value,8,0,w-16,h-3,size,C.dark,true,g.content);return this.bindButton(g.node,action,null,allowBusy);
   }
-  private iconButton(frame:string,x:number,y:number,size:number,action:()=>void){return this.btn('',x,y,size,size,action,frame);}
+  private iconButton(frame:string,x:number,y:number,size:number,action:()=>void,allowBusy=false){return this.btn('',x,y,size,size,action,frame,16,this.root,allowBusy);}
   private drawLoading(){
     this.shape(0,0,this.width,this.height,C.background,'',0);
     this.txt('四格诡局',40,280,this.width-80,60,34,C.dark,true);
@@ -296,8 +303,8 @@ export class FourfoldGame extends Component {
   private drawGame(){
     if(this.mode==='daily'){this.drawReferenceDaily();return;}
     const w=this.width,top=Math.max(24,this.safeTop+8),bottom=this.height-this.safeBottom-12;
-    this.iconButton('backButton',16,top,42,()=>{this.inHome=true;this.modal='';this.hideBanner();this.draw();});
-    this.iconButton('settingsButton',w-58,top,42,()=>{this.modal='settings';this.draw();});
+    this.iconButton('backButton',16,top,42,()=>{this.inHome=true;this.modal='';this.hideBanner();this.draw();},true);
+    this.iconButton('settingsButton',w-58,top,42,()=>{this.modal='settings';this.draw();},true);
     this.art('creamButton',87,top-2,w-174,52);this.txt(`第${this.key}关`,93,top+1,w-186,44,27,C.dark,true);
     const statsY=top+67,statW=(w-42)/2,statH=statW*this.reference.components.movesCard[3]/this.reference.components.movesCard[2];
     this.statCard('stepsCard','当前步数',String(this.moves).padStart(2,'0'),15,statsY,statW,statH);
@@ -311,7 +318,7 @@ export class FourfoldGame extends Component {
     this.btn(`✧ 提示 ${this.hintsLeft()}/${hintLimit(this.mode)}`,88,hintY,w-176,36,()=>this.askHint(),'creamButton',16);
     this.btn('✦ 发起同关挑战',16,shareY,w-32,52,()=>this.share(),'goldButton',20);
   }
-  private referenceControl(name:string,rect:number[],ox:number,oy:number,scale:number,action:()=>void,selected=false,dim=false,parent:Node=this.root){
+  private referenceControl(name:string,rect:number[],ox:number,oy:number,scale:number,action:()=>void,selected=false,dim=false,parent:Node=this.root,allowBusy=false){
     const [rx,ry,rw,rh]=rect,w=rw*scale,h=rh*scale,hitW=Math.max(44,w),hitH=Math.max(44,h);
     const n=this.createNode(name,ox+rx*scale-(hitW-w)/2,oy+ry*scale-(hitH-h)/2,hitW,hitH,parent),g=n.addComponent(Graphics);
     let pressed=false;
@@ -322,9 +329,9 @@ export class FourfoldGame extends Component {
       if(pressed||selected){g.strokeColor=ink(pressed?'#FFF1CE':'#FFD06E');g.lineWidth=Math.max(1.5,4*scale);g.stroke();}
     };
     feedback();
-    n.on(Node.EventType.TOUCH_START,(e:any)=>{e.propagationStopped=true;if(this.busy)return;pressed=true;feedback();});
+    n.on(Node.EventType.TOUCH_START,(e:any)=>{e.propagationStopped=true;if((this.busy&&!allowBusy)||this.disposed||!n.isValid)return;pressed=true;feedback();});
     n.on(Node.EventType.TOUCH_CANCEL,()=>{pressed=false;feedback();});
-    n.on(Node.EventType.TOUCH_END,(e:any)=>{e.propagationStopped=true;if(!pressed)return;pressed=false;feedback();if(!this.busy)action();});
+    n.on(Node.EventType.TOUCH_END,(e:any)=>{e.propagationStopped=true;if(!pressed)return;pressed=false;feedback();if((!this.busy||allowBusy)&&!this.disposed&&n.isValid&&n.activeInHierarchy!==false)action();});
     return n;
   }
   private drawReferenceDaily(){
@@ -336,7 +343,7 @@ export class FourfoldGame extends Component {
       return {ox:x-source[0]*scale,oy:y-source[1]*scale,scale};
     };
     const control=(key:string,name:string,rect:any,action:()=>void,selected=false,dim=false,maxWidth=rect.w)=>{
-      const p=piece(key,rect,maxWidth);this.referenceControl(name,r.components[key],p.ox,p.oy,p.scale,action,selected,dim,parent);
+      const p=piece(key,rect,maxWidth);this.referenceControl(name,r.components[key],p.ox,p.oy,p.scale,action,selected,dim,parent,key==='back'||key==='settings');
     };
     control('back','返回主页',layout.back,()=>{this.inHome=true;this.modal='';this.hideBanner();this.draw();},false,false,layout.iconWidth);
     control('settings','设置',layout.settings,()=>{this.modal='settings';this.draw();},false,false,layout.iconWidth);
@@ -368,7 +375,7 @@ export class FourfoldGame extends Component {
   private drawReferenceBoard(ox:number,oy:number,scale:number,parent:Node=this.root){
     const r=this.reference,a=r.tileArea,w=a[2]*scale,h=a[3]*scale,bx=ox+a[0]*scale,by=oy+a[1]*scale;
     this.boardLayout={x:bx,y:by,size:w,unit:w/3,height:h};
-    const boardLayer=this.group('Reference board',bx,by,w,h,parent),mask=boardLayer.node.addComponent(Mask);mask.type=Mask.Type.RECT;
+    const boardLayer=this.group('Reference board',bx,by,w,h,parent),mask=boardLayer.node.addComponent(Mask);mask.type=Mask.Type.RECT;this.boardContent=boardLayer.content;
     // 遮住底图所有旧棋子和旋钮，换位动画的空隙也不会透出固定数字。
     this.shape(0,0,w,h,C.night,'',0,boardLayer.content);
     for(const seam of r.seams){const p=seam.rect;this.art(seam.name,(p[0]-a[0])*scale,(p[1]-a[1])*scale,p[2]*scale,p[3]*scale,boardLayer.content);}
@@ -383,20 +390,74 @@ export class FourfoldGame extends Component {
       const hit=this.group('Rotate '+q,cx-hitD/2,cy-hitD/2,hitD,hitD,boardLayer.content);
       const circle=this.group('Knob circle',(hitD-d)/2,(hitD-d)/2,d,d,hit.content),clip=circle.node.addComponent(Mask);clip.type=Mask.Type.ELLIPSE;clip.segments=64;
       const cw=crop[2]*scale,ch=crop[3]*scale,knob=this.art('referenceKnob'+q,(d-cw)/2,(d-ch)/2,cw,ch,circle.content);
-      if(this.direction<0)knob.setScale(-1,1,1);this.bindButton(hit.node,()=>this.spin(q));
+      if(this.direction<0)knob.setScale(-1,1,1);knob.angle=-this.knobAngles[q];this.knobNodes[q]=hit.node;this.knobArtNodes[q]=knob;this.bindButton(hit.node,()=>this.spin(q));
     }
   }
   private spin(q:number){
-    if(this.won||this.modal||this.busy||!this.assetsReady)return;
+    if(this.disposed||this.inHome||this.won||this.modal||this.busy||!this.assetsReady||!Number.isInteger(q)||!SQUARES[q]||!this.boardContent)return;
+    const squares=SQUARES[q],tiles=squares.map(index=>this.tileNodes[index]),knob=this.knobArtNodes[q],hit=this.knobNodes[q];
+    if(tiles.some(node=>!node?.isValid)||!knob?.isValid||!hit?.isValid)return;
+    const rects=tiles.map(node=>{const t=node.getComponent(UITransform);return {x:node.position.x-t.width/2,y:-node.position.y-t.height/2,width:t.width,height:t.height};});
+    const geometry=createTurnMotion(rects,this.direction,{x:hit.position.x,y:-hit.position.y});
+    const states=this.tileNodes.map(node=>{const opacity=node.getComponent(UIOpacity)||node.addComponent(UIOpacity);return {node,position:node.position.clone(),scale:node.scale.clone(),opacity,value:opacity.opacity};});
+    const bounds=geometry.bounds,width=bounds.right-bounds.left,height=bounds.bottom-bounds.top,effects:Node[]=[];
+    const outline=this.turnOutline('Turn selection',bounds.left,bounds.top,width,height,7,'#FFD56C44',this.boardContent);effects.push(outline);
+    const edge=this.turnOutline('Turn selection edge',bounds.left,bounds.top,width,height,2.4,'#FFE5A0',this.boardContent);effects.push(edge);
+    const d=knob.getComponent(UITransform).width+10;
+    const pivot=this.turnOutline('Turn pivot glow',geometry.pivot.x-d/2,geometry.pivot.y-d/2,d,d,5,'#FFD15B77',this.boardContent,d/2);effects.push(pivot);
+    const ring=this.turnOutline('Turn pivot ring',geometry.pivot.x-d/2,geometry.pivot.y-d/2,d,d,2,'#FFF0B2',this.boardContent,d/2);effects.push(ring);
+    const flashes=tiles.map((node,index)=>{const r=rects[index],flash=this.shape(0,0,r.width,r.height,'#FFF5C9','',3,node.children[0]);flash.name='Turn landing flash';flash.addComponent(UIOpacity).opacity=0;effects.push(flash);return flash;});
     if(!this.startAt)this.startAt=at();this.busy=true;
-    const squares=SQUARES[q],positions=this.tileNodes.map(n=>n.position.clone()),dir=this.direction;
-    squares.forEach((from,i)=>{const to=squares[(i+dir+4)%4];tween(this.tileNodes[from]).to(.16,{position:positions[to]},{easing:'quadInOut'}).start();});
-    this.scheduleOnce(()=>{
-      this.board=rotate(this.board,q,dir);this.moves++;this.busy=false;
-      if(isSolved(this.board)){this.won=true;this.elapsed=(at()-this.startAt)/1000;this.complete();}
-      this.draw();
-    },.17);
+    const motion={serial:++this.motionSerial,round:this.roundSerial,board:this.board,q,dir:this.direction,elapsed:0,geometry,tiles,states,knob,knobStart:this.knobAngles[q],parent:this.boardContent,effects,focus:[outline,edge,pivot,ring],flashes};
+    this.turnMotion=motion;this.applyTurnFrame(motion,0);
   }
+  private turnOutline(name:string,x:number,y:number,width:number,height:number,lineWidth:number,color:string,parent:Node,radius=11){
+    const node=this.createNode(name,x,y,width,height,parent),g=node.addComponent(Graphics),inset=lineWidth/2+1;
+    g.roundRect(-width/2+inset,-height/2+inset,Math.max(1,width-2*inset),Math.max(1,height-2*inset),Math.max(1,Math.min(radius,Math.min(width,height)/2-inset)));
+    g.fillColor=ink('#FFD77508');g.fill();g.strokeColor=ink(color);g.lineWidth=lineWidth;g.stroke();node.addComponent(UIOpacity).opacity=0;return node;
+  }
+  private turnIsCurrent(motion:any){
+    return this.turnMotion===motion&&motion.serial===this.motionSerial&&motion.round===this.roundSerial&&motion.board===this.board&&!this.disposed&&!this.inHome&&!this.won&&!this.modal&&this.assetsReady&&this.boardContent===motion.parent&&motion.parent.isValid&&motion.tiles.every((node:Node)=>node.isValid);
+  }
+  private applyTurnFrame(motion:any,progress:number){
+    const first=sampleTurn(motion.geometry,0,progress),focus=first.focus;
+    motion.tiles.forEach((node:Node,index:number)=>{
+      const point=index?sampleTurn(motion.geometry,index,progress):first;
+      // 共享数学使用y向下；Cocos节点局部坐标y向上。图块自身不旋转。
+      node.setPosition(point.x,-point.y);node.setScale(point.scaleX,point.scaleY,1);
+    });
+    motion.states.forEach((state:any)=>{state.opacity.opacity=Math.round(state.value*(motion.tiles.includes(state.node)?1:1-.44*focus));});
+    motion.knob.angle=-(motion.knobStart+first.angle);
+    motion.focus.forEach((node:Node)=>{node.getComponent(UIOpacity).opacity=Math.round(255*focus);});
+    const landing=Math.max(0,Math.min(1,(progress-.9)/.1)),flash=Math.round(58*Math.sin(Math.PI*landing));
+    motion.flashes.forEach((node:Node)=>{node.getComponent(UIOpacity).opacity=Math.max(0,flash);});
+  }
+  update(deltaTime:number){
+    const motion=this.turnMotion;if(!motion)return;
+    if(!this.turnIsCurrent(motion)){this.cancelTurnMotion();return;}
+    if(!Number.isFinite(deltaTime)||deltaTime<=0)return;
+    motion.elapsed=Math.min(TURN_DURATION_MS,motion.elapsed+deltaTime*1000);
+    const progress=motion.elapsed/TURN_DURATION_MS;this.applyTurnFrame(motion,progress);
+    if(progress<1)return;
+    // 唯一提交点：整段460ms完成后再更新棋盘与步数，不排队补跑连续点击。
+    const next=rotate(motion.board,motion.q,motion.dir),angle=(motion.knobStart+motion.dir*90)%360;
+    this.cancelTurnMotion(false);this.knobAngles[motion.q]=angle;this.board=next;this.moves++;
+    if(isSolved(this.board)){this.won=true;this.elapsed=(at()-this.startAt)/1000;this.complete();}
+    this.draw();
+  }
+  private cancelTurnMotion(restore=true){
+    this.motionSerial++;const motion=this.turnMotion;this.turnMotion=null;if(!motion)return;
+    for(const state of motion.states){
+      if(!state.node.isValid)continue;Tween.stopAllByTarget(state.node);
+      if(restore){state.node.setPosition(state.position);state.node.setScale(state.scale);}
+      state.opacity.opacity=state.value;
+    }
+    if(motion.knob.isValid){Tween.stopAllByTarget(motion.knob);if(restore)motion.knob.angle=-motion.knobStart;}
+    for(const effect of motion.effects)if(effect.isValid){effect.active=false;effect.removeFromParent();effect.destroy();}
+    this.busy=false;
+  }
+  private onAppHide=()=>{this.cancelTurnMotion();};
+  onDisable(){this.cancelTurnMotion();}
   private complete(){
     const result={moves:this.moves,par:this.puzzle.par,seconds:Math.floor(this.elapsed),hints:this.hints,score:resultScore(this.moves,this.elapsed,this.hints),day:this.key};
     const prev=this.storeRead('best:'+this.storageKey(),null);
@@ -574,7 +635,8 @@ export class FourfoldGame extends Component {
     this.scheduleOnce(()=>{if(this.toastNode===g.node)this.toastNode=null;if(g.node.isValid)g.node.destroy();},2.5);
   }
   onDestroy(){
-    this.disposed=true;this.roundSerial++;screen.off('window-resize',this.onWindowResize,this);this.loadSerial++;
+    this.disposed=true;this.cancelTurnMotion();this.roundSerial++;screen.off('window-resize',this.onWindowResize,this);this.loadSerial++;
+    try{this.hideSDK?.offHide?.(this.onAppHide);}catch{}this.hideSDK=null;
     if(this.hintRequest)this.releaseHintRequest(this.hintRequest);
     this.hideBanner();try{this.rewardAd?.destroy?.();}catch{}this.rewardAd=null;this.disposeArt();
   }

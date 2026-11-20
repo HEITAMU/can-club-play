@@ -8,6 +8,14 @@
 
 打开本文件夹 `index.html` 的静态站点（推荐 GitHub Pages；本地用 `python3 -m http.server 8000`），直接手机或电脑浏览器开玩。建议手机竖屏。键盘 `1–4` 旋转四个位置、空格切换旋转方向、R 重开。
 
+## 0.8.5 四格旋转反馈
+
+- 点击旋转点后，对应四格以金色边框突出显示，其他五格轻微变暗；四张图案沿中心做可见的90°弧线移动，旋钮同步转向。
+- 网页与原生共用 `TurnMotion.js`：总时长460毫秒，包含聚焦、旋转和落位。中途适度收拢四张图案，保持完整可见，结束时准确匹配原稿各个格子的实际宽高。图案与数字保持正立。
+- 一次动画完成只记一步；动画期间不累积连点。返回、重开、尺寸变化或销毁页面会取消未完成的动作，旧回调不会改变新一局。
+- 系统开启“减少动态效果”时，网页缩短为轻微淡入淡出，仍完整更新棋盘和步数。
+- `tests/turn-motion.test.mjs` 检查四个旋转点、两个方向及原稿不等宽格子的轨迹；`tests/turn-preview.html` 使用真实游戏页面检查中途效果和动作结束后的状态。
+
 ## 0.8.4 排行榜原画与通关弹窗
 
 - 「好友荣誉榜」接入确认的星空领奖台原画；前三名常驻，下方从第4名开始每页3人，头像、昵称、日期、步数与用时为动态内容。网页保留真实本机最佳及微信好友榜空态，不生成演示好友。
@@ -56,6 +64,7 @@ cocos/package.json                    Cocos Creator 3.8.8 主工程入口
 cocos/assets/scenes/Main.scene        启动场景，附加 FourfoldGame 和排行榜视图模板
 cocos/assets/scripts/Game.ts          原生 Cocos 组件、微信分享/广告/好友榜
 cocos/assets/scripts/Core.js          两端共用规则与双向 BFS
+cocos/assets/scripts/TurnMotion.js    两端共用四格弧线与落位采样
 cocos/build-templates/wechatgame/
   openDataContext/index.js             好友排行的独立开放数据域
 cocos/docs/RELEASE.md                  小游戏构建及上线核验清单

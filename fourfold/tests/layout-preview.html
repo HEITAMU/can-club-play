@@ -3,12 +3,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
-<title>四格诡局 · 手机界面验收 0.8.4</title>
+<title>四格诡局 · 手机界面验收 0.8.5</title>
 <style>
 *{box-sizing:border-box}body{margin:0;padding:20px;background:#e7e3dc;color:#342b23;font:15px system-ui,sans-serif}header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:12px}h1{font-size:20px;margin:0}select,button{font:inherit;padding:8px}button{cursor:pointer}button:disabled{cursor:wait;opacity:.55}output{padding:8px;border-radius:8px;background:#fff}.spec{font-size:13px;line-height:1.6;margin:0 0 14px;color:#625347}iframe{display:block;flex:none;border:0;box-shadow:0 0 0 2px #75634f,0 8px 30px #0002;margin:0 auto;background:#f8d4a5}main{overflow:auto;padding:4px 4px 20px}.pass{color:#176333}.fail{color:#a22621}#details{white-space:pre-wrap;overflow-wrap:anywhere;margin:12px 0;font:13px/1.6 system-ui,sans-serif}table{border-collapse:collapse;width:100%;background:#fff;font-size:13px;margin-top:12px}th,td{text-align:left;border:1px solid #d1c6ba;padding:7px}td button{padding:3px 6px;font:inherit}caption{text-align:left;font-weight:700;margin-bottom:6px}.table-wrap{overflow:auto}
 </style>
 <header>
-<h1>手机界面验收 · 0.8.4</h1>
+<h1>手机界面验收 · 0.8.5</h1>
 <label>可用视口 <select id="size"><option value="390,650">390 × 650 · 内置浏览器短屏</option><option value="390,844">390 × 844 · 常规竖屏</option><option value="320,568">320 × 568 · 小屏</option><option value="390,600">390 × 600 · 紧凑短屏</option><option value="460,936">460 × 936 · 宽屏容器</option></select></label>
 <label>页面 <select id="mode"><option value="home">主页</option><option value="daily">每日挑战</option><option value="story">普通关</option><option value="rank">好友荣誉榜</option><option value="result">真实通关弹窗</option></select></label>
 <button id="check" type="button">检查当前页面</button><button id="runAll" type="button">检查全部 25 个组合</button>
@@ -16,11 +16,11 @@
 </header>
 <p class="spec">主页／每日验收：容器使用 min(视口宽度, 460px)，每日棋盘至少占宽 90%，素材等比，44px 触区可命中且互不重叠。仅 390×600 允许容器局部纵向滚动，逐个滚到按钮验证。主页检查标题与书主体，允许裁去装饰空白。普通关保留素材、比例与 36px 触区基线；屏幕边界问题单独提示。</p>
 <p class="spec">新增验收：排行榜从主页真实按钮进入，854×1842 原画按容器宽等比显示，允许纵向滚动。通关项会求解第1关并实际点击方向／旋钮，留下正常本机通关记录；随后检查 1086×1448 弹窗原画、关闭／继续／分享的 44px 触区及遮挡。排行榜与通关项会检查触区中心和四个方向的内部采样点。</p>
-<main><iframe id="preview" title="真实游戏视口" width="390" height="650" src="../?v=0.8.4"></iframe></main>
+<main><iframe id="preview" title="真实游戏视口" width="390" height="650" src="../?v=0.8.5"></iframe></main>
 <pre id="details" aria-live="polite"></pre>
 <div class="table-wrap"><table id="matrix" hidden><caption>真实页面逐项检查</caption><thead><tr><th>视口</th><th>页面</th><th>结果</th><th>容器宽度</th><th>棋盘占宽</th><th>检查说明</th><th>查看</th></tr></thead><tbody></tbody></table></div>
 <script>
-const VERSION='0.8.4';
+const VERSION='0.8.5';
 const SIZES=[[390,650],[390,844],[320,568],[390,600],[460,936]];
 const MODES=['home','daily','story','rank','result'];
 const MODE_NAMES={home:'主页',daily:'每日挑战',story:'普通关',rank:'好友荣誉榜',result:'真实通关弹窗'};

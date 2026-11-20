@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>四格诡局 · 旋转验收 0.8.5</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#17203b;color:#f6e2b4;font:15px/1.6 system-ui,sans-serif}main{display:flex;flex-wrap:wrap;align-items:flex-start;gap:24px;padding:24px;max-width:1100px;margin:auto}section{flex:1;min-width:280px}h1{font-size:24px;margin:0 0 8px}p{color:#d5cdbf}button{padding:10px 14px;margin:4px;border:1px solid #c49b59;border-radius:9px;background:#f6dfad;color:#4d291c;font:600 14px system-ui;cursor:pointer}button:disabled{opacity:.45;cursor:wait}iframe{flex:none;display:block;width:390px;height:650px;border:0;border-radius:14px;background:#f4cf99;box-shadow:0 14px 50px #0005}pre{white-space:pre-wrap;background:#0e152a;padding:16px;border-radius:10px;font:13px/1.7 ui-monospace,monospace}a{color:#f3c978}.pass{color:#9ee3b0}.fail{color:#ff9f95}@media(max-width:460px){main{padding:10px;gap:12px}iframe{max-width:100%}}
+</style>
+<main>
+<iframe id="preview" title="真实每日挑战游戏" width="390" height="650" src="../?mode=daily&v=0.8.5"></iframe>
+<section>
+<h1>四格旋转 · 0.8.5</h1>
+<p>左边是真实游戏。验收按钮只点击现有控件，并读取动画和棋盘；“中途暂停”仅用于观察，游戏内始终按460毫秒播放。</p>
+<div><button id="normalCW">顺时针转一次</button><button id="normalCCW">逆时针转一次</button></div>
+<div><button id="pauseCW">顺时针中途暂停</button><button id="pauseCCW">逆时针中途暂停</button><button id="resume">继续落位</button></div>
+<div><button id="verify">运行旋转验收</button></div>
+<pre id="report" role="status" aria-live="polite">正在载入真实游戏…</pre>
+<p><a href="../?v=0.8.5">打开游戏</a> · <a href="layout-preview.html?v=0.8.5">手机布局验收</a></p>
+</section>
+</main>
+<script type="module">
+const frame=document.querySelector('#preview'),report=document.querySelector('#report');
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+const doc=()=>frame.contentDocument;
+const get=id=>doc().getElementById(id);
+const tiles=()=>[...get('board').children];
+const sequence=()=>tiles().map(n=>n.dataset.token).join('');
+const moves=()=>Number(get('moves').textContent);
+const busy=()=>get('board').classList.contains('rotating');
+const animations=()=>doc().getAnimations().filter(a=>a.effect?.getTiming().duration===460);
+const rect=n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,cx:r.x+r.width/2,cy:r.y+r.height/2};};
+const check=(ok,message)=>{if(!ok)throw Error(message);};
+async function until(fn,message,timeout=3000){const deadline=performance.now()+timeout;while(performance.now()<deadline){if(fn())return;await sleep(25);}throw Error(message);}
+async function ready(){await until(()=>doc()&&get('board')?.children.length===9&&!get('gameScreen').hidden&&doc().documentElement.dataset.gameReady==='true'&&doc().documentElement.dataset.layoutReady==='true','游戏没有载入每日挑战',30000);await until(()=>!busy(),'上一动作没有结束');}
+function rotateText(board,direction){const indices=[0,1,4,3],next=[...board];indices.forEach((from,i)=>next[indices[(i+direction+4)%4]]=board[from]);return next.join('');}
+function begin(direction){get(direction===1?'cwBtn':'ccwBtn').click();get('anchors').querySelector('[data-q="0"]').click();}
+async function midpoint(direction){
+  await ready();const original=sequence(),before=moves(),nodes=tiles(),start=nodes.map(rect);begin(direction);
+  await until(()=>animations().length>=4,'没有找到四块图案动画');
+  const list=animations();list.forEach(a=>{a.pause();a.currentTime=230;});await sleep(50);
+  return {original,before,nodes,start,list,direction};
+}
+function continueMotion(){animations().forEach(a=>a.play());}
+async function normal(direction){await ready();begin(direction);await until(()=>!busy(),'动作没有完成');report.className='';report.textContent=`${direction===1?'顺':'逆'}时针已落位，当前 ${moves()} 步。`;}
+async function pause(direction){const s=await midpoint(direction);report.className='';report.textContent=`${direction===1?'顺':'逆'}时针暂停在230/460毫秒。\n四块图案沿圆弧移动，数字保持朝上。\n当前步数 ${moves()}（落位后才增加）。\n点击“继续落位”完成这一步。`;return s;}
+async function verify(){
+  const lines=[];report.className='';report.textContent='正在运行真实网页旋转验收…';
+  const record=text=>{lines.push('通过 · '+text);report.textContent=lines.join('\n');};
+  await ready();
+  const liveBefore=moves(),liveBoard=sequence(),liveTile=tiles()[0],liveFrames=[];
+  begin(1);check(animations().filter(a=>a.effect?.target?.classList?.contains('tile')&&a.effect.getKeyframes().some(k=>'transform' in k)).length===4,'实际播放没有同时启动四块图案');
+  await new Promise((resolve,reject)=>{const started=performance.now();function sample(){if(!busy()){resolve();return;}if(performance.now()-started>3000){reject(Error('连续播放超过3秒仍未完成'));return;}const r=rect(liveTile);liveFrames.push([r.cx.toFixed(2),r.cy.toFixed(2)].join(','));frame.contentWindow.requestAnimationFrame(sample);}sample();});
+  check(new Set(liveFrames).size>=4,'连续播放没有显示足够的中间位置');
+  check(sequence()===rotateText(liveBoard,1)&&moves()===liveBefore+1,'实际播放未正确落位');
+  record(`连续播放：460毫秒动画，观察到${new Set(liveFrames).size}个不同中间位置`);
+  for(const direction of [1,-1]){
+    const s=await midpoint(direction),selected=[0,1,4,3],all=s.nodes.map(rect);
+    check(sequence()===s.original&&moves()===s.before,'尚未落位就提交了棋盘或步数');
+    const bounds={left:Math.min(...selected.map(i=>s.start[i].x)),right:Math.max(...selected.map(i=>s.start[i].x+s.start[i].width)),top:Math.min(...selected.map(i=>s.start[i].y)),bottom:Math.max(...selected.map(i=>s.start[i].y+s.start[i].height))};
+    for(const i of selected){const r=all[i];check(Math.hypot(r.cx-s.start[i].cx,r.cy-s.start[i].cy)>12,'中途位移不明显');check(r.x>=bounds.left-.8&&r.x+r.width<=bounds.right+.8&&r.y>=bounds.top-.8&&r.y+r.height<=bounds.bottom+.8,'中途图案超出选区被裁切');}
+    for(const i of [2,5,6,7,8]){check(Math.abs(all[i].cx-s.start[i].cx)<.1&&Math.abs(all[i].cy-s.start[i].cy)<.1,'其它五格意外移动');check(Number(frame.contentWindow.getComputedStyle(s.nodes[i]).opacity)<.96,'其它五格没有弱化');}
+    check(get('turnFocus')?.getBoundingClientRect().width>0,'选中四格没有高亮');
+    const first=s.start[0],target=s.start[direction===1?1:3],now=all[0];
+    const distance=Math.abs((target.cx-first.cx)*(now.cy-first.cy)-(target.cy-first.cy)*(now.cx-first.cx))/Math.hypot(target.cx-first.cx,target.cy-first.cy);
+    check(distance>12,'四格仍沿直线换位');
+    get('anchors').querySelector('[data-q="1"]').click();
+    continueMotion();await until(()=>!busy(),'动画未落位');
+    check(sequence()===rotateText(s.original,direction),'最终棋盘方向或落点不对');check(moves()===s.before+1,'连点导致多记步');
+    tiles().forEach((n,i)=>{const r=rect(n),b=s.start[i];check(Math.abs(r.x-b.x)<.1&&Math.abs(r.y-b.y)<.1&&Math.abs(r.width-b.width)<.1&&Math.abs(r.height-b.height)<.1,'落位后格子尺寸发生变化');});
+    record(`${direction===1?'顺':'逆'}时针：弧线、完整图块、金色选区、一次落位、连点锁定`);
+  }
+  let original=sequence(),before=moves();await midpoint(1);get('backHome').click();await sleep(520);
+  check(sequence()===original&&moves()===before&&!busy(),'返回后旧动作仍改动棋盘');record('转动中返回：取消动作，旧回调不再记步');
+  get('enterDaily').click();await ready();original=sequence();before=moves();await midpoint(-1);
+  frame.style.width='375px';await sleep(150);await until(()=>!busy(),'尺寸变化没有取消动作');await sleep(520);
+  check(sequence()===original&&moves()===before,'尺寸变化后旧动作仍提交');frame.style.width='390px';await sleep(150);record('转动中改变视口：恢复原局面与格子比例');
+  await normal(1);record('取消后可立即开始下一次旋转');report.className='pass';report.textContent=lines.join('\n')+'\n\n全部通过 · 真实浏览器动画与交互';
+}
+async function run(fn){try{await fn();}catch(error){continueMotion();report.className='fail';report.textContent='未通过 · '+error.message;throw error;}}
+document.querySelector('#normalCW').onclick=()=>run(()=>normal(1));document.querySelector('#normalCCW').onclick=()=>run(()=>normal(-1));
+document.querySelector('#pauseCW').onclick=()=>run(()=>pause(1));document.querySelector('#pauseCCW').onclick=()=>run(()=>pause(-1));
+document.querySelector('#resume').onclick=()=>{continueMotion();report.textContent='继续播放并落位。';};document.querySelector('#verify').onclick=()=>run(verify);
+ready().then(()=>report.textContent='游戏就绪。可正常转动、暂停观察，或运行验收。').catch(error=>report.textContent=error.message);
+</script>
+</html>

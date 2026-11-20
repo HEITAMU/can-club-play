@@ -1,8 +1,8 @@
 {
   "name": "fourfold-cocos",
-  "version": "0.8.4",
+  "version": "0.8.5",
   "private": true,
   "type": "module",
   "creator": {"version": "3.8.8"},
-  "scripts": {"test": "node --test ../tests/core.test.mjs"}
+  "scripts": {"test": "node --test ../tests/core.test.mjs ../tests/turn-motion.test.mjs"}
 }

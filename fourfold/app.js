@@ -1,4 +1,5 @@
-import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.4';
+import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.5';
+import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.5';
 
 const el=id=>document.getElementById(id);
 const $={board:el('board'),anchors:el('anchors'),target:el('target'),moves:el('moves'),par:el('par'),clock:el('clock'),instruction:el('instruction'),difficulty:el('difficulty'),chapterCaption:el('chapterCaption'),puzzleTitle:el('puzzleTitle'),storyTab:el('storyTab'),dailyTab:el('dailyTab'),cwBtn:el('cwBtn'),ccwBtn:el('ccwBtn'),modal:el('modal'),toast:el('toast')};
@@ -14,11 +15,14 @@ const settingsOverlay=el('settingsOverlay');
 const notice=el('startupNotice');
 const tileNodes=new Map();
 const anchorNodes=[];
+const anchorMotionNodes=[],anchorRingNodes=[],knobAngles=[0,0,0,0];
+const turnFocus=el('turnFocus'),boardFrame=el('boardFrame');
 
 let mode='story',key='1',dir=1,board=GOAL,puzzle=null,moves=0,hints=0,won=false,started=0,elapsed=0,claimedBeat=null,highlight=-1;
 let audio=null,soundEnabled=read('sound',true),clockTimer=0,bgTimer=0,toastTimer=0;
 let ready=false,bootFailed=false,pendingOpen=window.ffPending||null;
 let rotating=false,motionEpoch=0,activeAnimations=[];
+let motionFallback=null,hintAnimation=null;
 let rankOrigin='home';
 let roundSerial=0,resultRouteToken=null;
 window.ffReady=false;
@@ -44,15 +48,35 @@ function toast(message){
   $.toast.textContent=message;$.toast.classList.add('show');
   clearTimeout(toastTimer);toastTimer=setTimeout(()=>$.toast.classList.remove('show'),2800);
 }
-function cancelRotation(){
+function stopHintPulse(){
+  if(hintAnimation){hintAnimation.cancel();hintAnimation=null;}
+}
+function clearTurnVisuals(resetKnobs=false){
+  if(resetKnobs)knobAngles.fill(0);
+  for(const tile of tileNodes.values()){
+    tile.style.zIndex='';tile.style.transform='';tile.style.opacity='';tile.style.filter='';
+    tile.classList.remove('turn-selected','turn-muted');
+  }
+  turnFocus.hidden=true;turnFocus.style.opacity='';
+  $.board.classList.remove('rotating');$.anchors.removeAttribute('aria-busy');
+  delete $.board.dataset.turn;delete $.board.dataset.turnDirection;delete $.board.dataset.turnDuration;
+  anchorNodes.forEach((button,q)=>{
+    button.disabled=won;button.classList.remove('turning');
+    anchorMotionNodes[q].style.transform=knobAngles[q]?`rotate(${knobAngles[q]}deg)`:'';
+    anchorMotionNodes[q].style.opacity='';anchorRingNodes[q].style.opacity='';
+  });
+  $.cwBtn.disabled=false;$.ccwBtn.disabled=false;el('hintBtn').disabled=false;
+}
+function cancelRotation({resetKnobs=false}={}){
   motionEpoch++;
   for(const animation of activeAnimations)animation.cancel();
+  if(motionFallback){motionFallback();motionFallback=null;}
+  stopHintPulse();
   activeAnimations=[];rotating=false;
-  for(const tile of tileNodes.values())tile.style.zIndex='';
-  $.board.classList.remove('rotating');$.anchors.removeAttribute('aria-busy');
+  clearTurnVisuals(resetKnobs);
 }
 function showHome(){
-  cancelRotation();
+  cancelRotation({resetKnobs:true});
   el('home').hidden=false;gameScreen.hidden=true;rankScreen.hidden=true;$.modal.hidden=true;settingsOverlay.hidden=true;
   if(puzzle)render();
 }
@@ -76,7 +100,10 @@ function syncSettings(){
   el('settingsSound').textContent=soundEnabled?'♫　音乐与音效：开':'♩　音乐与音效：关';
   el('settingsReset').disabled=!ready||gameScreen.hidden;
 }
-function openSettings(){syncSettings();settingsOverlay.hidden=false;}
+function openSettings(){
+  if(rotating||hintAnimation){cancelRotation();if(puzzle)render();}
+  syncSettings();settingsOverlay.hidden=false;
+}
 el('settingsBtn').onclick=openSettings;
 if(el('homeSettings'))el('homeSettings').onclick=openSettings;
 el('settingsClose').onclick=()=>{settingsOverlay.hidden=true;};
@@ -100,7 +127,7 @@ function best(){return read('best:'+storageKey(),null);}
 function startGame(nextMode=mode,nextKey=key){
   const nextPuzzle=makePuzzle(nextMode,String(nextKey));
   if(nextMode==='daily'&&(nextPuzzle.par<9||nextPuzzle.par>11||nextPuzzle.difficulty!=='宗师'))throw new Error('daily puzzle bank validation failed');
-  cancelRotation();
+  cancelRotation({resetKnobs:true});
   roundSerial++;resultRouteToken=null;$.modal.classList.remove('result-mode');
   mode=nextMode;puzzle=nextPuzzle;key=puzzle.key;board=puzzle.board;dir=1;
   moves=0;hints=0;elapsed=0;started=0;won=false;highlight=-1;$.modal.hidden=true;
@@ -122,8 +149,10 @@ function initBoard(){
   SQUARES.forEach((_,q)=>{
     const button=document.createElement('button');button.type='button';button.className='spin-node';button.dataset.q=String(q);
     button.style.left=`${(q%2+1)*100/3}%`;button.style.top=`${(Math.floor(q/2)+1)*100/3}%`;
+    const motion=document.createElement('span');motion.className='spin-motion';motion.setAttribute('aria-hidden','true');
     const art=document.createElement('span');art.className='spin-art skin skin-rotateKnob';art.setAttribute('aria-hidden','true');
-    button.append(art);anchorNodes.push(button);$.anchors.append(button);
+    const ring=document.createElement('span');ring.className='spin-ring';ring.setAttribute('aria-hidden','true');
+    motion.append(art);button.append(motion,ring);anchorNodes.push(button);anchorMotionNodes.push(motion);anchorRingNodes.push(ring);$.anchors.append(button);
   });
 }
 function render(){
@@ -141,6 +170,7 @@ function render(){
   el('hintLabel').textContent=`✧ 提示 ${remaining}/${limit}`;
   el('hintRemaining').textContent=`${remaining}/${limit}`;
   hintButton.classList.toggle('hint-exhausted',remaining===0);
+  hintButton.disabled=rotating;$.cwBtn.disabled=rotating;$.ccwBtn.disabled=rotating;
   hintButton.setAttribute('aria-disabled',String(won||remaining===0));
   hintButton.setAttribute('aria-label',remaining?`提示，剩余 ${remaining} 次，本局最多 ${limit} 次`:'本局提示已用完');
   hintButton.title=remaining?`本局剩余 ${remaining}/${limit} 次提示`:'本局提示已用完，重新开始可重置';
@@ -157,52 +187,87 @@ function render(){
 }
 
 function canPlay(){return ready&&!gameScreen.hidden&&$.modal.hidden&&settingsOverlay.hidden&&!rotating&&!won;}
+function screenScale(node,rect){
+  const style=window.getComputedStyle?.(node);
+  const width=parseFloat(style?.width)||node.offsetWidth||rect.width;
+  const height=parseFloat(style?.height)||node.offsetHeight||rect.height;
+  return {x:rect.width/width||1,y:rect.height/height||1};
+}
+function playTurnFallback(effects,duration,epoch){
+  return new Promise(resolve=>{
+    const request=window.requestAnimationFrame?fn=>window.requestAnimationFrame(fn):fn=>setTimeout(()=>fn(performance.now()),16);
+    const cancel=window.cancelAnimationFrame?id=>window.cancelAnimationFrame(id):id=>clearTimeout(id);
+    const start=performance.now();let frame=0,done=false;
+    const stop=()=>{if(done)return;done=true;cancel(frame);resolve(false);};
+    motionFallback=stop;
+    function tick(now){
+      if(epoch!==motionEpoch){stop();return;}
+      const progress=Math.min(1,Math.max(0,(now-start)/duration));
+      for(const effect of effects)for(const [name,value] of Object.entries(effect.at(progress)))effect.node.style[name]=value;
+      if(progress<1)frame=request(tick);
+      else{done=true;if(motionFallback===stop)motionFallback=null;resolve(true);}
+    }
+    frame=request(tick);
+  });
+}
 async function spin(q){
   if(!canPlay()||!SQUARES[q])return;
-  if(!started)started=performance.now();
-  rotating=true;highlight=-1;
-  const epoch=++motionEpoch,nextBoard=rotate(board,q,dir),direction=dir;
   const affected=SQUARES[q].map(index=>tileNodes.get(board[index]));
   const rectangles=affected.map(tile=>tile.getBoundingClientRect());
-  const scaleX=rectangles[0].width/(affected[0].offsetWidth||rectangles[0].width||1)||1;
-  const scaleY=rectangles[0].height/(affected[0].offsetHeight||rectangles[0].height||1)||1;
-  const centers=rectangles.map(r=>({x:r.left+r.width/2,y:r.top+r.height/2}));
-  const pivot={x:centers.reduce((sum,c)=>sum+c.x,0)/4,y:centers.reduce((sum,c)=>sum+c.y,0)/4};
-  // The approved reference uses rectangular grid strides. Rotate in normalized
-  // grid coordinates so a quarter turn lands on the next cell on either axis.
-  const radiusX=(Math.max(...centers.map(c=>c.x))-Math.min(...centers.map(c=>c.x)))/2||1;
-  const radiusY=(Math.max(...centers.map(c=>c.y))-Math.min(...centers.map(c=>c.y)))/2||1;
-  affected.forEach(tile=>{tile.style.zIndex='2';});
-  $.board.classList.add('rotating');$.anchors.setAttribute('aria-busy','true');
-  anchorNodes.forEach(button=>{button.disabled=true;button.classList.remove('hinted');});
-  const reduceMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  if(!reduceMotion&&rectangles[0].width&&typeof affected[0].animate==='function'){
-    activeAnimations=affected.map((tile,index)=>{
-      const center=centers[index],x=center.x-pivot.x,y=center.y-pivot.y;
-      const normalizedX=x/radiusX,normalizedY=y/radiusY;
-      const target=centers[(index+direction+4)%4];
-      const endX=-direction*normalizedY*radiusX,endY=direction*normalizedX*radiusY;
-      const correctionX=target.x-pivot.x-endX,correctionY=target.y-pivot.y-endY;
-      const frames=Array.from({length:9},(_,frame)=>{
-        const progress=frame/8,angle=direction*Math.PI/2*progress;
-        const easeCorrection=progress*progress*(3-2*progress);
-        const nextX=(normalizedX*Math.cos(angle)-normalizedY*Math.sin(angle))*radiusX+correctionX*easeCorrection;
-        const nextY=(normalizedX*Math.sin(angle)+normalizedY*Math.cos(angle))*radiusY+correctionY*easeCorrection;
-        return {transform:`translate(${(nextX-x)/scaleX}px,${(nextY-y)/scaleY}px)`,offset:progress};
-      });
-      // Translate each illustrated piece around the pivot without rotating its own artwork.
-      return tile.animate(frames,{duration:170,easing:'cubic-bezier(.25,.7,.3,1)',fill:'both'});
-    });
-    await Promise.allSettled(activeAnimations.map(animation=>animation.finished));
+  if(rectangles.some(r=>r.width<=0||r.height<=0))return;
+  const scales=affected.map((tile,index)=>screenScale(tile,rectangles[index]));
+  const knobRect=anchorNodes[q].getBoundingClientRect();
+  const motion=createTurnMotion(rectangles.map(r=>({x:r.left,y:r.top,width:r.width,height:r.height})),dir,{x:knobRect.left+knobRect.width/2,y:knobRect.top+knobRect.height/2});
+  if(!started)started=performance.now();
+  stopHintPulse();rotating=true;highlight=-1;
+  const epoch=++motionEpoch,nextBoard=rotate(board,q,dir),direction=dir,startAngle=knobAngles[q];
+  const reduceMotion=!!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  const duration=reduceMotion?120:TURN_DURATION_MS;
+  const offsets=reduceMotion?[0,.45,.55,1]:Array.from({length:TURN_KEYFRAME_COUNT},(_,i)=>i/(TURN_KEYFRAME_COUNT-1));
+  const fadeAt=p=>p<=.45?1-p/.45:p<.55?0:(p-.55)/.45;
+  const focusAt=p=>reduceMotion?Math.sin(Math.PI*p)*.45:sampleTurn(motion,0,p).focus;
+  const selected=new Set(affected);
+  for(const tile of tileNodes.values()){
+    tile.classList.toggle('turn-selected',selected.has(tile));tile.classList.toggle('turn-muted',!selected.has(tile));
+    if(selected.has(tile))tile.style.zIndex='2';
   }
+  const frameRect=boardFrame.getBoundingClientRect(),frameScale=screenScale(boardFrame,frameRect),bounds=motion.bounds;
+  turnFocus.style.left=(bounds.left-frameRect.left)/frameScale.x+'px';turnFocus.style.top=(bounds.top-frameRect.top)/frameScale.y+'px';
+  turnFocus.style.width=(bounds.right-bounds.left)/frameScale.x+'px';turnFocus.style.height=(bounds.bottom-bounds.top)/frameScale.y+'px';turnFocus.hidden=false;
+  $.board.classList.add('rotating');$.anchors.setAttribute('aria-busy','true');
+  $.board.dataset.turn=String(q);$.board.dataset.turnDirection=String(direction);$.board.dataset.turnDuration=String(duration);
+  anchorNodes.forEach(button=>{button.disabled=true;button.classList.remove('hinted');});anchorNodes[q].classList.add('turning');
+  $.cwBtn.disabled=true;$.ccwBtn.disabled=true;el('hintBtn').disabled=true;
+  const effects=affected.map((tile,index)=>({node:tile,role:'tile-'+tile.dataset.token,at:p=>{
+    const sample=sampleTurn(motion,index,reduceMotion?(p<.5?0:1):p);
+    const landing=!reduceMotion&&p>=.9?Math.sin(Math.PI*(p-.9)/.1)*.18:0;
+    return {transform:`translate(${sample.dx/scales[index].x}px,${sample.dy/scales[index].y}px) scale(${sample.scaleX},${sample.scaleY})`,opacity:reduceMotion?fadeAt(p):1,filter:`brightness(${1+(reduceMotion?0:.08*sample.focus)+landing})`};
+  }}));
+  for(const tile of tileNodes.values())if(!selected.has(tile))effects.push({node:tile,role:'dim-'+tile.dataset.token,at:p=>({opacity:1-(reduceMotion ? .14*Math.sin(Math.PI*p) : .44*focusAt(p))})});
+  effects.push({node:turnFocus,role:'focus',at:p=>({opacity:focusAt(p)})});
+  effects.push({node:anchorRingNodes[q],role:'ring',at:p=>({opacity:focusAt(p)})});
+  effects.push({node:anchorMotionNodes[q],role:'knob',at:p=>({transform:`rotate(${startAngle+(reduceMotion?(p<.5?0:direction*90):sampleTurn(motion,0,p).angle)}deg)`,opacity:reduceMotion?fadeAt(p):1})});
+  let completed=false;
+  try{
+    if(typeof affected[0].animate==='function'){
+      activeAnimations=[];
+      for(const effect of effects){
+        const animation=effect.node.animate(offsets.map(offset=>({...effect.at(offset),offset})),{duration,easing:'linear',fill:'both'});
+        animation.id='fourfold-turn-'+effect.role;animation.finished.catch(()=>{});activeAnimations.push(animation);
+      }
+      const results=await Promise.allSettled(activeAnimations.map(animation=>animation.finished));
+      completed=results.every(result=>result.status==='fulfilled');
+    }else completed=await playTurnFallback(effects,duration,epoch);
+  }catch{completed=false;}
   if(epoch!==motionEpoch)return;
-  board=nextBoard;moves++;rotating=false;
+  if(!completed){cancelRotation();render();return;}
+  board=nextBoard;moves++;knobAngles[q]=(startAngle+direction*90)%360;
   for(const animation of activeAnimations)animation.cancel();
-  affected.forEach(tile=>{tile.style.zIndex='';});
-  activeAnimations=[];$.board.classList.remove('rotating');$.anchors.removeAttribute('aria-busy');
+  activeAnimations=[];rotating=false;clearTurnVisuals();
   sound(365+q*70);render();
   if(isSolved(board))finish();
 }
+
 function finish(){
   won=true;elapsed=started?(performance.now()-started)/1000:0;
   const metric={moves,par:puzzle.par,seconds:Math.floor(elapsed),hints,score:resultScore(moves,elapsed,hints),day:key};
@@ -301,7 +366,11 @@ function hint(){
   const path=shortestPath(board);if(!path.length)return;
   hints++;dir=path[0].dir;highlight=path[0].q;render();
   const button=anchorNodes[highlight];
-  if(typeof button.animate==='function')button.animate([{transform:'translate(-50%,-50%) scale(1)'},{transform:'translate(-50%,-50%) scale(1.15)'},{transform:'translate(-50%,-50%) scale(1)'}],{duration:750,iterations:2});
+  stopHintPulse();
+  if(typeof button.animate==='function'){
+    const pulse=button.animate([{transform:'translate(-50%,-50%) scale(1)'},{transform:'translate(-50%,-50%) scale(1.15)'},{transform:'translate(-50%,-50%) scale(1)'}],{duration:750,iterations:2});
+    hintAnimation=pulse;pulse.finished.catch(()=>{}).then(()=>{if(hintAnimation===pulse)hintAnimation=null;});
+  }
   const remaining=limit-hints;
   toast(remaining?`点击高亮旋转点；本局剩余 ${remaining}/${limit} 次提示`:'点击高亮旋转点；本局提示已用完');sound(660,.3);
 }
@@ -332,6 +401,10 @@ function startTimers(){
 }
 window.addEventListener('pagehide',()=>{cancelRotation();clearInterval(clockTimer);clearInterval(bgTimer);});
 window.addEventListener('pageshow',event=>{if(event.persisted&&ready){render();startTimers();}});
+function onMotionResize(){if(rotating||hintAnimation){cancelRotation();if(puzzle)render();}}
+window.addEventListener('resize',onMotionResize);
+window.visualViewport?.addEventListener('resize',onMotionResize);
+document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelRotation();if(puzzle)render();}});
 
 const ART_FILES=['home-scene.webp','celestial-mural.webp','ui-atlas.webp','daily-banner.webp','reference-daily.webp','reference-clean.webp','rank-scene.webp','result-panel.webp'];
 function preloadArt(file){
