@@ -15,6 +15,14 @@ el('enterStory').onclick=()=>{showGame();startGame('story',String(read('unlocked
 el('enterDaily').onclick=()=>{showGame();startGame('daily',currentDay());};
 el('enterRank').onclick=()=>{showRank();};
 el('backHome').onclick=showHome;
+const settingsOverlay=el('settingsOverlay');
+const syncSettings=()=>{el('settingsSound').textContent=soundEnabled?'♫　音乐与音效：开':'♩　音乐与音效：关';};
+el('settingsBtn').onclick=()=>{syncSettings();settingsOverlay.hidden=false;};
+el('settingsClose').onclick=()=>{settingsOverlay.hidden=true;};
+settingsOverlay.addEventListener('click',e=>{if(e.target===settingsOverlay)settingsOverlay.hidden=true;});
+el('settingsSound').onclick=()=>{soundEnabled=!soundEnabled;write('sound',soundEnabled);if(soundEnabled){if(audio?.state==='suspended')audio.resume().catch(()=>{});sound(523);}else if(audio)audio.suspend().catch(()=>{});syncSettings();};
+el('settingsReset').onclick=()=>{settingsOverlay.hidden=true;reset();};
+el('settingsHome').onclick=()=>{settingsOverlay.hidden=true;showHome();};
 function sound(note=440,len=.13,volume=.038){if(!soundEnabled)return;try{audio ||= new (window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume();const osc=audio.createOscillator(),gain=audio.createGain();osc.type='sine';osc.frequency.setValueAtTime(note,audio.currentTime);osc.frequency.exponentialRampToValueAtTime(note*.79,audio.currentTime+len);gain.gain.setValueAtTime(volume,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+len);osc.connect(gain);gain.connect(audio.destination);osc.start();osc.stop(audio.currentTime+len);}catch{}}
 function backgroundMusic(){if(!soundEnabled||document.hidden||!audio||audio.state!=='running')return;const notes=[196,247,294,392,330,294,247,220];sound(notes[Math.floor(Date.now()/6000)%notes.length],1.6,.008);}
 function toast(msg){$.toast.textContent=msg;$.toast.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>$.toast.classList.remove('show'),2800);}
@@ -32,7 +40,7 @@ function render(){
   $.board.innerHTML=board.split('').map((tok,i)=>`<div class="tile ${i<9?'pulse':''}" data-token="${tok}" style="--pos:${pos(Number(tok)-1)}" aria-label="星图碎片 ${tok}"><span class="index">${tok} ${chars[Number(tok)-1]}</span></div>`).join('');
   $.anchors.innerHTML=SQUARES.map((_,q)=>`<button type="button" class="spin-node" aria-label="${q+1}号旋转点，${dir===1?'顺':'逆'}时针旋转四格" style="left:${q%2?66.6667:33.3333}%;top:${q>=2?66.6667:33.3333}%" data-q="${q}">${dir===1?'↻':'↺'}</button>`).join('');
   $.cwBtn.classList.toggle('selected',dir===1);$.ccwBtn.classList.toggle('selected',dir===-1);
-  el('nextBtn').textContent=won?(mode==='daily'?'继续闯关 →':+key===18?'全部通关 ✓':'下一关 →'):'完成后解锁 →';
+  el('nextBtn').textContent=won?'下一关 →':'';
 }
 function spin(q){if(won)return;if(!started)started=performance.now();board=rotate(board,q,dir);moves++;highlight=-1;render();sound(365+q*70);if(isSolved(board))finish();}
 function finish(){won=true;elapsed=started?(performance.now()-started)/1000:0;const metric={moves,par:puzzle.par,seconds:Math.floor(elapsed),hints,score:resultScore(moves,elapsed,hints),day:key};const prev=best();const better=!prev || (hints===0&&prev.hints>0)||(hints===prev.hints&&(moves<prev.moves||(moves===prev.moves&&metric.seconds<prev.seconds)));
@@ -50,10 +58,10 @@ function hint(){if(won){toast('本局已经通关');return;}const path=shortestP
 function reset(){startGame(mode,key);toast('已重置，重新挑战最优解');}
 $.anchors.addEventListener('click',e=>{const b=e.target.closest('button[data-q]');if(b)spin(Number(b.dataset.q));});
 el('cwBtn').onclick=()=>{dir=1;render();sound(390)};el('ccwBtn').onclick=()=>{dir=-1;render();sound(350)};
-el('resetBtn').onclick=reset;el('hintBtn').onclick=hint;el('shareBtn').onclick=share;el('nextBtn').onclick=nextLevel;el('rankBtn').onclick=showRank;
+el('resetBtn').onclick=reset;el('hintBtn').onclick=hint;el('shareBtn').onclick=share;el('nextBtn').onclick=nextLevel;
 $.storyTab.onclick=()=>{claimedBeat=null;startGame('story',String(read('unlocked',1)));};$.dailyTab.onclick=()=>{claimedBeat=null;startGame('daily',currentDay());};
 el('closeModal').onclick=()=>{$.modal.hidden=true;};$.modal.addEventListener('click',e=>{if(e.target===$.modal)$.modal.hidden=true;});
-el('soundBtn').onclick=()=>{soundEnabled=!soundEnabled;write('sound',soundEnabled);el('soundBtn').textContent=soundEnabled?'♫':'♩';if(soundEnabled){sound(523);backgroundMusic();}else if(audio){audio.suspend().catch(()=>{});}toast(soundEnabled?'声音已开启':'声音已关闭');};el('soundBtn').textContent=soundEnabled?'♫':'♩';
+if(soundEnabled){sound(523);backgroundMusic();}else if(audio){audio.suspend().catch(()=>{});}toast(soundEnabled?'声音已开启':'声音已关闭');};el('soundBtn').textContent=soundEnabled?'♫':'♩';
 window.addEventListener('keydown',e=>{if(e.key==='Escape')$.modal.hidden=true;else if(e.key==='r'||e.key==='R')reset();else if(e.key==='1'||e.key==='2'||e.key==='3'||e.key==='4')spin(Number(e.key)-1);else if(e.key===' ') {e.preventDefault();dir=-dir;render();}});
 window.setInterval(updateTime,220);bgTimer=window.setInterval(backgroundMusic,6600);
 const entry=parseChallenge(new URLSearchParams(location.search));claimedBeat=entry.beat;startGame(entry.mode,entry.key);if(new URLSearchParams(location.search).has('mode'))showGame();else showHome();if(claimedBeat!==null)toast(`好友向你发起挑战：试试能否少于 ${claimedBeat} 步！`);
