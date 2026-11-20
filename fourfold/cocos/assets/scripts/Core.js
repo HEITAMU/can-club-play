@@ -44,11 +44,17 @@ export function shortestPath(from) {
 export function hash(input){let h=2166136261>>>0;for(const ch of String(input)){h=Math.imul(h ^ ch.charCodeAt(0),16777619)>>>0;}return h>>>0;}
 function rand(seed){let x=seed||0x9e3779b9;return ()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return(x>>>0)/4294967296;};}
 /** date YYYY-MM-DD; level 1..18。生成独立的确定性残局。 */
+// Curated 18-level story progression; each board's exact distance was verified by exhaustive BFS.
+export const STORY_BOARDS=["152463789","413526789","152743869","136285479","413278596","413892576","541682793","542361789","523716849","254681793","243619758","254739861","215874369","215378694","624389517","284765913","624397581","624581397"];
+export const STORY_PAR=[1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,10];
 export function makePuzzle(mode='story', key='1'){
   if(mode!=='story'&&mode!=='daily')throw new Error('invalid mode');
   if(!/^[0-9-]{1,14}$/.test(String(key)))throw new Error('invalid key');
   if(mode==='daily')return dailyBankPuzzle(String(key));
-  const level=mode==='story'?Math.max(1,Math.min(18,Number(key)||1)):0;
+  const level=Math.max(1,Math.min(18,Number(key)||1));
+  const board=STORY_BOARDS[level-1],par=STORY_PAR[level-1];
+  return {board,par,mode:'story',key:String(level),level,difficulty:par<=2?'入门':par<=4?'普通':par<=6?'进阶':par<=8?'高手':'宗师'};
+  /* legacy generator retained below for comparison only */
   const target=mode==='daily'?7:Math.min(8,Math.max(2,2+Math.floor(level*.42)));
   const r=rand(hash(mode+':'+key+':fourfold-v1'));
   let pick=null;
