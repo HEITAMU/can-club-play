@@ -7,6 +7,7 @@ import {
 } from 'cc';
 import {GOAL,SQUARES,makePuzzle,todayCN,rotate,isSolved,shortestPath,honor,resultScore} from './Core';
 const {ccclass}=_decorator;
+const HINT_MODE:'free'|'rewarded'='free'; // 未开通广告时，正式上线也免费提示；开通后再显式切换。
 const AD_IDS={rewarded:'',banner:''}; // 接入时只填写微信公众平台提供的真实 adUnitId。
 const C={background:'#F8DEB7',surface:'#FFF1D6',gold:'#F5CB79',gold2:'#C88B4D',white:'#FFF4D7',muted:'#977253',dark:'#5B301F',edge:'#825037',night:'#1B2345',shadow:'#B27C50'};
 const ART_PATHS={home:'art/home-scene',atlas:'art/ui-atlas',referenceOriginal:'art/reference-daily',referenceClean:'art/reference-clean'};
@@ -23,6 +24,7 @@ export class FourfoldGame extends Component {
   private safeTop=0;private safeBottom=0;private inHome=true;private mode='story';private key='1';private puzzle:any;
   private board=GOAL;private direction=1;private moves=0;private hints=0;private elapsed=0;private startAt=0;private won=false;private modal='';private busy=false;
   private clockLabel:Label|null=null;private rewardAd:any=null;private banner:any=null;private toastNode:Node|null=null;
+  private roundSerial=0;private hintRequest:any=null;private disposed=false;
   private assetsReady=false;private loading=false;private loadError='';private loadProgress=0;private loadSerial=0;
   private textures:Record<string,Texture2D>={};private frames:Record<string,SpriteFrame>={};private images:ImageAsset[]=[];private manifest:any=null;private reference:any=null;
   private tileNodes:Node[]=[];private boardLayout={x:0,y:0,size:0,unit:0};private launchQuery:any={};
@@ -150,6 +152,7 @@ export class FourfoldGame extends Component {
   }
   private startGame(mode:string,key:string,home=false){
     try{this.puzzle=makePuzzle(mode,key);}catch(e){console.warn('unavailable challenge',e);this.toast('这个日期的挑战暂不可用');if(!this.puzzle){this.puzzle=makePuzzle('story','1');mode='story';key='1';home=true;}else return;}
+    this.roundSerial++; // 同一关重开也不能领取上一局尚未结束的广告奖励。
     this.mode=mode;this.key=key;this.inHome=home;this.board=this.puzzle.board;this.direction=1;this.moves=0;this.hints=0;this.startAt=0;this.elapsed=0;this.won=false;this.busy=false;this.modal='';this.hideBanner();this.draw();
   }
   private updateClock(){if(this.startAt&&!this.won&&!this.inHome)this.elapsed=(at()-this.startAt)/1000;if(this.clockLabel)this.clockLabel.string=clock(this.elapsed);}
@@ -385,13 +388,52 @@ export class FourfoldGame extends Component {
   }
   private nextLevel(){if(!this.won){this.toast('先完成本关，再解锁后续关卡');return;}if(this.mode==='daily')this.startGame('story',String(this.unlocked()));else if(Number(this.key)<18)this.startGame('story',String(Number(this.key)+1));else this.startGame('daily',todayCN());}
   private applyHint(){if(this.won)return;const path=shortestPath(this.board);if(!path.length)return;this.hints++;this.direction=path[0].dir;this.draw();this.toast(`点击第 ${path[0].q+1} 个旋转点（从左上到右下）`);}
-  private askHint(){
-    if(this.won)return;const sdk=wxSDK();
-    if(!sdk||!AD_IDS.rewarded){this.applyHint();return;}
+  private hintRequestCurrent(request:any){return !this.disposed&&this.hintRequest===request&&request.round===this.roundSerial&&!this.inHome&&!this.won;}
+  private releaseHintRequest(request:any){
+    if(this.hintRequest!==request)return;this.hintRequest=null;
+    try{request.ad.offClose?.(request.onClose);}catch(e){console.warn('hint close listener cleanup failed',e);}
+    try{request.ad.offError?.(request.onError);}catch(e){console.warn('hint error listener cleanup failed',e);}
+  }
+  private failHintRequest(request:any){
+    const current=this.hintRequestCurrent(request);this.releaseHintRequest(request);
+    if(current)this.toast('提示广告暂不可用，请稍后再试');
+  }
+  private async askHint(){
+    if(this.disposed||this.won||this.inHome||this.busy||!this.assetsReady)return;
+    const sdk=wxSDK();
+    // 免费期不创建广告对象；以后填入 ID 也不会自动改变玩家当前的提示方式。
+    if(HINT_MODE==='free'){this.applyHint();return;}
+    if(this.hintRequest)return;
+    if(!AD_IDS.rewarded||typeof sdk?.createRewardedVideoAd!=='function'){this.toast('提示广告暂不可用，请稍后再试');return;}
+    let request:any=null;
     try{
-      if(!this.rewardAd){this.rewardAd=sdk.createRewardedVideoAd({adUnitId:AD_IDS.rewarded});this.rewardAd.onClose((res:any)=>{if(res?.isEnded===true)this.applyHint();else this.toast('未观看完整广告，未消耗提示机会');});this.rewardAd.onError((err:any)=>{console.warn(err);this.toast('广告加载失败，可以继续挑战');});}
-      this.rewardAd.show().catch(()=>this.rewardAd.load().then(()=>this.rewardAd.show()).catch(()=>this.toast('广告暂不可用')));
-    }catch{this.toast('广告接口暂不可用');}
+      const ad=this.rewardAd||(this.rewardAd=sdk.createRewardedVideoAd({adUnitId:AD_IDS.rewarded}));
+      request={ad,round:this.roundSerial,opening:true,onClose:null,onError:null};this.hintRequest=request;
+      request.onClose=(res:any)=>{
+        const current=this.hintRequestCurrent(request);this.releaseHintRequest(request);
+        if(!current)return;
+        if(res?.isEnded===true)this.applyHint();else this.toast('看完视频才能获得提示');
+      };
+      request.onError=(err:any)=>{
+        if(this.hintRequest!==request||this.disposed)return;
+        console.warn('hint ad unavailable',err);
+        // 展示/加载阶段由 Promise 统一重试、结算，避免同一次失败处理两遍。
+        if(!request.opening)this.failHintRequest(request);
+      };
+      ad.onClose(request.onClose);ad.onError(request.onError);
+      try{await ad.show();}catch{
+        if(!this.hintRequestCurrent(request)){this.releaseHintRequest(request);return;}
+        await ad.load();
+        if(!this.hintRequestCurrent(request)){this.releaseHintRequest(request);return;}
+        await ad.show();
+      }
+      request.opening=false;
+      if(!this.hintRequestCurrent(request))this.releaseHintRequest(request);
+    }catch(e){
+      if(this.disposed)return;
+      console.warn('hint ad request failed',e);
+      if(request)this.failHintRequest(request);else this.toast('提示广告暂不可用，请稍后再试');
+    }
   }
   private showBanner(){const sdk=wxSDK();if(!sdk||!AD_IDS.banner)return;try{
     const info=sdk.getWindowInfo?.()||sdk.getSystemInfoSync?.();const width=Math.min(info.windowWidth||320,320);
@@ -444,5 +486,9 @@ export class FourfoldGame extends Component {
     this.shape(0,0,this.width-50,50,C.surface,C.edge,15,g.content);this.txt(message,10,3,this.width-70,44,13,C.dark,true,g.content);
     this.scheduleOnce(()=>{if(this.toastNode===g.node)this.toastNode=null;if(g.node.isValid)g.node.destroy();},2.5);
   }
-  onDestroy(){screen.off('window-resize',this.onWindowResize,this);this.loadSerial++;this.hideBanner();try{this.rewardAd?.destroy?.();}catch{}this.disposeArt();}
+  onDestroy(){
+    this.disposed=true;this.roundSerial++;screen.off('window-resize',this.onWindowResize,this);this.loadSerial++;
+    if(this.hintRequest)this.releaseHintRequest(this.hintRequest);
+    this.hideBanner();try{this.rewardAd?.destroy?.();}catch{}this.rewardAd=null;this.disposeArt();
+  }
 }
