@@ -170,13 +170,27 @@ export class FourfoldGame extends Component {
   }
   private drawHome(){
     const w=this.width,h=this.height;
-    // 保留原画比例；只在较高的微信胶囊下整体下移，裁掉的部分仅为底端背景。
-    this.art('home',0,Math.max(0,this.safeTop-58),w,h);
+    // 原画与按钮都按素材宽高比缩放；短屏/安全区只改变整体大小，不能压扁书、窗或星仪。
+    const source=this.textures.home,sceneTop=Math.max(0,this.safeTop-58),bottom=h-this.safeBottom-12;
+    const scale=Math.min(w/source.width,Math.max(1,bottom-sceneTop)/source.height);
+    const sceneW=source.width*scale,sceneH=source.height*scale,sceneX=(w-sceneW)/2,uiScale=sceneW/390;
+    this.art('home',sceneX,sceneTop,sceneW,sceneH);
     this.iconButton('settingsButton',16,Math.max(14,this.safeTop+6),42,()=>{this.modal='settings';this.draw();});
-    const bh=62,gap=12,start=Math.min(h*.64,h-this.safeBottom-38-bh*3-gap*2);
-    this.btn('✦ 进入星图',35,start,w-70,bh,()=>this.startGame('story',String(this.unlocked())),'goldButton',22);
-    this.btn('◇ 每日挑战',35,start+bh+gap,w-70,bh,()=>this.startGame('daily',todayCN()),'creamButton',21);
-    this.btn('♛ 好友荣誉榜',35,start+(bh+gap)*2,w-70,bh,()=>this.showRank(),'lavenderButton',21);
+    // 插画在原图上部结束，下部36%为空白纸面；菜单跟随插画比例排在其下。
+    const menuW=sceneW*(320/390),menuX=(w-menuW)/2,gap=12*uiScale;
+    let y=sceneTop+sceneH*.64;
+    const entries=[
+      {text:'✦ 进入星图',frame:'goldButton',size:22,action:()=>this.startGame('story',String(this.unlocked()))},
+      {text:'◇ 每日挑战',frame:'creamButton',size:21,action:()=>this.startGame('daily',todayCN())},
+      {text:'♛ 好友荣誉榜',frame:'lavenderButton',size:21,action:()=>this.showRank()},
+    ];
+    for(const entry of entries){
+      const r=this.manifest.atlas.frames[entry.frame],buttonH=menuW*r.h/r.w;
+      const button=this.btn(entry.text,menuX,y,menuW,buttonH,entry.action,entry.frame,entry.size*uiScale);
+      // 点击范围可扩大，内部原画仍按素材比例绘制。
+      if(buttonH<44)button.getComponent(UITransform).setContentSize(menuW,44);
+      y+=buttonH+gap;
+    }
   }
   private statCard(frame:string,label:string,value:string,x:number,y:number,w:number,h:number,isClock=false){
     this.art(frame,x,y,w,h);
