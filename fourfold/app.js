@@ -9,9 +9,12 @@ const read=(key,otherwise)=>{try{const v=localStorage.getItem('fourfold:'+key);r
 const write=(key,value)=>{try{localStorage.setItem('fourfold:'+key,JSON.stringify(value));}catch{}};
 let mode='story',key='1',dir=1,board=GOAL,puzzle=null,moves=0,hints=0,won=false,started=0,elapsed=0,claimedBeat=null,highlight=-1,showingRanks=false;
 let bgTimer=0,audio=null,soundEnabled=read('sound',true);
+window.ffReady=true;
 const showHome=()=>{el('home').hidden=false;el('gameScreen').hidden=true;$.modal.hidden=true;el('homeProgress').textContent=String(read('unlocked',1)).padStart(2,'0')+' / 18';};
 const showGame=()=>{el('home').hidden=true;el('gameScreen').hidden=false;};
 el('enterStory').onclick=()=>{showGame();startGame('story',String(read('unlocked',1)));};
+window.ffOpen=(which)=>{if(which==='rank'){showRank();return;}showGame();startGame(which==='daily'?'daily':'story',which==='daily'?currentDay():String(read('unlocked',1)));};
+const notice=el('startupNotice');if(notice)notice.hidden=true;
 el('enterDaily').onclick=()=>{showGame();startGame('daily',currentDay());};
 el('enterRank').onclick=()=>{showRank();};
 el('backHome').onclick=showHome;
