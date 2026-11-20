@@ -58,10 +58,9 @@ function hint(){if(won){toast('本局已经通关');return;}const path=shortestP
 function reset(){startGame(mode,key);toast('已重置，重新挑战最优解');}
 $.anchors.addEventListener('click',e=>{const b=e.target.closest('button[data-q]');if(b)spin(Number(b.dataset.q));});
 el('cwBtn').onclick=()=>{dir=1;render();sound(390)};el('ccwBtn').onclick=()=>{dir=-1;render();sound(350)};
-el('resetBtn').onclick=reset;el('hintBtn').onclick=hint;el('shareBtn').onclick=share;el('nextBtn').onclick=nextLevel;
+el('hintBtn').onclick=hint;el('shareBtn').onclick=share;el('nextBtn').onclick=nextLevel;
 $.storyTab.onclick=()=>{claimedBeat=null;startGame('story',String(read('unlocked',1)));};$.dailyTab.onclick=()=>{claimedBeat=null;startGame('daily',currentDay());};
 el('closeModal').onclick=()=>{$.modal.hidden=true;};$.modal.addEventListener('click',e=>{if(e.target===$.modal)$.modal.hidden=true;});
-if(soundEnabled){sound(523);backgroundMusic();}else if(audio){audio.suspend().catch(()=>{});}toast(soundEnabled?'声音已开启':'声音已关闭');};el('soundBtn').textContent=soundEnabled?'♫':'♩';
 window.addEventListener('keydown',e=>{if(e.key==='Escape')$.modal.hidden=true;else if(e.key==='r'||e.key==='R')reset();else if(e.key==='1'||e.key==='2'||e.key==='3'||e.key==='4')spin(Number(e.key)-1);else if(e.key===' ') {e.preventDefault();dir=-dir;render();}});
 window.setInterval(updateTime,220);bgTimer=window.setInterval(backgroundMusic,6600);
 const entry=parseChallenge(new URLSearchParams(location.search));claimedBeat=entry.beat;startGame(entry.mode,entry.key);if(new URLSearchParams(location.search).has('mode'))showGame();else showHome();if(claimedBeat!==null)toast(`好友向你发起挑战：试试能否少于 ${claimedBeat} 步！`);
