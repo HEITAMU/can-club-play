@@ -2,11 +2,11 @@
 <html lang="zh-CN"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
 <meta name="theme-color" content="#0b1329"/><meta name="description" content="四格诡局：与朋友比一比，谁能用最少步数复原失落星图。"/>
-<title>四格诡局 · 每日同题脑力挑战</title><link rel="icon" type="image/svg+xml" href="assets/icon.svg"/><link rel="stylesheet" href="style.css?v=0.4.5" />
+<title>四格诡局 · 每日同题脑力挑战</title><link rel="icon" type="image/svg+xml" href="assets/icon.svg"/><link rel="stylesheet" href="style.css?v=0.4.6" />
 </head><body>
 <div class="aurora a1"></div><div class="aurora a2"></div>
 <main class="shell" id="app">
-<section id="home" class="home-screen"><div class="cozy-window"><div class="cozy-sun">☀</div><div class="cozy-plant">❀</div></div><div class="cozy-title"><span>✦</span>四格诡局</div><div class="cozy-subtitle">F O U R F O L D</div><div class="cozy-notebook"><div class="cozy-ring">✦</div><div class="cozy-caption">星图手册</div></div><div class="cozy-menu"><button id="enterStory" onclick="window.ffOpen&&window.ffOpen('story')">✦　进入星图</button><button id="enterDaily" onclick="window.ffOpen&&window.ffOpen('daily')">◈　每日挑战</button><button id="enterRank" onclick="window.ffOpen&&window.ffOpen('rank')">♛　好友荣誉榜</button></div><div class="cozy-cat">ฅ^•ﻌ•^ฅ</div><div class="cozy-desk"></div><span id="homeProgress" class="cozy-progress">第 1 / 18 关</span></section>
+<section id="home" class="home-screen"><div class="cozy-window"><div class="cozy-sun">☀</div><div class="cozy-plant">❀</div></div><div class="cozy-title"><span>✦</span>四格诡局</div><div class="cozy-subtitle">F O U R F O L D</div><div class="cozy-notebook"><div class="cozy-ring">✦</div><div class="cozy-caption">星图手册</div></div><div class="cozy-menu"><button id="enterStory" onclick="window.ffOpen&&window.ffOpen('story')">✦　进入星图</button><button id="enterDaily" onclick="window.ffOpen&&window.ffOpen('daily')">◈　每日挑战</button><button id="enterRank" onclick="window.ffOpen&&window.ffOpen('rank')">♛　好友荣誉榜</button></div></section>
 <div id="gameScreen" class="game-screen" hidden>
 <header class="top compact-top"><button id="backHome" class="home-back" aria-label="返回主界面">‹</button><button id="settingsBtn" class="settings-gear" aria-label="设置">⚙</button></header>
 
@@ -37,5 +37,5 @@ window.addEventListener('error',function(e){var n=document.getElementById('start
 window.addEventListener('unhandledrejection',function(){var n=document.getElementById('startupNotice');if(n){n.hidden=false;n.textContent='加载失败，请刷新页面';}});
 </script>
 <div id="startupNotice" hidden role="status" style="position:fixed;z-index:100;left:15%;right:15%;top:45%;padding:14px;border-radius:14px;background:#fff1d2;color:#70462d;text-align:center;border:2px solid #9d724c"></div>
-<script type="module" src="app.js?v=0.4.5"></script>
+<script type="module" src="app.js?v=0.4.6"></script>
 </body></html>

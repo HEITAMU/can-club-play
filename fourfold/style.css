@@ -67,3 +67,9 @@ html,body{height:100%;overflow:hidden;background:#d9b68d;overscroll-behavior:non
 .cozy-menu{margin-top:clamp(54px,10vh,110px)!important}
 .cozy-progress{top:4%;right:4%;font-size:13px;padding:7px 10px;border-radius:12px;background:#ffefd0b8;border:1px solid #a777515e}
 @media(max-height:720px){.cozy-menu{margin-top:clamp(28px,5vh,60px)!important}}
+
+/* v0.4.6: remove red-marked counter and bottom desk; lower the three menu buttons */
+.cozy-progress,.cozy-desk,.cozy-cat,.cozy-footer{display:none!important}
+.home-screen{background:linear-gradient(125deg,#f8e7c7 0%,#efd4b4 58%,#e3bb97 100%)}
+.cozy-menu{margin-top:clamp(98px,16vh,180px)!important;transform:none;position:relative;z-index:3}
+@media(max-height:740px){.cozy-title{margin-top:7%}.cozy-notebook{height:18%;min-height:95px;margin-top:3%}.cozy-menu{margin-top:clamp(45px,8vh,95px)!important;gap:8px}.cozy-menu button{height:43px}}
