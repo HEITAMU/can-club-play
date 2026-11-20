@@ -44,3 +44,20 @@ html,body{height:100%;overflow:hidden;background:#d9b68d;overscroll-behavior:non
 .bottom-actions{flex:none;margin:0}.bottom-actions button{height:42px}.share{background:linear-gradient(#ffebaf,#e9b15d);border:2px solid #a3744d;color:#6d462d}.secondary{background:#f7d9af;border:2px solid #a57853;color:#6d482f}
 .overlay{background:#3a241ac9}.dialog{background:linear-gradient(#fff5df,#f3d3a6);border:3px solid #946743}.dialog h2{color:#714b33}.dialog p{color:#896a4e}.dialog-stats{background:#f7dfb9;border:2px solid #b58a61;color:#714b33}
 @media(max-height:720px){.cozy-title{margin-top:8%}.cozy-notebook{margin-top:3%;height:19%;min-height:100px}.cozy-ring{font-size:58px}.cozy-menu{margin-top:4%;gap:7px}.cozy-menu button{height:42px}.game-panel{gap:3px;padding:6px}.target{height:18px}.target .mini{width:18px;height:18px}.direction button{height:29px}.tools button{height:27px}.bottom-actions button{height:37px}.board-frame{max-height:calc(100% - 153px)}}
+
+/* v0.4.2 declutter gameplay and move sound/reset into gear */
+.compact-top{display:flex;justify-content:space-between;align-items:center;flex:0 0 40px!important;height:40px!important}
+.home-back,.settings-gear{display:grid;place-items:center;border:2px solid #986b49;background:#ffe7be;color:#765035;box-shadow:0 3px 0 #b6875d;border-radius:12px;width:43px;height:37px;font-size:27px}
+.settings-gear{font-size:25px}
+.game-topline{justify-content:flex-end;padding:0;min-height:20px}
+.game-topline .difficulty{margin-left:auto}
+.target[hidden],#nextBtn[hidden]{display:none!important}
+.game-panel .target{display:none}
+.tools{display:flex;justify-content:center}.tools button{width:100%;max-width:210px}
+.bottom-actions .share{width:100%;flex:1}
+.settings-overlay{position:fixed;z-index:55;inset:0;background:#3b291eb8;display:grid;place-items:center;padding:24px;backdrop-filter:blur(4px)}
+.settings-overlay[hidden]{display:none!important}
+.settings-card{width:min(100%,340px);padding:18px;border:4px solid #966a49;border-radius:22px;background:linear-gradient(#fff4db,#e9c69c);box-shadow:0 12px 0 #75513b,0 24px 45px #0005;display:grid;gap:12px}
+.settings-head{display:flex;align-items:center;justify-content:space-between;color:#6d462e;font-size:23px;margin-bottom:8px}
+.settings-head button{border:2px solid #ad7d55;border-radius:10px;background:#f9e5c3;color:#754e33;width:38px;height:36px;font-size:25px}
+.settings-card>button{height:52px;border:2px solid #a77750;border-radius:14px;background:linear-gradient(#fff2d7,#efce9f);box-shadow:0 3px 0 #bd8f66;color:#71492f;font-size:16px;font-weight:800}
