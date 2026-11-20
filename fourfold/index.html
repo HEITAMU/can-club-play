@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f8d4a5">
 <meta name="description" content="四格诡局：转动四格，复原星图。">
-<meta name="fourfold-version" content="0.8.2">
+<meta name="fourfold-version" content="0.8.3">
 <title>四格诡局 · 星图挑战</title>
 <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
 <link rel="preload" as="image" href="assets/art/home-scene.webp" fetchpriority="high">
 <link rel="preload" as="image" href="assets/art/ui-atlas.webp">
-<link rel="stylesheet" href="assets/art/atlas.css?v=0.8.2">
-<link rel="stylesheet" href="style.css?v=0.8.2">
-<link rel="stylesheet" href="reference.css?v=0.8.2">
+<link rel="stylesheet" href="assets/art/atlas.css?v=0.8.3">
+<link rel="stylesheet" href="style.css?v=0.8.3">
+<link rel="stylesheet" href="reference.css?v=0.8.3">
 </head>
 <body>
-<main class="shell" id="app" data-build="0.8.2">
+<main class="shell" id="app" data-build="0.8.3">
 <section id="home" class="home-screen" aria-label="四格诡局主菜单">
 <h1 class="sr-only">四格诡局</h1>
 <div class="home-hero"><img class="home-scene" src="assets/art/home-scene.webp" width="854" height="1840" alt="夜色星窗前摊开的星图手册" fetchpriority="high" draggable="false"></div>
@@ -48,17 +48,35 @@
 <button id="cwBtn" class="art-button selected"><span class="skin skin-creamButton" aria-hidden="true"></span><span class="button-label"><span class="direction-symbol">↻</span>顺时针</span></button>
 <button id="ccwBtn" class="art-button"><span class="skin skin-creamButton" aria-hidden="true"></span><span class="button-label"><span class="direction-symbol">↺</span>逆时针</span></button>
 </div>
-<div class="tools"><button id="hintBtn" class="art-button"><span class="skin skin-creamButton" aria-hidden="true"></span><span class="button-label">✧ 提示</span></button></div>
+<div class="tools"><button id="hintBtn" class="art-button" type="button" aria-label="提示，剩余 5 次，本局最多 5 次"><span class="skin skin-creamButton" aria-hidden="true"></span><span id="hintLabel" class="button-label">✧ 提示 5/5</span><span id="hintRemaining" class="hint-remaining" aria-hidden="true">5/5</span></button></div>
 </section>
 <div class="bottom-actions"><button class="art-button" id="shareBtn"><span class="skin skin-goldButton" aria-hidden="true"></span><span class="button-label">✧ 发起同关挑战</span></button><button id="nextBtn" hidden></button></div>
 </div>
+<section id="rankScreen" class="rank-screen" aria-labelledby="rankTitle" hidden>
+<header class="rank-top">
+<button id="rankBack" class="icon-button" type="button" aria-label="返回上一页"><span class="skin skin-backButton" aria-hidden="true"></span></button>
+<div><h1 id="rankTitle">好友荣誉榜</h1><p id="rankDate" class="rank-date"></p></div>
+<span class="rank-seal" aria-hidden="true">♛</span>
+</header>
+<section class="rank-best" aria-labelledby="rankBestTitle">
+<h2 id="rankBestTitle">本机今日最佳</h2>
+<div class="rank-best-values"><div><span>步数</span><strong id="rankBestMoves">—</strong></div><div><span>用时</span><strong id="rankBestTime">—</strong></div></div>
+<p id="rankBestNote">今天还没有通关记录</p>
+</section>
+<div class="rank-list">
+<table class="rank-table" aria-label="微信好友成绩"><thead><tr><th scope="col">名次</th><th scope="col">好友</th><th scope="col">步数</th><th scope="col">用时</th></tr></thead>
+<tbody><tr><td colspan="4"><div class="rank-empty"><span class="rank-empty-star" aria-hidden="true">✦</span><h2>微信好友榜</h2><p>在微信小游戏中查看好友成绩</p></div></td></tr></tbody></table>
+</div>
+<div class="rank-rules"><p>步数更少优先 · 同步数比用时</p><p id="rankHintRule">每日挑战每局可用 2 次提示，成绩照常参与排行</p></div>
+<button id="rankDaily" class="art-button rank-primary" type="button"><span class="skin skin-goldButton" aria-hidden="true"></span><span class="button-label">✧ 挑战今日关卡</span></button>
+</section>
 </main>
-<div id="settingsOverlay" class="settings-overlay" hidden><section class="settings-card" role="dialog" aria-modal="true" aria-label="游戏设置"><div class="settings-head"><h2>设置</h2><button id="settingsClose" class="close" aria-label="关闭设置">×</button></div><button id="settingsSound">音乐与音效：开</button><button id="settingsReset">重开本局</button><button id="settingsHome">返回主界面</button></section></div>
+<div id="settingsOverlay" class="settings-overlay" hidden><section class="settings-card" role="dialog" aria-modal="true" aria-label="游戏设置"><div class="settings-head"><h2>设置</h2><button id="settingsClose" class="close" aria-label="关闭设置">×</button></div><button id="settingsSound">音乐与音效：开</button><button id="settingsReset">重开本局</button><button id="settingsRank">好友荣誉榜</button><button id="settingsHome">返回主界面</button></section></div>
 <div class="overlay" id="modal" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle"><button id="closeModal" class="close" aria-label="关闭弹窗">×</button><div class="dialog-emblem" id="dialogEmblem">✦</div><div id="dialogOverline" hidden></div><h2 id="dialogTitle">星图已复原</h2><p id="dialogText"></p><div class="dialog-stats" id="dialogStats"></div><button id="dialogPrimary" class="sprite-button skin-goldButton">继续挑战</button><button id="dialogSecondary" class="result-share-btn sprite-button skin-creamButton">分享我的成绩</button></section></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="startupNotice" hidden role="status"></div>
 <noscript>请启用 JavaScript 进入星图。</noscript>
 <script>window.ffOpen=function(which){window.ffPending=which;var n=document.getElementById('startupNotice');n.hidden=false;n.textContent='星图正在准备…';};</script>
-<script type="module" src="layout.mjs?v=0.8.2"></script>
-<script type="module" src="app.js?v=0.8.2"></script>
+<script type="module" src="layout.mjs?v=0.8.3"></script>
+<script type="module" src="app.js?v=0.8.3"></script>
 </body></html>

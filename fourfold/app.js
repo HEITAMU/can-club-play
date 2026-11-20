@@ -1,4 +1,4 @@
-import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2';
+import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.3';
 
 const el=id=>document.getElementById(id);
 const $={board:el('board'),anchors:el('anchors'),target:el('target'),moves:el('moves'),par:el('par'),clock:el('clock'),instruction:el('instruction'),difficulty:el('difficulty'),chapterCaption:el('chapterCaption'),puzzleTitle:el('puzzleTitle'),storyTab:el('storyTab'),dailyTab:el('dailyTab'),cwBtn:el('cwBtn'),ccwBtn:el('ccwBtn'),modal:el('modal'),toast:el('toast')};
@@ -9,6 +9,7 @@ const read=(key,otherwise)=>{try{const v=localStorage.getItem('fourfold:'+key);r
 const write=(key,value)=>{try{localStorage.setItem('fourfold:'+key,JSON.stringify(value));}catch{}};
 const unlocked=()=>String(Math.min(18,Math.max(1,parseInt(read('unlocked',1),10)||1)));
 const gameScreen=el('gameScreen');
+const rankScreen=el('rankScreen');
 const settingsOverlay=el('settingsOverlay');
 const notice=el('startupNotice');
 const tileNodes=new Map();
@@ -18,6 +19,7 @@ let mode='story',key='1',dir=1,board=GOAL,puzzle=null,moves=0,hints=0,won=false,
 let audio=null,soundEnabled=read('sound',true),clockTimer=0,bgTimer=0,toastTimer=0;
 let ready=false,bootFailed=false,pendingOpen=window.ffPending||null;
 let rotating=false,motionEpoch=0,activeAnimations=[];
+let rankOrigin='home';
 window.ffReady=false;
 
 function sound(note=440,len=.13,volume=.038){
@@ -50,14 +52,14 @@ function cancelRotation(){
 }
 function showHome(){
   cancelRotation();
-  el('home').hidden=false;gameScreen.hidden=true;$.modal.hidden=true;settingsOverlay.hidden=true;
+  el('home').hidden=false;gameScreen.hidden=true;rankScreen.hidden=true;$.modal.hidden=true;settingsOverlay.hidden=true;
   if(puzzle)render();
 }
-function showGame(){el('home').hidden=true;gameScreen.hidden=false;settingsOverlay.hidden=true;}
+function showGame(){el('home').hidden=true;gameScreen.hidden=false;rankScreen.hidden=true;settingsOverlay.hidden=true;}
 function openMode(which){
   if(!ready){pendingOpen=which;window.ffPending=which;if(notice)notice.hidden=false;return;}
-  claimedBeat=null;
   if(which==='rank'){showRank();return;}
+  claimedBeat=null;
   try{
     startGame(which==='daily'?'daily':'story',which==='daily'?currentDay():unlocked());
     showGame();sound(440,.12,.025);
@@ -84,7 +86,10 @@ el('settingsSound').onclick=()=>{
   syncSettings();
 };
 el('settingsReset').onclick=()=>{settingsOverlay.hidden=true;reset();};
+el('settingsRank').onclick=()=>openMode('rank');
 el('settingsHome').onclick=showHome;
+el('rankBack').onclick=closeRank;
+el('rankDaily').onclick=()=>openMode('daily');
 
 const storageKey=()=>mode+':'+key;
 function best(){return read('best:'+storageKey(),null);}
@@ -127,7 +132,14 @@ function render(){
   $.puzzleTitle.textContent=mode==='story'?names[Math.min(17,Math.max(0,+key-1))]:'每日挑战';
   $.difficulty.textContent=mode==='daily'?'宗师':puzzle.difficulty;
   $.moves.textContent=String(moves).padStart(2,'0');$.par.textContent=String(puzzle.par).padStart(2,'0');updateTime();
-  $.instruction.textContent=won?'✦ 完成':hints?'✧ 已使用提示':'';
+  const limit=hintLimit(mode),remaining=Math.max(0,limit-hints),hintButton=el('hintBtn');
+  el('hintLabel').textContent=`✧ 提示 ${remaining}/${limit}`;
+  el('hintRemaining').textContent=`${remaining}/${limit}`;
+  hintButton.classList.toggle('hint-exhausted',remaining===0);
+  hintButton.setAttribute('aria-disabled',String(won||remaining===0));
+  hintButton.setAttribute('aria-label',remaining?`提示，剩余 ${remaining} 次，本局最多 ${limit} 次`:'本局提示已用完');
+  hintButton.title=remaining?`本局剩余 ${remaining}/${limit} 次提示`:'本局提示已用完，重新开始可重置';
+  $.instruction.textContent=won?'✦ 完成':`提示剩余 ${remaining}/${limit} 次`;
   for(const token of board)$.board.append(tileNodes.get(token));
   anchorNodes.forEach((button,q)=>{
     button.dataset.direction=String(dir);button.disabled=won||rotating;
@@ -190,8 +202,8 @@ function finish(){
   won=true;elapsed=started?(performance.now()-started)/1000:0;
   const metric={moves,par:puzzle.par,seconds:Math.floor(elapsed),hints,score:resultScore(moves,elapsed,hints),day:key};
   const prev=best();
-  const better=!prev||(hints===0&&prev.hints>0)||(hints===prev.hints&&(moves<prev.moves||(moves===prev.moves&&metric.seconds<prev.seconds)));
-  if(better)write('best:'+storageKey(),metric);
+  const record=isBetterResult(metric,prev)?metric:prev;
+  write('best:'+storageKey(),{...record,score:resultScore(record.moves,record.seconds,record.hints)});
   if(mode==='story')write('unlocked',Math.max(Number(unlocked()),Math.min(18,+key+1)));
   sound(523,.22,.05);setTimeout(()=>sound(659,.25,.043),110);setTimeout(()=>sound(784,.45,.04),235);
   render();openResult(metric);
@@ -204,7 +216,7 @@ function openDialog({emblem='✦',title,text='',stats='',primary='继续',second
   el('dialogPrimary').onclick=onPrimary;el('dialogSecondary').onclick=onSecondary;$.modal.hidden=false;
 }
 function openResult(metric){
-  const perfect=metric.moves===metric.par&&!metric.hints;
+  const perfect=metric.moves===metric.par;
   openDialog({emblem:perfect?'♛':'✦',title:honor(metric.moves,metric.par,metric.hints),primary:mode==='daily'?'返回闯关':'挑战下一关',secondary:'分享这个成绩',onPrimary:nextLevel,onSecondary:share});
   $.modal.classList.add('result-mode');
   const stats=el('dialogStats');
@@ -228,7 +240,7 @@ function nextLevel(){
 function share(){shareChallenge(mode,key);}
 function shareChallenge(challengeMode,challengeKey){
   const url=new URL(window.location.href);url.search='';url.searchParams.set('mode',challengeMode);
-  const shareResult=won&&!hints&&challengeMode===mode&&challengeKey===key;
+  const shareResult=won&&challengeMode===mode&&challengeKey===key;
   url.searchParams.set(challengeMode==='daily'?'day':'level',challengeKey);
   if(shareResult)url.searchParams.set('beat',String(moves));
   const title=shareResult?`我在《四格诡局》用 ${moves} 步还原星图。你能更少吗？`:'四格诡局 · 和我来一场脑力挑战';
@@ -238,17 +250,35 @@ function shareChallenge(challengeMode,challengeKey){
   else toast('可以复制浏览器地址分享给朋友');
 }
 function showRank(){
+  if(rankScreen.hidden)rankOrigin=gameScreen.hidden?'home':'game';
+  cancelRotation();if(puzzle)render();
   const local=read('best:daily:'+currentDay(),null);
-  openDialog({emblem:'♛',title:'好友荣誉榜',text:'微信好友榜在微信小游戏中展示。',stats:local?`今日个人最佳：${local.moves} 步 · ${local.seconds} 秒`:'今天还没有通关记录',primary:'开始每日挑战',secondary:'分享挑战入口',onPrimary:()=>openMode('daily'),onSecondary:()=>shareChallenge('daily',currentDay())});
+  const hasBest=local&&Number.isFinite(Number(local.moves))&&Number(local.moves)>=0&&Number.isFinite(Number(local.seconds))&&Number(local.seconds)>=0;
+  const [year,month,day]=currentDay().split('-');
+  el('rankDate').textContent=`${year}年${Number(month)}月${Number(day)}日`;
+  el('rankBestMoves').textContent=hasBest?String(local.moves):'—';
+  const seconds=hasBest?Math.floor(Number(local.seconds)):0;
+  el('rankBestTime').textContent=hasBest?`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`:'—';
+  el('rankBestNote').textContent=hasBest?'已记录今日最佳成绩':'今天还没有通关记录';
+  el('rankHintRule').textContent=`每日挑战每局可用 ${hintLimit('daily')} 次提示，成绩照常参与排行`;
+  el('home').hidden=true;gameScreen.hidden=true;$.modal.hidden=true;settingsOverlay.hidden=true;
+  rankScreen.hidden=false;rankScreen.scrollTop=0;
+}
+function closeRank(){
+  if(rankOrigin==='game'&&puzzle){render();showGame();}
+  else showHome();
 }
 function hint(){
   if(won){toast('本局已经通关');return;}
   if(!canPlay())return;
+  const limit=hintLimit(mode);
+  if(hints>=limit){toast('本局提示已用完，重新开始可重置');return;}
   const path=shortestPath(board);if(!path.length)return;
   hints++;dir=path[0].dir;highlight=path[0].q;render();
   const button=anchorNodes[highlight];
   if(typeof button.animate==='function')button.animate([{transform:'translate(-50%,-50%) scale(1)'},{transform:'translate(-50%,-50%) scale(1.15)'},{transform:'translate(-50%,-50%) scale(1)'}],{duration:750,iterations:2});
-  toast('试玩版免费显示一步提示；这局不参与每日排名');sound(660,.3);
+  const remaining=limit-hints;
+  toast(remaining?`点击高亮旋转点；本局剩余 ${remaining}/${limit} 次提示`:'点击高亮旋转点；本局提示已用完');sound(660,.3);
 }
 function reset(){if(!ready)return;startGame(mode,key);toast('已重置本局');}
 function setDirection(direction){if(!canPlay())return;dir=direction;render();sound(direction===1?390:350);}
@@ -259,7 +289,7 @@ $.storyTab.onclick=()=>openMode('story');$.dailyTab.onclick=()=>openMode('daily'
 el('closeModal').onclick=()=>{$.modal.hidden=true;};
 $.modal.addEventListener('click',event=>{if(event.target===$.modal)$.modal.hidden=true;});
 window.addEventListener('keydown',event=>{
-  if(event.key==='Escape'){$.modal.hidden=true;settingsOverlay.hidden=true;return;}
+  if(event.key==='Escape'){if(!rankScreen.hidden){closeRank();return;}$.modal.hidden=true;settingsOverlay.hidden=true;return;}
   if(!canPlay())return;
   if(event.key==='r'||event.key==='R')reset();
   else if(/^[1-4]$/.test(event.key))spin(Number(event.key)-1);

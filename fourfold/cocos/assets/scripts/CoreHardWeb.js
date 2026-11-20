@@ -102,6 +102,11 @@ export function dailyBankPuzzle(date){
   return {board,par,mode:'daily',key:date,level:0,difficulty:'宗师',bankIndex:index+1,bankSize:DAILY_BANK_SIZE};
 }
 export function todayCN(now=Date.now()){return new Date(now+8*3600*1000).toISOString().slice(0,10);}
-export function resultScore(moves,seconds,hints=0){if(hints>0)return 0;return Math.max(0,100-moves)*1000 + (999-Math.min(999,Math.max(0,Math.floor(seconds))));}
-export function honor(moves,par,hints=0){if(hints)return '练习通关';if(moves===par)return '最优解 · 解谜宗师';if(moves<=par+2)return '极致推演';if(moves<=par+5)return '逻辑高手';return '破局者';}
+/** 每局提示额度；两端均从规则引擎读取，重开时由界面重置本局已用次数。 */
+export function hintLimit(mode='story'){if(mode!=='story'&&mode!=='daily')throw new Error('invalid mode');return mode==='daily'?2:5;}
+/** hints 参数保留供旧调用兼容；使用提示不影响得分或荣誉。 */
+export function resultScore(moves,seconds,hints=0){return Math.max(0,100-moves)*1000 + (999-Math.min(999,Math.max(0,Math.floor(seconds))));}
+export function honor(moves,par,hints=0){if(moves===par)return '最优解 · 解谜宗师';if(moves<=par+2)return '极致推演';if(moves<=par+5)return '逻辑高手';return '破局者';}
+/** 最佳成绩只按更少步数、相同步数时更短用时比较；完全相同时保留已有记录。 */
+export function isBetterResult(candidate,previous){return !previous||candidate.moves<previous.moves||(candidate.moves===previous.moves&&candidate.seconds<previous.seconds);}
 export function parseChallenge(params){const mode=params.get('mode')==='daily'?'daily':'story';const day=params.get('day');const key=mode==='daily' && /^20\d\d-\d\d-\d\d$/.test(day||'')?day:mode==='daily'?todayCN():String(Math.min(18,Math.max(1,parseInt(params.get('level')||'1',10)||1)));const beat=parseInt(params.get('beat')||'',10);return {mode,key,beat:Number.isFinite(beat)&&beat>=0&&beat<=999?beat:null};}
