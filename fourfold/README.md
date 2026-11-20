@@ -1,12 +1,16 @@
 # 四格诡局 · FOURFOLD
 
-微信好友同题挑战 × 3×3 四格旋转益智游戏。目标：转动任一 2×2 方块（顺时针或逆时针），用尽量少的操作把九枚印记归位，争夺真实好友最优解。
+微信好友同关挑战 × 3×3 四格旋转益智游戏。目标：转动任一 2×2 方块（顺时针或逆时针），用尽量少的操作把九枚印记归位，争夺真实好友最优解。
 
-> 工程版本：**Cocos Creator 3.8.8**。网页试玩和 Cocos 小游戏通过 `cocos/assets/scripts/Core.js` 共用**同一份**纯逻辑代码。网页试玩版不冒充 Cocos 渲染版，微信好友榜与微信广告仅能在微信小游戏内运行。
+> 工程版本：**Cocos Creator 3.8.8**。网页试玩和 Cocos 小游戏通过 `cocos/assets/scripts/Core.js` 与网页的 `CoreHardWeb.js` 使用一致的规则与固定题库。网页试玩版不冒充 Cocos 渲染版，微信好友榜与微信广告仅能在微信小游戏内运行。
 
 ## 试玩
 
 打开本文件夹 `index.html` 的静态站点（推荐 GitHub Pages；本地用 `python3 -m http.server 8000`），直接手机或电脑浏览器开玩。建议手机竖屏。键盘 `1–4` 旋转四个位置、空格切换旋转方向、R 重开。
+
+## 0.7.0 美术接入
+
+主页、普通关与每日挑战采用已确认的星图美术。按钮、脚印/沙漏数据牌、九块星图和旋转钮均为独立可操作组件；步数与时间实时显示。每日页删除重复顶部标题，仅在日期横幅内显示“每日挑战”。网页资源约 0.8 MB，Cocos 使用同源 PNG；原生接入与验证边界见 `cocos/docs/ART-INTEGRATION.md`。
 
 ## 玩法闭环
 
@@ -22,7 +26,8 @@
 
 ```text
 index.html / app.js / style.css        网页试玩（微信关系链/广告不可用）
-assets/mural.svg                       网页试玩的原创星图纹样
+assets/art/                            网页美术 WebP 与图集坐标
+cocos/assets/resources/art/            原生 PNG 与共用美术清单
 cocos/package.json                    Cocos Creator 3.8.8 主工程入口
 cocos/assets/scenes/Main.scene        启动场景，附加 FourfoldGame
 cocos/assets/scripts/Game.ts          原生 Cocos 组件、微信分享/广告/好友榜

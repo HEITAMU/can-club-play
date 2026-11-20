@@ -1,45 +1,62 @@
 <!doctype html>
-<html lang="zh-CN"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
-<meta name="theme-color" content="#0b1329"/><meta name="description" content="四格诡局：与朋友比一比，谁能用最少步数复原失落星图。"/>
-<title>四格诡局 · 星图挑战</title><link rel="icon" type="image/svg+xml" href="assets/icon.svg"/><link rel="stylesheet" href="style.css?v=0.6.3" />
-</head><body>
-<div class="aurora a1"></div><div class="aurora a2"></div>
-<main class="shell" id="app">
-<section id="home" class="home-screen">
-<div class="scene-art" aria-hidden="true"><div class="scene-halo"></div><div class="scene-window"><div class="scene-moon"></div><div class="scene-constellations"><svg viewBox="0 0 280 350" preserveAspectRatio="none"><g stroke="#ffe3a0" stroke-width="1.6" fill="none" opacity=".95"><path d="M22 95 L74 45 L128 92 L174 64 L228 113 L256 82"/><path d="M30 231 L80 195 L142 242 L203 201 L248 261"/><path d="M76 45 L80 195 M174 64 L203 201" stroke-dasharray="3 7"/></g><g fill="#fff0b8"><circle cx="22" cy="95" r="3"/><circle cx="74" cy="45" r="4"/><circle cx="128" cy="92" r="3"/><circle cx="174" cy="64" r="4"/><circle cx="228" cy="113" r="3"/><circle cx="256" cy="82" r="4"/><circle cx="30" cy="231" r="3"/><circle cx="80" cy="195" r="4"/><circle cx="142" cy="242" r="3"/><circle cx="203" cy="201" r="4"/><circle cx="248" cy="261" r="3"/></g></svg></div><div class="scene-mountains"></div><div class="window-divider"></div></div><div class="scene-lamp">✦</div><div class="scene-globe"><div>✧</div></div><div class="scene-book"><div class="book-emblem">✦</div><div class="book-label">星图手册</div><div class="book-pages"></div></div><div class="scene-sparkles">✧　✦　✧</div></div>
-<div class="home-heading"><div class="home-name">✧ 四格诡局</div><div class="home-english">F O U R F O L D</div></div>
-<div class="cozy-menu"><button id="enterStory" onclick="window.ffOpen&&window.ffOpen('story')">✧　进入星图</button><button id="enterDaily" onclick="window.ffOpen&&window.ffOpen('daily')">◇　每日挑战</button><button id="enterRank" onclick="window.ffOpen&&window.ffOpen('rank')">♛　好友荣誉榜</button></div>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f8d4a5">
+<meta name="description" content="四格诡局：转动四格，复原星图。">
+<meta name="fourfold-version" content="0.7.0">
+<title>四格诡局 · 星图挑战</title>
+<link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+<link rel="preload" as="image" href="assets/art/home-scene.webp" fetchpriority="high">
+<link rel="preload" as="image" href="assets/art/ui-atlas.webp">
+<link rel="stylesheet" href="assets/art/atlas.css?v=0.7.0">
+<link rel="stylesheet" href="style.css?v=0.7.0">
+</head>
+<body>
+<main class="shell" id="app" data-build="0.7.0">
+<section id="home" class="home-screen" aria-label="四格诡局主菜单">
+<h1 class="sr-only">四格诡局</h1>
+<img class="home-scene" src="assets/art/home-scene.webp" width="854" height="1840" alt="夜色星窗前摊开的星图手册" fetchpriority="high" draggable="false">
+<button id="homeSettings" class="icon-button home-settings" aria-label="设置"><span class="skin skin-settingsButton" aria-hidden="true"></span></button>
+<div class="cozy-menu" aria-label="主菜单">
+<button id="enterStory" class="art-button" onclick="window.ffOpen&&window.ffOpen('story')"><span class="skin skin-goldButton" aria-hidden="true"></span><span class="button-label"><span class="menu-symbol">✧</span>进入星图</span></button>
+<button id="enterDaily" class="art-button" onclick="window.ffOpen&&window.ffOpen('daily')"><span class="skin skin-creamButton" aria-hidden="true"></span><span class="button-label"><span class="menu-symbol">◇</span>每日挑战</span></button>
+<button id="enterRank" class="art-button" onclick="window.ffOpen&&window.ffOpen('rank')"><span class="skin skin-lavenderButton" aria-hidden="true"></span><span class="button-label"><span class="menu-symbol crown">♛</span>好友荣誉榜</span></button>
+</div>
 </section>
-<div id="gameScreen" class="game-screen" hidden>
-<header class="top compact-top"><button id="backHome" class="home-back" aria-label="返回主界面">‹</button><button id="settingsBtn" class="settings-gear" aria-label="设置">⚙</button></header>
-
-<nav class="mode-select" aria-label="关卡模式" hidden><button id="storyTab" class="active">✦ 闯关档案</button><button id="dailyTab">◈ 每日挑战 <i id="dailyDot"></i></button></nav>
-<section class="game-panel"><div class="game-topline"><span class="difficulty" id="difficulty">入门</span><span id="chapterCaption" hidden></span><span id="puzzleTitle" hidden></span></div>
-<div class="metric-row"><div><small>当前步数</small><strong id="moves">00</strong></div><div hidden><small>理论最优</small><strong id="par">--</strong></div><div><small>本局用时</small><strong id="clock">00:00</strong></div></div>
-<div class="target" id="target" aria-label="目标星图" hidden></div>
-<div class="board-frame"><div class="board-halo"></div><div id="board" class="board" role="group" aria-label="九宫格拼图"></div><div id="anchors" class="anchors" aria-label="旋转节点"></div></div>
-<p class="instruction" id="instruction" aria-live="polite"></p>
-<div class="direction"><button class="selected" id="cwBtn">↻ 顺时针</button><button id="ccwBtn">↺ 逆时针</button></div>
-<div class="tools"><button id="hintBtn">✧ 提示</button></div>
+<div id="gameScreen" class="game-screen" data-mode="story" hidden>
+<header class="compact-top">
+<button id="backHome" class="icon-button" aria-label="返回主界面"><span class="skin skin-backButton" aria-hidden="true"></span></button>
+<h1 id="stageTitle" class="stage-title skin-creamButton">第1关</h1>
+<button id="settingsBtn" class="icon-button" aria-label="设置"><span class="skin skin-settingsButton" aria-hidden="true"></span></button>
+</header>
+<div id="dailyBanner" class="daily-banner" hidden><span class="banner-skin" aria-hidden="true"></span><div class="daily-copy"><strong id="dailyDate"></strong><span>每日挑战</span></div></div>
+<nav class="mode-select" hidden aria-hidden="true"><button id="storyTab">闯关</button><button id="dailyTab">每日挑战</button></nav>
+<section class="game-panel" aria-label="星图关卡">
+<div class="game-topline" hidden><span id="difficulty"></span><span id="chapterCaption"></span><span id="puzzleTitle"></span></div>
+<div class="metric-row">
+<div class="stat-card"><span class="skin skin-stepsCard" aria-hidden="true"></span><div class="stat-copy"><small>当前步数</small><strong id="moves">00</strong></div></div>
+<div hidden><strong id="par"></strong></div>
+<div class="stat-card"><span class="skin skin-timeCard" aria-hidden="true"></span><div class="stat-copy"><small>本局用时</small><strong id="clock">00:00</strong></div></div>
+</div>
+<div id="target" class="target" hidden></div>
+<div class="board-frame"><div id="board" class="board" role="group" aria-label="九宫格星图"></div><div id="anchors" class="anchors" aria-label="旋转节点"></div></div>
+<p class="instruction sr-only" id="instruction" aria-live="polite"></p>
+<div class="direction" aria-label="旋转方向">
+<button id="cwBtn" class="art-button selected"><span class="skin skin-creamButton" aria-hidden="true"></span><span class="button-label"><span class="direction-symbol">↻</span>顺时针</span></button>
+<button id="ccwBtn" class="art-button"><span class="skin skin-creamButton" aria-hidden="true"></span><span class="button-label"><span class="direction-symbol">↺</span>逆时针</span></button>
+</div>
+<div class="tools"><button id="hintBtn" class="art-button"><span class="skin skin-creamButton" aria-hidden="true"></span><span class="button-label">✧ 提示</span></button></div>
 </section>
-<div class="bottom-actions"><button class="share" id="shareBtn"><span>✦</span> 发起同关挑战</button><button id="nextBtn" hidden></button></div>
+<div class="bottom-actions"><button class="art-button" id="shareBtn"><span class="skin skin-goldButton" aria-hidden="true"></span><span class="button-label">✧ 发起同关挑战</span></button><button id="nextBtn" hidden></button></div>
 </div>
 </main>
-<div id="settingsOverlay" class="settings-overlay" hidden><div class="settings-card" role="dialog" aria-modal="true" aria-label="游戏设置"><div class="settings-head"><strong>⚙ 设置</strong><button id="settingsClose" aria-label="关闭设置">×</button></div><button id="settingsSound">♫　音乐与音效：开</button><button id="settingsReset">↺　重开本局</button><button id="settingsHome">⌂　返回主界面</button></div></div>
-<div class="overlay" id="modal" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle"><button id="closeModal" class="close" aria-label="关闭弹窗">×</button><div class="dialog-emblem" id="dialogEmblem">✦</div><div class="eyebrow" id="dialogOverline" hidden></div><h2 id="dialogTitle">星图已复原</h2><p id="dialogText"></p><div class="dialog-stats" id="dialogStats"></div><button id="dialogPrimary" class="share">继续挑战</button><button id="dialogSecondary" class="result-share-btn">分享我的成绩</button></section></div>
+<div id="settingsOverlay" class="settings-overlay" hidden><section class="settings-card" role="dialog" aria-modal="true" aria-label="游戏设置"><div class="settings-head"><h2>设置</h2><button id="settingsClose" class="close" aria-label="关闭设置">×</button></div><button id="settingsSound">音乐与音效：开</button><button id="settingsReset">重开本局</button><button id="settingsHome">返回主界面</button></section></div>
+<div class="overlay" id="modal" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle"><button id="closeModal" class="close" aria-label="关闭弹窗">×</button><div class="dialog-emblem" id="dialogEmblem">✦</div><div id="dialogOverline" hidden></div><h2 id="dialogTitle">星图已复原</h2><p id="dialogText"></p><div class="dialog-stats" id="dialogStats"></div><button id="dialogPrimary" class="sprite-button skin-goldButton">继续挑战</button><button id="dialogSecondary" class="result-share-btn sprite-button skin-creamButton">分享我的成绩</button></section></div>
 <div id="toast" role="status" aria-live="polite"></div>
-<script>
-window.ffOpen=function(which){
- var home=document.getElementById('home'),game=document.getElementById('gameScreen');
- if(which==='rank'){document.getElementById('startupNotice').hidden=false;document.getElementById('startupNotice').textContent='排行榜正在加载';return;}
- home.hidden=true;game.hidden=false;
- var notice=document.getElementById('startupNotice');
- if(!window.ffReady){notice.hidden=false;notice.textContent='游戏正在加载，请稍候…';}
-};
-window.addEventListener('error',function(e){var n=document.getElementById('startupNotice');if(n){n.hidden=false;n.textContent='加载失败，请刷新页面';} });
-window.addEventListener('unhandledrejection',function(){var n=document.getElementById('startupNotice');if(n){n.hidden=false;n.textContent='加载失败，请刷新页面';}});
-</script>
-<div id="startupNotice" hidden role="status" style="position:fixed;z-index:100;left:15%;right:15%;top:45%;padding:14px;border-radius:14px;background:#fff1d2;color:#70462d;text-align:center;border:2px solid #9d724c"></div>
-<script type="module" src="app.js?v=0.6.3"></script>
+<div id="startupNotice" hidden role="status"></div>
+<noscript>请启用 JavaScript 进入星图。</noscript>
+<script>window.ffOpen=function(which){window.ffPending=which;var n=document.getElementById('startupNotice');n.hidden=false;n.textContent='星图正在准备…';};</script>
+<script type="module" src="app.js?v=0.7.0"></script>
 </body></html>

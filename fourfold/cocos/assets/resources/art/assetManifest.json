@@ -1,0 +1,77 @@
+{
+  "version": "0.7.0",
+  "atlas": {
+    "width": 1254,
+    "height": 1254,
+    "frames": {
+      "goldButton": {
+        "x": 69,
+        "y": 52,
+        "w": 1114,
+        "h": 198
+      },
+      "creamButton": {
+        "x": 68,
+        "y": 265,
+        "w": 1116,
+        "h": 196
+      },
+      "lavenderButton": {
+        "x": 65,
+        "y": 477,
+        "w": 1122,
+        "h": 196
+      },
+      "stepsCard": {
+        "x": 37,
+        "y": 681,
+        "w": 580,
+        "h": 277
+      },
+      "timeCard": {
+        "x": 634,
+        "y": 681,
+        "w": 580,
+        "h": 277
+      },
+      "rotateKnob": {
+        "x": 150,
+        "y": 988,
+        "w": 237,
+        "h": 241
+      },
+      "settingsButton": {
+        "x": 510,
+        "y": 989,
+        "w": 229,
+        "h": 227
+      },
+      "backButton": {
+        "x": 873,
+        "y": 989,
+        "w": 232,
+        "h": 227
+      }
+    }
+  },
+  "images": {
+    "homeScene": {
+      "width": 854,
+      "height": 1840
+    },
+    "celestialMural": {
+      "width": 1254,
+      "height": 1254
+    },
+    "dailyBanner": {
+      "width": 2126,
+      "height": 740,
+      "frame": {
+        "x": 24,
+        "y": 71,
+        "w": 2075,
+        "h": 556
+      }
+    }
+  }
+}
