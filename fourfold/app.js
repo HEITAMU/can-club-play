@@ -9,6 +9,12 @@ const read=(key,otherwise)=>{try{const v=localStorage.getItem('fourfold:'+key);r
 const write=(key,value)=>{try{localStorage.setItem('fourfold:'+key,JSON.stringify(value));}catch{}};
 let mode='story',key='1',dir=1,board=GOAL,puzzle=null,moves=0,hints=0,won=false,started=0,elapsed=0,claimedBeat=null,highlight=-1,showingRanks=false;
 let bgTimer=0,audio=null,soundEnabled=read('sound',true);
+const showHome=()=>{el('home').hidden=false;el('gameScreen').hidden=true;$.modal.hidden=true;el('homeProgress').textContent=String(read('unlocked',1)).padStart(2,'0')+' / 18';};
+const showGame=()=>{el('home').hidden=true;el('gameScreen').hidden=false;};
+el('enterStory').onclick=()=>{showGame();startGame('story',String(read('unlocked',1)));};
+el('enterDaily').onclick=()=>{showGame();startGame('daily',currentDay());};
+el('enterRank').onclick=()=>{showRank();};
+el('backHome').onclick=showHome;
 function sound(note=440,len=.13,volume=.038){if(!soundEnabled)return;try{audio ||= new (window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume();const osc=audio.createOscillator(),gain=audio.createGain();osc.type='sine';osc.frequency.setValueAtTime(note,audio.currentTime);osc.frequency.exponentialRampToValueAtTime(note*.79,audio.currentTime+len);gain.gain.setValueAtTime(volume,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+len);osc.connect(gain);gain.connect(audio.destination);osc.start();osc.stop(audio.currentTime+len);}catch{}}
 function backgroundMusic(){if(!soundEnabled||document.hidden||!audio||audio.state!=='running')return;const notes=[196,247,294,392,330,294,247,220];sound(notes[Math.floor(Date.now()/6000)%notes.length],1.6,.008);}
 function toast(msg){$.toast.textContent=msg;$.toast.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>$.toast.classList.remove('show'),2800);}
@@ -21,7 +27,7 @@ function render(){
   $.puzzleTitle.textContent=mode==='story'?names[Math.min(17,Math.max(0,+key-1))]:'今日脑力审判';
   $.difficulty.textContent=puzzle.difficulty;
   $.moves.textContent=String(moves).padStart(2,'0');$.par.textContent=String(puzzle.par).padStart(2,'0');updateTime();
-  $.instruction.textContent=won?'星图已复原 · 点击下一关继续':hints?'提示过的成绩不进入好友榜':'点按四格交汇处的星环，即可旋转这四格';
+  $.instruction.textContent=won?'✦ 完成':hints?'✧ 已使用提示':'';
   $.target.innerHTML=GOAL.split('').map((tok,i)=>`<div class="mini" data-id="${tok}" style="--pos:${pos(i)}"></div>`).join('');
   $.board.innerHTML=board.split('').map((tok,i)=>`<div class="tile ${i<9?'pulse':''}" data-token="${tok}" style="--pos:${pos(Number(tok)-1)}" aria-label="星图碎片 ${tok}"><span class="index">${tok} ${chars[Number(tok)-1]}</span></div>`).join('');
   $.anchors.innerHTML=SQUARES.map((_,q)=>`<button type="button" class="spin-node" aria-label="${q+1}号旋转点，${dir===1?'顺':'逆'}时针旋转四格" style="left:${q%2?66.6667:33.3333}%;top:${q>=2?66.6667:33.3333}%" data-q="${q}">${dir===1?'↻':'↺'}</button>`).join('');
@@ -50,4 +56,4 @@ el('closeModal').onclick=()=>{$.modal.hidden=true;};$.modal.addEventListener('cl
 el('soundBtn').onclick=()=>{soundEnabled=!soundEnabled;write('sound',soundEnabled);el('soundBtn').textContent=soundEnabled?'♫':'♩';if(soundEnabled){sound(523);backgroundMusic();}else if(audio){audio.suspend().catch(()=>{});}toast(soundEnabled?'声音已开启':'声音已关闭');};el('soundBtn').textContent=soundEnabled?'♫':'♩';
 window.addEventListener('keydown',e=>{if(e.key==='Escape')$.modal.hidden=true;else if(e.key==='r'||e.key==='R')reset();else if(e.key==='1'||e.key==='2'||e.key==='3'||e.key==='4')spin(Number(e.key)-1);else if(e.key===' ') {e.preventDefault();dir=-dir;render();}});
 window.setInterval(updateTime,220);bgTimer=window.setInterval(backgroundMusic,6600);
-const entry=parseChallenge(new URLSearchParams(location.search));claimedBeat=entry.beat;startGame(entry.mode,entry.key);if(claimedBeat!==null)toast(`好友向你发起挑战：试试能否少于 ${claimedBeat} 步！`);
+const entry=parseChallenge(new URLSearchParams(location.search));claimedBeat=entry.beat;startGame(entry.mode,entry.key);if(new URLSearchParams(location.search).has('mode'))showGame();else showHome();if(claimedBeat!==null)toast(`好友向你发起挑战：试试能否少于 ${claimedBeat} 步！`);
