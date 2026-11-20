@@ -1,4 +1,4 @@
-import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge} from './cocos/assets/scripts/Core.js';
+import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge} from './cocos/assets/scripts/CoreHardWeb.js';
 const el=id=>document.getElementById(id);
 const $={board:el('board'),anchors:el('anchors'),target:el('target'),moves:el('moves'),par:el('par'),clock:el('clock'),instruction:el('instruction'),difficulty:el('difficulty'),chapterCaption:el('chapterCaption'),puzzleTitle:el('puzzleTitle'),storyTab:el('storyTab'),dailyTab:el('dailyTab'),cwBtn:el('cwBtn'),ccwBtn:el('ccwBtn'),modal:el('modal'),toast:el('toast')};
 const names=['星图初醒','看似简单','交错轨道','一念之差','不对称','失序之环','倒影之谜','四角对峙','镜像迷宫','群星换位','王冠密码','无声棋局','深空共振','星环审判','暗夜回响','隐秘秩序','星渊终章','逻辑之冠'];
@@ -31,12 +31,12 @@ function backgroundMusic(){if(!soundEnabled||document.hidden||!audio||audio.stat
 function toast(msg){$.toast.textContent=msg;$.toast.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>$.toast.classList.remove('show'),2800);}
 const storageKey=()=>mode+':'+key;
 function best(){return read('best:'+storageKey(),null);}
-function startGame(m=mode,k=key){mode=m;key=String(k);puzzle=makePuzzle(mode,key);board=puzzle.board;moves=0;hints=0;elapsed=0;started=0;won=false;highlight=-1;showingRanks=false;$.modal.hidden=true;$.storyTab.classList.toggle('active',mode==='story');$.dailyTab.classList.toggle('active',mode==='daily');render();}
+function startGame(m=mode,k=key){mode=m;key=String(k);puzzle=makePuzzle(mode,key);if(mode==='daily'&&(puzzle.par<9||puzzle.par>11||puzzle.difficulty!=='宗师')){throw new Error('每日挑战题库版本错误：未加载宗师关卡');}board=puzzle.board;moves=0;hints=0;elapsed=0;started=0;won=false;highlight=-1;showingRanks=false;$.modal.hidden=true;$.storyTab.classList.toggle('active',mode==='story');$.dailyTab.classList.toggle('active',mode==='daily');render();}
 function updateTime(){if(started&&!won)elapsed=(performance.now()-started)/1000;$.clock.textContent=`${String(Math.floor(elapsed/60)).padStart(2,'0')}:${String(Math.floor(elapsed%60)).padStart(2,'0')}`;}
 function render(){
   $.chapterCaption.textContent=mode==='story'?`ARCHIVE ${String(+key).padStart(2,'0')} / 18`:`DAILY • ${key}`;
   $.puzzleTitle.textContent=mode==='story'?names[Math.min(17,Math.max(0,+key-1))]:'今日脑力审判';
-  $.difficulty.textContent=puzzle.difficulty;
+  $.difficulty.textContent=mode==='daily'?'宗师':puzzle.difficulty;
   $.moves.textContent=String(moves).padStart(2,'0');$.par.textContent=String(puzzle.par).padStart(2,'0');updateTime();
   $.instruction.textContent=won?'✦ 完成':hints?'✧ 已使用提示':'';
   $.target.innerHTML=GOAL.split('').map((tok,i)=>`<div class="mini" data-id="${tok}" style="--pos:${pos(i)}"></div>`).join('');

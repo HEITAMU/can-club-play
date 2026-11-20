@@ -116,3 +116,21 @@ html,body{background:#f0d1aa!important}
 .home-screen .cozy-menu{top:72%!important;left:11%!important;right:11%!important;width:78%!important;gap:clamp(9px,1.4vh,14px)!important}
 .home-screen .cozy-menu button{height:clamp(46px,6.6vh,60px)!important;font-size:clamp(16px,4.5vw,20px)!important}
 @media(max-height:720px){.home-heading{top:5%}.scene-window{top:21%;height:37%}.scene-book{top:37%;height:22%}.home-screen .cozy-menu{top:68%!important}.home-screen .cozy-menu button{height:43px!important}}
+
+/* v0.6.0: refined hand-drawn celestial home layout, matching the existing game panels */
+.home-screen{background:radial-gradient(ellipse at 50% 35%,#fff4de 0%,#f4d9b8 58%,#edc49e 100%)!important}
+.scene-halo{top:-17%;border-color:#cf9a7359;box-shadow:0 0 0 22px #c58e630d,0 0 0 61px #c58e6308}
+.home-heading{top:7%!important}
+.home-name{border:4px solid #7d4d37;background:linear-gradient(180deg,#fff8e6,#ffe8bd);box-shadow:0 6px 0 #b47c5b,0 13px 22px #80503940;border-radius:22px}
+.home-english{letter-spacing:.34em;font-size:11px;margin-top:14px}
+.scene-window{top:23%!important;left:-6%!important;width:61%!important;height:37%!important;border:10px solid #9e694b!important;border-radius:48% 48% 9px 9px/26% 26% 9px 9px!important;background:radial-gradient(ellipse at 45% 28%,#4c427b,#282850 55%,#121c3e)!important;box-shadow:inset 0 0 0 4px #edc48f,0 8px 16px #81503948!important}
+.scene-moon{width:48px;height:48px;background:#ffe2a3;box-shadow:0 0 25px #f8dba57d}
+.scene-book{top:41%!important;right:5%!important;width:48%!important;height:20%!important;transform:rotate(9deg)!important;border:7px solid #84553e!important;border-radius:15px!important;background:linear-gradient(135deg,#6e617f,#4b4367 68%,#453a60)!important;box-shadow:8px 11px 0 #c99d78,0 17px 20px #83553d4f!important}
+.scene-book .book-emblem{font-size:clamp(58px,13vw,82px)!important;text-shadow:0 0 13px #efc68b77}
+.scene-book .book-label{font-size:clamp(13px,3.3vw,17px)!important}
+.scene-globe{top:52%!important;left:5%!important;width:19%!important;box-shadow:0 0 0 4px #e5b779,0 8px 12px #9a6a4b50!important}
+.scene-lamp{top:29%!important;right:7%!important}
+.home-screen .cozy-menu{top:73%!important;left:11%!important;width:78%!important;gap:clamp(10px,1.5vh,16px)!important}
+.home-screen .cozy-menu button{height:clamp(45px,6.4vh,58px)!important;border:4px solid #83533b!important;box-shadow:0 5px 0 #a87250,0 10px 14px #79503a35!important}
+.home-screen .cozy-menu button:active{transform:translateY(3px);box-shadow:0 2px 0 #a87250!important}
+@media(max-height:730px){.home-heading{top:4%!important}.scene-window{top:20%!important;height:36%!important}.scene-book{top:35%!important}.home-screen .cozy-menu{top:66%!important}.home-screen .cozy-menu button{height:43px!important}}
