@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<meta name="theme-color" content="#0b1329"/><meta name="description" content="四格诡局：与朋友比一比，谁能用最少步数复原失落星图。"/>
+<title>四格诡局 · 每日同题脑力挑战</title><link rel="icon" type="image/svg+xml" href="assets/icon.svg"/><link rel="stylesheet" href="style.css" />
+</head><body>
+<div class="aurora a1"></div><div class="aurora a2"></div>
+<main class="shell" id="app">
+<header class="top"><div class="brand-icon" aria-hidden="true"><span>✦</span></div><div class="brand-text"><b>FOURFOLD</b><small>四格诡局 · 星图修复局</small></div><div class="top-actions"><button id="soundBtn" class="circle-btn" aria-label="开关声音">♫</button><button id="rankBtn" class="circle-btn" aria-label="查看排行榜">♛</button></div></header>
+<section class="hero"><div class="eyebrow">✦ LOGIC / 001 <span>·</span> 九宫回转计划</div><h1>你能在<span>几步</span>之内<br>还原失落星图？</h1><p>每一次旋转，四块同时换位。<br>真正的高手，知道下一步该往哪走。</p></section>
+<nav class="mode-select" aria-label="关卡模式"><button id="storyTab" class="active">✦ 闯关档案</button><button id="dailyTab">◈ 每日同题 <i id="dailyDot"></i></button></nav>
+<section class="game-panel"><div class="game-topline"><div><span class="caption" id="chapterCaption">ARCHIVE 01 / 18</span><h2 id="puzzleTitle">初醒的星图</h2></div><span class="difficulty" id="difficulty">入门</span></div>
+<div class="metric-row"><div><small>当前步数</small><strong id="moves">00</strong></div><div><small>理论最优</small><strong id="par">--</strong></div><div><small>本局用时</small><strong id="clock">00:00</strong></div></div>
+<div class="goal-caption"><span>目标图案</span><span>9 枚印记 · 顺序复原</span></div><div class="target" id="target" aria-label="目标星图"></div>
+<div class="board-frame"><div class="board-halo"></div><div id="board" class="board" role="group" aria-label="九宫格拼图"></div><div id="anchors" class="anchors" aria-label="旋转节点"></div></div>
+<p class="instruction" id="instruction">点按四格交汇处的星环，即可旋转这四格</p>
+<div class="direction"><button class="selected" id="cwBtn">↻ 顺时针</button><button id="ccwBtn">↺ 逆时针</button></div>
+<div class="tools"><button id="resetBtn">↺ 重开本局</button><button id="hintBtn">✧ 看提示 <span>· 奖励广告位</span></button></div>
+</section>
+<div class="bottom-actions"><button class="share" id="shareBtn"><span>✦</span> 发起同题挑战</button><button class="secondary" id="nextBtn">下一关 <span>→</span></button></div>
+<div class="footer"><p>不会靠邀请送额外步数 · 成绩来自真实操作</p><div class="ad-reserve" id="adReserve">广告展示栏位（上线接入后按场景展示）</div><small>© FOURFOLD · 本页是浏览器试玩版，微信好友榜须在微信小游戏内查看</small></div>
+</main>
+<div class="overlay" id="modal" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle"><button id="closeModal" class="close" aria-label="关闭弹窗">×</button><div class="dialog-emblem" id="dialogEmblem">✦</div><div class="eyebrow" id="dialogOverline">CHALLENGE COMPLETE</div><h2 id="dialogTitle">星图已复原</h2><p id="dialogText"></p><div class="dialog-stats" id="dialogStats"></div><button id="dialogPrimary" class="share">继续挑战</button><button id="dialogSecondary" class="text-btn">分享我的成绩</button></section></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script type="module" src="app.js"></script>
+</body></html>
