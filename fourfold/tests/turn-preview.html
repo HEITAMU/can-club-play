@@ -42,7 +42,16 @@ async function midpoint(direction){
   return {original,before,nodes,start,list,direction};
 }
 function continueMotion(){animations().forEach(a=>a.play());}
-async function normal(direction){await ready();begin(direction);await until(()=>!busy(),'动作没有完成');report.className='';report.textContent=`${direction===1?'顺':'逆'}时针已落位，当前 ${moves()} 步。`;}
+async function normal(direction){await ready();const before=moves(),original=sequence();begin(direction);check(busy(),'点击旋钮没有开始旋转');await until(()=>!busy(),'动作没有完成');check(moves()===before+1&&sequence()===rotateText(original,direction),'动作没有完成正确的一步换位');report.className='';report.textContent=`${direction===1?'顺':'逆'}时针已落位，当前 ${moves()} 步。`;}
+async function resizeFrame(width){
+  const w=frame.contentWindow;
+  if(Math.abs(frame.getBoundingClientRect().width-width)>.1)await new Promise((resolve,reject)=>{
+    const changed=()=>{clearTimeout(timer);resolve();};
+    const timer=setTimeout(()=>{w.removeEventListener('resize',changed);reject(Error('视口没有触发真实尺寸变化'));},3000);
+    w.addEventListener('resize',changed,{once:true});frame.style.width=width+'px';
+  });
+  await new Promise(resolve=>w.requestAnimationFrame(()=>w.requestAnimationFrame(resolve)));await sleep(120);
+}
 async function pause(direction){const s=await midpoint(direction);report.className='';report.textContent=`${direction===1?'顺':'逆'}时针暂停在230/460毫秒。\n四块图案沿圆弧移动，数字保持朝上。\n当前步数 ${moves()}（落位后才增加）。\n点击“继续落位”完成这一步。`;return s;}
 async function verify(){
   const lines=[];report.className='';report.textContent='正在运行真实网页旋转验收…';
@@ -73,8 +82,8 @@ async function verify(){
   let original=sequence(),before=moves();await midpoint(1);get('backHome').click();await sleep(520);
   check(sequence()===original&&moves()===before&&!busy(),'返回后旧动作仍改动棋盘');record('转动中返回：取消动作，旧回调不再记步');
   get('enterDaily').click();await ready();original=sequence();before=moves();await midpoint(-1);
-  frame.style.width='375px';await sleep(150);await until(()=>!busy(),'尺寸变化没有取消动作');await sleep(520);
-  check(sequence()===original&&moves()===before,'尺寸变化后旧动作仍提交');frame.style.width='390px';await sleep(150);record('转动中改变视口：恢复原局面与格子比例');
+  await resizeFrame(375);await until(()=>!busy(),'尺寸变化没有取消动作');await sleep(520);
+  check(sequence()===original&&moves()===before,'尺寸变化后旧动作仍提交');await resizeFrame(390);record('转动中改变视口：恢复原局面与格子比例');
   await normal(1);record('取消后可立即开始下一次旋转');report.className='pass';report.textContent=lines.join('\n')+'\n\n全部通过 · 真实浏览器动画与交互';
 }
 async function run(fn){try{await fn();}catch(error){continueMotion();report.className='fail';report.textContent='未通过 · '+error.message;throw error;}}
