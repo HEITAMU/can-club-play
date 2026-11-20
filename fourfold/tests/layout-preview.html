@@ -183,7 +183,8 @@ async function runAll(){
   }catch(error){result.className='fail';result.textContent='矩阵检查未完成';details.textContent=error.message;}
   finally{running=false;controls.forEach(control=>control.disabled=false);}
 }
-frame.addEventListener('load',()=>{if(!running)checkCurrent();});
+// Explicit navigation already awaits its own check; avoid two inspections scrolling the same page.
+frame.addEventListener('load',()=>{if(!running&&navigation===0)checkCurrent();});
 size.addEventListener('change',()=>{if(!running)navigate(...size.value.split(',').map(Number),mode.value);});
 mode.addEventListener('change',()=>{if(!running)navigate(...size.value.split(',').map(Number),mode.value);});
 document.querySelector('#check').addEventListener('click',checkCurrent);
