@@ -3,23 +3,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>四格诡局 · 旋转验收 0.8.5</title>
+<title>四格诡局 · 旋转验收 0.8.6</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#17203b;color:#f6e2b4;font:15px/1.6 system-ui,sans-serif}main{display:flex;flex-wrap:wrap;align-items:flex-start;gap:24px;padding:24px;max-width:1100px;margin:auto}section{flex:1;min-width:280px}h1{font-size:24px;margin:0 0 8px}p{color:#d5cdbf}button{padding:10px 14px;margin:4px;border:1px solid #c49b59;border-radius:9px;background:#f6dfad;color:#4d291c;font:600 14px system-ui;cursor:pointer}button:disabled{opacity:.45;cursor:wait}iframe{flex:none;display:block;width:390px;height:650px;border:0;border-radius:14px;background:#f4cf99;box-shadow:0 14px 50px #0005}pre{white-space:pre-wrap;background:#0e152a;padding:16px;border-radius:10px;font:13px/1.7 ui-monospace,monospace}a{color:#f3c978}.pass{color:#9ee3b0}.fail{color:#ff9f95}@media(max-width:460px){main{padding:10px;gap:12px}iframe{max-width:100%}}
 </style>
 <main>
-<iframe id="preview" title="真实每日挑战游戏" width="390" height="650" src="../?mode=daily&v=0.8.5"></iframe>
+<iframe id="preview" title="真实每日挑战游戏" width="390" height="650" src="../?mode=daily&v=0.8.6"></iframe>
 <section>
-<h1>四格旋转 · 0.8.5</h1>
-<p>左边是真实游戏。验收按钮只点击现有控件，并读取动画和棋盘；“中途暂停”仅用于观察，游戏内始终按460毫秒播放。</p>
+<h1>四格旋转 · 0.8.6</h1>
+<p>左边是真实游戏。验收按钮只点击现有控件，并读取动画和棋盘；“中途暂停”仅用于观察，游戏内始终按800毫秒播放。</p>
 <div><button id="normalCW">顺时针转一次</button><button id="normalCCW">逆时针转一次</button></div>
 <div><button id="pauseCW">顺时针中途暂停</button><button id="pauseCCW">逆时针中途暂停</button><button id="resume">继续落位</button></div>
 <div><button id="verify">运行旋转验收</button></div>
 <pre id="report" role="status" aria-live="polite">正在载入真实游戏…</pre>
-<p><a href="../?v=0.8.5">打开游戏</a> · <a href="layout-preview.html?v=0.8.5">手机布局验收</a></p>
+<p><a href="../?v=0.8.6">打开游戏</a> · <a href="layout-preview.html?v=0.8.6">手机布局验收</a></p>
 </section>
 </main>
 <script type="module">
+import {TURN_DURATION_MS} from '../cocos/assets/scripts/TurnMotion.js?v=0.8.6';
 const frame=document.querySelector('#preview'),report=document.querySelector('#report');
 let pausedAnimations=[];
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -29,7 +30,7 @@ const tiles=()=>[...get('board').children];
 const sequence=()=>tiles().map(n=>n.dataset.token).join('');
 const moves=()=>Number(get('moves').textContent);
 const busy=()=>get('board').classList.contains('rotating');
-const animations=()=>doc().getAnimations().filter(a=>a.effect?.getTiming().duration===460);
+const animations=()=>doc().getAnimations().filter(a=>a.effect?.getTiming().duration===TURN_DURATION_MS);
 const rect=n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,cx:r.x+r.width/2,cy:r.y+r.height/2};};
 const check=(ok,message)=>{if(!ok)throw Error(message);};
 async function until(fn,message,timeout=8000){const deadline=performance.now()+timeout;for(;;){if(fn())return;if(performance.now()>=deadline)throw Error(message);await sleep(25);}}
@@ -39,7 +40,7 @@ function begin(direction){get(direction===1?'cwBtn':'ccwBtn').click();get('ancho
 async function midpoint(direction){
   await ready();const original=sequence(),before=moves(),nodes=tiles(),start=nodes.map(rect);begin(direction);
   await until(()=>animations().length>=4,'没有找到四块图案动画');
-  const list=animations();pausedAnimations=list;list.forEach(a=>a.pause());await Promise.all(list.map(a=>a.ready));list.forEach(a=>a.currentTime=230);
+  const list=animations();pausedAnimations=list;list.forEach(a=>a.pause());await Promise.all(list.map(a=>a.ready));list.forEach(a=>a.currentTime=TURN_DURATION_MS/2);
   await new Promise(resolve=>frame.contentWindow.requestAnimationFrame(()=>frame.contentWindow.requestAnimationFrame(resolve)));
   return {original,before,nodes,start,list,direction};
 }
@@ -54,7 +55,7 @@ async function resizeFrame(width){
   });
   await new Promise(resolve=>w.requestAnimationFrame(()=>w.requestAnimationFrame(resolve)));await sleep(120);
 }
-async function pause(direction){const s=await midpoint(direction);report.className='';report.textContent=`${direction===1?'顺':'逆'}时针暂停在230/460毫秒。\n四块图案沿圆弧移动，数字保持朝上。\n当前步数 ${moves()}（落位后才增加）。\n点击“继续落位”完成这一步。`;return s;}
+async function pause(direction){const s=await midpoint(direction);report.className='';report.textContent=`${direction===1?'顺':'逆'}时针暂停在${TURN_DURATION_MS/2}/${TURN_DURATION_MS}毫秒。\n四块图案沿圆弧移动，数字保持朝上。\n当前步数 ${moves()}（落位后才增加）。\n点击“继续落位”完成这一步。`;return s;}
 async function verify(){
   const lines=[];report.className='';report.textContent='正在运行真实网页旋转验收…';
   const record=text=>{lines.push('通过 · '+text);report.textContent=lines.join('\n');};
@@ -62,11 +63,11 @@ async function verify(){
   const liveBefore=moves(),liveBoard=sequence(),liveTile=tiles()[0],liveFrames=[],liveStarted=performance.now();
   begin(1);check(animations().filter(a=>a.effect?.target?.classList?.contains('tile')&&a.effect.getKeyframes().some(k=>'transform' in k)).length===4,'实际播放没有同时启动四块图案');
   await new Promise((resolve,reject)=>{function sample(){if(!busy()){resolve();return;}if(performance.now()-liveStarted>10000){reject(Error('连续播放超过10秒仍未完成'));return;}const r=rect(liveTile);liveFrames.push([r.cx.toFixed(2),r.cy.toFixed(2)].join(','));frame.contentWindow.requestAnimationFrame(sample);}sample();});
-  check(performance.now()-liveStarted>=350,'连续播放提前提交了棋盘');
+  check(performance.now()-liveStarted>=TURN_DURATION_MS*.75,'连续播放提前提交了棋盘');
   check(sequence()===rotateText(liveBoard,1)&&moves()===liveBefore+1,'实际播放未正确落位');
   // Frame counts are observations, not a hardware-dependent pass threshold.
   // The exact mid-orbit geometry is checked separately with all effects paused.
-  record(`连续播放：460毫秒动画且正确落位，采样到${new Set(liveFrames).size}个不同位置`);
+  record(`连续播放：${TURN_DURATION_MS}毫秒动画且正确落位，采样到${new Set(liveFrames).size}个不同位置`);
   for(const direction of [1,-1]){
     const s=await midpoint(direction),selected=[0,1,4,3],all=s.nodes.map(rect);
     check(sequence()===s.original&&moves()===s.before,'尚未落位就提交了棋盘或步数');
@@ -83,10 +84,10 @@ async function verify(){
     tiles().forEach((n,i)=>{const r=rect(n),b=s.start[i];check(Math.abs(r.x-b.x)<.1&&Math.abs(r.y-b.y)<.1&&Math.abs(r.width-b.width)<.1&&Math.abs(r.height-b.height)<.1,'落位后格子尺寸发生变化');});
     record(`${direction===1?'顺':'逆'}时针：弧线、完整图块、金色选区、一次落位、连点锁定`);
   }
-  let original=sequence(),before=moves();await midpoint(1);get('backHome').click();await sleep(520);
+  let original=sequence(),before=moves();await midpoint(1);get('backHome').click();await sleep(TURN_DURATION_MS+60);
   check(sequence()===original&&moves()===before&&!busy(),'返回后旧动作仍改动棋盘');record('转动中返回：取消动作，旧回调不再记步');
   get('enterDaily').click();await ready();original=sequence();before=moves();await midpoint(-1);
-  await resizeFrame(375);await until(()=>!busy(),'尺寸变化没有取消动作');await sleep(520);
+  await resizeFrame(375);await until(()=>!busy(),'尺寸变化没有取消动作');await sleep(TURN_DURATION_MS+60);
   check(sequence()===original&&moves()===before,'尺寸变化后旧动作仍提交');await resizeFrame(390);record('转动中改变视口：恢复原局面与格子比例');
   await normal(1);record('取消后可立即开始下一次旋转');report.className='pass';report.textContent=lines.join('\n')+'\n\n全部通过 · 真实浏览器动画与交互';
 }

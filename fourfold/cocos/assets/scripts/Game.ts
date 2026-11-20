@@ -439,7 +439,7 @@ export class FourfoldGame extends Component {
     motion.elapsed=Math.min(TURN_DURATION_MS,motion.elapsed+deltaTime*1000);
     const progress=motion.elapsed/TURN_DURATION_MS;this.applyTurnFrame(motion,progress);
     if(progress<1)return;
-    // 唯一提交点：整段460ms完成后再更新棋盘与步数，不排队补跑连续点击。
+    // 唯一提交点：整段动画完成后再更新棋盘与步数，不排队补跑连续点击。
     const next=rotate(motion.board,motion.q,motion.dir),angle=(motion.knobStart+motion.dir*90)%360;
     this.cancelTurnMotion(false);this.knobAngles[motion.q]=angle;this.board=next;this.moves++;
     if(isSolved(this.board)){this.won=true;this.elapsed=(at()-this.startAt)/1000;this.complete();}

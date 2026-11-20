@@ -64,7 +64,7 @@ function validateFrame(c,samples,label){
 }
 
 test('quarter-turn endpoints land on the real unequal target rectangles without drift',()=>{
-  assert.equal(TURN_DURATION_MS,460);
+  assert.equal(TURN_DURATION_MS,800);
   assert.equal(TURN_KEYFRAME_COUNT,49);
   eachCase(c=>{
     const original=structuredClone(c.rects);
@@ -169,6 +169,6 @@ test('dense sampling reports shrink and endpoint error and detects discontinuous
   for(const [direction,values] of Object.entries(report)){
     assert.ok(values.minScaleX>0&&values.minScaleY>0,direction+' tiles vanished');
     assert.ok(values.maxEndpointError<EPS,direction+' endpoint error');
-    t.diagnostic(direction+' '+JSON.stringify(values)+'; center distances are original-art pixels, adjacent sample dt=0.001 (0.46ms)');
+    t.diagnostic(direction+' '+JSON.stringify(values)+`; center distances are original-art pixels, adjacent sample dt=0.001 (${TURN_DURATION_MS/1000}ms)`);
   }
 });
