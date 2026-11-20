@@ -2,11 +2,11 @@
 <html lang="zh-CN"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
 <meta name="theme-color" content="#0b1329"/><meta name="description" content="四格诡局：与朋友比一比，谁能用最少步数复原失落星图。"/>
-<title>四格诡局 · 每日同题脑力挑战</title><link rel="icon" type="image/svg+xml" href="assets/icon.svg"/><link rel="stylesheet" href="style.css?v=0.4.2" />
+<title>四格诡局 · 每日同题脑力挑战</title><link rel="icon" type="image/svg+xml" href="assets/icon.svg"/><link rel="stylesheet" href="style.css?v=0.4.4" />
 </head><body>
 <div class="aurora a1"></div><div class="aurora a2"></div>
 <main class="shell" id="app">
-<section id="home" class="home-screen"><div class="cozy-window"><div class="cozy-sun">☀</div><div class="cozy-plant">❀</div></div><div class="cozy-title"><span>✦</span>四格诡局</div><div class="cozy-subtitle">F O U R F O L D</div><div class="cozy-notebook"><div class="cozy-ring">✦</div><div class="cozy-caption">星图手册</div></div><div class="cozy-menu"><button id="enterStory">✦　进入星图</button><button id="enterDaily">◈　每日挑战</button><button id="enterRank">♛　好友荣誉榜</button></div><div class="cozy-cat">ฅ^•ﻌ•^ฅ</div><div class="cozy-desk"></div><div class="cozy-footer"><span>✦ 星图奖励</span><span>▣ 收藏册</span><span>♛ 成就</span></div><span id="homeProgress" class="cozy-progress">01 / 18</span></section>
+<section id="home" class="home-screen"><div class="cozy-window"><div class="cozy-sun">☀</div><div class="cozy-plant">❀</div></div><div class="cozy-title"><span>✦</span>四格诡局</div><div class="cozy-subtitle">F O U R F O L D</div><div class="cozy-notebook"><div class="cozy-ring">✦</div><div class="cozy-caption">星图手册</div></div><div class="cozy-menu"><button id="enterStory" onclick="window.ffOpen&&window.ffOpen('story')">✦　进入星图</button><button id="enterDaily" onclick="window.ffOpen&&window.ffOpen('daily')">◈　每日挑战</button><button id="enterRank" onclick="window.ffOpen&&window.ffOpen('rank')">♛　好友荣誉榜</button></div><div class="cozy-cat">ฅ^•ﻌ•^ฅ</div><div class="cozy-desk"></div><div class="cozy-footer"><span>✦ 星图奖励</span><span>▣ 收藏册</span><span>♛ 成就</span></div><span id="homeProgress" class="cozy-progress">01 / 18</span></section>
 <div id="gameScreen" class="game-screen" hidden>
 <header class="top compact-top"><button id="backHome" class="home-back" aria-label="返回主界面">‹</button><button id="settingsBtn" class="settings-gear" aria-label="设置">⚙</button></header>
 
@@ -25,5 +25,17 @@
 <div id="settingsOverlay" class="settings-overlay" hidden><div class="settings-card" role="dialog" aria-modal="true" aria-label="游戏设置"><div class="settings-head"><strong>⚙ 设置</strong><button id="settingsClose" aria-label="关闭设置">×</button></div><button id="settingsSound">♫　音乐与音效：开</button><button id="settingsReset">↺　重开本局</button><button id="settingsHome">⌂　返回主界面</button></div></div>
 <div class="overlay" id="modal" hidden><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle"><button id="closeModal" class="close" aria-label="关闭弹窗">×</button><div class="dialog-emblem" id="dialogEmblem">✦</div><div class="eyebrow" id="dialogOverline">CHALLENGE COMPLETE</div><h2 id="dialogTitle">星图已复原</h2><p id="dialogText"></p><div class="dialog-stats" id="dialogStats"></div><button id="dialogPrimary" class="share">继续挑战</button><button id="dialogSecondary" class="text-btn">分享我的成绩</button></section></div>
 <div id="toast" role="status" aria-live="polite"></div>
-<script type="module" src="app.js?v=0.4.3"></script>
+<script>
+window.ffOpen=function(which){
+ var home=document.getElementById('home'),game=document.getElementById('gameScreen');
+ if(which==='rank'){document.getElementById('startupNotice').hidden=false;document.getElementById('startupNotice').textContent='排行榜正在加载';return;}
+ home.hidden=true;game.hidden=false;
+ var notice=document.getElementById('startupNotice');
+ if(!window.ffReady){notice.hidden=false;notice.textContent='游戏正在加载，请稍候…';}
+};
+window.addEventListener('error',function(e){var n=document.getElementById('startupNotice');if(n){n.hidden=false;n.textContent='加载失败，请刷新页面';} });
+window.addEventListener('unhandledrejection',function(){var n=document.getElementById('startupNotice');if(n){n.hidden=false;n.textContent='加载失败，请刷新页面';}});
+</script>
+<div id="startupNotice" hidden role="status" style="position:fixed;z-index:100;left:15%;right:15%;top:45%;padding:14px;border-radius:14px;background:#fff1d2;color:#70462d;text-align:center;border:2px solid #9d724c"></div>
+<script type="module" src="app.js?v=0.4.4"></script>
 </body></html>
