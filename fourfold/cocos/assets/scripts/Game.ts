@@ -14,7 +14,7 @@ const SIGILS=['✦','◈','✣','❖','☼','✶','✧','✤','✺'];
 @ccclass('FourfoldGame')
 export class FourfoldGame extends Component {
   private canvasNode:Node;private root:Node;private cam:Camera;private width=390;private height=844;private safeTop=0;
-  private mode='story';private key='1';private puzzle:any;private board=GOAL;private direction=1;private moves=0;private hints=0;private elapsed=0;private startAt=0;private won=false;private modal='';private clockLabel:Label|null=null;
+  private inHome=true;private mode='story';private key='1';private puzzle:any;private board=GOAL;private direction=1;private moves=0;private hints=0;private elapsed=0;private startAt=0;private won=false;private modal='';private clockLabel:Label|null=null;
   private rewardAd:any=null;private banner:any=null;private toastSerial=0;
   onLoad(){
     // 固定设计坐标并使用 SHOW_ALL：小屏统一缩放，确保按钮不被挤到屏外。
@@ -33,7 +33,7 @@ export class FourfoldGame extends Component {
     this.canvasNode.setPosition(this.width/2,this.height/2);
     this.root=new Node('UIRoot');this.root.layer=Layers.Enum.UI_2D;this.root.addComponent(UITransform).setContentSize(this.width,this.height);this.canvasNode.addChild(this.root);this.root.setPosition(-this.width/2,this.height/2);
     const launch=sdk?.getLaunchOptionsSync?.()||{};const q=launch.query||{};
-    if(q.mode==='daily'&&/^20\d\d-\d\d-\d\d$/.test(q.day||''))this.startGame('daily',q.day);else this.startGame('story',String(this.storeRead('unlocked',1)));
+    if(q.mode==='daily'&&/^20\d\d-\d\d-\d\d$/.test(q.day||'')){this.inHome=false;this.startGame('daily',q.day);}else this.startGame('story',String(this.storeRead('unlocked',1)));
     this.schedule(()=>this.updateClock(),.2);
   }
   private storageKey(){return `${this.mode}:${this.key}`;}
@@ -56,17 +56,18 @@ export class FourfoldGame extends Component {
     n.on(Node.EventType.TOUCH_END,()=>{action();});return n;
   }
   private draw(){
+    if(this.inHome){this.drawHome();return;}
     this.clear();const w=this.width,h=this.height,T=this.safeTop>0?Math.min(30,this.safeTop):0;
     this.shape(0,0,w,h,C.background,'',0);
     this.ring(w/2,-105,320,'#263C5A');this.ring(w/2,-105,280,'#172C4B');
     this.shape(22,20+T,44,44,C.gold,C.gold2,12);this.txt('✦',25,21+T,38,42,27,C.dark,true);
     this.txt('FOURFOLD',75,23+T,161,21,14,C.gold,true);this.txt('四格诡局 · 星图修复局',75,45+T,185,14,10,C.muted);
     this.btn('♛ 榜',302,25+T,65,37,()=>this.showRank(),false,13);
-    this.txt('你能在几步之内复原星图？',18,87+T,w-36,33,23,C.white,true);
-    this.txt('每一次旋转，四块同时换位。',18,122+T,w-36,20,12,C.muted);
-    this.btn('✦ 闯关档案',20,155+T,169,39,()=>this.startGame('story',String(this.storeRead('unlocked',1))),this.mode==='story',13);
-    this.btn('◈ 每日同题',200,155+T,170,39,()=>this.startGame('daily',todayCN()),this.mode==='daily',13);
-    const y=198+T,cardH=h-y-110;
+
+    this.btn('‹',20,89+T,38,38,()=>{this.inHome=true;this.draw();},false,22);
+    this.btn('✦ 闯关档案',20,135+T,169,39,()=>this.startGame('story',String(this.storeRead('unlocked',1))),this.mode==='story',13);
+    this.btn('◈ 每日同题',200,135+T,170,39,()=>this.startGame('daily',todayCN()),this.mode==='daily',13);
+    const y=180+T,cardH=h-y-100;
     this.shape(16,y,w-32,cardH,C.surface,'#60708B',18);
     this.txt(this.mode==='story'?`ARCHIVE ${String(this.key).padStart(2,'0')} / 18`:`DAILY · ${this.key}`,30,y+12,170,20,11,C.muted);
     this.txt(this.mode==='story'?NAMES[Math.max(0,Number(this.key)-1)]:'今日脑力审判',28,y+34,205,27,18,C.white,true);
@@ -74,7 +75,7 @@ export class FourfoldGame extends Component {
     this.shape(31,y+72,w-62,64,C.dark,'#3E506A',10);
     const ms=[['当前步数',String(this.moves).padStart(2,'0')],['理论最优',String(this.puzzle.par).padStart(2,'0')],['本局用时','00:00']];
     ms.forEach((v,i)=>{const x=33+i*(w-66)/3,sz=(w-66)/3;this.txt(v[0],x,y+78,sz,19,10,C.muted);const l=this.txt(v[1],x,y+96,sz,31,24,C.gold,true);if(i===2){this.clockLabel=l;this.updateClock();}});
-    this.txt('目标图案 · 按数字 1—9 复原',32,y+140,w-64,19,10,C.muted);
+    this.txt('✦',32,y+140,w-64,19,12,C.gold);
     const size=Math.min(w-62,Math.min(260,cardH-250));
     const bx=(w-size)/2,by=y+156;
     this.shape(bx-6,by-6,size+12,size+12,C.dark,C.gold2,13);
@@ -94,18 +95,30 @@ export class FourfoldGame extends Component {
       const hit=this.node('Rotate '+q,sx-r,sy-r,2*r,2*r);hit.on(Node.EventType.TOUCH_END,()=>this.spin(q));
     }
     const iy=by+size+12;
-    this.txt(this.won?'✓ 星图已复原':this.hints?'提示过的成绩不进入好友榜':'点击四格中心的星环，按方向旋转',20,iy,w-40,20,10,this.won?C.green:C.muted);
+    this.txt(this.won?'✦ 完成':this.hints?'✧ 已使用提示':'',20,iy,w-40,20,10,this.won?C.green:C.muted);
     const ctrlY=iy+28;
     this.btn('↻ 顺时针',26,ctrlY,(w-62)/2,38,()=>{this.direction=1;this.draw();},this.direction===1,13);
     this.btn('↺ 逆时针',36+(w-62)/2,ctrlY,(w-62)/2,38,()=>{this.direction=-1;this.draw();},this.direction===-1,13);
     const toolY=ctrlY+45;
     this.btn('↺ 重开',26,toolY,(w-62)/2,37,()=>this.startGame(this.mode,this.key),false,12);
-    this.btn('✧ 提示 · 广告位',36+(w-62)/2,toolY,(w-62)/2,37,()=>this.askHint(),false,12);
+    this.btn('✧ 提示',36+(w-62)/2,toolY,(w-62)/2,37,()=>this.askHint(),false,12);
     const bottomY=h-84;
     this.btn('✦ 发起好友挑战',21,bottomY,214,50,()=>this.share(),true,14);
     this.btn(this.won?'下一关 →':'锁定下一关',245,bottomY,124,50,()=>this.nextLevel(),false,12);
     // 真正的 Banner 由微信 SDK 在结算界面管理；不伪造广告曝光。
     if(this.modal)this.drawModal();
+  }
+  private drawHome(){
+    this.clear();const w=this.width,h=this.height;
+    this.shape(0,0,w,h,C.background,'',0);
+    this.ring(w/2,h*.38,144,'#5E7290');this.ring(w/2,h*.38,113,C.gold2);this.ring(w/2,h*.38,83,'#3B5575');
+    this.txt('✦',w/2-90,h*.38-110,180,190,112,C.gold,true);
+    this.txt('四格诡局',30,h*.52,w-60,62,39,C.white,true);
+    this.txt('F O U R F O L D',30,h*.52+64,w-60,24,14,C.gold);
+    this.txt('♛  '+String(this.storeRead('unlocked',1)).padStart(2,'0')+' / 18',80,h*.52+99,w-160,30,18,C.gold,true);
+    this.btn('✦ 进入星图',43,h*.69,w-86,54,()=>{this.inHome=false;this.startGame('story',String(this.storeRead('unlocked',1)));},true,17);
+    this.btn('◈ 每日挑战',43,h*.69+66,w-86,51,()=>{this.inHome=false;this.startGame('daily',todayCN());},false,16);
+    this.btn('♛ 好友荣誉榜',43,h*.69+129,w-86,51,()=>{this.inHome=false;this.showRank();},false,16);
   }
   private spin(q:number){if(this.won||this.modal)return;if(!this.startAt)this.startAt=at();this.board=rotate(this.board,q,this.direction);this.moves++;if(isSolved(this.board)){this.won=true;this.elapsed=(at()-this.startAt)/1000;this.complete();}this.draw();}
   private complete(){
