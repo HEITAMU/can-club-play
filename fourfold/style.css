@@ -139,3 +139,18 @@ html,body{background:#f0d1aa!important}
 .mode-select[hidden],.metric-row>div[hidden]{display:none!important}
 .metric-row{display:grid!important;grid-template-columns:1fr 1fr!important}
 .metric-row>div:not([hidden]){width:auto!important;min-width:0!important}
+
+/* v0.6.3 — concise result presentation */
+#dialogOverline[hidden]{display:none!important}
+.overlay.result-mode .dialog{width:min(100%,370px);padding:31px 20px 23px;background:linear-gradient(160deg,#fff7e6,#f1d0a5);border:4px solid #8d5e42;border-radius:25px;box-shadow:0 9px 0 #805139,0 26px 60px #2e1c16a0}
+.overlay.result-mode .dialog-emblem{width:86px;height:86px;margin:0 auto 13px;border-radius:50%;border:4px solid #bc8c59;background:radial-gradient(circle,#fff4d3,#efc58b);box-shadow:0 4px 0 #b27c50;color:#9a6338;font-size:51px;display:grid;place-items:center;text-shadow:none}
+.overlay.result-mode .dialog h2{margin:8px 0 21px;color:#75472e;font-size:clamp(24px,6vw,30px);line-height:1.35}
+.overlay.result-mode #dialogText{display:none!important}
+.overlay.result-mode .dialog-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;padding:15px 6px;margin:12px 0 24px;border:2px solid #b78a60;border-radius:16px;background:#f8e1be;color:#71492e}
+.result-stat{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0}
+.result-stat+ .result-stat{border-left:1px solid #cda67f}
+.result-stat small{font-size:11px;color:#97704e}
+.result-stat strong{font-size:clamp(23px,6vw,30px);line-height:1.1;color:#75472e;font-variant-numeric:tabular-nums}
+.result-rival{grid-column:1/-1;border-top:1px solid #cda67f;margin-top:12px;padding-top:10px;font-size:12px}
+.overlay.result-mode #dialogPrimary{height:53px;border:3px solid #9c6d45;border-radius:15px;background:linear-gradient(#ffedb4,#efbd6c);box-shadow:0 4px 0 #a36e48;color:#75482d;font-size:17px;font-weight:800}
+.overlay.result-mode .result-share-btn{display:block!important;width:100%;height:47px;margin-top:17px;padding:0;border:2px solid #aa7b55;border-radius:13px;background:linear-gradient(#fff7e8,#f1d8b5);box-shadow:0 3px 0 #b98d67;color:#7d5338;font-size:15px;font-weight:750}

@@ -52,8 +52,19 @@ function finish(){won=true;elapsed=started?(performance.now()-started)/1000:0;co
   sound(523,.22,.05);setTimeout(()=>sound(659,.25,.043),110);setTimeout(()=>sound(784,.45,.04),235);
   render();openResult(metric,better);
 }
-function openDialog({emblem='✦',overline='',title,text='',stats='',primary='继续',secondary='',onPrimary=()=>{},onSecondary=()=>{}}){el('dialogEmblem').textContent=emblem;el('dialogOverline').textContent=overline;el('dialogTitle').textContent=title;el('dialogText').textContent=text;el('dialogStats').textContent=stats;el('dialogPrimary').textContent=primary;el('dialogSecondary').textContent=secondary;el('dialogSecondary').style.display=secondary?'':'none';el('dialogPrimary').onclick=onPrimary;el('dialogSecondary').onclick=onSecondary;$.modal.hidden=false;}
-function openResult(metric,newBest){const title=honor(metric.moves,metric.par,metric.hints);openDialog({emblem:metric.moves===metric.par&&!metric.hints?'♛':'✦',overline:mode==='daily'?'DAILY CHALLENGE / COMPLETE':'ARCHIVE REPAIRED',title,text:`${newBest?'个人记录已更新。':''}${metric.hints?'本次用了提示，不参与公平排名。':'这是你的真实解题成绩。'}`,stats:`${metric.moves} 步通关 · 最优 ${metric.par} 步 · 用时 ${metric.seconds} 秒${claimedBeat!==null?` · 好友目标 ${claimedBeat} 步`:''}`,primary:mode==='daily'?'去闯关':'挑战下一关',secondary:'分享这个成绩',onPrimary:nextLevel,onSecondary:share});}
+function openDialog({emblem='✦',overline='',title,text='',stats='',primary='继续',secondary='',onPrimary=()=>{},onSecondary=()=>{}}){$.modal.classList.remove('result-mode');el('dialogText').hidden=false;el('dialogEmblem').textContent=emblem;el('dialogOverline').textContent='';el('dialogOverline').hidden=true;el('dialogTitle').textContent=title;el('dialogText').textContent=text;el('dialogStats').textContent=stats;el('dialogPrimary').textContent=primary;el('dialogSecondary').textContent=secondary;el('dialogSecondary').style.display=secondary?'':'none';el('dialogPrimary').onclick=onPrimary;el('dialogSecondary').onclick=onSecondary;$.modal.hidden=false;}
+function openResult(metric,newBest){
+  const perfect=metric.moves===metric.par&&!metric.hints;
+  openDialog({emblem:perfect?'♛':'✦',title:honor(metric.moves,metric.par,metric.hints),
+    text:'',stats:'',primary:mode==='daily'?'返回闯关':'挑战下一关',
+    secondary:'分享这个成绩',onPrimary:nextLevel,onSecondary:share});
+  $.modal.classList.add('result-mode');
+  const stats=el('dialogStats');
+  const fields=[['通关步数',metric.moves],['最优步数',metric.par],['用时',Math.floor(metric.seconds/60)+':'+String(metric.seconds%60).padStart(2,'0')]];
+  stats.replaceChildren(...fields.map(([label,value])=>{const cell=document.createElement('div');cell.className='result-stat';const l=document.createElement('small');l.textContent=label;const v=document.createElement('strong');v.textContent=String(value);cell.append(l,v);return cell;}));
+  if(claimedBeat!==null){const note=document.createElement('div');note.className='result-rival';note.textContent='好友挑战目标 '+claimedBeat+' 步';stats.append(note);}
+  el('dialogText').hidden=true;
+}
 function nextLevel(){if(!won){toast('先还原星图，才能解锁下一关');return;}claimedBeat=null;if(mode==='daily')startGame('story',String(read('unlocked',1)));else if(+key<18)startGame('story',String(+key+1));else {toast('18份档案全部通关！试试今日同题');startGame('daily',currentDay());}}
 function share(){let url=new URL(window.location.href);url.search='';url.searchParams.set('mode',mode);if(mode==='daily'){url.searchParams.set('day',key);if(won&&!hints)url.searchParams.set('beat',String(moves));}else{url.searchParams.set('level',key);if(won&&!hints)url.searchParams.set('beat',String(moves));}const title=won&&!hints?`我在《四格诡局》用 ${moves} 步还原星图。你能更少吗？`:'四格诡局 · 和我来一场同题脑力挑战';const text=`${title} ${url.toString()}`;if(navigator.share){navigator.share({title,text,url:url.toString()}).catch(()=>{});}else if(navigator.clipboard){navigator.clipboard.writeText(text).then(()=>toast('挑战链接已复制，发给朋友试试')).catch(()=>toast('浏览器限制复制，请手动复制当前地址'));}else{toast('可以复制浏览器地址分享给朋友');}}
 function showRank(){showingRanks=true;const local=read('best:daily:'+currentDay(),null);openDialog({emblem:'♛',overline:'WECHAT FRIENDS RANK',title:'好友同关榜',text:'网页试玩不拥有微信关系链权限。微信正式小游戏使用开放数据域展示好友的真实成绩，不会生成虚拟好友。',stats:local?`你今天的个人最好成绩：${local.moves} 步 · ${local.seconds} 秒`:'今天还没有通关记录，先去完成今日挑战吧。',primary:'去挑战每日挑战',secondary:'分享挑战入口',onPrimary:()=>startGame('daily',currentDay()),onSecondary:share});}
