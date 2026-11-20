@@ -3,19 +3,28 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
-<title>四格诡局 · 主页比例检查</title>
+<title>四格诡局 · 界面比例检查</title>
 <style>
 body{margin:0;padding:20px;background:#e7e3dc;color:#342b23;font:15px system-ui,sans-serif}header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px}h1{font-size:20px;margin:0}select,button{font:inherit;padding:8px}output{padding:8px;border-radius:8px;background:#fff}iframe{display:block;border:0;box-shadow:0 0 0 2px #75634f,0 8px 30px #0002;margin:0 auto;background:#f8d4a5}main{overflow:auto;padding:4px 4px 20px}.pass{color:#176333}.fail{color:#a22621}
 </style>
-<header><h1>主页比例检查</h1><label>可用视口 <select id="size"><option value="390,650">390 × 650 · 内置浏览器短屏</option><option value="390,844">390 × 844 · 常规竖屏</option><option value="320,568">320 × 568 · 小屏</option><option value="460,936">460 × 936 · 桌面容器</option></select></label><button id="check">重新检查</button><output id="result">加载中…</output></header>
-<main><iframe id="preview" title="真实游戏视口" width="390" height="650" src="../?v=0.7.2"></iframe></main>
+<header><h1>界面比例检查</h1><label>可用视口 <select id="size"><option value="390,650">390 × 650 · 内置浏览器短屏</option><option value="390,844">390 × 844 · 常规竖屏</option><option value="320,568">320 × 568 · 小屏</option><option value="460,936">460 × 936 · 桌面容器</option></select></label><label>页面 <select id="mode"><option value="home">主页</option><option value="daily">每日挑战</option><option value="story">普通关</option></select></label><button id="check">重新检查</button><output id="result">加载中…</output></header>
+<main><iframe id="preview" title="真实游戏视口" width="390" height="650" src="../?v=0.8.0"></iframe></main>
 <script>
 const frame=document.querySelector('#preview'),size=document.querySelector('#size'),result=document.querySelector('#result');
 function check(){
   const d=frame.contentDocument,w=frame.contentWindow;
   if(!d?.querySelector('.home-scene'))return;
   const art=d.querySelector('.home-scene').getBoundingClientRect(),home=d.querySelector('#home');
-  if(home.hidden){result.textContent='请先返回游戏主页再检查';result.className='';return;}
+  if(home.hidden){
+    const game=d.querySelector('#gameScreen'),gr=game.getBoundingClientRect(),board=d.querySelector('#board').getBoundingClientRect(),tiles=[...d.querySelectorAll('.tile')];
+    const daily=game.dataset.mode==='daily';
+    const ratioOK=!daily||Math.abs(gr.width/gr.height-854/1842)<.002;
+    const boardOK=Math.abs(board.width/board.height-747/694)<.003&&tiles.length===9&&tiles.every(t=>w.getComputedStyle(t).backgroundImage.includes('reference-clean'));
+    const inside=gr.left>=-.5&&gr.top>=-.5&&gr.right<=w.innerWidth+.5&&gr.bottom<=w.innerHeight+.5;
+    result.className=ratioOK&&boardOK&&inside?'pass':'fail';
+    result.textContent=`${result.className==='pass'?'通过':'未通过'} · ${daily?'每日':'普通'}画面 ${gr.width.toFixed(1)} × ${gr.height.toFixed(1)} · 九块原稿图案 ${boardOK?'✓':'×'}`;
+    return;
+  }
   const ratios=[1114/198,1116/196,1122/196],buttons=[...d.querySelectorAll('.cozy-menu button')];
   const artOK=Math.abs(art.width/art.height-854/1840)<.002;
   const buttonsOK=buttons.every((b,i)=>{const r=b.getBoundingClientRect(),s=b.querySelector('.skin').getBoundingClientRect();return Math.abs(s.width/s.height-ratios[i])<.01&&r.height>=43.9&&r.left>=0&&r.right<=w.innerWidth+.5&&r.top>=0&&r.bottom<=w.innerHeight+.5;});
@@ -26,5 +35,6 @@ function check(){
 frame.addEventListener('load',()=>requestAnimationFrame(check));
 size.addEventListener('change',()=>{const [width,height]=size.value.split(',');frame.width=width;frame.height=height;requestAnimationFrame(()=>requestAnimationFrame(check));});
 document.querySelector('#check').addEventListener('click',check);
+document.querySelector('#mode').addEventListener('change',e=>{frame.src='../?v=0.8.0'+(e.target.value==='home'?'':'&mode='+e.target.value);});
 </script>
 </html>

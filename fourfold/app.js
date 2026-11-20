@@ -149,17 +149,29 @@ async function spin(q){
   const rectangles=affected.map(tile=>tile.getBoundingClientRect());
   const scaleX=rectangles[0].width/(affected[0].offsetWidth||rectangles[0].width||1)||1;
   const scaleY=rectangles[0].height/(affected[0].offsetHeight||rectangles[0].height||1)||1;
-  const pivot={x:rectangles.reduce((sum,r)=>sum+r.left+r.width/2,0)/4,y:rectangles.reduce((sum,r)=>sum+r.top+r.height/2,0)/4};
+  const centers=rectangles.map(r=>({x:r.left+r.width/2,y:r.top+r.height/2}));
+  const pivot={x:centers.reduce((sum,c)=>sum+c.x,0)/4,y:centers.reduce((sum,c)=>sum+c.y,0)/4};
+  // The approved reference uses rectangular grid strides. Rotate in normalized
+  // grid coordinates so a quarter turn lands on the next cell on either axis.
+  const radiusX=(Math.max(...centers.map(c=>c.x))-Math.min(...centers.map(c=>c.x)))/2||1;
+  const radiusY=(Math.max(...centers.map(c=>c.y))-Math.min(...centers.map(c=>c.y)))/2||1;
   affected.forEach(tile=>{tile.style.zIndex='2';});
   $.board.classList.add('rotating');$.anchors.setAttribute('aria-busy','true');
   anchorNodes.forEach(button=>{button.disabled=true;button.classList.remove('hinted');});
   const reduceMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   if(!reduceMotion&&rectangles[0].width&&typeof affected[0].animate==='function'){
     activeAnimations=affected.map((tile,index)=>{
-      const r=rectangles[index],x=r.left+r.width/2-pivot.x,y=r.top+r.height/2-pivot.y;
+      const center=centers[index],x=center.x-pivot.x,y=center.y-pivot.y;
+      const normalizedX=x/radiusX,normalizedY=y/radiusY;
+      const target=centers[(index+direction+4)%4];
+      const endX=-direction*normalizedY*radiusX,endY=direction*normalizedX*radiusY;
+      const correctionX=target.x-pivot.x-endX,correctionY=target.y-pivot.y-endY;
       const frames=Array.from({length:9},(_,frame)=>{
-        const angle=direction*Math.PI/2*frame/8;
-        return {transform:`translate(${(x*Math.cos(angle)-y*Math.sin(angle)-x)/scaleX}px,${(x*Math.sin(angle)+y*Math.cos(angle)-y)/scaleY}px)`,offset:frame/8};
+        const progress=frame/8,angle=direction*Math.PI/2*progress;
+        const easeCorrection=progress*progress*(3-2*progress);
+        const nextX=(normalizedX*Math.cos(angle)-normalizedY*Math.sin(angle))*radiusX+correctionX*easeCorrection;
+        const nextY=(normalizedX*Math.sin(angle)+normalizedY*Math.cos(angle))*radiusY+correctionY*easeCorrection;
+        return {transform:`translate(${(nextX-x)/scaleX}px,${(nextY-y)/scaleY}px)`,offset:progress};
       });
       // Translate each illustrated piece around the pivot without rotating its own artwork.
       return tile.animate(frames,{duration:170,easing:'cubic-bezier(.25,.7,.3,1)',fill:'both'});
@@ -261,7 +273,7 @@ function startTimers(){
 window.addEventListener('pagehide',()=>{cancelRotation();clearInterval(clockTimer);clearInterval(bgTimer);});
 window.addEventListener('pageshow',event=>{if(event.persisted&&ready){render();startTimers();}});
 
-const ART_FILES=['home-scene.webp','celestial-mural.webp','ui-atlas.webp','daily-banner.webp'];
+const ART_FILES=['home-scene.webp','celestial-mural.webp','ui-atlas.webp','daily-banner.webp','reference-daily.webp','reference-clean.webp'];
 function preloadArt(file){
   return new Promise((resolve,reject)=>{
     const image=new Image(),timer=setTimeout(()=>reject(new Error('art load timeout')),25000);

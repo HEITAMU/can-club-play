@@ -1,0 +1,83 @@
+/* The supplied reference is the art source. Live values, tiles, and hit targets are separate DOM nodes. */
+.game-screen .board-frame{aspect-ratio:817 / 765;border:0;border-radius:0;box-shadow:none;background-image:url('assets/art/reference-daily.webp');background-repeat:no-repeat;background-size:104.52876377% 240.78431373%;background-position:48.64864865% 57.10306407%;}
+.game-screen .board,.game-screen .anchors{inset:auto;left:4.28396573%;top:3.13725490%;width:91.43206854%;height:90.71895425%}
+.game-screen .board{display:block;border-radius:0;box-shadow:none;overflow:hidden;background:
+linear-gradient(to right,transparent 32.396%,#8d522e 32.396%,#f9d698 32.8%,#d18c51 33.7%,transparent 34.003%,transparent 66.667%,#8d522e 66.667%,#f9d698 67.05%,#d18c51 67.8%,transparent 68.005%),
+linear-gradient(to bottom,transparent 32.853%,#8d522e 32.853%,#f9d698 33.2%,#d18c51 34.05%,transparent 34.438%,transparent 65.994%,#8d522e 65.994%,#f9d698 66.35%,#d18c51 67.2%,transparent 67.579%),#19213e}
+.game-screen .tile{position:absolute;min-width:0;min-height:0;background-image:url('assets/art/reference-clean.webp');background-repeat:no-repeat;box-shadow:none;border-radius:2px}
+.game-screen .tile:after,.game-screen .tile .index{display:none}
+.game-screen .spin-node{width:12.85140562%;height:auto;aspect-ratio:1;border-radius:50%;min-width:36px;min-height:36px}
+.game-screen .spin-art{background-image:url('assets/art/reference-daily.webp');border-radius:50%;overflow:hidden;box-shadow:0 2px 3px #42251b55}
+
+.game-screen .tile:nth-child(1){left:0.00000000%;top:0.00000000%;width:32.39625167%;height:32.85302594%;}
+.game-screen .tile:nth-child(2){left:34.00267738%;top:0.00000000%;width:32.66398929%;height:32.85302594%;}
+.game-screen .tile:nth-child(3){left:68.00535475%;top:0.00000000%;width:31.99464525%;height:32.85302594%;}
+.game-screen .tile:nth-child(4){left:0.00000000%;top:34.43804035%;width:32.39625167%;height:31.55619597%;}
+.game-screen .tile:nth-child(5){left:34.00267738%;top:34.43804035%;width:32.66398929%;height:31.55619597%;}
+.game-screen .tile:nth-child(6){left:68.00535475%;top:34.43804035%;width:31.99464525%;height:31.55619597%;}
+.game-screen .tile:nth-child(7){left:0.00000000%;top:67.57925072%;width:32.39625167%;height:32.42074928%;}
+.game-screen .tile:nth-child(8){left:34.00267738%;top:67.57925072%;width:32.66398929%;height:32.42074928%;}
+.game-screen .tile:nth-child(9){left:68.00535475%;top:67.57925072%;width:31.99464525%;height:32.42074928%;}
+.game-screen .tile[data-token="1"]{background-size:357.32217573% 841.09589041%;background-position:91.21951220% 54.09735059%;}
+.game-screen .tile[data-token="2"]{background-size:352.89256198% 807.89473684%;background-position:8.66013072% 39.59107807%;}
+.game-screen .tile[data-token="3"]{background-size:357.32217573% 818.66666667%;background-position:91.21951220% 68.52195424%;}
+.game-screen .tile[data-token="4"]{background-size:352.89256198% 818.66666667%;background-position:8.66013072% 68.52195424%;}
+.game-screen .tile[data-token="5"]{background-size:357.32217573% 807.89473684%;background-position:91.21951220% 39.59107807%;}
+.game-screen .tile[data-token="6"]{background-size:350.00000000% 818.66666667%;background-position:50.32786885% 68.52195424%;}
+.game-screen .tile[data-token="7"]{background-size:352.89256198% 841.09589041%;background-position:8.66013072% 54.09735059%;}
+.game-screen .tile[data-token="8"]{background-size:350.00000000% 841.09589041%;background-position:50.32786885% 54.09735059%;}
+.game-screen .tile[data-token="9"]{background-size:350.00000000% 807.89473684%;background-position:50.32786885% 39.59107807%;}
+.game-screen .spin-node[data-q="0"]{left:33.06559572%!important;top:33.86167147%!important;}
+.game-screen .spin-node[data-q="0"] .spin-art{background-size:889.58333333% 1918.75000000%;background-position:33.24538259% 47.30813288%;}
+.game-screen .spin-node[data-q="1"]{left:67.60374833%!important;top:34.00576369%!important;}
+.game-screen .spin-node[data-q="1"] .spin-art{background-size:889.58333333% 1918.75000000%;background-position:67.28232190% 47.36540664%;}
+.game-screen .spin-node[data-q="2"]{left:33.06559572%!important;top:67.43515850%!important;}
+.game-screen .spin-node[data-q="2"] .spin-art{background-size:889.58333333% 1918.75000000%;background-position:33.24538259% 60.65292096%;}
+.game-screen .spin-node[data-q="3"]{left:67.60374833%!important;top:67.43515850%!important;}
+.game-screen .spin-node[data-q="3"] .spin-art{background-size:889.58333333% 1918.75000000%;background-position:67.28232190% 60.65292096%;}
+
+/* Daily screen uses the reference coordinate system; its aspect ratio never changes. */
+.game-screen[data-mode=daily]{--daily-width:min(100vw,460px,calc(var(--available-height) * 854 / 1842));--r:calc(var(--daily-width) / 854);position:absolute;left:50%;top:50%;width:var(--daily-width);height:calc(var(--daily-width) * 1842 / 854);transform:translate(-50%,-50%);display:block;padding:0;background:url('assets/art/reference-daily.webp') center / 100% 100% no-repeat}
+.game-screen[data-mode=daily]:before,.game-screen[data-mode=daily]:after{display:none}
+.game-screen[data-mode=daily] .compact-top,.game-screen[data-mode=daily] .game-panel,.game-screen[data-mode=daily] .metric-row,.game-screen[data-mode=daily] .direction,.game-screen[data-mode=daily] .tools,.game-screen[data-mode=daily] .bottom-actions{display:contents}
+.game-screen[data-mode=daily] .icon-button,.game-screen[data-mode=daily] .direction .art-button,.game-screen[data-mode=daily] #hintBtn,.game-screen[data-mode=daily] #shareBtn{position:absolute;min-width:32px;min-height:32px;padding:0;border:0;background:none;transform:translate(-50%,-50%);border-radius:calc(64 * var(--r));box-shadow:none;z-index:5}
+.game-screen[data-mode=daily] .icon-button{border-radius:calc(25 * var(--r))}
+.game-screen[data-mode=daily] .icon-button>.skin,.game-screen[data-mode=daily] .art-button>.skin,.game-screen[data-mode=daily] .stat-card>.skin,.game-screen[data-mode=daily] .banner-skin{display:none}
+.game-screen[data-mode=daily] .button-label,.game-screen[data-mode=daily] .stat-copy small,.game-screen[data-mode=daily] .daily-copy>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.game-screen[data-mode=daily] .icon-button:active,.game-screen[data-mode=daily] .art-button:active{transform:translate(-50%,-50%);background:#fff6d52b;filter:none;box-shadow:inset 0 0 0 calc(3 * var(--r)) #ffe9ab99}
+.game-screen[data-mode=daily] #cwBtn:not(.selected){background:#fff7e257;box-shadow:inset 0 0 0 calc(3 * var(--r)) #fff5d180}
+.game-screen[data-mode=daily] #ccwBtn.selected{background:#ffbf4c38;box-shadow:inset 0 0 0 calc(5 * var(--r)) #ba7d2c}
+.game-screen[data-mode=daily] .daily-banner{position:absolute;margin:0;z-index:2;background-image:url('assets/art/reference-clean.webp');background-repeat:no-repeat}
+.game-screen[data-mode=daily] .daily-copy{position:absolute;inset:0;gap:0;color:#fff0c4;text-shadow:0 calc(1 * var(--r)) calc(1 * var(--r)) #231b37}
+.game-screen[data-mode=daily] .daily-copy strong{font-family:Georgia,"Songti SC",serif;font-size:calc(58 * var(--r));font-weight:800;line-height:1;letter-spacing:calc(2 * var(--r))}
+.game-screen[data-mode=daily] .stat-card{position:absolute;margin:0;min-width:0;z-index:2;background-image:url('assets/art/reference-clean.webp');background-repeat:no-repeat}
+.game-screen[data-mode=daily] .stat-copy{position:absolute;inset:0;display:flex;justify-content:center;align-items:center;gap:0;line-height:1}
+.game-screen[data-mode=daily] .stat-copy strong{font-family:Georgia,"Times New Roman",serif;font-weight:800;font-size:calc(76 * var(--r));line-height:1;color:#512814;letter-spacing:calc(1 * var(--r))}
+.game-screen[data-mode=daily] #clock{font-size:calc(70 * var(--r));letter-spacing:0}
+.game-screen[data-mode=daily] .board-frame{position:absolute;margin:0;min-width:0;max-width:none;aspect-ratio:auto;background:none;border:0;box-shadow:none;z-index:3}
+.game-screen[data-mode=daily] .spin-node{width:calc(96 * var(--r));height:calc(96 * var(--r));min-width:44px;min-height:44px;aspect-ratio:1}
+.game-screen[data-mode=daily] .spin-art{inset:auto;left:50%;top:50%;width:calc(96 * var(--r));height:calc(96 * var(--r));transform:translate(-50%,-50%)}
+.game-screen[data-mode=daily] .spin-node[data-direction="-1"] .spin-art{transform:translate(-50%,-50%) scaleX(-1)}
+
+.game-screen[data-mode=daily] #backHome{left:calc(83.5 * var(--r));top:calc(151.0 * var(--r));width:calc(109 * var(--r));height:calc(106 * var(--r));}
+.game-screen[data-mode=daily] #settingsBtn{left:calc(769.5 * var(--r));top:calc(151.0 * var(--r));width:calc(109 * var(--r));height:calc(106 * var(--r));}
+.game-screen[data-mode=daily] #cwBtn{left:calc(224.0 * var(--r));top:calc(1454.5 * var(--r));width:calc(412 * var(--r));height:calc(123 * var(--r));}
+.game-screen[data-mode=daily] #ccwBtn{left:calc(629.5 * var(--r));top:calc(1455.0 * var(--r));width:calc(411 * var(--r));height:calc(122 * var(--r));}
+.game-screen[data-mode=daily] #hintBtn{left:calc(426.5 * var(--r));top:calc(1572.0 * var(--r));width:calc(401 * var(--r));height:calc(92 * var(--r));}
+.game-screen[data-mode=daily] #shareBtn{left:calc(426.0 * var(--r));top:calc(1701.5 * var(--r));width:calc(764 * var(--r));height:calc(143 * var(--r));}
+.game-screen[data-mode=daily] .daily-banner{left:calc(289 * var(--r));top:calc(283 * var(--r));width:calc(282 * var(--r));height:calc(66 * var(--r));background-size:302.83687943% 2790.90909091%;background-position:50.52447552% 15.93468468%;}
+.game-screen[data-mode=daily] .metric-row>.stat-card:first-child{left:calc(219 * var(--r));top:calc(516 * var(--r));width:calc(116 * var(--r));height:calc(61 * var(--r));background-size:736.20689655% 3019.67213115%;background-position:29.67479675% 28.97248737%;}
+.game-screen[data-mode=daily] .metric-row>.stat-card:last-child{left:calc(584 * var(--r));top:calc(514 * var(--r));width:calc(195 * var(--r));height:calc(64 * var(--r));background-size:437.94871795% 2878.12500000%;background-position:88.61911988% 28.90888639%;}
+.game-screen[data-mode=daily] .board-frame{left:calc(18 * var(--r));top:calc(615 * var(--r));width:calc(817 * var(--r));height:calc(765 * var(--r));}
+
+/* Both modes use the same original information cards. */
+.game-screen[data-mode=story] .metric-row{height:auto}
+.game-screen[data-mode=story] .stat-card{height:auto;aspect-ratio:380 / 181;--stat-w:calc((min(100vw,460px) - max(26px,32 * var(--u)) - 12 * var(--u)) / 2)}
+.game-screen[data-mode=story] .stat-card>.skin{background-image:url('assets/art/reference-clean.webp')}
+.game-screen[data-mode=story] .stat-copy small{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.game-screen[data-mode=story] .stat-copy strong{font-size:calc(var(--stat-w) * 76 / 380);line-height:1;color:#512814;letter-spacing:0}
+.game-screen[data-mode=story] #clock{font-size:calc(var(--stat-w) * 70 / 379)}
+.game-screen[data-mode=story] .metric-row>.stat-card:first-child .stat-copy{left:48.15789474%;top:47.51381215%;width:30.52631579%;height:33.70165746%;right:auto;bottom:auto;gap:0}
+.game-screen[data-mode=story] .metric-row>.stat-card:last-child .stat-copy{left:38.25857520%;top:45.55555556%;width:51.45118734%;height:35.55555556%;right:auto;bottom:auto;gap:0}
+.game-screen[data-mode=story] .skin-stepsCard{background-size:224.73684211% 1017.67955801%;background-position:7.59493671% 25.88801927%;}
+.game-screen[data-mode=story] .skin-timeCard{background-size:225.32981530% 1023.33333333%;background-position:92.42105263% 25.99277978%;}

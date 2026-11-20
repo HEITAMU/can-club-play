@@ -3,13 +3,13 @@
 import {
   _decorator,Component,Node,Canvas,Camera,Layers,UITransform,Label,LabelOutline,
   Graphics,Color,view,ResolutionPolicy,director,SubContextView,tween,Tween,Vec3,
-  Sprite,SpriteFrame,Texture2D,ImageAsset,JsonAsset,Rect,Size,resources,BlockInputEvents,
+  Sprite,SpriteFrame,Texture2D,ImageAsset,JsonAsset,Rect,Size,resources,BlockInputEvents,Mask,
 } from 'cc';
 import {GOAL,SQUARES,makePuzzle,todayCN,rotate,isSolved,shortestPath,honor,resultScore} from './Core';
 const {ccclass}=_decorator;
 const AD_IDS={rewarded:'',banner:''}; // 接入时只填写微信公众平台提供的真实 adUnitId。
 const C={background:'#F8DEB7',surface:'#FFF1D6',gold:'#F5CB79',gold2:'#C88B4D',white:'#FFF4D7',muted:'#977253',dark:'#5B301F',edge:'#825037',night:'#1B2345',shadow:'#B27C50'};
-const ART_PATHS={home:'art/home-scene',mural:'art/celestial-mural',atlas:'art/ui-atlas',daily:'art/daily-banner'};
+const ART_PATHS={home:'art/home-scene',atlas:'art/ui-atlas',referenceOriginal:'art/reference-daily',referenceClean:'art/reference-clean'};
 const REQUIRED_FRAMES=['goldButton','creamButton','lavenderButton','stepsCard','timeCard','rotateKnob','settingsButton','backButton'];
 const at=()=>typeof performance!=='undefined'&&performance.now?performance.now():Date.now();
 const wxSDK=()=>typeof wx!=='undefined'?(wx as any):null;
@@ -24,7 +24,7 @@ export class FourfoldGame extends Component {
   private board=GOAL;private direction=1;private moves=0;private hints=0;private elapsed=0;private startAt=0;private won=false;private modal='';private busy=false;
   private clockLabel:Label|null=null;private rewardAd:any=null;private banner:any=null;private toastNode:Node|null=null;
   private assetsReady=false;private loading=false;private loadError='';private loadProgress=0;private loadSerial=0;
-  private textures:Record<string,Texture2D>={};private frames:Record<string,SpriteFrame>={};private images:ImageAsset[]=[];private manifest:any=null;
+  private textures:Record<string,Texture2D>={};private frames:Record<string,SpriteFrame>={};private images:ImageAsset[]=[];private manifest:any=null;private reference:any=null;
   private tileNodes:Node[]=[];private boardLayout={x:0,y:0,size:0,unit:0};private launchQuery:any={};
 
   onLoad(){
@@ -65,9 +65,9 @@ export class FourfoldGame extends Component {
     if(this.loading)return;
     const serial=++this.loadSerial;this.loading=true;this.loadError='';this.assetsReady=false;this.loadProgress=0;this.draw();
     try{
-      const manifestAsset=await this.loadResource('art/assetManifest',JsonAsset);
+      const [manifestAsset,referenceAsset]=await Promise.all([this.loadResource('art/assetManifest',JsonAsset),this.loadResource('art/referenceLayout',JsonAsset)]);
       if(serial!==this.loadSerial)return;
-      this.manifest=manifestAsset.json;
+      this.manifest=manifestAsset.json;this.reference=referenceAsset.json;
       const rects=this.manifest?.atlas?.frames;
       if(!rects||REQUIRED_FRAMES.some(name=>!rects[name]))throw new Error('美术清单缺少必要组件');
       this.disposeArt();
@@ -87,19 +87,7 @@ export class FourfoldGame extends Component {
         if(![r.x,r.y,r.w,r.h].every(Number.isFinite)||r.x<0||r.y<0||r.w<=0||r.h<=0||r.x+r.w>atlas.width||r.y+r.h>atlas.height)throw new Error(`组件裁切范围错误: ${name}`);
         this.frames[name]=this.makeFrame(atlas,r.x,r.y,r.w,r.h);
       }
-      const bannerRect=this.manifest.images?.dailyBanner?.frame;
-      if(bannerRect){
-        const t=this.textures.daily,r=bannerRect;
-        if(![r.x,r.y,r.w,r.h].every(Number.isFinite)||r.x<0||r.y<0||r.w<=0||r.h<=0||r.x+r.w>t.width||r.y+r.h>t.height)throw new Error('每日横幅裁切范围错误');
-        this.frames.daily.destroy();this.frames.daily=this.makeFrame(t,r.x,r.y,r.w,r.h);
-      }
-      const mural=this.textures.mural;
-      if(mural.width!==mural.height)throw new Error('星图原画必须是正方形');
-      for(let i=0;i<9;i++){
-        const x0=Math.round(i%3*mural.width/3),y0=Math.round(Math.floor(i/3)*mural.height/3);
-        const x1=Math.round((i%3+1)*mural.width/3),y1=Math.round((Math.floor(i/3)+1)*mural.height/3);
-        this.frames['tile'+(i+1)]=this.makeFrame(mural,x0,y0,x1-x0,y1-y0);
-      }
+      this.installReferenceFrames();
       this.assetsReady=true;this.loading=false;
       if(!this.puzzle){
         const q=this.launchQuery;
@@ -114,6 +102,28 @@ export class FourfoldGame extends Component {
   }
   private makeFrame(texture:Texture2D,x:number,y:number,w:number,h:number){
     const f=new SpriteFrame();f.texture=texture;f.rect=new Rect(x,y,w,h);f.originalSize=new Size(w,h);f.packable=false;return f;
+  }
+  private installReferenceFrames(){
+    const r=this.reference,original=this.textures.referenceOriginal,clean=this.textures.referenceClean;
+    if(!r?.size||r.slotRects?.length!==9||r.knobCenters?.length!==4||r.knobCropRects?.length!==4)throw new Error('参考界面坐标清单不完整');
+    if([original,clean].some(t=>t.width!==r.size[0]||t.height!==r.size[1]))throw new Error('参考原画尺寸与清单不一致');
+    const add=(name:string,rect:number[],texture=clean)=>{
+      if(!Array.isArray(rect)||rect.length!==4||!rect.every(Number.isFinite)||rect[0]<0||rect[1]<0||rect[2]<=0||rect[3]<=0||rect[0]+rect[2]>texture.width||rect[1]+rect[3]>texture.height)throw new Error(`参考裁片范围错误: ${name}`);
+      this.frames[name]=this.makeFrame(texture,rect[0],rect[1],rect[2],rect[3]);
+    };
+    for(let token=1;token<=9;token++)add('referenceTile'+token,r.tileByToken[token]);
+    for(let q=0;q<4;q++)add('referenceKnob'+q,r.knobCropRects[q],original);
+    for(const key of ['date','moves','timer'])add('referencePatch'+key,r.dynamicPatches[key]);
+    add('referenceBoardFrame',r.boardOuter,original);
+    add('referenceMovesCard',r.components.movesCard);add('referenceTimerCard',r.components.timerCard);
+    const a=r.tileArea,slots=r.slotRects;
+    r.seams=[];
+    for(let i=0;i<2;i++){
+      const x=slots[i][0]+slots[i][2],nextX=slots[i+1][0];
+      const vr=[x,a[1],nextX-x,a[3]],row=i*3,y=slots[row][1]+slots[row][3],nextY=slots[row+3][1];
+      const hr=[a[0],y,a[2],nextY-y];
+      add('referenceVSeam'+i,vr);add('referenceHSeam'+i,hr);r.seams.push({name:'referenceVSeam'+i,rect:vr},{name:'referenceHSeam'+i,rect:hr});
+    }
   }
   private disposeArt(){
     for(const frame of Object.values(this.frames))frame.destroy();this.frames={};
@@ -159,7 +169,7 @@ export class FourfoldGame extends Component {
     this.txt('四格诡局',40,280,this.width-80,60,34,C.dark,true);
     this.txt(this.loadError||'正在展开星图…',35,368,this.width-70,35,16,C.muted);
     if(this.loadError)this.btn('重新加载',80,431,this.width-160,54,()=>this.loadArt(),'creamButton',18);
-    else {this.shape(70,426,this.width-140,7,'#E5BC88','',3);this.shape(70,426,Math.max(7,(this.width-140)*this.loadProgress/4),7,C.gold2,'',3);}
+    else {this.shape(70,426,this.width-140,7,'#E5BC88','',3);this.shape(70,426,Math.max(7,(this.width-140)*this.loadProgress/Object.keys(ART_PATHS).length),7,C.gold2,'',3);}
   }
   private draw(){
     if(!this.root)return;this.clear();
@@ -192,28 +202,28 @@ export class FourfoldGame extends Component {
       y+=buttonH+gap;
     }
   }
+  private referenceNumber(value:string,x:number,y:number,w:number,h:number,color=C.dark){
+    const l=this.txt(value,x,y,w,h,h*.94,color,true);l.fontFamily='Georgia';l.lineHeight=h;return l;
+  }
   private statCard(frame:string,label:string,value:string,x:number,y:number,w:number,h:number,isClock=false){
-    this.art(frame,x,y,w,h);
-    this.txt(label,x+w*.37,y+h*.26,w*.55,h*.29,14,C.dark,true);
-    const l=this.txt(value,x+w*.36,y+h*.50,w*.57,h*.40,isClock?26:29,C.dark,true);
+    const timer=frame==='timeCard',card=this.reference.components[timer?'timerCard':'movesCard'];
+    const patch=this.reference.dynamicPatches[timer?'timer':'moves'],scale=Math.min(w/card[2],h/card[3]);
+    const dx=x+(w-card[2]*scale)/2,dy=y+(h-card[3]*scale)/2;
+    this.art(timer?'referenceTimerCard':'referenceMovesCard',dx,dy,card[2]*scale,card[3]*scale);
+    const l=this.referenceNumber(value,dx+(patch[0]-card[0])*scale,dy+(patch[1]-card[1])*scale,patch[2]*scale,patch[3]*scale);
     if(isClock){this.clockLabel=l;this.updateClock();}
   }
   private drawGame(){
-    const w=this.width,top=Math.max(24,this.safeTop+8),bottom=this.height-this.safeBottom-12,daily=this.mode==='daily';
+    if(this.mode==='daily'){this.drawReferenceDaily();return;}
+    const w=this.width,top=Math.max(24,this.safeTop+8),bottom=this.height-this.safeBottom-12;
     this.iconButton('backButton',16,top,42,()=>{this.inHome=true;this.modal='';this.hideBanner();this.draw();});
     this.iconButton('settingsButton',w-58,top,42,()=>{this.modal='settings';this.draw();});
-    let statsY:number;
-    if(daily){
-      const bannerY=top+48;this.art('daily',14,bannerY,w-28,74);
-      const parts=this.key.split('-');this.txt(`${Number(parts[1])}月${Number(parts[2])}日`,70,bannerY+11,w-140,33,27,C.white,true);
-      this.txt('每日挑战',95,bannerY+44,w-190,23,15,C.white,true);statsY=bannerY+82;
-    }else{
-      this.art('creamButton',87,top-2,w-174,52);this.txt(`第${this.key}关`,93,top+1,w-186,44,27,C.dark,true);statsY=top+67;
-    }
-    const statW=(w-42)/2;this.statCard('stepsCard','当前步数',String(this.moves).padStart(2,'0'),15,statsY,statW,68);
-    this.statCard('timeCard','本局用时',clock(this.elapsed),27+statW,statsY,statW,68,true);
+    this.art('creamButton',87,top-2,w-174,52);this.txt(`第${this.key}关`,93,top+1,w-186,44,27,C.dark,true);
+    const statsY=top+67,statW=(w-42)/2,statH=statW*this.reference.components.movesCard[3]/this.reference.components.movesCard[2];
+    this.statCard('stepsCard','当前步数',String(this.moves).padStart(2,'0'),15,statsY,statW,statH);
+    this.statCard('timeCard','本局用时',clock(this.elapsed),27+statW,statsY,statW,statH,true);
     const shareY=bottom-52,hintY=shareY-8-36,directionY=hintY-7-44;
-    const minBoardY=statsY+78,maxBoardBottom=directionY-14,size=Math.min(w-34,maxBoardBottom-minBoardY);
+    const minBoardY=statsY+statH+10,maxBoardBottom=directionY-14,size=Math.min(w-34,maxBoardBottom-minBoardY);
     const by=minBoardY+Math.max(0,(maxBoardBottom-minBoardY-size)/2),bx=(w-size)/2;
     this.drawBoard(bx,by,size);
     this.btn('↻ 顺时针',14,directionY,(w-35)/2,44,()=>{this.direction=1;this.draw();},this.direction===1?'goldButton':'creamButton',17);
@@ -221,21 +231,69 @@ export class FourfoldGame extends Component {
     this.btn('✧ 提示',88,hintY,w-176,36,()=>this.askHint(),'creamButton',16);
     this.btn('✦ 发起同关挑战',16,shareY,w-32,52,()=>this.share(),'goldButton',20);
   }
+  private referenceControl(name:string,rect:number[],ox:number,oy:number,scale:number,action:()=>void,selected=false,dim=false){
+    const [rx,ry,rw,rh]=rect,w=rw*scale,h=rh*scale,hitW=Math.max(44,w),hitH=Math.max(44,h);
+    const n=this.node(name,ox+rx*scale-(hitW-w)/2,oy+ry*scale-(hitH-h)/2,hitW,hitH),g=n.addComponent(Graphics);
+    let pressed=false;
+    const feedback=()=>{
+      g.clear();if(!pressed&&!selected&&!dim)return;
+      g.roundRect(-w/2+1,-h/2+1,w-2,h-2,Math.min(w,h)*.38);
+      g.fillColor=ink(pressed?'#FFF4D332':dim?'#4B31272B':'#FFDB8208');g.fill();
+      if(pressed||selected){g.strokeColor=ink(pressed?'#FFF1CE':'#FFD06E');g.lineWidth=Math.max(1.5,4*scale);g.stroke();}
+    };
+    feedback();
+    n.on(Node.EventType.TOUCH_START,(e:any)=>{e.propagationStopped=true;if(this.busy)return;pressed=true;feedback();});
+    n.on(Node.EventType.TOUCH_CANCEL,()=>{pressed=false;feedback();});
+    n.on(Node.EventType.TOUCH_END,(e:any)=>{e.propagationStopped=true;if(!pressed)return;pressed=false;feedback();if(!this.busy)action();});
+    return n;
+  }
+  private drawReferenceDaily(){
+    const r=this.reference,bottom=this.height-this.safeBottom-12,navY=Math.min(r.components.back[1],r.components.settings[1]);
+    const scale=Math.min(this.width/r.size[0],bottom/r.size[1],Math.max(1,bottom-this.safeTop)/(r.size[1]-navY));
+    const ox=(this.width-r.size[0]*scale)/2,oy=Math.max(0,this.safeTop-navY*scale);
+    // 静态部分直接使用用户指明的原稿；只覆盖被清理的日期和两个实时数字。
+    this.art('referenceOriginal',ox,oy,r.size[0]*scale,r.size[1]*scale);
+    const dateParts=this.key.split('-'),values={date:`${Number(dateParts[1])}月${Number(dateParts[2])}日`,moves:String(this.moves).padStart(2,'0'),timer:clock(this.elapsed)};
+    for(const key of ['date','moves','timer']){
+      const p=r.dynamicPatches[key],x=ox+p[0]*scale,y=oy+p[1]*scale,w=p[2]*scale,h=p[3]*scale;
+      this.art('referencePatch'+key,x,y,w,h);
+      const l=this.referenceNumber(values[key],x,y,w,h,key==='date'?C.white:C.dark);
+      if(key==='timer'){this.clockLabel=l;this.updateClock();}
+    }
+    this.drawReferenceBoard(ox,oy,scale);
+    const c=r.components;
+    this.referenceControl('返回主页',c.back,ox,oy,scale,()=>{this.inHome=true;this.modal='';this.hideBanner();this.draw();});
+    this.referenceControl('设置',c.settings,ox,oy,scale,()=>{this.modal='settings';this.draw();});
+    this.referenceControl('↻ 顺时针',c.clockwise,ox,oy,scale,()=>{this.direction=1;this.draw();},false,this.direction<0);
+    this.referenceControl('↺ 逆时针',c.counterclockwise,ox,oy,scale,()=>{this.direction=-1;this.draw();},this.direction<0);
+    this.referenceControl('✧ 提示',c.hint,ox,oy,scale,()=>this.askHint());
+    this.referenceControl('✦ 发起同关挑战',c.share,ox,oy,scale,()=>this.share());
+  }
   private drawBoard(bx:number,by:number,size:number){
-    const unit=size/3;this.boardLayout={x:bx,y:by,size,unit};
-    if(this.frames.boardFrame)this.art('boardFrame',bx-7,by-7,size+14,size+14);
-    else {this.shape(bx-7,by-4,size+14,size+16,C.shadow,C.edge,17);this.shape(bx-7,by-7,size+14,size+14,C.gold,C.edge,17);this.shape(bx-2,by-2,size+4,size+4,C.night,C.gold2,10);}
+    const outer=this.reference.boardOuter,outerW=Math.min(this.width-16,size+14),scale=outerW/outer[2],outerH=outer[3]*scale;
+    const x=bx+(size-outerW)/2,y=by+(size-outerH)/2;
+    this.art('referenceBoardFrame',x,y,outerW,outerH);
+    this.drawReferenceBoard(x-outer[0]*scale,y-outer[1]*scale,scale);
+  }
+  private drawReferenceBoard(ox:number,oy:number,scale:number){
+    const r=this.reference,a=r.tileArea,w=a[2]*scale,h=a[3]*scale,bx=ox+a[0]*scale,by=oy+a[1]*scale;
+    this.boardLayout={x:bx,y:by,size:w,unit:w/3,height:h};
+    const boardLayer=this.group('Reference board',bx,by,w,h),mask=boardLayer.node.addComponent(Mask);mask.type=Mask.Type.RECT;
+    // 遮住底图所有旧棋子和旋钮，换位动画的空隙也不会透出固定数字。
+    this.shape(0,0,w,h,C.night,'',0,boardLayer.content);
+    for(const seam of r.seams){const p=seam.rect;this.art(seam.name,(p[0]-a[0])*scale,(p[1]-a[1])*scale,p[2]*scale,p[3]*scale,boardLayer.content);}
     for(let i=0;i<9;i++){
-      const tok=Number(this.board[i]),x=bx+(i%3)*unit,y=by+Math.floor(i/3)*unit;
-      const tile=this.group('Tile '+tok,x+1,y+1,unit-2,unit-2);this.art('tile'+tok,0,0,unit-2,unit-2,tile.content);
-      const l=this.txt(String(tok),unit-45,unit-29,20,22,17,C.white,true,tile.content),outline=l.node.addComponent(LabelOutline);outline.color=ink(C.night);outline.width=1.5;
-      this.tileNodes[i]=tile.node;
+      const p=r.slotRects[i],token=Number(this.board[i]),tw=p[2]*scale,th=p[3]*scale;
+      const tile=this.group('Tile '+token,(p[0]-a[0])*scale,(p[1]-a[1])*scale,tw,th,boardLayer.content);
+      this.art('referenceTile'+token,0,0,tw,th,tile.content);this.tileNodes[i]=tile.node;
     }
     for(let q=0;q<4;q++){
-      const cx=bx+(q%2+1)*unit,cy=by+(Math.floor(q/2)+1)*unit,d=48;
-      const g=this.group('Rotate '+q,cx-d/2,cy-d/2,d,d),knob=this.art('rotateKnob',0,0,d,d,g.content);
-      if(this.direction<0)knob.setScale(-1,1,1);
-      this.bindButton(g.node,()=>this.spin(q));
+      const center=r.knobCenters[q],crop=r.knobCropRects[q],d=r.knobClipRadius*2*scale,hitD=Math.max(44,d);
+      const cx=(center[0]-a[0])*scale,cy=(center[1]-a[1])*scale;
+      const hit=this.group('Rotate '+q,cx-hitD/2,cy-hitD/2,hitD,hitD,boardLayer.content);
+      const circle=this.group('Knob circle',(hitD-d)/2,(hitD-d)/2,d,d,hit.content),clip=circle.node.addComponent(Mask);clip.type=Mask.Type.ELLIPSE;clip.segments=64;
+      const cw=crop[2]*scale,ch=crop[3]*scale,knob=this.art('referenceKnob'+q,(d-cw)/2,(d-ch)/2,cw,ch,circle.content);
+      if(this.direction<0)knob.setScale(-1,1,1);this.bindButton(hit.node,()=>this.spin(q));
     }
   }
   private spin(q:number){
