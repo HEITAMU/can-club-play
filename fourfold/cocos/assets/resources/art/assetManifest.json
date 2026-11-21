@@ -1,5 +1,5 @@
 {
-  "version": "0.8.20",
+  "version": "0.8.21",
   "atlas": {
     "width": 1254,
     "height": 1254,
@@ -65,9 +65,9 @@
       "alpha": true
     },
     "homeScene": {
-      "resource": "home-celestial-v8",
-      "width": 941,
-      "height": 1672
+      "resource": "home-celestial-v9",
+      "width": 981,
+      "height": 1602
     },
     "celestialMural": {
       "resource": "celestial-mural-v2",
@@ -85,7 +85,7 @@
       }
     },
     "homeMenu": {
-      "resource": "home-menu-v8",
+      "resource": "home-menu-v9",
       "width": 1536,
       "height": 1024,
       "alpha": true

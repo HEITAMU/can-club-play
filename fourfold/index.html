@@ -3,27 +3,27 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta id="themeColor" name="theme-color" content="#f5ece4">
+<meta id="themeColor" name="theme-color" content="#fdd4aa">
 <meta name="description" content="四格诡局：转动四格，复原星图。">
-<meta name="fourfold-version" content="0.8.20">
+<meta name="fourfold-version" content="0.8.21">
 <title>四格诡局 · 星图挑战</title>
 <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
-<link rel="preload" as="image" href="assets/art/home-celestial-v8.webp" fetchpriority="high">
-<link rel="preload" as="image" href="assets/art/home-menu-v8.webp">
+<link rel="preload" as="image" href="assets/art/home-celestial-v9.webp" fetchpriority="high">
+<link rel="preload" as="image" href="assets/art/home-menu-v9.webp">
 <link rel="preload" as="image" href="assets/art/ui-atlas.webp">
-<link rel="stylesheet" href="assets/art/atlas.css?v=0.8.20">
-<link rel="stylesheet" href="style.css?v=0.8.20">
-<link rel="stylesheet" href="reference.css?v=0.8.20">
+<link rel="stylesheet" href="assets/art/atlas.css?v=0.8.21">
+<link rel="stylesheet" href="style.css?v=0.8.21">
+<link rel="stylesheet" href="reference.css?v=0.8.21">
 </head>
 <body>
-<main class="shell" id="app" data-build="0.8.20">
+<main class="shell" id="app" data-build="0.8.21">
 <section id="home" class="home-screen" aria-label="四格诡局主菜单">
 <div class="home-hero">
-<img class="home-scene" src="assets/art/home-celestial-v8.webp" width="941" height="1672" alt="四块带细香槟色边线的不规则星图拼片悬浮在奶油白背景上" fetchpriority="high" draggable="false">
+<img class="home-scene" src="assets/art/home-celestial-v9.webp" width="981" height="1602" alt="四块带浅金细边的不规则星图拼片，配暖杏奶油底与厚涂星空" fetchpriority="high" draggable="false">
 <h1 id="homeTitle" class="home-title">四格诡局</h1>
 <p id="homeSubtitle" class="home-subtitle" aria-hidden="true">FOURFOLD</p>
 </div>
-<button id="homeSettings" class="icon-button home-settings" aria-label="设置"><img class="home-settings-icon" src="assets/home-settings-soft-v1.svg" width="44" height="44" alt="" aria-hidden="true" draggable="false"></button>
+<button id="homeSettings" class="icon-button home-settings" aria-label="设置"><span class="skin skin-settingsButton" aria-hidden="true"></span></button>
 <div class="cozy-menu" aria-label="主菜单">
 <button id="enterStory" class="art-button" onclick="window.ffOpen&&window.ffOpen('story')"><span class="home-menu-skin" aria-hidden="true"></span><span class="button-label"><span id="homeStoryText">开始解谜</span></span></button>
 <button id="enterDaily" class="art-button" onclick="window.ffOpen&&window.ffOpen('daily')"><span class="home-menu-skin" aria-hidden="true"></span><span class="button-label">每日挑战</span></button>
@@ -104,6 +104,6 @@
 <div id="startupNotice" hidden role="status"></div>
 <noscript>请启用 JavaScript 进入星图。</noscript>
 <script>window.ffOpen=function(which){window.ffPending=which;var n=document.getElementById('startupNotice');n.hidden=false;n.textContent='星图正在准备…';};</script>
-<script type="module" src="layout.mjs?v=0.8.20"></script>
-<script type="module" src="app.js?v=0.8.20"></script>
+<script type="module" src="layout.mjs?v=0.8.21"></script>
+<script type="module" src="app.js?v=0.8.21"></script>
 </body></html>

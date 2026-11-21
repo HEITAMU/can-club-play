@@ -1,6 +1,6 @@
 // The artwork keeps its own aspect ratio. Available height changes the arrangement,
 // never the width of the whole screen.
-import {HOME_ART,HOME_UI,HOME_COLORS,homeLayout} from './cocos/assets/scripts/HomeScene.js?v=0.8.20';
+import {HOME_ART,HOME_UI,HOME_COLORS,homeLayout} from './cocos/assets/scripts/HomeScene.js?v=0.8.21';
 export {homeLayout};
 const fitHeight = (width, sw, sh) => width * sh / sw;
 const box = (x,y,w,h) => ({x,y,w,h});

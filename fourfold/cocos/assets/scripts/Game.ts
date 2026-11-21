@@ -463,39 +463,24 @@ export class FourfoldGame extends Component {
       {text:'每日挑战',frame:'homeDailyButton',source:'daily',action:()=>this.startGame('daily',todayCN())},
       {text:'好友荣誉榜',frame:'homeRankButton',source:'rank',action:()=>this.showRank()},
     ];
-    // Star-map fragments and soft menu panels carry the artwork; the live
-    // lettering and settings control stay simple and unembellished.
+    // Match the game pages' bold live lettering and shared painted controls.
     const hero=layout.hero,scene=this.group('Home hero',hero.x,hero.y,hero.w,hero.h,parent);
     this.art('home',0,0,hero.w,hero.h,scene.content);
     const titleRect=layout.title,subtitleRect=layout.subtitle;
     const title=this.txt('四格诡局',titleRect.x,titleRect.y,titleRect.w,titleRect.h,HOME_ART.titleSize*layout.textScale,HOME_COLORS.title,true,scene.content);
-    title.node.name='Home title';title.fontFamily='sans-serif';title.lineHeight=titleRect.h;title.enableWrapText=false;
-    const subtitle=this.txt('FOURFOLD',subtitleRect.x,subtitleRect.y,subtitleRect.w,subtitleRect.h,HOME_ART.subtitleSize*layout.textScale,HOME_COLORS.subtitle,false,scene.content);
-    subtitle.node.name='Home subtitle';subtitle.fontFamily='sans-serif';subtitle.lineHeight=subtitleRect.h;subtitle.enableWrapText=false;
+    title.node.name='Home title';title.lineHeight=titleRect.h;title.enableWrapText=false;
+    const subtitle=this.txt('FOURFOLD',subtitleRect.x,subtitleRect.y,subtitleRect.w,subtitleRect.h,HOME_ART.subtitleSize*layout.textScale,HOME_COLORS.subtitle,true,scene.content);
+    subtitle.node.name='Home subtitle';subtitle.fontFamily='Georgia';subtitle.lineHeight=subtitleRect.h;subtitle.enableWrapText=false;
     entries.forEach((entry,i)=>{
       const rect=layout.buttons[i],art=layout.buttonArtwork[i],caption=layout.buttonLabels[i];
       const button=this.group('Home '+entry.source+' entry',rect.x,rect.y,rect.w,rect.h,parent);
       this.art(entry.frame,art.x,art.y,art.w,art.h,button.content);
       const label=this.txt(entry.text,caption.x,caption.y,caption.w,caption.h,layout.buttonFontSizes[i],HOME_COLORS.menu,true,button.content);
-      label.node.name='Home menu label';label.fontFamily='sans-serif';label.lineHeight=caption.h;label.enableWrapText=false;
+      label.node.name='Home menu label';label.lineHeight=caption.h;label.enableWrapText=false;
       this.bindButton(button.node,entry.action);
     });
-    this.drawHomeSettings(layout.settings,parent);
-  }
-  private drawHomeSettings(rect:any,parent:Node){
-    const button=this.group('Home settings',rect.x,rect.y,rect.w,rect.h,parent),g=button.node.addComponent(Graphics),scale=rect.w/44;
-    // Match the 44px SVG used by the browser. The cream circle is visual only;
-    // the entire unchanged shared rectangle remains the settings touch target.
-    g.fillColor=ink('#FFFAF1');g.strokeColor=ink('#E8E1E9');g.lineWidth=scale;
-    g.roundRect(-19*scale,-19*scale,38*scale,38*scale,19*scale);g.fill();g.stroke();
-    g.strokeColor=ink('#80738F');g.lineWidth=1.65*scale;
-    const points:{x:number;y:number}[]=[];
-    for(let tooth=0;tooth<8;tooth++)for(const [offset,radius] of [[-22.5,8.4],[-13,8.4],[-10,10.4],[10,10.4],[13,8.4]]){
-      const angle=(tooth*45-90+offset)*Math.PI/180;points.push({x:Math.cos(angle)*radius*scale,y:-Math.sin(angle)*radius*scale});
-    }
-    g.moveTo(points[0].x,points[0].y);for(const point of points.slice(1))g.lineTo(point.x,point.y);g.lineTo(points[0].x,points[0].y);g.stroke();
-    g.roundRect(-3.4*scale,-3.4*scale,6.8*scale,6.8*scale,3.4*scale);g.stroke();
-    this.bindButton(button.node,()=>{this.modal='settings';this.draw();});
+    const settings=layout.settings;
+    this.btn('',settings.x,settings.y,settings.w,settings.h,()=>{this.modal='settings';this.draw();},'settingsButton',16,parent);
   }
   private referenceNumber(value:string,x:number,y:number,w:number,h:number,color=C.dark,parent:Node=this.root){
     if(color===C.dark)return this.numberText(value,x,y,w,h,h*.94,parent);
