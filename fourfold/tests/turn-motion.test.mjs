@@ -64,7 +64,7 @@ function validateFrame(c,samples,label){
 }
 
 test('quarter-turn endpoints land on the real unequal target rectangles without drift',()=>{
-  assert.equal(TURN_DURATION_MS,800);
+  assert.equal(TURN_DURATION_MS,1200);
   assert.equal(TURN_KEYFRAME_COUNT,49);
   eachCase(c=>{
     const original=structuredClone(c.rects);

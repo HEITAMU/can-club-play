@@ -25,6 +25,7 @@ export class FourfoldGame extends Component {
   private safeTop=0;private safeBottom=0;private inHome=true;private mode='story';private key='1';private puzzle:any;
   private board=GOAL;private direction=1;private moves=0;private hints=0;private elapsed=0;private startAt=0;private won=false;private modal='';private busy=false;
   private clockLabel:Label|null=null;private rewardAd:any=null;private banner:any=null;private toastNode:Node|null=null;
+  private numberLayers=new Map<Label,Label[]>();
   private roundSerial=0;private hintRequest:any=null;private disposed=false;private resultAdvanceRound=-1;
   private rankTemplate:Node|null=null;private rankView:Node|null=null;private rankSettings=false;
   private assetsReady=false;private loading=false;private loadError='';private loadProgress=0;private loadSerial=0;
@@ -135,7 +136,12 @@ export class FourfoldGame extends Component {
       if(!Array.isArray(rect)||rect.length!==4||!rect.every(Number.isFinite)||rect[0]<0||rect[1]<0||rect[2]<=0||rect[3]<=0||rect[0]+rect[2]>texture.width||rect[1]+rect[3]>texture.height)throw new Error(`参考裁片范围错误: ${name}`);
       this.frames[name]=this.makeFrame(texture,rect[0],rect[1],rect[2],rect[3]);
     };
-    for(let token=1;token<=9;token++)add('referenceTile'+token,r.tileByToken[token]);
+    for(let token=1;token<=9;token++){
+      const [x,y,w,h]=r.tileByToken[token],inset=r.tileSurface.safeCropInsetsByToken?.[token]||r.tileSurface.safeCropInsets;
+      const [left,top,right,bottom]=inset;
+      // Source seams and neighbouring ornaments are not part of a movable tile.
+      add('referenceTile'+token,[x+left,y+top,w-left-right,h-top-bottom]);
+    }
     for(let q=0;q<4;q++)add('referenceKnob'+q,r.knobCropRects[q],original);
     for(const key of ['date','moves','timer'])add('referencePatch'+key,r.dynamicPatches[key]);
     add('referenceBoardFrame',r.boardOuter,original);
@@ -175,12 +181,15 @@ export class FourfoldGame extends Component {
     this.roundSerial++; // 同一关重开也不能领取上一局尚未结束的广告奖励。
     this.mode=mode;this.key=key;this.inHome=home;this.board=this.puzzle.board;this.direction=1;this.moves=0;this.hints=0;this.startAt=0;this.elapsed=0;this.won=false;this.busy=false;this.knobAngles=[0,0,0,0];this.modal='';this.rankSettings=false;this.hideBanner();this.draw();
   }
-  private updateClock(){if(this.startAt&&!this.won&&!this.inHome)this.elapsed=(at()-this.startAt)/1000;if(this.clockLabel)this.clockLabel.string=clock(this.elapsed);}
+  private updateClock(){
+    if(this.startAt&&!this.won&&!this.inHome)this.elapsed=(at()-this.startAt)/1000;
+    if(this.clockLabel){const value=clock(this.elapsed);for(const label of this.numberLayers.get(this.clockLabel)||[this.clockLabel])label.string=value;}
+  }
   private clear(){
     this.cancelTurnMotion();if(this.inHome)this.knobAngles=[0,0,0,0];
     this.rankView=null;
     if(this.pageScroll){this.scrollOffsets[this.pageScrollKey]=Math.max(0,this.pageScroll.getScrollOffset().y);this.pageScroll=null;}
-    this.clockLabel=null;this.tileNodes=[];this.knobNodes=[];this.knobArtNodes=[];this.boardContent=null;this.toastNode=null;for(const n of [...this.root.children]){n.active=false;n.removeFromParent();n.destroy();}
+    this.clockLabel=null;this.numberLayers.clear();this.tileNodes=[];this.knobNodes=[];this.knobArtNodes=[];this.boardContent=null;this.toastNode=null;for(const n of [...this.root.children]){n.active=false;n.removeFromParent();n.destroy();}
   }
   private createNode(name:string,x:number,y:number,w:number,h:number,parent:Node=this.root){const n=new Node(name);n.layer=Layers.Enum.UI_2D;parent.addChild(n);n.addComponent(UITransform).setContentSize(w,h);n.setPosition(x+w/2,-y-h/2);return n;}
   private group(name:string,x:number,y:number,w:number,h:number,parent:Node=this.root){const n=this.createNode(name,x,y,w,h,parent),content=new Node('Content');content.layer=Layers.Enum.UI_2D;content.addComponent(UITransform).setContentSize(w,h);n.addChild(content);content.setPosition(-w/2,h/2);return {node:n,content};}
@@ -203,6 +212,26 @@ export class FourfoldGame extends Component {
   private txt(value:string,x:number,y:number,w:number,h:number,size=14,color=C.dark,bold=false,parent:Node=this.root){
     const n=this.createNode('Text',x,y,w,h,parent),l=n.addComponent(Label);l.string=value;l.color=ink(color);l.fontSize=size;l.lineHeight=Math.max(size*1.25,16);
     l.horizontalAlign=Label.HorizontalAlign.CENTER;l.verticalAlign=Label.VerticalAlign.CENTER;l.overflow=Label.Overflow.SHRINK;l.isBold=bold;return l;
+  }
+  private numberText(value:string,x:number,y:number,w:number,h:number,size:number,parent:Node=this.root){
+    // A thin bronze bevel uses live labels, so the clock remains sharp at every
+    // device scale and all highlight layers update with the same real value.
+    const g=this.group('Bronze numeral',x,y,w,h,parent),layers:Label[]=[],unit=Math.max(.45,size/36);
+    const pass=(name:string,color:string,dy=0,owner=g.content)=>{
+      const label=this.txt(value,0,dy,w,h,size,color,true,owner);label.node.name=name;
+      label.fontFamily='Times New Roman';label.lineHeight=h;label.enableWrapText=false;layers.push(label);return label;
+    };
+    pass('Numeral lower shadow','#52291960',.7*unit);
+    pass('Numeral fine light edge','#FFF6DCCC',-.45*unit);
+    const face=pass('Numeral face','#4E291B');
+    const band=(name:string,start:number,end:number,color:string)=>{
+      const top=h*start,clip=this.group(name,0,top,w,h*(end-start),g.content),mask=clip.node.addComponent(Mask);mask.type=Mask.Type.RECT;
+      pass(name+' face',color,-top,clip.content);
+    };
+    band('Numeral upper sheen',0,.43,'#956035');
+    band('Numeral lower reflection',.64,.78,'#784423');
+    const outline=face.node.addComponent(LabelOutline);outline.color=ink('#542D1C66');outline.width=.2*unit;
+    this.numberLayers.set(face,layers);return face;
   }
   private art(name:string,x:number,y:number,w:number,h:number,parent:Node=this.root){
     const frame=this.frames[name];if(!frame)throw new Error(`Missing loaded sprite: ${name}`);
@@ -290,6 +319,7 @@ export class FourfoldGame extends Component {
     const settings=layout.settings;this.iconButton('settingsButton',settings.x,this.safeTop+settings.y,44,()=>{this.modal='settings';this.draw();});
   }
   private referenceNumber(value:string,x:number,y:number,w:number,h:number,color=C.dark,parent:Node=this.root){
+    if(color===C.dark)return this.numberText(value,x,y,w,h,h*.94,parent);
     const l=this.txt(value,x,y,w,h,h*.94,color,true,parent);l.fontFamily='Georgia';l.lineHeight=h;return l;
   }
   private statCard(frame:string,label:string,value:string,x:number,y:number,w:number,h:number,isClock=false,parent:Node=this.root){
@@ -382,7 +412,10 @@ export class FourfoldGame extends Component {
     for(let i=0;i<9;i++){
       const p=r.slotRects[i],token=Number(this.board[i]),tw=p[2]*scale,th=p[3]*scale;
       const tile=this.group('Tile '+token,(p[0]-a[0])*scale,(p[1]-a[1])*scale,tw,th,boardLayer.content);
-      this.art('referenceTile'+token,0,0,tw,th,tile.content);this.tileNodes[i]=tile.node;
+      const radius=Math.min(r.tileSurface.cornerRadius*scale,Math.min(tw,th)/2),clip=tile.node.addComponent(Mask);clip.type=Mask.Type.GRAPHICS_STENCIL;
+      const stencil=tile.node.getComponent(Graphics)||tile.node.addComponent(Graphics);stencil.clear();stencil.fillColor=ink('#FFFFFF');stencil.roundRect(-tw/2,-th/2,tw,th,radius);stencil.fill();
+      this.art('referenceTile'+token,0,0,tw,th,tile.content);
+      this.tileSurface(tw,th,radius,r.tileSurface.rimInset*scale,scale,tile.content);this.tileNodes[i]=tile.node;
     }
     for(let q=0;q<4;q++){
       const center=r.knobCenters[q],crop=r.knobCropRects[q],d=r.knobClipRadius*2*scale,hitD=Math.max(44,d);
@@ -392,6 +425,20 @@ export class FourfoldGame extends Component {
       const cw=crop[2]*scale,ch=crop[3]*scale,knob=this.art('referenceKnob'+q,(d-cw)/2,(d-ch)/2,cw,ch,circle.content);
       if(this.direction<0)knob.setScale(-1,1,1);knob.angle=-this.knobAngles[q];this.knobNodes[q]=hit.node;this.knobArtNodes[q]=knob;this.bindButton(hit.node,()=>this.spin(q));
     }
+  }
+  private tileSurface(w:number,h:number,radius:number,inset:number,scale:number,parent:Node){
+    const node=this.createNode('Tile satin rim',0,0,w,h,parent),g=node.addComponent(Graphics),line=Math.max(.35,1.1*scale);
+    const rounded=(pad:number,color:string,width:number)=>{g.clear();g.roundRect(-w/2+pad,-h/2+pad,w-pad*2,h-pad*2,Math.max(1,radius-pad));g.strokeColor=ink(color);g.lineWidth=width;g.stroke();};
+    // A single shared frame replaces the inconsistent baked crop corners.
+    rounded(Math.max(.3,.75*scale),'#A8B4DF4A',Math.max(.4,1.5*scale));
+    const rim=this.createNode('Tile inner rim',0,0,w,h,parent),edge=rim.addComponent(Graphics);
+    edge.roundRect(-w/2+inset,-h/2+inset,w-inset*2,h-inset*2,Math.max(1,radius-inset));edge.strokeColor=ink('#C2C8E039');edge.lineWidth=line;edge.stroke();
+    const accent=(name:string,x1:number,y1:number,x2:number,y2:number,color:string)=>{
+      const n=this.createNode(name,0,0,w,h,parent),path=n.addComponent(Graphics);path.moveTo(x1,y1);path.lineTo(x2,y2);path.strokeColor=ink(color);path.lineWidth=line;path.stroke();
+    };
+    accent('Tile upper light',-w/2+radius,h/2-inset,w/2-radius,h/2-inset,'#E6D4AA4D');
+    accent('Tile lower shade',-w/2+radius,-h/2+inset,w/2-radius,-h/2+inset,'#0C143D8C');
+    accent('Tile right shade',w/2-inset,-h/2+radius,w/2-inset,h/2-radius,'#68769B30');
   }
   private spin(q:number){
     if(this.disposed||this.inHome||this.won||this.modal||this.busy||!this.assetsReady||!Number.isInteger(q)||!SQUARES[q]||!this.boardContent)return;
@@ -562,11 +609,12 @@ export class FourfoldGame extends Component {
     const centered=(value:string,point:number[],width:number,lineHeight:number,size:number,color=C.dark,bold=false)=>this.txt(value,(point[0]-width/2)*scale,(point[1]-lineHeight/2)*scale,width*scale,lineHeight*scale,size*scale,color,bold,parent);
     centered(`${Number(date[1])}月${Number(date[2])}日 · 每日挑战`,r.date,550,52,36,C.white,true);
     const hasBest=best&&Number.isFinite(Number(best.moves))&&Number(best.moves)>=1&&Number.isFinite(Number(best.seconds))&&Number(best.seconds)>=0;
-    centered(hasBest?String(best.moves):'—',r.bestMoves,230,86,68,C.dark,true);
-    centered(hasBest?clock(Number(best.seconds)):'—:—',r.bestTime,280,86,62,C.dark,true);
+    const centeredNumber=(value:string,point:number[],width:number,lineHeight:number,size:number)=>this.numberText(value,(point[0]-width/2)*scale,(point[1]-lineHeight/2)*scale,width*scale,lineHeight*scale,size*scale,parent);
+    centeredNumber(hasBest?String(best.moves):'—',r.bestMoves,230,86,68);
+    centeredNumber(hasBest?clock(Number(best.seconds)):'—:—',r.bestTime,280,86,62);
     const sdk=wxSDK(),canUseFriends=typeof sdk?.getOpenDataContext==='function'&&!!this.rankTemplate;
     const empty=(title:string,note:string)=>{
-      for(const slot of r.podium){centered('—',slot.name,170,44,29);centered('— 步',slot.moves,165,42,29);centered('—:—',slot.time,165,44,31);}
+      for(const slot of r.podium){centered('—',slot.name,170,44,29);centeredNumber('— 步',slot.moves,165,42,29);centeredNumber('—:—',slot.time,165,44,31);}
       this.shape(64*scale,1081*scale,726*scale,80*scale,'#FFF1D7F7','',4*scale,parent);
       centered(title,[427,1105],650,42,30,C.dark,true);centered(note,[427,1144],650,32,23,C.muted);
       centered('—',[427,1258],146,28,19,C.muted);
@@ -619,7 +667,7 @@ export class FourfoldGame extends Component {
     text('星图已复原','title',78,C.white);
     text(honor(this.moves,this.puzzle.par,this.hints),'honor',44);
     text('当前步数','movesLabel',38);text('本局用时','timeLabel',38);
-    text(String(this.moves).padStart(2,'0'),'movesValue',78);text(clock(this.elapsed),'timeValue',73);
+    for(const [value,key,size] of [[String(this.moves).padStart(2,'0'),'movesValue',78],[clock(this.elapsed),'timeValue',73]] as any){const p=r[key];this.numberText(value,p[0]*scale,p[1]*scale,p[2]*scale,p[3]*scale,size*scale,panel.content);}
     text(`最优步数 ${this.puzzle.par} 步`,'note',38,C.muted,false);
     const primary=this.mode==='daily'?'继续闯关':Number(this.key)>=18?'挑战每日关卡':'挑战下一关';
     text(primary,'primary',63);text('分享此关给好友','share',44);

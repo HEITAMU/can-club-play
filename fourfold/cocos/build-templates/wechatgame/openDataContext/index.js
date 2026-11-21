@@ -36,10 +36,21 @@ function nameText(value,field,align='center'){
   ctx.restore();
 }
 function valueText(value,field,color=COLORS.ink){
-  ctx.font='bold '+field.size+'px sans-serif';
+  const family='"Times New Roman",Times,serif';
+  ctx.font='bold '+field.size+'px '+family;
   const width=ctx.measureText(String(value)).width,size=width>field.w?field.size*field.w/width:field.size;
   ctx.save();ctx.beginPath();ctx.rect(field.x-field.w/2,field.y-field.size*.8,field.w,field.size*1.6);ctx.clip();
-  text(value,field.x,field.y,size,color,'center',true);
+  ctx.font='bold '+size+'px '+family;ctx.textAlign='center';ctx.textBaseline='middle';
+  if(color===COLORS.ink){
+    // The same lining numerals and restrained bronze finish as the live HUD.
+    // Material is only a draw style; raw moves/time still drive the ranking.
+    const top=field.y-size*.48,bottom=field.y+size*.48,finish=ctx.createLinearGradient(0,top,0,bottom);
+    finish.addColorStop(0,'#A16B39');finish.addColorStop(.28,'#7A4325');finish.addColorStop(.53,'#4E291B');
+    finish.addColorStop(.71,'#784423');finish.addColorStop(1,'#432117');
+    ctx.fillStyle='rgba(255,246,220,.8)';ctx.fillText(String(value),field.x,field.y-.45);
+    ctx.fillStyle='rgba(82,41,25,.38)';ctx.fillText(String(value),field.x,field.y+.7);
+    ctx.fillStyle=finish;ctx.fillText(String(value),field.x,field.y);
+  }else{ctx.fillStyle=color;ctx.fillText(String(value),field.x,field.y);}
   ctx.restore();
 }
 function validDay(day){

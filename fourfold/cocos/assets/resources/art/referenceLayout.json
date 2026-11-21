@@ -265,7 +265,31 @@
       143
     ]
   },
-  "version": "0.8.0",
+  "version": "0.8.7",
   "originalResource": "art/reference-daily",
-  "cleanResource": "art/reference-clean"
+  "cleanResource": "art/reference-clean",
+  "tileSurface": {
+    "cornerRadius": 16,
+    "rimInset": 3,
+    "safeCropInsets": [
+      8,
+      8,
+      8,
+      8
+    ],
+    "safeCropInsetsByToken": {
+      "1": [
+        8,
+        8,
+        14,
+        8
+      ],
+      "7": [
+        8,
+        8,
+        14,
+        8
+      ]
+    }
+  }
 }
