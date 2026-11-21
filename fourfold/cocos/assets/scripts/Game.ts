@@ -16,7 +16,7 @@ const HINT_PULSE_SECONDS=2.2,HINT_PULSE_MIN=102;
 const AD_IDS={rewarded:'',banner:''}; // 接入时只填写微信公众平台提供的真实 adUnitId。
 const C={background:'#F8DEB7',surface:'#FFF1D6',gold:'#F5CB79',gold2:'#C88B4D',white:'#FFF4D7',muted:'#977253',dark:'#5B301F',edge:'#825037',night:'#1B2345',shadow:'#B27C50'};
 const ART_PATHS={home:'art/'+HOME_ART.resource,homeUI:'art/'+HOME_UI.resource,atlas:'art/ui-atlas',referenceOriginal:'art/reference-daily',referenceClean:'art/reference-clean',rankScene:'art/rank-scene',resultPanel:'art/result-panel'};
-const AUDIO_PATHS={ui:'audio/ui-stone-press-v1',turn:'audio/stone-turn-v1'};
+const AUDIO_PATHS={ui:'audio/ui-stone-press-v2',turn:'audio/stone-turn-v2'};
 const REQUIRED_FRAMES=['goldButton','creamButton','lavenderButton','stepsCard','timeCard','rotateKnob','settingsButton','backButton'];
 const at=()=>typeof performance!=='undefined'&&performance.now?performance.now():Date.now();
 const wxSDK=()=>typeof wx!=='undefined'?(wx as any):null;
@@ -36,7 +36,7 @@ export class FourfoldGame extends Component {
   private hintGuide:{q:number;dir:number;stage:'direction'|'target';round:number;board:string}|null=null;
   private hintVisualNodes:Node[]=[];private hintPulseElapsed=0;
   private hintMaskNode:Node|null=null;
-  private hintFocus:{name:string;rect:{x:number;y:number;w:number;h:number};radius:number;parent:Node;lastRect?:{x:number;y:number;w:number;h:number}}|null=null;
+  private hintFocus:{name:string;rect:{x:number;y:number;w:number;h:number};radius:number;parent:Node;lastRect?:{x:number;y:number;w:number;h:number};parts?:{name:string;rect:{x:number;y:number;w:number;h:number};radius:number;soft?:boolean}[]}|null=null;
   private rankTemplate:Node|null=null;private rankView:Node|null=null;private rankSettings=false;
   private assetsReady=false;private loading=false;private loadError='';private loadProgress=0;private loadSerial=0;
   private pendingResourceLoads=new Set<()=>void>();
@@ -131,8 +131,13 @@ export class FourfoldGame extends Component {
   }
   private canPlayAudio(){return this.soundEnabled&&!this.audioHidden&&!this.audioDisabled&&!this.disposed;}
   private playAudio(kind:'ui'|'turn'){
+    if(!this.canPlayAudio()||(kind==='turn'&&!this.turnMotion))return;
     const source=this.audioSources[kind];
-    if(!this.canPlayAudio()||!this.audioClips[kind]||!source?.isValid||(kind==='turn'&&!this.turnMotion))return;
+    if(!this.audioClips[kind]||!source?.isValid){
+      // A later valid touch retries missing optional clips without replaying this
+      // touch when loading finishes. prepareAudio deduplicates in-flight loads.
+      void this.prepareAudio();return;
+    }
     try{
       if(kind==='turn')this.stopAudio('ui');
       // One controllable source per effect avoids stacked clicks and allows
@@ -864,17 +869,18 @@ export class FourfoldGame extends Component {
     return guide;
   }
   private hintGuideMessage(guide=this.currentHintGuide()){
-    return guide?.stage==='direction'?`先点击高亮的${guide.dir===1?'顺时针':'逆时针'}`:'再点击高亮旋转点';
+    return guide?.stage==='direction'?`先点击高亮的${guide.dir===1?'顺时针':'逆时针'}`:'再点击这四格中间的旋转按钮';
   }
   private showHintGuide(){
     const guide=this.currentHintGuide();if(!guide)return;
     this.draw();this.toast(this.hintGuideMessage(guide));
   }
-  private drawHintOutline(name:string,rect:any,parent:Node,radius=12*this.windowScale){
+  private drawHintOutline(name:string,rect:any,parent:Node,radius=12*this.windowScale,soft=false){
     const {x,y,w,h}=rect,u=this.windowScale,node=this.createNode(name,x,y,w,h,parent),g=node.addComponent(Graphics);
     g.roundRect(-w/2,-h/2,w,h,Math.min(radius,Math.min(w,h)/2));
-    g.fillColor=ink('#FFE7A91F');g.fill();
-    for(const [color,width] of [['#F6BE4F18',24],['#F8C96145',14],['#FFE5A39C',6],['#FFF7D9',2.5]] as const){g.strokeColor=ink(color);g.lineWidth=width*u;g.stroke();}
+    g.fillColor=ink(soft?'#FFE7A912':'#FFE7A91F');g.fill();
+    const bands=soft?[['#F8C96122',10],['#FFE5A355',5],['#FFF0BDC9',1.6]]:[['#F6BE4F18',24],['#F8C96145',14],['#FFE5A39C',6],['#FFF7D9',2.5]];
+    for(const [color,width] of bands){g.strokeColor=ink(color as string);g.lineWidth=(width as number)*u;g.stroke();}
     node.addComponent(UIOpacity).opacity=HINT_PULSE_MIN;
     this.hintVisualNodes.push(node);return node;
   }
@@ -885,7 +891,8 @@ export class FourfoldGame extends Component {
     // Draw after all page controls so the entire screen is dim except this hole.
     this.hintMaskNode=this.createNode('Hint screen shade',0,0,this.width,this.height);
     this.hintMaskNode.addComponent(Graphics);
-    this.drawHintOutline(focus.name,focus.rect,this.root,focus.radius);
+    const parts=focus.parts||[{name:focus.name,rect:focus.rect,radius:focus.radius,soft:false}];
+    for(const part of parts)this.drawHintOutline(part.name,part.rect,this.root,part.radius,!!part.soft);
     this.updateHintSpotlightPosition(true);
     if(this.pageScroll&&focus.lastRect){
       const rect=focus.lastRect,pad=8*this.windowScale,top=this.safeTop+pad,bottom=this.height-this.safeBottom-pad;
@@ -904,7 +911,9 @@ export class FourfoldGame extends Component {
     const local=this.root.getComponent(UITransform).convertToNodeSpaceAR(point);
     const rect={x:local.x,y:-local.y,w:focus.rect.w,h:focus.rect.h},last=focus.lastRect;
     if(!force&&last&&Math.abs(last.x-rect.x)<.01&&Math.abs(last.y-rect.y)<.01)return;
-    focus.lastRect=rect;glow.setPosition(rect.x+rect.w/2,-rect.y-rect.h/2);
+    focus.lastRect=rect;
+    const dx=rect.x-focus.rect.x,dy=rect.y-focus.rect.y;
+    (focus.parts||[focus]).forEach((part,index)=>{const node=this.hintVisualNodes[index],p=part.rect;if(node?.isValid)node.setPosition(dx+p.x+p.w/2,-dy-p.y-p.h/2);});
     const g=shade.getComponent(Graphics),w=this.width,h=this.height,r=Math.min(focus.radius,rect.w/2,rect.h/2);
     const left=Math.max(0,Math.min(w,rect.x)),right=Math.max(0,Math.min(w,rect.x+rect.w));
     const top=Math.max(0,Math.min(h,rect.y)),bottom=Math.max(0,Math.min(h,rect.y+rect.h));
@@ -934,8 +943,14 @@ export class FourfoldGame extends Component {
   }
   private drawHintTarget(scale:number,parent:Node){
     const guide=this.currentHintGuide();if(guide?.stage!=='target'||this.modal)return;
-    const r=this.reference,a=r.tileArea,center=r.knobCenters[guide.q],d=r.knobClipRadius*2*scale+6*this.windowScale;
-    this.hintFocus={name:'Hint target knob '+guide.q,rect:{x:(center[0]-a[0])*scale-d/2,y:(center[1]-a[1])*scale-d/2,w:d,h:d},radius:d/2,parent};
+    const r=this.reference,a=r.tileArea,center=r.knobCenters[guide.q],d=r.knobClipRadius*2*scale+6*this.windowScale,indices=SQUARES[guide.q];
+    const slots=indices.map(index=>r.slotRects[index]),left=Math.min(...slots.map(p=>p[0])),top=Math.min(...slots.map(p=>p[1]));
+    const right=Math.max(...slots.map(p=>p[0]+p[2])),bottom=Math.max(...slots.map(p=>p[1]+p[3])),radius=r.tileSurface.cornerRadius*scale;
+    const parts=indices.map(index=>{const p=r.slotRects[index];return {name:'Hint target tile '+index,rect:{x:(p[0]-a[0])*scale,y:(p[1]-a[1])*scale,w:p[2]*scale,h:p[3]*scale},radius,soft:true};});
+    parts.push({name:'Hint target knob '+guide.q,rect:{x:(center[0]-a[0])*scale-d/2,y:(center[1]-a[1])*scale-d/2,w:d,h:d},radius:d/2,soft:false});
+    // The four affected tiles stay bright together; the centre knob retains
+    // the stronger glow so the player can still see where to perform the turn.
+    this.hintFocus={name:'Hint target region',rect:{x:(left-a[0])*scale,y:(top-a[1])*scale,w:(right-left)*scale,h:(bottom-top)*scale},radius,parent,parts};
   }
   private setDirection(direction:number,round=this.roundSerial,ui=this.uiSerial){
     if(this.disposed||this.inHome||this.won||this.modal||this.busy||round!==this.roundSerial||ui!==this.uiSerial||!this.assetsReady||this.themeLoading||this.themeError||!this.activeTheme||(direction!==1&&direction!==-1))return false;

@@ -71,11 +71,13 @@ test('native story and daily controls draw only the current step and use the sam
       button.emit('start');button.emit('end');
     }
     assert.equal(g.hintGuide.stage,'target');assert.equal(oldDirectionOutline.isValid,false);assert.equal(oldShade.isValid,false);
-    g.drawGame();assert.deepEqual(Array.from(g.hintVisualNodes,node=>node.name),['Hint target knob 3']);
-    const spot=g.hintFocus.lastRect,scale=g.boardLayout.size/reference.tileArea[2],center=reference.knobCenters[3],a=reference.tileArea;
-    assert.equal(spot.w,reference.knobClipRadius*2*scale+6*g.windowScale);assert.equal(spot.h,spot.w);
-    assert.ok(Math.abs(spot.x+spot.w/2-(g.boardLayout.x+(center[0]-a[0])*scale))<.001);
-    assert.ok(Math.abs(spot.y+spot.h/2-(g.boardLayout.y+(center[1]-a[1])*scale))<.001);
+    g.drawGame();assert.deepEqual(Array.from(g.hintVisualNodes,node=>node.name),[...SQUARES[3].map(index=>'Hint target tile '+index),'Hint target knob 3']);
+    const spot=g.hintFocus.lastRect,scale=g.boardLayout.size/reference.tileArea[2],slots=SQUARES[3].map(index=>reference.slotRects[index]),a=reference.tileArea;
+    const left=Math.min(...slots.map(p=>p[0])),top=Math.min(...slots.map(p=>p[1]));
+    assert.equal(spot.w,(Math.max(...slots.map(p=>p[0]+p[2]))-left)*scale);
+    assert.equal(spot.h,(Math.max(...slots.map(p=>p[1]+p[3]))-top)*scale);
+    assert.ok(Math.abs(spot.x-(g.boardLayout.x+(left-a[0])*scale))<.001);
+    assert.ok(Math.abs(spot.y-(g.boardLayout.y+(top-a[1])*scale))<.001);
     assert.equal(g.hints,1);
   }
 });
@@ -90,9 +92,11 @@ test('native spotlight keeps the screen shade static, follows scrolling and clea
   assert.equal(opacity.opacity,255);assert.equal(g.hintMaskNode,shade,'breathing cannot replace or animate the shade');
   for(let i=0;i<11;i++)g.updateHintPulse(.1);
   assert.equal(opacity.opacity,102);
-  g.setDirection(-1);const guide=g.hintGuide,target=g.hintFocus,previousY=target.lastRect.y,parent=target.parent,position=parent.position;
+  g.setDirection(-1);const guide=g.hintGuide,target=g.hintFocus,previousY=target.lastRect.y,parent=target.parent,position=parent.position,glowPositions=g.hintVisualNodes.map(node=>node.position[1]);
   parent.setPosition(position[0],position[1]+28);g.updateHintPulse(.1);
   assert.equal(target.lastRect.y,previousY-28,'the hole follows its scrolled target in root coordinates');
+  assert.ok(g.hintVisualNodes.every((node,index)=>Math.abs(node.position[1]-glowPositions[index]-28)<.001),'all four tile glows and the knob follow the region');
+  assert.equal(new Set(g.hintVisualNodes.map(node=>[...node.components.values()].find(component=>'opacity' in component).opacity)).size,1,'all five glows breathe in phase');
   for(const state of ['settings','']){g.modal=state;g.draw();assert.equal(g.hintGuide,guide);assert.equal(!!g.hintMaskNode,!state);}
   const beforeHide=g.hintMaskNode;g.onAppHide();assert.equal(g.hintMaskNode,null);assert.equal(beforeHide.isValid,false);assert.equal(g.hintGuide,guide);
   g.onAppShow();assert.ok(g.hintMaskNode);assert.equal(g.hintGuide,guide);assert.equal(g.hints,1);
@@ -112,7 +116,7 @@ test('native short-screen spotlight brings each new target into view once withou
   g.draw=()=>{g.clear();g.drawGame();};g.applyHint();
   const visible=()=>{const rect=g.hintFocus.lastRect;assert.ok(rect.y>=g.safeTop+8-.001);assert.ok(rect.y+rect.h<=g.height-g.safeBottom-8+.001);};
   visible();assert.equal(scrolls.length,1);
-  g.setDirection(-1);visible();assert.equal(scrolls.length,2,'the offscreen knob is revealed when the hint advances');
+  g.setDirection(-1);visible();assert.equal(scrolls.length,2,'the offscreen four-tile region is revealed when the hint advances');
   const originalY=g.hintFocus.lastRect.y,offset=g.pageScroll.getScrollOffset();g.pageScroll.scrollToOffset({x:0,y:offset.y+28});const calls=scrolls.length;
   g.updateHintPulse(.1);g.updateHintPulse(.1);
   assert.equal(scrolls.length,calls,'subsequent frames cannot force the scroll position back');

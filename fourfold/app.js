@@ -1,8 +1,8 @@
-import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.24';
-import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.24';
-import {HOME_ART,HOME_UI,HOME_COLORS,homeStoryLabel} from './cocos/assets/scripts/HomeScene.js?v=0.8.24';
-import {getTileTheme,buildThemeArtwork} from './cocos/assets/scripts/TileThemes.js?v=0.8.24';
-import {createGameAudio} from './audio.mjs?v=0.8.24';
+import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.25';
+import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.25';
+import {HOME_ART,HOME_UI,HOME_COLORS,homeStoryLabel} from './cocos/assets/scripts/HomeScene.js?v=0.8.25';
+import {getTileTheme,buildThemeArtwork} from './cocos/assets/scripts/TileThemes.js?v=0.8.25';
+import {createGameAudio} from './audio.mjs?v=0.8.25';
 
 const el=id=>document.getElementById(id);
 const $={board:el('board'),anchors:el('anchors'),target:el('target'),moves:el('moves'),par:el('par'),clock:el('clock'),instruction:el('instruction'),difficulty:el('difficulty'),chapterCaption:el('chapterCaption'),puzzleTitle:el('puzzleTitle'),storyTab:el('storyTab'),dailyTab:el('dailyTab'),cwBtn:el('cwBtn'),ccwBtn:el('ccwBtn'),modal:el('modal'),toast:el('toast')};
@@ -53,7 +53,7 @@ function currentHint(){
   return hintGuide;
 }
 function hintInstruction(guide){
-  return guide.stage==='direction'?`先点击“${guide.dir===1?'顺时针':'逆时针'}”`:'再点击棋盘上高亮的旋转点';
+  return guide.stage==='direction'?`先点击“${guide.dir===1?'顺时针':'逆时针'}”`:'再点击这四格中间的旋转按钮';
 }
 function hideHintSpotlight(){
   const spotlight=el('hintSpotlight');
@@ -69,12 +69,23 @@ function syncHintSpotlight(){
   }
   const target=guide.stage==='direction'?(guide.dir===1?$.cwBtn:$.ccwBtn):anchorNodes[guide.q];
   const targetName=guide.stage==='direction'?target.id:'rotation-'+guide.q;
-  let rect=target.getBoundingClientRect();
+  const targetBounds=()=>{
+    if(guide.stage==='direction')return target.getBoundingClientRect();
+    const tiles=SQUARES[guide.q].map(index=>tileNodes.get(board[index]).getBoundingClientRect());
+    const left=Math.min(...tiles.map(r=>r.left)),top=Math.min(...tiles.map(r=>r.top));
+    const right=Math.max(...tiles.map(r=>r.right)),bottom=Math.max(...tiles.map(r=>r.bottom));
+    return {left,top,right,bottom,width:right-left,height:bottom-top};
+  };
+  let rect=targetBounds();
   const viewport=gameScreen.getBoundingClientRect();
-  // A short phone may scroll its daily board. Bring a newly prompted control into view.
+  // Reveal the whole four-tile group on short phones, rather than just its centre.
   if(spotlight.dataset.target!==targetName&&(rect.top<viewport.top+4||rect.bottom>viewport.bottom-4)){
-    target.scrollIntoView?.({block:'nearest',inline:'nearest',behavior:'auto'});
-    rect=target.getBoundingClientRect();
+    if(guide.stage==='target'){
+      const available=viewport.height-8;
+      const delta=rect.height>available?(rect.top+rect.bottom-viewport.top-viewport.bottom)/2:rect.top<viewport.top+4?rect.top-viewport.top-4:rect.bottom-viewport.bottom+4;
+      gameScreen.scrollTop+=delta;
+    }else target.scrollIntoView?.({block:'nearest',inline:'nearest',behavior:'auto'});
+    rect=targetBounds();
   }
   if(rect.width<=0||rect.height<=0){hideHintSpotlight();return;}
   const focus=el('hintSpotlightFocus'),padding=3;
@@ -322,8 +333,10 @@ function render(){
   $.instruction.textContent=won?'✦ 完成':guide?hintInstruction(guide):`提示剩余 ${remaining}/${limit} 次`;
   highlight=guide?.stage==='target'?guide.q:-1;
   gameScreen.dataset.hintStage=guide?.stage||'';
+  const hintTiles=new Set(highlight<0?[]:SQUARES[highlight].map(index=>board[index]));
   for(const token of board){
     const tile=tileNodes.get(token);$.board.append(tile);
+    tile.classList.toggle('hint-selected',hintTiles.has(token));
   }
   anchorNodes.forEach((button,q)=>{
     button.dataset.direction=String(dir);button.disabled=won||blocked;
@@ -608,7 +621,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelRota
 
 const ART_FILES=[HOME_ART.resource+'.webp',HOME_UI.resource+'.webp','ui-atlas.webp','daily-banner.webp','reference-daily.webp','reference-clean.webp','rank-scene.webp','result-panel.webp'];
 async function preloadTileArtwork(){
-  const response=await fetch(new URL('./cocos/assets/resources/art/referenceLayout.json?v=0.8.24',import.meta.url));
+  const response=await fetch(new URL('./cocos/assets/resources/art/referenceLayout.json?v=0.8.25',import.meta.url));
   if(!response.ok)throw new Error('tile artwork layout could not be loaded');
   const {tileArtwork:art}=await response.json();
   if(!art||!/^[-a-z0-9]+$/.test(art.resource)||art.fit!=='fill'||!Array.isArray(art.imageSize)||art.imageSize.length!==2||art.imageSize.some(v=>!Number.isFinite(v)||v<=0))throw new Error('invalid tile artwork layout');

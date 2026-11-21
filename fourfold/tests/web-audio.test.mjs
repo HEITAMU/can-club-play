@@ -31,6 +31,49 @@ test('audio preloads samples without opening a context and unlocks sampled playb
   audio.dispose();assert.equal(p.context.closeCount,1);
 });
 
+test('a later gesture retries failed downloads or decodes and reuses the recovered sample',async()=>{
+  for(const failure of ['download','decode']){
+    let available=false;
+    const p=audioPlatform({
+      fetchAudio:async(url,response)=>failure==='download'&&!available&&url===SOUND_FILES.button?{ok:false}:response(url),
+      decodeAudioData:async bytes=>{
+        const turn=new Uint8Array(bytes)[0]===2;
+        if(failure==='decode'&&!available&&!turn)throw new Error('temporary decode failure');
+        return {kind:turn?'turn':'button',duration:turn?1.2:.24};
+      },
+    });
+    const audio=createGameAudio(p.options);await audio.preload();
+    assert.equal(await audio.playButton(),false,failure);assert.equal(p.sources.length,0);
+    const before=p.fetches.filter(url=>url===SOUND_FILES.button).length;
+    available=true;
+    assert.equal(await audio.playButton(),true,failure+' recovers on a new gesture');
+    assert.equal(p.sources.length,1,'recovery never replays the failed click');
+    assert.equal(p.fetches.filter(url=>url===SOUND_FILES.button).length,before+1,'recovery gets fresh bytes');
+    assert.equal(await audio.playButton(),true);
+    assert.equal(p.fetches.filter(url=>url===SOUND_FILES.button).length,before+1,'the recovered clip is cached');
+    audio.dispose();
+  }
+});
+
+test('a recovering load cannot replay a late or cancelled gesture',async()=>{
+  for(const end of ['late','cancelled']){
+    let attempts=0,finishRetry;
+    const p=audioPlatform({fetchAudio:(url,response)=>{
+      if(url!==SOUND_FILES.button)return response(url);
+      if(++attempts===1)throw new Error('temporary network failure');
+      return new Promise(resolve=>{finishRetry=()=>resolve(response(url));});
+    }});
+    const audio=createGameAudio(p.options);
+    assert.equal(await audio.playButton(),false);assert.equal(attempts,1);
+    const retry=audio.playButton();await flush();assert.equal(attempts,2);
+    if(end==='late')p.clock.ms=400;else audio.stopAll();
+    finishRetry();assert.equal(await retry,false,end);assert.equal(p.sources.length,0);
+    assert.equal(await audio.playButton(),true,'a fresh gesture can use the successfully recovered clip');
+    assert.equal(p.sources.length,1);assert.equal(attempts,2);
+    audio.dispose();
+  }
+});
+
 test('turn foley replaces a prior UI voice and follows full or reduced-motion duration without speed-up',async()=>{
   const p=audioPlatform(),audio=createGameAudio(p.options);await audio.preload();await audio.playButton();
   assert.equal(await audio.playTurn(1200),true);

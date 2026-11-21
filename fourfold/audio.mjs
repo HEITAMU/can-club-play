@@ -1,8 +1,8 @@
 // Short sampled foley shared with the native build. No sound is queued behind
 // a slow download, a hidden page, a cancelled turn, or an old audio context.
 export const SOUND_FILES=Object.freeze({
-  button:new URL('./assets/audio/ui-stone-press-v1.mp3',import.meta.url).href,
-  turn:new URL('./assets/audio/stone-turn-v1.mp3',import.meta.url).href,
+  button:new URL('./assets/audio/ui-stone-press-v2.mp3',import.meta.url).href,
+  turn:new URL('./assets/audio/stone-turn-v2.mp3',import.meta.url).href,
 });
 
 export function createGameAudio({
@@ -16,19 +16,35 @@ export function createGameAudio({
   const raw=new Map(),decoded=new Map(),voices=new Map(),fading=new Set(),epochs={button:0,turn:0};
   const allowed=()=>enabled&&!disposed&&isVisible();
   const bytes=kind=>{
-    if(!raw.has(kind))raw.set(kind,Promise.resolve().then(()=>fetchAudio(SOUND_FILES[kind])).then(response=>{
-      if(!response.ok)throw new Error('Sound asset unavailable');
-      return response.arrayBuffer();
-    }).catch(()=>null));
+    if(!raw.has(kind)){
+      const request=Promise.resolve().then(()=>fetchAudio(SOUND_FILES[kind])).then(response=>{
+        if(!response.ok)throw new Error('Sound asset unavailable');
+        return response.arrayBuffer();
+      }).catch(()=>{
+        if(raw.get(kind)===request)raw.delete(kind);
+        return null;
+      });
+      raw.set(kind,request);
+    }
     return raw.get(kind);
   };
   const buffer=kind=>{
     if(!context)return Promise.resolve(null);
     const owner=context;
-    if(!decoded.has(kind))decoded.set(kind,bytes(kind).then(data=>{
-      if(!data||disposed||context!==owner||owner.state==='closed')return null;
-      return owner.decodeAudioData(data.slice(0));
-    }).catch(()=>null));
+    if(!decoded.has(kind)){
+      const request=bytes(kind),decoding=request.then(data=>{
+        if(!data||disposed||context!==owner||owner.state==='closed')return null;
+        return owner.decodeAudioData(data.slice(0));
+      }).catch(()=>{
+        // A corrupt or interrupted response needs fresh bytes on a later gesture.
+        if(raw.get(kind)===request)raw.delete(kind);
+        return null;
+      }).then(clip=>{
+        if(!clip&&decoded.get(kind)===decoding)decoded.delete(kind);
+        return clip;
+      });
+      decoded.set(kind,decoding);
+    }
     return decoded.get(kind);
   };
   const preload=()=>Promise.all(Object.keys(SOUND_FILES).map(bytes));
@@ -78,8 +94,11 @@ export function createGameAudio({
     const epoch=++epochs[channel],requestedAt=now();
     stopVoice(channel);
     try{
-      if(!await unlock())return false;
-      const clip=await buffer(kind),late=Math.max(0,now()-requestedAt);
+      const unlocking=unlock(),pending=context?buffer(kind):null;
+      if(!await unlocking)return false;
+      // Keep this gesture's attempt even if it fails while the context resumes;
+      // only a later gesture should retry, never a loop replaying an old action.
+      const clip=await (pending||buffer(kind)),late=Math.max(0,now()-requestedAt);
       if(!clip||!allowed()||epochs[channel]!==epoch||context.state!=='running')return false;
       // A delayed foley cue must never arrive after the visual action. Turns
       // may join the sample at its current offset after a short decode delay.

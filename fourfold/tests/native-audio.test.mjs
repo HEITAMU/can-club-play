@@ -46,7 +46,7 @@ function audioFixture(options={}){
 
 test('native optional clips load independently and never replay a click missed during loading',async()=>{
   const f=audioFixture(),g=f.game,loading=g.prepareAudio();
-  assert.deepEqual(f.requests.map(request=>request.path),['audio/ui-stone-press-v1','audio/stone-turn-v1']);
+  assert.deepEqual(f.requests.map(request=>request.path),['audio/ui-stone-press-v2','audio/stone-turn-v2']);
   assert(f.channels.every(source=>source.playOnAwake===false&&source.loop===false));
   assert.equal(g.assetsReady,true);assert.equal(g.loading,false);
   const button=new f.NativeNode('Button');let actions=0;g.bindButton(button,()=>{actions++;});
@@ -59,6 +59,24 @@ test('native optional clips load independently and never replay a click missed d
   g.audioSources.ui.failPlay=true;assert.doesNotThrow(()=>f.tap(button));assert.equal(actions,3);
   const retry=g.prepareAudio();assert.equal(f.requests.length,3,'retry only the missing clip');f.finish(f.requests[2]);await retry;
   assert.equal(g.audioSources.turn.plays,0);assert.equal(g.audioClips.turn.refs,1);
+});
+
+test('native valid touches retry missing clips once without queuing the missed sound',async()=>{
+  const f=audioFixture(),g=f.game,loading=g.prepareAudio();
+  f.finish(f.requests[0],new Error('temporary network failure'));f.finish(f.requests[1]);await loading;
+  const button=new f.NativeNode('Retry button');let actions=0;g.bindButton(button,()=>{actions++;});
+  g.soundEnabled=false;f.tap(button);assert.equal(f.requests.length,2,'muted touches do not retry audio');
+  g.soundEnabled=true;g.audioHidden=true;f.tap(button);assert.equal(f.requests.length,2,'hidden touches do not retry audio');
+  g.audioHidden=false;
+  const stale=new f.NativeNode('Stale button');g.bindButton(stale,()=>false);f.tap(stale);
+  assert.equal(f.requests.length,2,'rejected actions do not retry audio');
+  f.tap(button);f.tap(button);
+  assert.equal(actions,4);assert.equal(f.requests.length,3,'in-flight recovery is deduplicated');
+  assert.equal(f.requests[2].path,'audio/ui-stone-press-v2');assert.equal(g.audioSources.ui.plays,0);
+  f.finish(f.requests[2]);await flush();
+  assert.equal(g.audioSources.ui.plays,0,'finishing recovery cannot replay either missed tap');
+  assert.equal(g.audioClips.ui.refs,1);assert.equal(g.audioLoading,false);
+  f.tap(button);assert.equal(g.audioSources.ui.plays,1);assert.equal(f.requests.length,3);
 });
 
 test('native UI sounds fire once after accepted touches and ignore busy, cancelled or stale actions',async()=>{

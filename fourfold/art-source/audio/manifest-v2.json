@@ -1,0 +1,42 @@
+{
+  "version": 2,
+  "origin": "Original deterministic procedural stone foley; no third-party recordings or online generated output.",
+  "seeds": {
+    "button": 482501,
+    "turn": 482502
+  },
+  "intent": "Dry midrange contact and irregular granular friction; a single settling contact at 1.064s. Sound character still needs target-device listening.",
+  "verification": "48kHz mono 24-bit WAV master; decoded MP3 timing and peak/boundary checks; web/native bytes identical.",
+  "sounds": [
+    {
+      "name": "ui-stone-press-v2",
+      "origin": "original deterministic procedural stone foley",
+      "sampleRate": 48000,
+      "channels": 1,
+      "decodedFrames": 13440,
+      "decodedDurationSeconds": 0.28,
+      "decodedPeakDbFS": -6.029,
+      "decodedRmsDbFS": -24.817,
+      "sha256": "1406177f39ba7d7a24e30bda16e0f00ec79d7083515b9d75395e77e141386b82",
+      "mp3Bytes": 8108,
+      "sourceMaster": "art-source/audio/ui-stone-press-v2.wav",
+      "web": "assets/audio/ui-stone-press-v2.mp3",
+      "native": "cocos/assets/resources/audio/ui-stone-press-v2.mp3"
+    },
+    {
+      "name": "stone-turn-v2",
+      "origin": "original deterministic procedural stone foley",
+      "sampleRate": 48000,
+      "channels": 1,
+      "decodedFrames": 57600,
+      "decodedDurationSeconds": 1.2,
+      "decodedPeakDbFS": -5.012,
+      "decodedRmsDbFS": -21.305,
+      "sha256": "ba908eae54410b4be5a8a50f217358faccbbb77bfa825c768b805d6183028242",
+      "mp3Bytes": 29996,
+      "sourceMaster": "art-source/audio/stone-turn-v2.wav",
+      "web": "assets/audio/stone-turn-v2.mp3",
+      "native": "cocos/assets/resources/audio/stone-turn-v2.mp3"
+    }
+  ]
+}
