@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta id="themeColor" name="theme-color" content="#fdd4aa">
 <meta name="description" content="四格诡局：转动四格，复原星图。">
-<meta name="fourfold-version" content="0.8.23">
+<meta name="fourfold-version" content="0.8.24">
 <title>四格诡局 · 星图挑战</title>
 <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
 <link rel="preload" as="image" href="assets/art/home-celestial-v9.webp" fetchpriority="high">
 <link rel="preload" as="image" href="assets/art/home-menu-v9.webp">
 <link rel="preload" as="image" href="assets/art/ui-atlas.webp">
-<link rel="stylesheet" href="assets/art/atlas.css?v=0.8.23">
-<link rel="stylesheet" href="style.css?v=0.8.23">
-<link rel="stylesheet" href="reference.css?v=0.8.23">
+<link rel="stylesheet" href="assets/art/atlas.css?v=0.8.24">
+<link rel="stylesheet" href="style.css?v=0.8.24">
+<link rel="stylesheet" href="reference.css?v=0.8.24">
 </head>
 <body>
-<main class="shell" id="app" data-build="0.8.23">
+<main class="shell" id="app" data-build="0.8.24">
 <section id="home" class="home-screen" aria-label="四格诡局主菜单">
 <div class="home-hero">
 <img class="home-scene" src="assets/art/home-celestial-v9.webp" width="981" height="1602" alt="四块带浅金细边的不规则星图拼片，配暖杏奶油底与厚涂星空" fetchpriority="high" draggable="false">
@@ -88,6 +88,7 @@
 </div>
 </section>
 </main>
+<div id="hintSpotlight" aria-hidden="true" hidden><div id="hintSpotlightFocus"></div></div>
 <div id="settingsOverlay" class="settings-overlay" hidden><section class="settings-card" role="dialog" aria-modal="true" aria-label="游戏设置"><div class="settings-head"><h2>设置</h2><button id="settingsClose" class="close" aria-label="关闭设置">×</button></div><button id="settingsSound" aria-pressed="true">音效：开</button><button id="settingsReset">重开本局</button><button id="settingsRank">好友荣誉榜</button><button id="settingsHome">返回主界面</button></section></div>
 <div class="overlay" id="modal" hidden><section id="dialogPanel" class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
 <img id="resultArtwork" class="result-artwork result-only" src="assets/art/result-panel.webp" width="1086" height="1448" alt="" draggable="false">
@@ -98,12 +99,12 @@
 <p id="dialogText"></p><div class="dialog-stats" id="dialogStats"></div>
 <p id="resultNote" class="result-only result-position" style="--result-x:220;--result-y:966;--result-w:650;--result-h:60"></p>
 <button id="dialogPrimary" class="sprite-button skin-goldButton result-position" style="--result-x:130;--result-y:1082;--result-w:830;--result-h:143" type="button">继续挑战</button>
-<button id="dialogSecondary" class="result-share-btn sprite-button skin-creamButton result-position" style="--result-x:248;--result-y:1256;--result-w:594;--result-h:94" type="button">分享此关给好友</button>
+<button id="dialogSecondary" class="result-share-btn sprite-button skin-creamButton result-position" style="--result-x:183;--result-y:1244;--result-w:720;--result-h:122" type="button"><span id="dialogSecondaryLabel">分享此关给好友</span></button>
 </section></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="startupNotice" hidden role="status"></div>
 <noscript>请启用 JavaScript 进入星图。</noscript>
 <script>window.ffOpen=function(which){window.ffPending=which;var n=document.getElementById('startupNotice');n.hidden=false;n.textContent='星图正在准备…';};</script>
-<script type="module" src="layout.mjs?v=0.8.23"></script>
-<script type="module" src="app.js?v=0.8.23"></script>
+<script type="module" src="layout.mjs?v=0.8.24"></script>
+<script type="module" src="app.js?v=0.8.24"></script>
 </body></html>

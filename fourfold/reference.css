@@ -60,7 +60,7 @@ linear-gradient(to bottom,transparent 32.853%,#8d522e 32.853%,#f9d698 33.2%,#d18
 .game-screen[data-mode=daily] .art-button .skin{inset:auto;left:0;top:50%;width:100%;height:auto;transform:translateY(-50%);border-radius:100px}
 .game-screen[data-mode=daily] .button-label,.game-screen[data-mode=daily] .stat-copy small,.game-screen[data-mode=daily] .daily-copy>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .game-screen[data-mode=daily] .icon-button:active,.game-screen[data-mode=daily] .art-button:active{transform:scale(.98);filter:brightness(1.04)}
-.game-screen[data-mode=daily] #cwBtn:not(.selected) .skin{filter:saturate(.7) brightness(1.04);opacity:.7}
+.game-screen[data-mode=daily] #cwBtn:not(.selected):not(.hint-direction) .skin{filter:saturate(.7) brightness(1.04);opacity:.7}
 .game-screen[data-mode=daily] #ccwBtn.selected .skin{box-shadow:inset 0 0 0 2px #c5852b,0 0 0 1px #f5bd5d}
 .game-screen[data-mode=daily] .daily-banner{z-index:2;background:none}
 .game-screen[data-mode=daily] .banner-skin{inset:0;background-image:url('assets/art/reference-clean.webp')}

@@ -7,15 +7,25 @@ import {nativeFixture,reference,TEST_DAY} from './helpers/runtime-fixtures.mjs';
 
 // Production component methods and callbacks with cc drawing substituted.
 // This checks interaction state, not Creator rendering or WeChat device behavior.
-function ready(mode='story',q=0,dir=1){
-  const f=nativeFixture(),g=f.game;g.startGame(mode,mode==='daily'?TEST_DAY:'1');
+function ready(mode='story',q=0,dir=1,cc={}){
+  const f=nativeFixture({cc}),g=f.game;g.startGame(mode,mode==='daily'?TEST_DAY:'1');
   g.board=rotate(GOAL,q,-dir);return f;
 }
 
 function paintingFixture(mode='story',q=0,dir=1){
-  const f=ready(mode,q,dir),g=f.game;f.created=[];
+  class Vec3 {constructor(x=0,y=0,z=0){Object.assign(this,{x,y,z});}}
+  class UITransform {
+    setContentSize(w,h){this.width=w;this.height=h;}
+    convertToWorldSpaceAR(point){const result={...point};for(let node=this.node;node;node=node.parent){result.x+=node.position?.[0]||0;result.y+=node.position?.[1]||0;}return result;}
+    convertToNodeSpaceAR(point){const origin=this.convertToWorldSpaceAR(new Vec3());return new Vec3(point.x-origin.x,point.y-origin.y,point.z);}
+  }
+  const f=ready(mode,q,dir,{UITransform,Vec3,Layers:{Enum:{UI_2D:1}}}),g=f.game;f.created=[];
+  g.root.addComponent(UITransform);g.group=f.Game.prototype.group.bind(g);
   g.createNode=(name,x,y,w,h,parent=g.root)=>{
-    const node=new f.NativeNode(name);node.rect={x,y,w,h};parent.addChild(node);f.created.push(node);return node;
+    const node=new f.NativeNode(name);node.rect={x,y,w,h};parent.addChild(node);node.addComponent(UITransform).setContentSize(w,h);node.setPosition(x+w/2,-y-h/2);
+    node.getSiblingIndex=()=>node.parent.children.indexOf(node);
+    node.setSiblingIndex=index=>{const siblings=node.parent.children;siblings.splice(siblings.indexOf(node),1);siblings.splice(index,0,node);};
+    f.created.push(node);return node;
   };
   g.pageContent=name=>g.group(name,0,0,390,844).content;
   g.referenceNumber=(value,x,y,w,h,color,parent)=>g.txt(value,x,y,w,h,16,color,true,parent);
@@ -53,19 +63,69 @@ test('native story and daily controls draw only the current step and use the sam
   for(const mode of ['story','daily'])for(const dir of [1,-1]){
     const f=paintingFixture(mode,3,dir),g=f.game;g.applyHint();g.drawGame();
     assert.deepEqual(Array.from(g.hintVisualNodes,node=>node.name),['Hint direction '+dir]);
-    const oldDirectionOutline=g.hintVisualNodes[0];
+    const oldDirectionOutline=g.hintVisualNodes[0],oldShade=g.hintMaskNode;
+    assert.deepEqual(oldShade.rect,{x:0,y:0,w:g.width,h:g.height});
     if(mode==='story')f.buttons.findLast(button=>button.label===(dir===1?'↻ 顺时针':'↺ 逆时针')).action();
     else{
       const button=f.created.findLast(node=>node.name===(dir===1?'↻ 顺时针':'↺ 逆时针'));
       button.emit('start');button.emit('end');
     }
-    assert.equal(g.hintGuide.stage,'target');assert.equal(oldDirectionOutline.isValid,false);
-    g.drawGame();assert.deepEqual(Array.from(g.hintVisualNodes,node=>node.name),['Hint target region','Hint target knob 3']);
-    const region=g.hintVisualNodes[0].rect,scale=g.boardLayout.size/reference.tileArea[2],slots=SQUARES[3].map(i=>reference.slotRects[i]);
-    assert.equal(region.w,(Math.max(...slots.map(p=>p[0]+p[2]))-Math.min(...slots.map(p=>p[0])))*scale);
-    assert.equal(region.h,(Math.max(...slots.map(p=>p[1]+p[3]))-Math.min(...slots.map(p=>p[1])))*scale);
+    assert.equal(g.hintGuide.stage,'target');assert.equal(oldDirectionOutline.isValid,false);assert.equal(oldShade.isValid,false);
+    g.drawGame();assert.deepEqual(Array.from(g.hintVisualNodes,node=>node.name),['Hint target knob 3']);
+    const spot=g.hintFocus.lastRect,scale=g.boardLayout.size/reference.tileArea[2],center=reference.knobCenters[3],a=reference.tileArea;
+    assert.equal(spot.w,reference.knobClipRadius*2*scale+6*g.windowScale);assert.equal(spot.h,spot.w);
+    assert.ok(Math.abs(spot.x+spot.w/2-(g.boardLayout.x+(center[0]-a[0])*scale))<.001);
+    assert.ok(Math.abs(spot.y+spot.h/2-(g.boardLayout.y+(center[1]-a[1])*scale))<.001);
     assert.equal(g.hints,1);
   }
+});
+
+test('native spotlight keeps the screen shade static, follows scrolling and clears across lifecycle changes',()=>{
+  const f=paintingFixture('daily',2,-1),g=f.game;
+  g.draw=()=>{g.clear();g.drawGame();};g.applyHint();
+  const shade=g.hintMaskNode,glow=g.hintVisualNodes[0],opacity=[...glow.components.values()].find(component=>'opacity' in component);
+  assert.equal(opacity.opacity,102);assert.equal([...shade.components.values()].some(component=>'opacity' in component),false);
+  assert.equal(shade.events.size,0,'the visual shade cannot consume button input');
+  for(let i=0;i<11;i++)g.updateHintPulse(.1);
+  assert.equal(opacity.opacity,255);assert.equal(g.hintMaskNode,shade,'breathing cannot replace or animate the shade');
+  for(let i=0;i<11;i++)g.updateHintPulse(.1);
+  assert.equal(opacity.opacity,102);
+  g.setDirection(-1);const guide=g.hintGuide,target=g.hintFocus,previousY=target.lastRect.y,parent=target.parent,position=parent.position;
+  parent.setPosition(position[0],position[1]+28);g.updateHintPulse(.1);
+  assert.equal(target.lastRect.y,previousY-28,'the hole follows its scrolled target in root coordinates');
+  for(const state of ['settings','']){g.modal=state;g.draw();assert.equal(g.hintGuide,guide);assert.equal(!!g.hintMaskNode,!state);}
+  const beforeHide=g.hintMaskNode;g.onAppHide();assert.equal(g.hintMaskNode,null);assert.equal(beforeHide.isValid,false);assert.equal(g.hintGuide,guide);
+  g.onAppShow();assert.ok(g.hintMaskNode);assert.equal(g.hintGuide,guide);assert.equal(g.hints,1);
+  g.onDisable();assert.equal(g.hintMaskNode,null);g.onEnable();assert.ok(g.hintMaskNode);assert.equal(g.hintGuide,guide);
+  const lastMask=g.hintMaskNode;g.clearHintGuide();assert.equal(lastMask.isValid,false);assert.equal(g.hintMaskNode,null);assert.equal(g.hintVisualNodes.length,0);
+});
+
+test('native short-screen spotlight brings each new target into view once without locking later scrolling',()=>{
+  const f=paintingFixture('daily',0,-1),g=f.game,scrolls=[];g.height=360;g.safeTop=18;g.safeBottom=12;
+  g.pageContent=(name,height)=>{
+    const content=g.group(name,0,g.safeTop,g.width,height).content,origin=[...content.position],max=Math.max(0,height-g.height+g.safeTop+g.safeBottom);
+    let offset=Math.min(max,g.scrollOffsets['short-screen']||0);content.setPosition(origin[0],origin[1]+offset);
+    g.pageScrollKey='short-screen';
+    g.pageScroll={getScrollOffset:()=>({x:0,y:offset}),getMaxScrollOffset:()=>({x:0,y:max}),scrollToOffset(point){offset=point.y;content.setPosition(origin[0],origin[1]+offset);scrolls.push(offset);}};
+    return content;
+  };
+  g.draw=()=>{g.clear();g.drawGame();};g.applyHint();
+  const visible=()=>{const rect=g.hintFocus.lastRect;assert.ok(rect.y>=g.safeTop+8-.001);assert.ok(rect.y+rect.h<=g.height-g.safeBottom-8+.001);};
+  visible();assert.equal(scrolls.length,1);
+  g.setDirection(-1);visible();assert.equal(scrolls.length,2,'the offscreen knob is revealed when the hint advances');
+  const originalY=g.hintFocus.lastRect.y,offset=g.pageScroll.getScrollOffset();g.pageScroll.scrollToOffset({x:0,y:offset.y+28});const calls=scrolls.length;
+  g.updateHintPulse(.1);g.updateHintPulse(.1);
+  assert.equal(scrolls.length,calls,'subsequent frames cannot force the scroll position back');
+  assert.ok(Math.abs(g.hintFocus.lastRect.y-originalY+28)<.001);assert.equal(g.hints,1);
+});
+
+test('native hint toast stays beneath the shade and clear of the only illuminated control',()=>{
+  const f=paintingFixture('daily'),g=f.game;g.applyHint();g.drawGame();g.scheduleOnce=()=>{};
+  f.Game.prototype.toast.call(g,'先点击高亮的顺时针');
+  const toast=g.toastNode,focus=g.hintFocus.lastRect;
+  assert.ok(toast.getSiblingIndex()<g.hintMaskNode.getSiblingIndex());
+  assert.ok(toast.rect.y+toast.rect.h<=focus.y-12||toast.rect.y>=focus.y+focus.h+12);
+  assert.ok(f.texts.some(label=>label.string==='先点击高亮的顺时针'),'the existing instruction remains in the toast');
 });
 
 test('native redraws and number settings preserve guidance; new rounds, home, completion and stale boards clear it',()=>{

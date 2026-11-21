@@ -1,8 +1,8 @@
-import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.23';
-import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.23';
-import {HOME_ART,HOME_UI,HOME_COLORS,homeStoryLabel} from './cocos/assets/scripts/HomeScene.js?v=0.8.23';
-import {getTileTheme,buildThemeArtwork} from './cocos/assets/scripts/TileThemes.js?v=0.8.23';
-import {createGameAudio} from './audio.mjs?v=0.8.23';
+import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.24';
+import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.24';
+import {HOME_ART,HOME_UI,HOME_COLORS,homeStoryLabel} from './cocos/assets/scripts/HomeScene.js?v=0.8.24';
+import {getTileTheme,buildThemeArtwork} from './cocos/assets/scripts/TileThemes.js?v=0.8.24';
+import {createGameAudio} from './audio.mjs?v=0.8.24';
 
 const el=id=>document.getElementById(id);
 const $={board:el('board'),anchors:el('anchors'),target:el('target'),moves:el('moves'),par:el('par'),clock:el('clock'),instruction:el('instruction'),difficulty:el('difficulty'),chapterCaption:el('chapterCaption'),puzzleTitle:el('puzzleTitle'),storyTab:el('storyTab'),dailyTab:el('dailyTab'),cwBtn:el('cwBtn'),ccwBtn:el('ccwBtn'),modal:el('modal'),toast:el('toast')};
@@ -24,7 +24,7 @@ const anchorMotionNodes=[],anchorRingNodes=[],knobAngles=[0,0,0,0];
 const turnFocus=el('turnFocus'),boardFrame=el('boardFrame');
 
 let mode='story',key='1',dir=1,board=GOAL,puzzle=null,moves=0,hints=0,won=false,started=0,elapsed=0,claimedBeat=null,highlight=-1;
-let hintGuide=null;
+let hintGuide=null,hintSpotlightFrame=0;
 let soundEnabled=read('sound',true)!==false,clockTimer=0,toastTimer=0;
 const gameAudio=createGameAudio({enabled:soundEnabled,isVisible:()=>!document.hidden});
 let showNumbers=read('showNumbers',true)!==false,viewArt=false,completionMetric=null;
@@ -55,8 +55,42 @@ function currentHint(){
 function hintInstruction(guide){
   return guide.stage==='direction'?`先点击“${guide.dir===1?'顺时针':'逆时针'}”`:'再点击棋盘上高亮的旋转点';
 }
+function hideHintSpotlight(){
+  const spotlight=el('hintSpotlight');
+  spotlight.hidden=true;spotlight.dataset.target='';spotlight.dataset.stage='';
+  document.documentElement.classList.remove('hint-spotlight-active');
+  if(hintSpotlightFrame){window.cancelAnimationFrame?.(hintSpotlightFrame);hintSpotlightFrame=0;}
+}
+function syncHintSpotlight(){
+  hintSpotlightFrame=0;
+  const guide=currentHint(),spotlight=el('hintSpotlight');
+  if(!guide||gameScreen.hidden||!$.modal.hidden||!settingsOverlay.hidden||document.hidden||rotating||!themeReady()){
+    hideHintSpotlight();return;
+  }
+  const target=guide.stage==='direction'?(guide.dir===1?$.cwBtn:$.ccwBtn):anchorNodes[guide.q];
+  const targetName=guide.stage==='direction'?target.id:'rotation-'+guide.q;
+  let rect=target.getBoundingClientRect();
+  const viewport=gameScreen.getBoundingClientRect();
+  // A short phone may scroll its daily board. Bring a newly prompted control into view.
+  if(spotlight.dataset.target!==targetName&&(rect.top<viewport.top+4||rect.bottom>viewport.bottom-4)){
+    target.scrollIntoView?.({block:'nearest',inline:'nearest',behavior:'auto'});
+    rect=target.getBoundingClientRect();
+  }
+  if(rect.width<=0||rect.height<=0){hideHintSpotlight();return;}
+  const focus=el('hintSpotlightFocus'),padding=3;
+  focus.style.left=(rect.left-padding)+'px';focus.style.top=(rect.top-padding)+'px';
+  focus.style.width=(rect.width+padding*2)+'px';focus.style.height=(rect.height+padding*2)+'px';
+  spotlight.dataset.stage=guide.stage;spotlight.dataset.target=targetName;spotlight.hidden=false;
+  document.documentElement.classList.add('hint-spotlight-active');
+}
+function queueHintSpotlight(){
+  if(!hintGuide)return;
+  if(!window.requestAnimationFrame){syncHintSpotlight();return;}
+  if(!hintSpotlightFrame)hintSpotlightFrame=window.requestAnimationFrame(syncHintSpotlight);
+}
 function clearHintGuide(){
   hintGuide=null;highlight=-1;gameScreen.dataset.hintStage='';
+  hideHintSpotlight();
   for(const button of [$.cwBtn,$.ccwBtn,...anchorNodes]){
     button.classList.remove('hint-direction','hinted');button.removeAttribute('aria-describedby');
   }
@@ -110,7 +144,7 @@ function showHome(){
   el('home').hidden=false;gameScreen.hidden=true;rankScreen.hidden=true;$.modal.hidden=true;settingsOverlay.hidden=true;
   if(puzzle)render();
 }
-function showGame(){setScreenBackdrop('game');el('home').hidden=true;gameScreen.hidden=false;rankScreen.hidden=true;settingsOverlay.hidden=true;}
+function showGame(){setScreenBackdrop('game');el('home').hidden=true;gameScreen.hidden=false;rankScreen.hidden=true;settingsOverlay.hidden=true;syncHintSpotlight();}
 function openMode(which){
   if(!ready){pendingOpen=which;window.ffPending=which;if(notice)notice.hidden=false;return;}
   if(which==='rank'){showRank();return;}
@@ -134,12 +168,13 @@ function syncSettings(){
 }
 function openSettings(){
   if(rotating){cancelRotation();if(puzzle)render();}
-  syncSettings();settingsOverlay.hidden=false;
+  syncSettings();settingsOverlay.hidden=false;hideHintSpotlight();
 }
+function closeSettings(){settingsOverlay.hidden=true;syncHintSpotlight();}
 el('settingsBtn').onclick=openSettings;
 if(el('homeSettings'))el('homeSettings').onclick=openSettings;
-el('settingsClose').onclick=()=>{settingsOverlay.hidden=true;};
-settingsOverlay.addEventListener('click',event=>{if(event.target===settingsOverlay)settingsOverlay.hidden=true;});
+el('settingsClose').onclick=closeSettings;
+settingsOverlay.addEventListener('click',event=>{if(event.target===settingsOverlay)closeSettings();});
 el('settingsSound').onclick=()=>{
   soundEnabled=!soundEnabled;write('sound',soundEnabled);
   gameAudio.setEnabled(soundEnabled);
@@ -287,11 +322,8 @@ function render(){
   $.instruction.textContent=won?'✦ 完成':guide?hintInstruction(guide):`提示剩余 ${remaining}/${limit} 次`;
   highlight=guide?.stage==='target'?guide.q:-1;
   gameScreen.dataset.hintStage=guide?.stage||'';
-  const hintTiles=new Set(highlight<0?[]:SQUARES[highlight].map(index=>board[index]));
   for(const token of board){
     const tile=tileNodes.get(token);$.board.append(tile);
-    tile.classList.toggle('hint-selected',hintTiles.has(token));
-    tile.classList.toggle('hint-muted',highlight>=0&&!hintTiles.has(token));
   }
   anchorNodes.forEach((button,q)=>{
     button.dataset.direction=String(dir);button.disabled=won||blocked;
@@ -323,6 +355,7 @@ function render(){
   el('viewArtBtn').onclick=()=>toggleArtView(route);
   el('nextBtn').onclick=()=>nextLevel(route);
   el('resultDetailsBtn').onclick=()=>openResult(metric,route);
+  syncHintSpotlight();
 }
 
 function toggleNumbers(){
@@ -440,8 +473,8 @@ function openDialog({emblem='✦',title,text='',stats='',primary='继续',second
   $.modal.classList.remove('result-mode');el('dialogText').hidden=false;el('dialogEmblem').textContent=emblem;
   el('dialogOverline').textContent='';el('dialogOverline').hidden=true;el('dialogTitle').textContent=title;
   el('dialogText').textContent=text;el('dialogStats').textContent=stats;el('dialogPrimary').textContent=primary;
-  el('dialogSecondary').textContent=secondary;el('dialogSecondary').style.display=secondary?'':'none';
-  el('dialogPrimary').onclick=onPrimary;el('dialogSecondary').onclick=onSecondary;$.modal.hidden=false;
+  el('dialogSecondaryLabel').textContent=secondary;el('dialogSecondary').style.display=secondary?'':'none';
+  el('dialogPrimary').onclick=onPrimary;el('dialogSecondary').onclick=onSecondary;$.modal.hidden=false;hideHintSpotlight();
 }
 function openResult(metric=completionMetric,route=resultRouteToken){
   if(!completionCurrent(route)||!metric||metric!==completionMetric||!$.modal.hidden||!settingsOverlay.hidden)return false;
@@ -489,6 +522,7 @@ function closeDialog(){
   if($.modal.hidden)return;
   $.modal.hidden=true;resultDialogToken=null;$.modal.classList.remove('result-mode');
   el('dialogPrimary').onclick=null;el('dialogSecondary').onclick=null;
+  syncHintSpotlight();
 }
 function share(){shareChallenge(mode,key);}
 function shareChallenge(challengeMode,challengeKey){
@@ -516,7 +550,7 @@ function showRank(){
   el('rankBestTime').textContent=hasBest?`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`:'—:—';
   el('rankBestNote').textContent=hasBest?'本机已记录':'本机暂无记录';
   el('home').hidden=true;gameScreen.hidden=true;$.modal.hidden=true;resultDialogToken=null;$.modal.classList.remove('result-mode');settingsOverlay.hidden=true;
-  rankScreen.hidden=false;rankScreen.scrollTop=0;
+  rankScreen.hidden=false;rankScreen.scrollTop=0;hideHintSpotlight();
 }
 function closeRank(){
   if(rankOrigin==='game'&&puzzle){showGame();render();}
@@ -549,7 +583,7 @@ el('closeModal').onclick=closeDialog;
 $.modal.addEventListener('click',event=>{if(event.target===$.modal)closeDialog();});
 window.addEventListener('keydown',event=>{
   if(event.key==='Escape'){
-    if(!settingsOverlay.hidden){settingsOverlay.hidden=true;return;}
+    if(!settingsOverlay.hidden){closeSettings();return;}
     if(!$.modal.hidden){closeDialog();return;}
     if(!rankScreen.hidden)closeRank();
     return;
@@ -564,16 +598,17 @@ function startTimers(){
   clearInterval(clockTimer);
   clockTimer=window.setInterval(updateTime,220);
 }
-window.addEventListener('pagehide',event=>{cancelRotation();clearInterval(clockTimer);if(event.persisted)gameAudio.pause();else gameAudio.dispose();});
+window.addEventListener('pagehide',event=>{cancelRotation();hideHintSpotlight();clearInterval(clockTimer);if(event.persisted)gameAudio.pause();else gameAudio.dispose();});
 window.addEventListener('pageshow',event=>{if(event.persisted&&ready){render();startTimers();}});
-function onMotionResize(){if(rotating){cancelRotation();if(puzzle)render();}}
+function onMotionResize(){if(rotating){cancelRotation();if(puzzle)render();}queueHintSpotlight();}
 window.addEventListener('resize',onMotionResize);
 window.visualViewport?.addEventListener('resize',onMotionResize);
-document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelRotation();gameAudio.pause();if(puzzle)render();}});
+document.addEventListener('scroll',queueHintSpotlight,{capture:true,passive:true});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelRotation();gameAudio.pause();if(puzzle)render();hideHintSpotlight();}else syncHintSpotlight();});
 
 const ART_FILES=[HOME_ART.resource+'.webp',HOME_UI.resource+'.webp','ui-atlas.webp','daily-banner.webp','reference-daily.webp','reference-clean.webp','rank-scene.webp','result-panel.webp'];
 async function preloadTileArtwork(){
-  const response=await fetch(new URL('./cocos/assets/resources/art/referenceLayout.json?v=0.8.23',import.meta.url));
+  const response=await fetch(new URL('./cocos/assets/resources/art/referenceLayout.json?v=0.8.24',import.meta.url));
   if(!response.ok)throw new Error('tile artwork layout could not be loaded');
   const {tileArtwork:art}=await response.json();
   if(!art||!/^[-a-z0-9]+$/.test(art.resource)||art.fit!=='fill'||!Array.isArray(art.imageSize)||art.imageSize.length!==2||art.imageSize.some(v=>!Number.isFinite(v)||v<=0))throw new Error('invalid tile artwork layout');

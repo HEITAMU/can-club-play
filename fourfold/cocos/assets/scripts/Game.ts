@@ -35,6 +35,8 @@ export class FourfoldGame extends Component {
   private roundSerial=0;private hintRequest:any=null;private disposed=false;private resultAdvanceRound=-1;
   private hintGuide:{q:number;dir:number;stage:'direction'|'target';round:number;board:string}|null=null;
   private hintVisualNodes:Node[]=[];private hintPulseElapsed=0;
+  private hintMaskNode:Node|null=null;
+  private hintFocus:{name:string;rect:{x:number;y:number;w:number;h:number};radius:number;parent:Node;lastRect?:{x:number;y:number;w:number;h:number}}|null=null;
   private rankTemplate:Node|null=null;private rankView:Node|null=null;private rankSettings=false;
   private assetsReady=false;private loading=false;private loadError='';private loadProgress=0;private loadSerial=0;
   private pendingResourceLoads=new Set<()=>void>();
@@ -535,6 +537,7 @@ export class FourfoldGame extends Component {
       this.drawNumbersControl(layout.numbers,parent);
     }
     this.btn('✦ 发起同关挑战',8*u,shareY,contentW,shareH,()=>this.share(),'goldButton',20*u,parent);
+    this.drawHintSpotlight();
   }
   private drawNumbersControl(rect:any,parent:Node){
     const round=this.roundSerial,ui=this.uiSerial;
@@ -590,8 +593,8 @@ export class FourfoldGame extends Component {
     const board=layout.board;this.drawBoard(board.x,board.y,board.w,parent);
     if(this.won)this.drawCompletionControls(layout,parent);
     else{
-      const round=this.roundSerial,ui=this.uiSerial;
-      control('clockwise','↻ 顺时针',layout.cw,()=>this.setDirection(1,round,ui),false,this.direction<0);
+      const round=this.roundSerial,ui=this.uiSerial,guide=this.currentHintGuide();
+      control('clockwise','↻ 顺时针',layout.cw,()=>this.setDirection(1,round,ui),false,this.direction<0&&!(guide?.stage==='direction'&&guide.dir===1));
       control('counterclockwise','↺ 逆时针',layout.ccw,()=>this.setDirection(-1,round,ui),this.direction<0);
       this.drawHintDirection(layout,parent);
       control('hint','✧ 提示',layout.hint,()=>this.askHint(),false,this.hintsLeft()===0&&!this.currentHintGuide());
@@ -601,6 +604,7 @@ export class FourfoldGame extends Component {
       this.drawNumbersControl(layout.numbers,parent);
     }
     control('share','✦ 发起同关挑战',layout.share,()=>this.share());
+    this.drawHintSpotlight();
   }
   private drawBoard(x:number,y:number,width:number,parent:Node=this.root){
     const outer=this.reference.boardOuter,scale=width/outer[2],height=outer[3]*scale;
@@ -783,10 +787,10 @@ export class FourfoldGame extends Component {
     for(const effect of motion.effects)if(effect.isValid){effect.active=false;effect.removeFromParent();effect.destroy();}
     this.busy=false;
   }
-  private onAppHide=()=>{this.audioHidden=true;this.resetHintPulse();this.cancelTurnMotion();this.stopAudio();};
-  private onAppShow=()=>{if(!this.disposed)this.audioHidden=false;};
-  onEnable(){this.audioDisabled=false;}
-  onDisable(){this.audioDisabled=true;this.resetHintPulse();this.cancelTurnMotion();this.stopAudio();}
+  private onAppHide=()=>{this.audioHidden=true;this.clearHintVisuals();this.cancelTurnMotion();this.stopAudio();};
+  private onAppShow=()=>{if(this.disposed)return;const hidden=this.audioHidden;this.audioHidden=false;if(hidden&&this.currentHintGuide())this.draw();};
+  onEnable(){const disabled=this.audioDisabled;this.audioDisabled=false;if(disabled&&this.root&&this.currentHintGuide())this.draw();}
+  onDisable(){this.audioDisabled=true;this.clearHintVisuals();this.cancelTurnMotion();this.stopAudio();}
   private toggleNumbers(round=this.roundSerial,ui=this.uiSerial){
     if(this.disposed||this.inHome||this.won||this.modal||this.busy||round!==this.roundSerial||ui!==this.uiSerial||this.themeLoading||this.themeError||!this.activeTheme)return false;
     this.showNumbers=!this.showNumbers;this.storeWrite('showNumbers',this.showNumbers);this.draw();return true;
@@ -834,19 +838,20 @@ export class FourfoldGame extends Component {
   }
   private clearHintVisuals(){
     for(const node of this.hintVisualNodes)if(node.isValid){node.active=false;node.removeFromParent();node.destroy();}
-    this.hintVisualNodes=[];this.hintPulseElapsed=0;
+    if(this.hintMaskNode?.isValid){this.hintMaskNode.active=false;this.hintMaskNode.removeFromParent();this.hintMaskNode.destroy();}
+    this.hintVisualNodes=[];this.hintMaskNode=null;this.hintFocus=null;this.hintPulseElapsed=0;
   }
   private setHintPulseOpacity(value:number){
     for(const node of this.hintVisualNodes)if(node.isValid){
       const opacity=node.getComponent(UIOpacity);if(opacity)opacity.opacity=value;
     }
   }
-  private resetHintPulse(){this.hintPulseElapsed=0;this.setHintPulseOpacity(HINT_PULSE_MIN);}
   private updateHintPulse(deltaTime:number){
     if(!this.hintVisualNodes.length||!this.currentHintGuide())return;
-    if(this.audioHidden||this.audioDisabled||this.modal||this.busy){this.resetHintPulse();return;}
+    if(this.audioHidden||this.audioDisabled||this.modal||this.busy){this.clearHintVisuals();return;}
+    this.updateHintSpotlightPosition();
     if(!Number.isFinite(deltaTime)||deltaTime<=0)return;
-    // Only the decorative outlines breathe. Clamp a resumed frame so a hidden
+    // Only the target glow breathes; the screen shade stays fixed. Clamp a resumed frame so a hidden
     // app cannot jump through the cycle; no timers or perpetual tweens survive.
     this.hintPulseElapsed=(this.hintPulseElapsed+Math.min(deltaTime,.1))%HINT_PULSE_SECONDS;
     const glow=(1-Math.cos(2*Math.PI*this.hintPulseElapsed/HINT_PULSE_SECONDS))/2;
@@ -866,23 +871,71 @@ export class FourfoldGame extends Component {
     this.draw();this.toast(this.hintGuideMessage(guide));
   }
   private drawHintOutline(name:string,rect:any,parent:Node,radius=12*this.windowScale){
-    const {x,y,w,h}=rect,u=this.windowScale,node=this.createNode(name,x,y,w,h,parent),g=node.addComponent(Graphics),inset=4*u;
-    g.roundRect(-w/2+inset,-h/2+inset,Math.max(1,w-2*inset),Math.max(1,h-2*inset),Math.max(1,Math.min(radius,Math.min(w,h)/2-inset)));
-    g.fillColor=ink('#FFE7A90D');g.fill();g.strokeColor=ink('#FFD16B80');g.lineWidth=7*u;g.stroke();g.strokeColor=ink('#FFF0BD');g.lineWidth=2.4*u;g.stroke();
+    const {x,y,w,h}=rect,u=this.windowScale,node=this.createNode(name,x,y,w,h,parent),g=node.addComponent(Graphics);
+    g.roundRect(-w/2,-h/2,w,h,Math.min(radius,Math.min(w,h)/2));
+    g.fillColor=ink('#FFE7A91F');g.fill();
+    for(const [color,width] of [['#F6BE4F18',24],['#F8C96145',14],['#FFE5A39C',6],['#FFF7D9',2.5]] as const){g.strokeColor=ink(color);g.lineWidth=width*u;g.stroke();}
     node.addComponent(UIOpacity).opacity=HINT_PULSE_MIN;
     this.hintVisualNodes.push(node);return node;
   }
+  private drawHintSpotlight(){
+    const focus=this.hintFocus;
+    if(!focus||!this.currentHintGuide()||this.modal||this.busy||this.audioHidden||this.audioDisabled)return;
+    // The shade is independent of the pulsing node and has no touch handlers.
+    // Draw after all page controls so the entire screen is dim except this hole.
+    this.hintMaskNode=this.createNode('Hint screen shade',0,0,this.width,this.height);
+    this.hintMaskNode.addComponent(Graphics);
+    this.drawHintOutline(focus.name,focus.rect,this.root,focus.radius);
+    this.updateHintSpotlightPosition(true);
+    if(this.pageScroll&&focus.lastRect){
+      const rect=focus.lastRect,pad=8*this.windowScale,top=this.safeTop+pad,bottom=this.height-this.safeBottom-pad;
+      const delta=rect.h>bottom-top?rect.y+rect.h/2-(top+bottom)/2:rect.y<top?rect.y-top:rect.y+rect.h>bottom?rect.y+rect.h-bottom:0;
+      if(Math.abs(delta)>.01){
+        const offset=this.pageScroll.getScrollOffset(),max=this.pageScroll.getMaxScrollOffset();
+        this.pageScroll.scrollToOffset(new Vec2(offset.x,Math.max(0,Math.min(max.y,offset.y+delta))),0);
+        this.updateHintSpotlightPosition(true);
+      }
+    }
+  }
+  private updateHintSpotlightPosition(force=false){
+    const focus=this.hintFocus,shade=this.hintMaskNode,glow=this.hintVisualNodes[0];
+    if(!focus||!focus.parent.isValid||!shade?.isValid||!glow?.isValid)return;
+    const point=focus.parent.getComponent(UITransform).convertToWorldSpaceAR(new Vec3(focus.rect.x,-focus.rect.y,0));
+    const local=this.root.getComponent(UITransform).convertToNodeSpaceAR(point);
+    const rect={x:local.x,y:-local.y,w:focus.rect.w,h:focus.rect.h},last=focus.lastRect;
+    if(!force&&last&&Math.abs(last.x-rect.x)<.01&&Math.abs(last.y-rect.y)<.01)return;
+    focus.lastRect=rect;glow.setPosition(rect.x+rect.w/2,-rect.y-rect.h/2);
+    const g=shade.getComponent(Graphics),w=this.width,h=this.height,r=Math.min(focus.radius,rect.w/2,rect.h/2);
+    const left=Math.max(0,Math.min(w,rect.x)),right=Math.max(0,Math.min(w,rect.x+rect.w));
+    const top=Math.max(0,Math.min(h,rect.y)),bottom=Math.max(0,Math.min(h,rect.y+rect.h));
+    g.clear();g.fillColor=ink('#1B122FAD');
+    const fillRect=(x:number,y:number,width:number,height:number)=>{if(width>0&&height>0)g.roundRect(x-w/2,h/2-y-height,width,height,0);};
+    if(right<=left||bottom<=top)fillRect(0,0,w,h);
+    else{
+      fillRect(0,0,w,top);fillRect(0,bottom,w,h-bottom);fillRect(0,top,left,bottom-top);fillRect(right,top,w-right,bottom-top);
+      // Fill only the outside corners of the opening, without double-dark seams.
+      // A circle uses the same paths with radius = half the knob diameter.
+      const corner=(x:number,y:number,cx:number,cy:number,start:number)=>{
+        g.moveTo(x-w/2,h/2-y);
+        for(let i=0;i<=16;i++){const angle=start-i*Math.PI/32;g.lineTo(cx+r*Math.cos(angle)-w/2,h/2-cy-r*Math.sin(angle));}
+        g.lineTo(x-w/2,h/2-y);
+      };
+      corner(rect.x,rect.y,rect.x+r,rect.y+r,-Math.PI/2);
+      corner(rect.x+rect.w,rect.y,rect.x+rect.w-r,rect.y+r,0);
+      corner(rect.x+rect.w,rect.y+rect.h,rect.x+rect.w-r,rect.y+rect.h-r,Math.PI/2);
+      corner(rect.x,rect.y+rect.h,rect.x+r,rect.y+rect.h-r,Math.PI);
+    }
+    g.fill();
+  }
   private drawHintDirection(layout:any,parent:Node){
     const guide=this.currentHintGuide();if(guide?.stage!=='direction'||this.modal)return;
-    this.drawHintOutline('Hint direction '+guide.dir,guide.dir===1?layout.cw:layout.ccw,parent,17*this.windowScale);
+    const target=guide.dir===1?layout.cw:layout.ccw,pad=2*this.windowScale;
+    this.hintFocus={name:'Hint direction '+guide.dir,rect:{x:target.x-pad,y:target.y-pad,w:target.w+pad*2,h:target.h+pad*2},radius:(target.h+pad*2)/2,parent};
   }
   private drawHintTarget(scale:number,parent:Node){
     const guide=this.currentHintGuide();if(guide?.stage!=='target'||this.modal)return;
-    const r=this.reference,a=r.tileArea,rects=SQUARES[guide.q].map(index=>r.slotRects[index]);
-    const left=Math.min(...rects.map(p=>p[0])),top=Math.min(...rects.map(p=>p[1])),right=Math.max(...rects.map(p=>p[0]+p[2])),bottom=Math.max(...rects.map(p=>p[1]+p[3]));
-    this.drawHintOutline('Hint target region',{x:(left-a[0])*scale,y:(top-a[1])*scale,w:(right-left)*scale,h:(bottom-top)*scale},parent);
-    const center=r.knobCenters[guide.q],d=r.knobClipRadius*2*scale+12*this.windowScale;
-    this.drawHintOutline('Hint target knob '+guide.q,{x:(center[0]-a[0])*scale-d/2,y:(center[1]-a[1])*scale-d/2,w:d,h:d},parent,d/2);
+    const r=this.reference,a=r.tileArea,center=r.knobCenters[guide.q],d=r.knobClipRadius*2*scale+6*this.windowScale;
+    this.hintFocus={name:'Hint target knob '+guide.q,rect:{x:(center[0]-a[0])*scale-d/2,y:(center[1]-a[1])*scale-d/2,w:d,h:d},radius:d/2,parent};
   }
   private setDirection(direction:number,round=this.roundSerial,ui=this.uiSerial){
     if(this.disposed||this.inHome||this.won||this.modal||this.busy||round!==this.roundSerial||ui!==this.uiSerial||!this.assetsReady||this.themeLoading||this.themeError||!this.activeTheme||(direction!==1&&direction!==-1))return false;
@@ -1035,7 +1088,11 @@ export class FourfoldGame extends Component {
     for(const [value,key,size] of [[String(this.moves).padStart(2,'0'),'movesValue',78],[clock(this.elapsed),'timeValue',73]] as any){const p=r[key];this.numberText(value,p[0]*scale,p[1]*scale,p[2]*scale,p[3]*scale,size*scale,panel.content);}
     text(`最优步数 ${this.puzzle.par} 步`,'note',38,C.muted,false);
     const primary=this.nextLevelLabel();
-    text(primary,'primary',63);text('分享此关给好友','share',44);
+    text(primary,'primary',63);
+    const [shareX,shareY,shareW,shareH]=r.share;
+    this.art('creamButton',shareX*scale,shareY*scale,shareW*scale,shareH*scale,panel.content);
+    // Keep the label centered on the cream face above the button's lower shadow.
+    this.txt('分享此关给好友',shareX*scale,(shareY-6)*scale,shareW*scale,shareH*scale,52*scale,C.dark,true,panel.content);
     this.artHit('Result close',r.close,scale,panel.content,close);
     const primaryHit=this.artHit('Result next',r.primary,scale,panel.content,advance);
     // 小尺寸时分享按钮的点击区向下扩展，和上一个44px点击区保持间隔。
@@ -1043,8 +1100,12 @@ export class FourfoldGame extends Component {
   }
   private toast(message:string){
     if(!this.root)return;if(this.toastNode){this.toastNode.active=false;this.toastNode.destroy();}
-    const y=this.height-this.safeBottom-154,g=this.group('Toast',25,y,this.width-50,50);this.toastNode=g.node;
+    let y=this.height-this.safeBottom-154;
+    const focus=this.hintFocus?.lastRect;
+    if(focus&&y<focus.y+focus.h+12&&y+50>focus.y-12)y=focus.y-62>=this.safeTop+8?focus.y-62:Math.min(this.height-this.safeBottom-58,focus.y+focus.h+12);
+    const g=this.group('Toast',25,y,this.width-50,50);this.toastNode=g.node;
     this.shape(0,0,this.width-50,50,C.surface,C.edge,15,g.content);this.txt(message,10,3,this.width-70,44,13,C.dark,true,g.content);
+    if(this.hintMaskNode?.isValid)g.node.setSiblingIndex(this.hintMaskNode.getSiblingIndex());
     this.scheduleOnce(()=>{if(this.toastNode===g.node)this.toastNode=null;if(g.node.isValid)g.node.destroy();},2.5);
   }
   onDestroy(){
