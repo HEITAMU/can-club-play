@@ -7,7 +7,7 @@ import {
 } from 'cc';
 import {GOAL,SQUARES,makePuzzle,todayCN,rotate,isSolved,shortestPath,honor,resultScore,hintLimit,isBetterResult} from './Core';
 import {TURN_DURATION_MS,createTurnMotion,sampleTurn} from './TurnMotion';
-import {HOME_ART,HOME_UI,homeLayout,homeStoryLabel} from './HomeScene';
+import {HOME_ART,HOME_UI,HOME_COLORS,homeLayout,homeStoryLabel} from './HomeScene';
 import {getTileTheme,buildThemeArtwork} from './TileThemes';
 const {ccclass}=_decorator;
 const HINT_MODE:'free'|'rewarded'='free'; // 未开通广告时，正式上线也免费提示；开通后再显式切换。
@@ -350,7 +350,9 @@ export class FourfoldGame extends Component {
   private draw(){
     if(this.disposed||!this.root)return;this.clear();
     if(!this.assetsReady){this.drawLoading();return;}
-    this.shape(0,0,this.width,this.height,C.background,'',0);
+    const homeSurface=this.inHome&&this.modal!=='rank'&&!(this.modal==='settings'&&this.rankSettings);
+    const background=homeSurface?HOME_COLORS.background:C.background;
+    this.shape(0,0,this.width,this.height,background,'',0);if(this.cam)this.cam.clearColor=ink(background);
     if(this.modal==='rank'||(this.modal==='settings'&&this.rankSettings)){this.drawRankPage();if(this.modal==='settings')this.drawModal();return;}
     if(this.inHome)this.drawHome();else if(this.themeLoading||this.themeError||!this.activeTheme)this.drawThemeLoading();else this.drawGame();
     if(this.modal)this.drawModal();
@@ -404,9 +406,9 @@ export class FourfoldGame extends Component {
     const hero=layout.hero,scene=this.group('Home hero',hero.x,hero.y,hero.w,hero.h,parent);
     this.art('home',0,0,hero.w,hero.h,scene.content);
     const titleRect=layout.title,subtitleRect=layout.subtitle;
-    const title=this.txt('四格诡局',titleRect.x,titleRect.y,titleRect.w,titleRect.h,HOME_ART.titleSize*layout.textScale,C.dark,true,scene.content);
+    const title=this.txt('四格诡局',titleRect.x,titleRect.y,titleRect.w,titleRect.h,HOME_ART.titleSize*layout.textScale,HOME_COLORS.title,true,scene.content);
     title.node.name='Home title';title.lineHeight=titleRect.h;title.enableWrapText=false;
-    const subtitle=this.txt('FOURFOLD',subtitleRect.x,subtitleRect.y,subtitleRect.w,subtitleRect.h,HOME_ART.subtitleSize*layout.textScale,C.dark,true,scene.content);
+    const subtitle=this.txt('FOURFOLD',subtitleRect.x,subtitleRect.y,subtitleRect.w,subtitleRect.h,HOME_ART.subtitleSize*layout.textScale,HOME_COLORS.subtitle,true,scene.content);
     subtitle.node.name='Home subtitle';subtitle.fontFamily='Times New Roman';subtitle.lineHeight=subtitleRect.h;subtitle.enableWrapText=false;
     entries.forEach((entry,i)=>{
       const [, ,sourceW,sourceH]=HOME_UI.frames[entry.source],rect=layout.buttons[i],buttonH=rect.w*sourceH/sourceW;
@@ -414,7 +416,7 @@ export class FourfoldGame extends Component {
       // Icons are in the new artwork. Shift the live caption toward the clear
       // center-right area without duplicating a Unicode icon over the drawing.
       const offset=23*uiScale,fontSize=Math.min(30,Math.max(18,26*(w/this.windowScale)/390))*this.windowScale;
-      const label=this.txt(entry.text,8+offset*2,0,rect.w-16-offset*2,buttonH-2*uiScale,fontSize,C.dark,true,button.children[0]);
+      const label=this.txt(entry.text,8+offset*2,0,rect.w-16-offset*2,buttonH-2*uiScale,fontSize,HOME_COLORS.menu,true,button.children[0]);
       label.node.name='Home menu label';label.enableWrapText=false;
       // 点击范围可扩大，内部原画仍按素材比例绘制。
       if(buttonH<rect.h)button.getComponent(UITransform).setContentSize(rect.w,rect.h);

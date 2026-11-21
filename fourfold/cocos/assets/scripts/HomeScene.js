@@ -1,13 +1,19 @@
 // Shared by the browser and Cocos: the new homepage is a full-width illustration,
 // with real text on top and three separate menu buttons. Short screens scroll.
 export const HOME_ART=Object.freeze({
-  resource:'home-celestial-v3',width:1173,height:1341,
+  resource:'home-celestial-v4',width:1173,height:1341,
   titleRect:[230,112,714,106],subtitleRect:[330,218,514,30],
   titleSize:104,subtitleSize:28,
 });
 
+// Homepage-only colors keep the soft peach scene continuous without changing
+// the established game, ranking, result panel, or numeric material colors.
+export const HOME_COLORS=Object.freeze({
+  background:'#F7D1B9',title:'#805A46',subtitle:'#825B49',menu:'#77543E',
+});
+
 export const HOME_UI=Object.freeze({
-  resource:'home-menu-v3',width:1448,height:1086,
+  resource:'home-menu-v4',width:1448,height:1086,
   frames:{story:[37,88,1370,260],daily:[37,419,1370,260],rank:[37,752,1370,260]},
 });
 
