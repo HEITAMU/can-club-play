@@ -1,5 +1,5 @@
 {
-  "version": "0.8.14",
+  "version": "0.8.17",
   "atlas": {
     "width": 1254,
     "height": 1254,
@@ -65,9 +65,9 @@
       "alpha": true
     },
     "homeScene": {
-      "resource": "home-celestial-v3",
-      "width": 1173,
-      "height": 1341
+      "resource": "home-celestial-v5",
+      "width": 941,
+      "height": 1672
     },
     "celestialMural": {
       "resource": "celestial-mural-v2",
@@ -85,9 +85,9 @@
       }
     },
     "homeMenu": {
-      "resource": "home-menu-v3",
-      "width": 1448,
-      "height": 1086,
+      "resource": "home-menu-v5",
+      "width": 1536,
+      "height": 1024,
       "alpha": true
     }
   },

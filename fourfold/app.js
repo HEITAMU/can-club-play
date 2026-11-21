@@ -1,7 +1,7 @@
-import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.16';
-import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.16';
-import {HOME_ART,HOME_UI,homeStoryLabel} from './cocos/assets/scripts/HomeScene.js?v=0.8.16';
-import {getTileTheme,buildThemeArtwork} from './cocos/assets/scripts/TileThemes.js?v=0.8.16';
+import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.17';
+import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.17';
+import {HOME_ART,HOME_UI,HOME_COLORS,homeStoryLabel} from './cocos/assets/scripts/HomeScene.js?v=0.8.17';
+import {getTileTheme,buildThemeArtwork} from './cocos/assets/scripts/TileThemes.js?v=0.8.17';
 
 const el=id=>document.getElementById(id);
 const $={board:el('board'),anchors:el('anchors'),target:el('target'),moves:el('moves'),par:el('par'),clock:el('clock'),instruction:el('instruction'),difficulty:el('difficulty'),chapterCaption:el('chapterCaption'),puzzleTitle:el('puzzleTitle'),storyTab:el('storyTab'),dailyTab:el('dailyTab'),cwBtn:el('cwBtn'),ccwBtn:el('ccwBtn'),modal:el('modal'),toast:el('toast')};
@@ -96,6 +96,10 @@ function syncHomeEntry(){
   el('homeStoryText').textContent=label;
   el('enterStory').setAttribute('aria-label',label);
 }
+function setScreenBackdrop(screen){
+  document.documentElement.dataset.screen=screen;
+  el('themeColor')?.setAttribute('content',screen==='home'?HOME_COLORS.background:'#f8d4a5');
+}
 function clearCompletion(){
   viewArt=false;completionMetric=null;resultRouteToken=null;resultDialogToken=null;
   $.modal.hidden=true;$.modal.classList.remove('result-mode');
@@ -103,6 +107,7 @@ function clearCompletion(){
   el('completeArt').hidden=true;
 }
 function showHome(){
+  setScreenBackdrop('home');
   cancelRotation({resetKnobs:true});
   clearHintGuide();
   clearCompletion();won=false;started=0;
@@ -110,7 +115,7 @@ function showHome(){
   el('home').hidden=false;gameScreen.hidden=true;rankScreen.hidden=true;$.modal.hidden=true;settingsOverlay.hidden=true;
   if(puzzle)render();
 }
-function showGame(){el('home').hidden=true;gameScreen.hidden=false;rankScreen.hidden=true;settingsOverlay.hidden=true;}
+function showGame(){setScreenBackdrop('game');el('home').hidden=true;gameScreen.hidden=false;rankScreen.hidden=true;settingsOverlay.hidden=true;}
 function openMode(which){
   if(!ready){pendingOpen=which;window.ffPending=which;if(notice)notice.hidden=false;return;}
   if(which==='rank'){showRank();return;}
@@ -502,6 +507,7 @@ function shareChallenge(challengeMode,challengeKey){
   else toast('可以复制浏览器地址分享给朋友');
 }
 function showRank(){
+  setScreenBackdrop('rank');
   if(rankScreen.hidden)rankOrigin=gameScreen.hidden?'home':'game';
   cancelRotation();if(puzzle)render();
   const local=read('best:daily:'+currentDay(),null);
@@ -572,7 +578,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelRota
 
 const ART_FILES=[HOME_ART.resource+'.webp',HOME_UI.resource+'.webp','ui-atlas.webp','daily-banner.webp','reference-daily.webp','reference-clean.webp','rank-scene.webp','result-panel.webp'];
 async function preloadTileArtwork(){
-  const response=await fetch(new URL('./cocos/assets/resources/art/referenceLayout.json?v=0.8.16',import.meta.url));
+  const response=await fetch(new URL('./cocos/assets/resources/art/referenceLayout.json?v=0.8.17',import.meta.url));
   if(!response.ok)throw new Error('tile artwork layout could not be loaded');
   const {tileArtwork:art}=await response.json();
   if(!art||!/^[-a-z0-9]+$/.test(art.resource)||art.fit!=='fill'||!Array.isArray(art.imageSize)||art.imageSize.length!==2||art.imageSize.some(v=>!Number.isFinite(v)||v<=0))throw new Error('invalid tile artwork layout');

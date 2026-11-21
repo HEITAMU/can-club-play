@@ -364,7 +364,8 @@ export class FourfoldGame extends Component {
     const rect=(r:any)=>({x:r.x*scale,y:r.y*scale,w:r.w*scale,h:r.h*scale});
     return {...layout,contentH:layout.contentH*scale,textScale:layout.textScale*scale,
       hero:rect(layout.hero),image:rect(layout.image),title:rect(layout.title),subtitle:rect(layout.subtitle),
-      buttons:layout.buttons.map(rect),settings:rect(layout.settings)};
+      buttons:layout.buttons.map(rect),buttonArtwork:layout.buttonArtwork.map(rect),buttonLabels:layout.buttonLabels.map(rect),
+      buttonFontSizes:layout.buttonFontSizes.map(size=>size*scale),settings:rect(layout.settings)};
   }
   private dailyGeometry(width:number,height:number){
     // Mirror dailyLayout in viewport pixels, then convert to the fixed-width
@@ -394,32 +395,30 @@ export class FourfoldGame extends Component {
     return scaled;
   }
   private drawHome(){
-    const w=this.width,uiScale=w/390,layout=this.homeGeometry(w,this.height-this.safeTop-this.safeBottom),parent=this.pageContent('Home',layout.contentH);
+    const w=this.width,layout=this.homeGeometry(w,this.height-this.safeTop-this.safeBottom),parent=this.pageContent('Home',layout.contentH);
     const launchStory=()=>this.startGame('story',String(this.unlocked()));
     const entries=[
       {text:homeStoryLabel(this.unlocked()),frame:'homeStoryButton',source:'story',action:launchStory},
       {text:'每日挑战',frame:'homeDailyButton',source:'daily',action:()=>this.startGame('daily',todayCN())},
       {text:'好友荣誉榜',frame:'homeRankButton',source:'rank',action:()=>this.showRank()},
     ];
-    // The continuous celestial scene stays full-width and uncropped. It has no
-    // gameplay hit area; only the three separate menu buttons launch a feature.
+    // The floating star-map pieces are scenery. Entries sit in the lower clouds
+    // of the same full-width illustration and retain their own touch regions.
     const hero=layout.hero,scene=this.group('Home hero',hero.x,hero.y,hero.w,hero.h,parent);
     this.art('home',0,0,hero.w,hero.h,scene.content);
     const titleRect=layout.title,subtitleRect=layout.subtitle;
     const title=this.txt('四格诡局',titleRect.x,titleRect.y,titleRect.w,titleRect.h,HOME_ART.titleSize*layout.textScale,HOME_COLORS.title,true,scene.content);
-    title.node.name='Home title';title.lineHeight=titleRect.h;title.enableWrapText=false;
+    title.node.name='Home title';title.fontFamily='serif';title.lineHeight=titleRect.h;title.enableWrapText=false;
+    const titleOutline=title.node.addComponent(LabelOutline);titleOutline.color=ink('#101B3B66');titleOutline.width=this.windowScale;
     const subtitle=this.txt('FOURFOLD',subtitleRect.x,subtitleRect.y,subtitleRect.w,subtitleRect.h,HOME_ART.subtitleSize*layout.textScale,HOME_COLORS.subtitle,true,scene.content);
     subtitle.node.name='Home subtitle';subtitle.fontFamily='Times New Roman';subtitle.lineHeight=subtitleRect.h;subtitle.enableWrapText=false;
     entries.forEach((entry,i)=>{
-      const [, ,sourceW,sourceH]=HOME_UI.frames[entry.source],rect=layout.buttons[i],buttonH=rect.w*sourceH/sourceW;
-      const button=this.btn('',rect.x,rect.y+(rect.h-buttonH)/2,rect.w,buttonH,entry.action,entry.frame,0,parent);button.name=entry.text;
-      // Icons are in the new artwork. Shift the live caption toward the clear
-      // center-right area without duplicating a Unicode icon over the drawing.
-      const offset=23*uiScale,fontSize=Math.min(30,Math.max(18,26*(w/this.windowScale)/390))*this.windowScale;
-      const label=this.txt(entry.text,8+offset*2,0,rect.w-16-offset*2,buttonH-2*uiScale,fontSize,HOME_COLORS.menu,true,button.children[0]);
-      label.node.name='Home menu label';label.enableWrapText=false;
-      // 点击范围可扩大，内部原画仍按素材比例绘制。
-      if(buttonH<rect.h)button.getComponent(UITransform).setContentSize(rect.w,rect.h);
+      const rect=layout.buttons[i],art=layout.buttonArtwork[i],caption=layout.buttonLabels[i];
+      const button=this.group('Home '+entry.source+' entry',rect.x,rect.y,rect.w,rect.h,parent);
+      this.art(entry.frame,art.x,art.y,art.w,art.h,button.content);
+      const label=this.txt(entry.text,caption.x,caption.y,caption.w,caption.h,layout.buttonFontSizes[i],HOME_COLORS.menu,true,button.content);
+      label.node.name='Home menu label';label.fontFamily='serif';label.lineHeight=caption.h;label.enableWrapText=false;
+      this.bindButton(button.node,entry.action);
     });
     const settings=layout.settings;this.btn('',settings.x,settings.y,settings.w,settings.h,()=>{this.modal='settings';this.draw();},'settingsButton',16,parent);
   }

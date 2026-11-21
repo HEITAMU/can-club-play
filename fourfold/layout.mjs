@@ -1,6 +1,6 @@
 // The artwork keeps its own aspect ratio. Available height changes the arrangement,
 // never the width of the whole screen.
-import {HOME_ART,HOME_UI,HOME_COLORS,homeLayout} from './cocos/assets/scripts/HomeScene.js?v=0.8.16';
+import {HOME_ART,HOME_UI,HOME_COLORS,homeLayout} from './cocos/assets/scripts/HomeScene.js?v=0.8.17';
 export {homeLayout};
 const fitHeight = (width, sw, sh) => width * sh / sw;
 const box = (x,y,w,h) => ({x,y,w,h});
@@ -51,6 +51,9 @@ if(typeof document!=='undefined'){
     home.querySelectorAll('.cozy-menu button').forEach((b,i)=>{
       place(b,h.buttons[i]);
       const [sx,sy,sw,sh]=HOME_UI.frames[['story','daily','rank'][i]],skin=b.querySelector('.home-menu-skin');
+      place(skin,h.buttonArtwork[i]);
+      place(b.querySelector('.button-label'),h.buttonLabels[i]);
+      b.style.fontSize=h.buttonFontSizes[i]+'px';
       b.style.setProperty('--button-ratio',sw+' / '+sh);
       skin.style.backgroundImage=`url("${new URL('./assets/art/'+HOME_UI.resource+'.webp',import.meta.url).href}")`;
       skin.style.backgroundSize=`${100*HOME_UI.width/sw}% ${100*HOME_UI.height/sh}%`;
