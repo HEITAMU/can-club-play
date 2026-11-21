@@ -265,7 +265,7 @@
       143
     ]
   },
-  "version": "0.8.7",
+  "version": "0.8.8",
   "originalResource": "art/reference-daily",
   "cleanResource": "art/reference-clean",
   "tileSurface": {
@@ -291,5 +291,15 @@
         8
       ]
     }
+  },
+  "boardBed": {
+    "rect": [
+      48,
+      635,
+      756,
+      703
+    ],
+    "cornerRadius": 30,
+    "color": "#19213E"
   }
 }

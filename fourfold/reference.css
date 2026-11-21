@@ -1,9 +1,11 @@
 /* The supplied reference is the art source. Live values, tiles, and hit targets are separate DOM nodes. */
 .game-screen .board-frame{aspect-ratio:817 / 765;border:0;border-radius:0;box-shadow:none;background-image:url('assets/art/reference-daily.webp');background-repeat:no-repeat;background-size:104.52876377% 240.78431373%;background-position:48.64864865% 57.10306407%;}
+/* Opaque rounded bed covers the old baked artwork all the way to the inner frame. */
+.game-screen .board-frame:before{content:"";position:absolute;left:3.67197062%;top:2.61437908%;width:92.53365973%;height:91.89542484%;border-radius:3.96825397% / 4.26742532%;background:#19213e;pointer-events:none;z-index:0}
 .game-screen .board,.game-screen .anchors{inset:auto;left:4.28396573%;top:3.13725490%;width:91.43206854%;height:90.71895425%}
-.game-screen .board{display:block;border-radius:0;box-shadow:none;overflow:hidden;background:
+.game-screen .board{display:block;z-index:1;border-radius:0;box-shadow:none;overflow:hidden;background:
 linear-gradient(to right,transparent 32.396%,#8d522e 32.396%,#f9d698 32.8%,#d18c51 33.7%,transparent 34.003%,transparent 66.667%,#8d522e 66.667%,#f9d698 67.05%,#d18c51 67.8%,transparent 68.005%),
-linear-gradient(to bottom,transparent 32.853%,#8d522e 32.853%,#f9d698 33.2%,#d18c51 34.05%,transparent 34.438%,transparent 65.994%,#8d522e 65.994%,#f9d698 66.35%,#d18c51 67.2%,transparent 67.579%),#19213e}
+linear-gradient(to bottom,transparent 32.853%,#8d522e 32.853%,#f9d698 33.2%,#d18c51 34.05%,transparent 34.438%,transparent 65.994%,#8d522e 65.994%,#f9d698 66.35%,#d18c51 67.2%,transparent 67.579%)}
 /* Crop only the old baked seams; every card receives the same rounded lacquer rim. */
 .game-screen .tile{position:absolute;min-width:0;min-height:0;background-image:url('assets/art/reference-clean.webp');background-repeat:no-repeat;overflow:hidden;border-radius:var(--tile-radius-x) / var(--tile-radius-y);box-shadow:inset 0 0 0 .55px #a8b4df4a,inset 0 1px 1px #fff2d51a,inset 0 -2px 3px #070c2759}
 .game-screen .tile:before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(145deg,#fff5d912,transparent 35%,transparent 64%,#050b2826);pointer-events:none}

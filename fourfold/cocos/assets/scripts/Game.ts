@@ -150,14 +150,6 @@ export class FourfoldGame extends Component {
     for(const key of ['back','settings','clockwise','counterclockwise','hint','share'])add('referenceControl'+key,r.components[key],original);
     this.frames.homeHero=this.makeFrame(this.textures.home,0,0,this.textures.home.width,1140);
     this.frames.homeHeroCompact=this.makeFrame(this.textures.home,0,128,this.textures.home.width,1012);
-    const a=r.tileArea,slots=r.slotRects;
-    r.seams=[];
-    for(let i=0;i<2;i++){
-      const x=slots[i][0]+slots[i][2],nextX=slots[i+1][0];
-      const vr=[x,a[1],nextX-x,a[3]],row=i*3,y=slots[row][1]+slots[row][3],nextY=slots[row+3][1];
-      const hr=[a[0],y,a[2],nextY-y];
-      add('referenceVSeam'+i,vr);add('referenceHSeam'+i,hr);r.seams.push({name:'referenceVSeam'+i,rect:vr},{name:'referenceHSeam'+i,rect:hr});
-    }
   }
   private disposeArt(){
     for(const frame of Object.values(this.frames))frame.destroy();this.frames={};
@@ -405,10 +397,12 @@ export class FourfoldGame extends Component {
   private drawReferenceBoard(ox:number,oy:number,scale:number,parent:Node=this.root){
     const r=this.reference,a=r.tileArea,w=a[2]*scale,h=a[3]*scale,bx=ox+a[0]*scale,by=oy+a[1]*scale;
     this.boardLayout={x:bx,y:by,size:w,unit:w/3,height:h};
+    // Cover the full inner opening, including the original artwork's rounded
+    // corners outside tileArea. This clean bed is the only opaque blue underlay.
+    const bed=r.boardBed,p=bed.rect;
+    this.shape(ox+p[0]*scale,oy+p[1]*scale,p[2]*scale,p[3]*scale,bed.color,'',bed.cornerRadius*scale,parent).name='Clean board bed';
     const boardLayer=this.group('Reference board',bx,by,w,h,parent),mask=boardLayer.node.addComponent(Mask);mask.type=Mask.Type.RECT;this.boardContent=boardLayer.content;
-    // 遮住底图所有旧棋子和旋钮，换位动画的空隙也不会透出固定数字。
-    this.shape(0,0,w,h,C.night,'',0,boardLayer.content);
-    for(const seam of r.seams){const p=seam.rect;this.art(seam.name,(p[0]-a[0])*scale,(p[1]-a[1])*scale,p[2]*scale,p[3]*scale,boardLayer.content);}
+    this.cleanBoardRails(scale,boardLayer.content);
     for(let i=0;i<9;i++){
       const p=r.slotRects[i],token=Number(this.board[i]),tw=p[2]*scale,th=p[3]*scale;
       const tile=this.group('Tile '+token,(p[0]-a[0])*scale,(p[1]-a[1])*scale,tw,th,boardLayer.content);
@@ -424,6 +418,25 @@ export class FourfoldGame extends Component {
       const circle=this.group('Knob circle',(hitD-d)/2,(hitD-d)/2,d,d,hit.content),clip=circle.node.addComponent(Mask);clip.type=Mask.Type.ELLIPSE;clip.segments=64;
       const cw=crop[2]*scale,ch=crop[3]*scale,knob=this.art('referenceKnob'+q,(d-cw)/2,(d-ch)/2,cw,ch,circle.content);
       if(this.direction<0)knob.setScale(-1,1,1);knob.angle=-this.knobAngles[q];this.knobNodes[q]=hit.node;this.knobArtNodes[q]=knob;this.bindButton(hit.node,()=>this.spin(q));
+    }
+  }
+  private cleanBoardRails(scale:number,parent:Node){
+    const r=this.reference,a=r.tileArea,slots=r.slotRects;
+    const bands=[{end:.16,color:'#8D522E'},{end:.34,color:'#C98C50'},{end:.58,color:'#F9D698'},{end:.8,color:'#E7B06F'},{end:1,color:'#D18C51'}];
+    const rail=(name:string,x:number,y:number,w:number,h:number,vertical:boolean)=>{
+      const g=this.group(name,x*scale,y*scale,w*scale,h*scale,parent);let from=0;
+      for(const band of bands){
+        const start=from,span=band.end-start;from=band.end;
+        const bx=vertical?w*start:0,by=vertical?0:h*start,bw=vertical?w*span:w,bh=vertical?h:h*span;
+        this.shape(bx*scale,by*scale,bw*scale,bh*scale,band.color,'',0,g.content).name=name+' metal band';
+      }
+    };
+    // Do not sample neighbouring artwork into the rails. Only clean,
+    // procedural metal remains beneath the movable illustrated cards.
+    for(let i=0;i<2;i++){
+      const x=slots[i][0]+slots[i][2],nextX=slots[i+1][0],row=i*3,y=slots[row][1]+slots[row][3],nextY=slots[row+3][1];
+      rail('Clean vertical rail '+i,x-a[0],0,nextX-x,a[3],true);
+      rail('Clean horizontal rail '+i,0,y-a[1],a[2],nextY-y,false);
     }
   }
   private tileSurface(w:number,h:number,radius:number,inset:number,scale:number,parent:Node){

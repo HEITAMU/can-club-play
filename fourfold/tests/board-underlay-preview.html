@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>四格诡局 · 棋盘底板检查 0.8.8</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#17203b;color:#f6e2b4;font:15px/1.6 system-ui,sans-serif}main{display:flex;flex-wrap:wrap;align-items:flex-start;gap:22px;max-width:1050px;margin:auto;padding:22px}iframe{display:block;flex:none;width:390px;height:650px;border:0;border-radius:12px;background:#f4cf99;box-shadow:0 10px 35px #0005}section{flex:1;min-width:270px;max-width:520px}h1{font-size:23px;line-height:1.3;margin:0 0 12px}p{color:#d7cdb7;margin:12px 0}fieldset{border:1px solid #97805a;border-radius:12px;margin:16px 0;padding:13px}legend{padding:0 7px}label{display:flex;align-items:center;gap:9px;margin:10px 0}input{width:19px;height:19px;accent-color:#d9aa61}select,button{font:600 14px system-ui;color:#4d291c;background:#f6dfad;border:1px solid #c49b59;border-radius:8px;padding:10px 12px}button{cursor:pointer}fieldset:disabled{opacity:.6}output{display:block;padding:13px;border-radius:10px;background:#0e152a;white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.7 ui-monospace,monospace}a{color:#f3c978}@media(max-width:460px){main{padding:8px;gap:18px}iframe{max-width:100%;border-radius:8px}}
+</style>
+<main>
+<iframe id="preview" title="真实游戏棋盘底板" width="390" height="650" src="../?mode=daily&amp;v=0.8.8"></iframe>
+<section>
+<h1>棋盘底板检查 · 0.8.8</h1>
+<p>默认暂时隐藏九张图块和四个旋钮，直接检查棋盘底层。下面的开关只作用于左侧预览，打开游戏后照常显示。</p>
+<fieldset id="controls" disabled>
+<legend>显示图层</legend>
+<label><input id="hidePieces" type="checkbox" checked>隐藏图块与旋钮</label>
+<label for="underlayMode">底板版本 <select id="underlayMode"><option value="current">清理后底板</option><option value="original">原底板 · 0.8.7</option></select></label>
+<label><input id="rawFrame" type="checkbox">只看原底图</label>
+<button id="restore" type="button">恢复游戏</button>
+</fieldset>
+<output id="report" role="status" aria-live="polite">正在载入真实游戏…</output>
+<p>“原底板”保留旧版底图和遮盖范围，方便比较边缘残留；“只看原底图”会连同深蓝底层一起隐藏。</p>
+<p><a href="../?v=0.8.8">打开完整游戏</a> · <a href="turn-preview.html?v=0.8.8">旋转验收</a></p>
+</section>
+</main>
+<script type="module">
+const frame=document.querySelector('#preview'),controls=document.querySelector('#controls'),report=document.querySelector('#report');
+const hidePieces=document.querySelector('#hidePieces'),underlayMode=document.querySelector('#underlayMode'),rawFrame=document.querySelector('#rawFrame');
+const STYLE_ID='fourfold-underlay-inspector';
+// Frozen 0.8.7 presentation only. This never changes a board, score, or save.
+const originalFrame=`
+.game-screen .board-frame{border:0!important;border-radius:0!important;box-shadow:none!important;background-image:url('assets/art/reference-daily.webp')!important;background-repeat:no-repeat!important;background-size:104.52876377% 240.78431373%!important;background-position:48.64864865% 57.10306407%!important}
+.game-screen .board-frame:before,.game-screen .board-frame:after,.game-screen .board-underlay{display:none!important}
+`;
+const originalBoard=`
+.game-screen .board{left:4.28396573%!important;top:3.13725490%!important;width:91.43206854%!important;height:90.71895425%!important;border-radius:0!important;box-shadow:none!important;overflow:hidden!important;background:linear-gradient(to right,transparent 32.396%,#8d522e 32.396%,#f9d698 32.8%,#d18c51 33.7%,transparent 34.003%,transparent 66.667%,#8d522e 66.667%,#f9d698 67.05%,#d18c51 67.8%,transparent 68.005%),linear-gradient(to bottom,transparent 32.853%,#8d522e 32.853%,#f9d698 33.2%,#d18c51 34.05%,transparent 34.438%,transparent 65.994%,#8d522e 65.994%,#f9d698 66.35%,#d18c51 67.2%,transparent 67.579%),#19213e!important}
+.game-screen .board:before,.game-screen .board:after{display:none!important}
+`;
+function apply(){
+  const doc=frame.contentDocument,board=doc?.getElementById('board');if(!board)return;
+  doc.getElementById(STYLE_ID)?.remove();
+  const rules=[];
+  if(underlayMode.value==='original'||rawFrame.checked)rules.push(originalFrame,originalBoard);
+  if(hidePieces.checked||rawFrame.checked)rules.push('.game-screen .tile,.game-screen .anchors,.game-screen .turn-focus{visibility:hidden!important;pointer-events:none!important}');
+  if(rawFrame.checked)rules.push('.game-screen .board{visibility:hidden!important}');
+  if(rules.length){const style=doc.createElement('style');style.id=STYLE_ID;style.textContent=rules.join('\n');doc.head.append(style);}
+  underlayMode.disabled=rawFrame.checked;hidePieces.disabled=rawFrame.checked;
+  const rect=board.getBoundingClientRect();
+  const view=rawFrame.checked?'原图全层（包括原图中的固定图案）':`${underlayMode.value==='original'?'原底板 · 0.8.7':'清理后底板'}\n${hidePieces.checked?'九张图块和四个旋钮已隐藏':'图块和旋钮正常显示'}`;
+  report.textContent=`${view}\n真实游戏 ${doc.querySelector('meta[name="fourfold-version"]')?.content||'—'}\n棋盘 ${rect.width.toFixed(1)} × ${rect.height.toFixed(1)} px\n现有图块 ${board.children.length} 张（未删除）`;
+}
+for(const control of [hidePieces,underlayMode,rawFrame])control.addEventListener('change',apply);
+document.querySelector('#restore').addEventListener('click',()=>{hidePieces.checked=false;rawFrame.checked=false;underlayMode.value='current';apply();});
+async function ready(){
+  controls.disabled=true;const deadline=performance.now()+30000;
+  while(true){
+    const doc=frame.contentDocument;
+    if(doc?.documentElement.dataset.gameReady==='true'&&doc.documentElement.dataset.layoutReady==='true'&&doc.getElementById('board')?.children.length===9&&!doc.getElementById('gameScreen').hidden)break;
+    if(performance.now()>deadline)throw new Error('游戏尚未准备好，请重新打开此页。');
+    await new Promise(resolve=>setTimeout(resolve,30));
+  }
+  controls.disabled=false;apply();
+}
+frame.addEventListener('load',()=>ready().catch(error=>{report.textContent=error.message;}));
+if(frame.contentDocument?.readyState==='complete'&&frame.contentDocument.getElementById('board'))ready().catch(error=>{report.textContent=error.message;});
+</script>
+</html>
