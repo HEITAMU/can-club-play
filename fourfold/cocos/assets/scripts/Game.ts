@@ -30,6 +30,8 @@ export class FourfoldGame extends Component {
   private clockLabel:Label|null=null;private rewardAd:any=null;private banner:any=null;private toastNode:Node|null=null;
   private numberLayers=new Map<Label,Label[]>();
   private roundSerial=0;private hintRequest:any=null;private disposed=false;private resultAdvanceRound=-1;
+  private hintGuide:{q:number;dir:number;stage:'direction'|'target';round:number;board:string}|null=null;
+  private hintVisualNodes:Node[]=[];
   private rankTemplate:Node|null=null;private rankView:Node|null=null;private rankSettings=false;
   private assetsReady=false;private loading=false;private loadError='';private loadProgress=0;private loadSerial=0;
   private pendingResourceLoads=new Set<()=>void>();
@@ -242,6 +244,7 @@ export class FourfoldGame extends Component {
     if(this.disposed)return;
     this.cancelTurnMotion();
     try{this.puzzle=makePuzzle(mode,key);}catch(e){console.warn('unavailable challenge',e);this.toast('这个日期的挑战暂不可用');if(!this.puzzle){this.puzzle=makePuzzle('story','1');mode='story';key='1';home=true;}else return;}
+    this.clearHintGuide();if(this.hintRequest)this.releaseHintRequest(this.hintRequest);
     this.roundSerial++; // 同一关重开也不能领取上一局尚未结束的广告奖励。
     this.mode=mode;this.key=key;this.inHome=home;this.board=this.puzzle.board;this.direction=1;this.moves=0;this.hints=0;this.startAt=0;this.elapsed=0;this.won=false;this.busy=false;this.knobAngles=[0,0,0,0];this.modal='';this.rankSettings=false;this.admiring=false;this.completedRound=-1;this.resultAdvanceRound=-1;this.hideBanner();
     // Keep round changes synchronous: an old victory callback must not advance
@@ -250,6 +253,7 @@ export class FourfoldGame extends Component {
   }
   private goHome(){
     if(this.disposed)return;
+    this.clearHintGuide();if(this.hintRequest)this.releaseHintRequest(this.hintRequest);
     this.cancelTurnMotion();this.themeSerial++;this.themeLoading=false;this.themeError='';this.inHome=true;this.modal='';this.rankSettings=false;this.admiring=false;this.hideBanner();this.draw();
   }
   private updateClock(){
@@ -258,6 +262,7 @@ export class FourfoldGame extends Component {
   }
   private clear(){
     this.uiSerial++;
+    this.clearHintVisuals(); // Redraw replaces nodes; the two-step hint itself survives.
     this.cancelTurnMotion();if(this.inHome)this.knobAngles=[0,0,0,0];
     this.rankView=null;
     if(this.pageScroll){this.scrollOffsets[this.pageScrollKey]=Math.max(0,this.pageScroll.getScrollOffset().y);this.pageScroll=null;}
@@ -446,8 +451,10 @@ export class FourfoldGame extends Component {
     this.drawBoard(8*u,boardY,contentW,parent);
     if(this.won)this.drawCompletionControls(layout,parent);
     else{
-      this.btn('↻ 顺时针',layout.cw.x,layout.cw.y,half,buttonH,()=>{this.direction=1;this.draw();},this.direction===1?'goldButton':'creamButton',17*u,parent);
-      this.btn('↺ 逆时针',layout.ccw.x,layout.ccw.y,half,buttonH,()=>{this.direction=-1;this.draw();},this.direction===-1?'goldButton':'creamButton',17*u,parent);
+      const round=this.roundSerial,ui=this.uiSerial;
+      this.btn('↻ 顺时针',layout.cw.x,layout.cw.y,half,buttonH,()=>this.setDirection(1,round,ui),this.direction===1?'goldButton':'creamButton',17*u,parent);
+      this.btn('↺ 逆时针',layout.ccw.x,layout.ccw.y,half,buttonH,()=>this.setDirection(-1,round,ui),this.direction===-1?'goldButton':'creamButton',17*u,parent);
+      this.drawHintDirection(layout,parent);
       this.btn(`✧ 提示 ${this.hintsLeft()}/${hintLimit(this.mode)}`,layout.hint.x,toolsY,half,buttonH,()=>this.askHint(),'creamButton',16*u,parent);
       this.drawNumbersControl(layout.numbers,parent);
     }
@@ -507,9 +514,11 @@ export class FourfoldGame extends Component {
     const board=layout.board;this.drawBoard(board.x,board.y,board.w,parent);
     if(this.won)this.drawCompletionControls(layout,parent);
     else{
-      control('clockwise','↻ 顺时针',layout.cw,()=>{this.direction=1;this.draw();},false,this.direction<0);
-      control('counterclockwise','↺ 逆时针',layout.ccw,()=>{this.direction=-1;this.draw();},this.direction<0);
-      control('hint','✧ 提示',layout.hint,()=>this.askHint(),false,this.hintsLeft()===0);
+      const round=this.roundSerial,ui=this.uiSerial;
+      control('clockwise','↻ 顺时针',layout.cw,()=>this.setDirection(1,round,ui),false,this.direction<0);
+      control('counterclockwise','↺ 逆时针',layout.ccw,()=>this.setDirection(-1,round,ui),this.direction<0);
+      this.drawHintDirection(layout,parent);
+      control('hint','✧ 提示',layout.hint,()=>this.askHint(),false,this.hintsLeft()===0&&!this.currentHintGuide());
       const u=this.windowScale,badge={x:layout.hint.x+layout.hint.w-33*u,y:layout.hint.y+layout.hint.h/2-9*u};
       this.shape(badge.x,badge.y,31*u,18*u,C.surface,C.gold2,9*u,parent);
       this.txt(`${this.hintsLeft()}/${hintLimit(this.mode)}`,badge.x,badge.y,31*u,18*u,11*u,this.hintsLeft()?C.dark:C.muted,true,parent);
@@ -553,6 +562,7 @@ export class FourfoldGame extends Component {
       const cw=crop[2]*scale,ch=crop[3]*scale,knob=this.art('referenceKnob'+q,(d-cw)/2,(d-ch)/2,cw,ch,circle.content);
       if(this.direction<0)knob.setScale(-1,1,1);knob.angle=-this.knobAngles[q];this.knobNodes[q]=hit.node;this.knobArtNodes[q]=knob;this.bindButton(hit.node,()=>this.spin(q));
     }
+    this.drawHintTarget(scale,boardLayer.content);
   }
   private tileIndex(token:number,w:number,h:number,scale:number,parent:Node){
     if(!this.showNumbers)return;
@@ -631,10 +641,13 @@ export class FourfoldGame extends Component {
   }
   private spin(q:number){
     if(this.disposed||this.inHome||this.won||this.modal||this.busy||!this.assetsReady||this.themeLoading||this.themeError||!this.activeTheme||!Number.isInteger(q)||!SQUARES[q]||!this.boardContent)return;
+    const guide=this.currentHintGuide();
+    if(guide?.stage==='direction'){this.toast(this.hintGuideMessage(guide));return;}
     const squares=SQUARES[q],tiles=squares.map(index=>this.tileNodes[index]),knob=this.knobArtNodes[q],hit=this.knobNodes[q];
     if(tiles.some(node=>!node?.isValid)||!knob?.isValid||!hit?.isValid)return;
     const rects=tiles.map(node=>{const t=node.getComponent(UITransform);return {x:node.position.x-t.width/2,y:-node.position.y-t.height/2,width:t.width,height:t.height};});
     const geometry=createTurnMotion(rects,this.direction,{x:hit.position.x,y:-hit.position.y});
+    this.clearHintGuide(); // Any chosen turn consumes the shown guidance, never another allowance.
     const states=this.tileNodes.map(node=>{const opacity=node.getComponent(UIOpacity)||node.addComponent(UIOpacity);return {node,position:node.position.clone(),scale:node.scale.clone(),opacity,value:opacity.opacity};});
     const bounds=geometry.bounds,width=bounds.right-bounds.left,height=bounds.bottom-bounds.top,effects:Node[]=[];
     const outline=this.turnOutline('Turn selection',bounds.left,bounds.top,width,height,7,'#FFD56C44',this.boardContent);effects.push(outline);
@@ -713,6 +726,7 @@ export class FourfoldGame extends Component {
     // update() marks won before calling this. The separate round marker guards
     // storage, unlocks and cloud upload without suppressing the first record.
     if(this.disposed||this.inHome||round!==this.roundSerial||this.completedRound===round||!this.won||!this.puzzle||!isSolved(this.board))return false;
+    this.clearHintGuide();if(this.hintRequest)this.releaseHintRequest(this.hintRequest);
     this.completedRound=round;this.admiring=false;this.modal='';this.hideBanner();
     const result={moves:this.moves,par:this.puzzle.par,seconds:Math.floor(this.elapsed),hints:this.hints,score:resultScore(this.moves,this.elapsed,this.hints),day:this.key};
     const prev=this.storeRead('best:'+this.storageKey(),null);
@@ -738,13 +752,55 @@ export class FourfoldGame extends Component {
     if(this.roundSerial===round)this.resultAdvanceRound=-1; // 日期不可用时保留重试机会。
     return this.roundSerial!==round;
   }
+  private clearHintVisuals(){
+    for(const node of this.hintVisualNodes)if(node.isValid){node.active=false;node.removeFromParent();node.destroy();}
+    this.hintVisualNodes=[];
+  }
+  private clearHintGuide(){this.hintGuide=null;this.clearHintVisuals();}
+  private currentHintGuide(){
+    const guide=this.hintGuide;
+    if(guide&&(guide.round!==this.roundSerial||guide.board!==this.board||this.inHome||this.won||this.disposed)){this.clearHintGuide();return null;}
+    return guide;
+  }
+  private hintGuideMessage(guide=this.currentHintGuide()){
+    return guide?.stage==='direction'?`先点击高亮的${guide.dir===1?'顺时针':'逆时针'}`:'再点击高亮旋转点';
+  }
+  private showHintGuide(){
+    const guide=this.currentHintGuide();if(!guide)return;
+    this.draw();this.toast(this.hintGuideMessage(guide));
+  }
+  private drawHintOutline(name:string,rect:any,parent:Node,radius=12*this.windowScale){
+    const {x,y,w,h}=rect,u=this.windowScale,node=this.createNode(name,x,y,w,h,parent),g=node.addComponent(Graphics),inset=4*u;
+    g.roundRect(-w/2+inset,-h/2+inset,Math.max(1,w-2*inset),Math.max(1,h-2*inset),Math.max(1,Math.min(radius,Math.min(w,h)/2-inset)));
+    g.fillColor=ink('#FFE7A90D');g.fill();g.strokeColor=ink('#FFD16B80');g.lineWidth=7*u;g.stroke();g.strokeColor=ink('#FFF0BD');g.lineWidth=2.4*u;g.stroke();
+    this.hintVisualNodes.push(node);return node;
+  }
+  private drawHintDirection(layout:any,parent:Node){
+    const guide=this.currentHintGuide();if(guide?.stage!=='direction')return;
+    this.drawHintOutline('Hint direction '+guide.dir,guide.dir===1?layout.cw:layout.ccw,parent,17*this.windowScale);
+  }
+  private drawHintTarget(scale:number,parent:Node){
+    const guide=this.currentHintGuide();if(guide?.stage!=='target')return;
+    const r=this.reference,a=r.tileArea,rects=SQUARES[guide.q].map(index=>r.slotRects[index]);
+    const left=Math.min(...rects.map(p=>p[0])),top=Math.min(...rects.map(p=>p[1])),right=Math.max(...rects.map(p=>p[0]+p[2])),bottom=Math.max(...rects.map(p=>p[1]+p[3]));
+    this.drawHintOutline('Hint target region',{x:(left-a[0])*scale,y:(top-a[1])*scale,w:(right-left)*scale,h:(bottom-top)*scale},parent);
+    const center=r.knobCenters[guide.q],d=r.knobClipRadius*2*scale+12*this.windowScale;
+    this.drawHintOutline('Hint target knob '+guide.q,{x:(center[0]-a[0])*scale-d/2,y:(center[1]-a[1])*scale-d/2,w:d,h:d},parent,d/2);
+  }
+  private setDirection(direction:number,round=this.roundSerial,ui=this.uiSerial){
+    if(this.disposed||this.inHome||this.won||this.modal||this.busy||round!==this.roundSerial||ui!==this.uiSerial||!this.assetsReady||this.themeLoading||this.themeError||!this.activeTheme||(direction!==1&&direction!==-1))return false;
+    this.direction=direction;const guide=this.currentHintGuide();
+    // Even an already-selected direction needs an explicit click to advance.
+    if(guide)guide.stage=direction===guide.dir?'target':'direction';
+    this.draw();if(guide)this.toast(this.hintGuideMessage(guide));return true;
+  }
   private hintsLeft(){return Math.max(0,hintLimit(this.mode)-this.hints);}
   private applyHint(){
-    if(this.won||this.disposed||this.inHome||this.themeLoading||this.themeError||!this.activeTheme)return;
+    if(this.won||this.disposed||this.inHome||this.busy||this.modal||!this.assetsReady||this.themeLoading||this.themeError||!this.activeTheme)return;
+    if(this.currentHintGuide()){this.showHintGuide();return;}
     if(!this.hintsLeft()){this.toast(`本局 ${hintLimit(this.mode)} 次提示已用完`);return;}
     const path=shortestPath(this.board);if(!path.length)return;
-    this.hints++;this.direction=path[0].dir;this.draw();
-    this.toast(`第 ${path[0].q+1} 个旋转点（从左上到右下）· 剩余 ${this.hintsLeft()} 次`);
+    this.hints++;this.hintGuide={q:path[0].q,dir:path[0].dir,stage:'direction',round:this.roundSerial,board:this.board};this.showHintGuide();
   }
   private hintRequestCurrent(request:any){return !this.disposed&&this.hintRequest===request&&request.round===this.roundSerial&&!this.inHome&&!this.won;}
   private releaseHintRequest(request:any){
@@ -757,7 +813,8 @@ export class FourfoldGame extends Component {
     if(current)this.toast('提示广告暂不可用，请稍后再试');
   }
   private async askHint(){
-    if(this.disposed||this.won||this.inHome||this.busy||!this.assetsReady||this.themeLoading||this.themeError||!this.activeTheme)return;
+    if(this.disposed||this.won||this.inHome||this.busy||this.modal||!this.assetsReady||this.themeLoading||this.themeError||!this.activeTheme)return;
+    if(this.currentHintGuide()){this.showHintGuide();return;}
     if(!this.hintsLeft()){this.toast(`本局 ${hintLimit(this.mode)} 次提示已用完`);return;}
     const sdk=wxSDK();
     // 免费期不创建广告对象；以后填入 ID 也不会自动改变玩家当前的提示方式。
@@ -893,7 +950,7 @@ export class FourfoldGame extends Component {
     this.scheduleOnce(()=>{if(this.toastNode===g.node)this.toastNode=null;if(g.node.isValid)g.node.destroy();},2.5);
   }
   onDestroy(){
-    this.disposed=true;this.cancelTurnMotion();this.roundSerial++;screen.off('window-resize',this.onWindowResize,this);this.loadSerial++;
+    this.disposed=true;this.clearHintGuide();this.cancelTurnMotion();this.roundSerial++;screen.off('window-resize',this.onWindowResize,this);this.loadSerial++;
     for(const cancel of [...this.pendingResourceLoads])cancel();
     try{this.hideSDK?.offHide?.(this.onAppHide);}catch{}this.hideSDK=null;
     if(this.hintRequest)this.releaseHintRequest(this.hintRequest);

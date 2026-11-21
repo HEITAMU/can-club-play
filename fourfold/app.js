@@ -1,7 +1,7 @@
-import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.14';
-import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.14';
-import {HOME_ART,HOME_UI,homeStoryLabel} from './cocos/assets/scripts/HomeScene.js?v=0.8.14';
-import {getTileTheme,buildThemeArtwork} from './cocos/assets/scripts/TileThemes.js?v=0.8.14';
+import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.15';
+import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.15';
+import {HOME_ART,HOME_UI,homeStoryLabel} from './cocos/assets/scripts/HomeScene.js?v=0.8.15';
+import {getTileTheme,buildThemeArtwork} from './cocos/assets/scripts/TileThemes.js?v=0.8.15';
 
 const el=id=>document.getElementById(id);
 const $={board:el('board'),anchors:el('anchors'),target:el('target'),moves:el('moves'),par:el('par'),clock:el('clock'),instruction:el('instruction'),difficulty:el('difficulty'),chapterCaption:el('chapterCaption'),puzzleTitle:el('puzzleTitle'),storyTab:el('storyTab'),dailyTab:el('dailyTab'),cwBtn:el('cwBtn'),ccwBtn:el('ccwBtn'),modal:el('modal'),toast:el('toast')};
@@ -23,11 +23,12 @@ const anchorMotionNodes=[],anchorRingNodes=[],knobAngles=[0,0,0,0];
 const turnFocus=el('turnFocus'),boardFrame=el('boardFrame');
 
 let mode='story',key='1',dir=1,board=GOAL,puzzle=null,moves=0,hints=0,won=false,started=0,elapsed=0,claimedBeat=null,highlight=-1;
+let hintGuide=null;
 let audio=null,soundEnabled=read('sound',true),clockTimer=0,bgTimer=0,toastTimer=0;
 let showNumbers=read('showNumbers',true)!==false,viewArt=false,completionMetric=null;
 let ready=false,bootFailed=false,pendingOpen=window.ffPending||null;
 let rotating=false,motionEpoch=0,activeAnimations=[];
-let motionFallback=null,hintAnimation=null;
+let motionFallback=null;
 let rankOrigin='home';
 let roundSerial=0,resultRouteToken=null,resultDialogToken=null;
 window.ffReady=false;
@@ -53,8 +54,19 @@ function toast(message){
   $.toast.textContent=message;$.toast.classList.add('show');
   clearTimeout(toastTimer);toastTimer=setTimeout(()=>$.toast.classList.remove('show'),2800);
 }
-function stopHintPulse(){
-  if(hintAnimation){hintAnimation.cancel();hintAnimation=null;}
+function currentHint(){
+  if(hintGuide&&(hintGuide.round!==roundSerial||hintGuide.board!==board||won))clearHintGuide();
+  return hintGuide;
+}
+function hintInstruction(guide){
+  return guide.stage==='direction'?`先点击“${guide.dir===1?'顺时针':'逆时针'}”`:'再点击棋盘上高亮的旋转点';
+}
+function clearHintGuide(){
+  hintGuide=null;highlight=-1;gameScreen.dataset.hintStage='';
+  for(const button of [$.cwBtn,$.ccwBtn,...anchorNodes]){
+    button.classList.remove('hint-direction','hinted');button.removeAttribute('aria-describedby');
+  }
+  for(const tile of tileNodes.values())tile.classList.remove('hint-selected','hint-muted');
 }
 function clearTurnVisuals(resetKnobs=false){
   if(resetKnobs)knobAngles.fill(0);
@@ -76,7 +88,6 @@ function cancelRotation({resetKnobs=false}={}){
   motionEpoch++;
   for(const animation of activeAnimations)animation.cancel();
   if(motionFallback){motionFallback();motionFallback=null;}
-  stopHintPulse();
   activeAnimations=[];rotating=false;
   clearTurnVisuals(resetKnobs);
 }
@@ -93,6 +104,7 @@ function clearCompletion(){
 }
 function showHome(){
   cancelRotation({resetKnobs:true});
+  clearHintGuide();
   clearCompletion();won=false;started=0;
   syncHomeEntry();
   el('home').hidden=false;gameScreen.hidden=true;rankScreen.hidden=true;$.modal.hidden=true;settingsOverlay.hidden=true;
@@ -120,7 +132,7 @@ function syncSettings(){
   el('settingsReset').disabled=!ready||gameScreen.hidden;
 }
 function openSettings(){
-  if(rotating||hintAnimation){cancelRotation();if(puzzle)render();}
+  if(rotating){cancelRotation();if(puzzle)render();}
   syncSettings();settingsOverlay.hidden=false;
 }
 el('settingsBtn').onclick=openSettings;
@@ -148,6 +160,7 @@ function startGame(nextMode=mode,nextKey=key){
   if(nextMode==='daily'&&(nextPuzzle.par<9||nextPuzzle.par>11||nextPuzzle.difficulty!=='宗师'))throw new Error('daily puzzle bank validation failed');
   const nextTheme=getTileTheme(nextMode,nextPuzzle.key);
   cancelRotation({resetKnobs:true});
+  clearHintGuide();
   roundSerial++;clearCompletion();
   mode=nextMode;puzzle=nextPuzzle;key=puzzle.key;board=puzzle.board;dir=1;
   moves=0;hints=0;elapsed=0;started=0;won=false;highlight=-1;$.modal.hidden=true;
@@ -262,19 +275,33 @@ function render(){
   const limit=hintLimit(mode),remaining=Math.max(0,limit-hints),hintButton=el('hintBtn');
   el('hintLabel').textContent=`✧ 提示 ${remaining}/${limit}`;
   el('hintRemaining').textContent=`${remaining}/${limit}`;
-  hintButton.classList.toggle('hint-exhausted',remaining===0);
+  const guide=currentHint();
+  hintButton.classList.toggle('hint-exhausted',remaining===0&&!guide);
   const blocked=rotating||!themeReady();
   hintButton.disabled=blocked||won;$.cwBtn.disabled=blocked||won;$.ccwBtn.disabled=blocked||won;
-  hintButton.setAttribute('aria-disabled',String(blocked||won||remaining===0));
-  hintButton.setAttribute('aria-label',remaining?`提示，剩余 ${remaining} 次，本局最多 ${limit} 次`:'本局提示已用完');
-  hintButton.title=remaining?`本局剩余 ${remaining}/${limit} 次提示`:'本局提示已用完，重新开始可重置';
-  $.instruction.textContent=won?'✦ 完成':`提示剩余 ${remaining}/${limit} 次`;
-  for(const token of board)$.board.append(tileNodes.get(token));
+  hintButton.setAttribute('aria-disabled',String(blocked||won||(remaining===0&&!guide)));
+  hintButton.setAttribute('aria-label',guide?'查看当前提示，不额外消耗次数':remaining?`提示，剩余 ${remaining} 次，本局最多 ${limit} 次`:'本局提示已用完');
+  hintButton.title=guide?'查看当前提示，不额外消耗次数':remaining?`本局剩余 ${remaining}/${limit} 次提示`:'本局提示已用完，重新开始可重置';
+  $.instruction.textContent=won?'✦ 完成':guide?hintInstruction(guide):`提示剩余 ${remaining}/${limit} 次`;
+  highlight=guide?.stage==='target'?guide.q:-1;
+  gameScreen.dataset.hintStage=guide?.stage||'';
+  const hintTiles=new Set(highlight<0?[]:SQUARES[highlight].map(index=>board[index]));
+  for(const token of board){
+    const tile=tileNodes.get(token);$.board.append(tile);
+    tile.classList.toggle('hint-selected',hintTiles.has(token));
+    tile.classList.toggle('hint-muted',highlight>=0&&!hintTiles.has(token));
+  }
   anchorNodes.forEach((button,q)=>{
     button.dataset.direction=String(dir);button.disabled=won||blocked;
     button.setAttribute('aria-label',`${q+1}号旋转点，${dir===1?'顺':'逆'}时针旋转四格`);
     button.classList.toggle('hinted',q===highlight);
+    if(q===highlight)button.setAttribute('aria-describedby','instruction');else button.removeAttribute('aria-describedby');
   });
+  for(const [button,direction] of [[$.cwBtn,1],[$.ccwBtn,-1]]){
+    const prompted=guide?.stage==='direction'&&guide.dir===direction;
+    button.classList.toggle('hint-direction',prompted);
+    if(prompted)button.setAttribute('aria-describedby','instruction');else button.removeAttribute('aria-describedby');
+  }
   $.cwBtn.classList.toggle('selected',dir===1);$.ccwBtn.classList.toggle('selected',dir===-1);
   $.cwBtn.setAttribute('aria-pressed',String(dir===1));$.ccwBtn.setAttribute('aria-pressed',String(dir===-1));
   gameScreen.dataset.showNumbers=String(showNumbers);gameScreen.dataset.won=String(won);
@@ -334,6 +361,8 @@ function playTurnFallback(effects,duration,epoch){
 }
 async function spin(q){
   if(!canPlay()||!SQUARES[q])return;
+  const guide=currentHint();
+  if(guide?.stage==='direction'){toast(hintInstruction(guide));return;}
   const affected=SQUARES[q].map(index=>tileNodes.get(board[index]));
   const rectangles=affected.map(tile=>tile.getBoundingClientRect());
   if(rectangles.some(r=>r.width<=0||r.height<=0))return;
@@ -341,7 +370,7 @@ async function spin(q){
   const knobRect=anchorNodes[q].getBoundingClientRect();
   const motion=createTurnMotion(rectangles.map(r=>({x:r.left,y:r.top,width:r.width,height:r.height})),dir,{x:knobRect.left+knobRect.width/2,y:knobRect.top+knobRect.height/2});
   if(!started)started=performance.now();
-  stopHintPulse();rotating=true;highlight=-1;
+  clearHintGuide();rotating=true;
   const epoch=++motionEpoch,nextBoard=rotate(board,q,dir),direction=dir,startAngle=knobAngles[q];
   const reduceMotion=!!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
   const duration=reduceMotion?120:TURN_DURATION_MS;
@@ -392,6 +421,7 @@ async function spin(q){
 
 function finish(){
   if(won||rotating||!puzzle||!isSolved(board)||gameScreen.hidden)return;
+  clearHintGuide();
   won=true;elapsed=started?(performance.now()-started)/1000:0;
   const metric={moves,par:puzzle.par,seconds:Math.floor(elapsed),hints,score:resultScore(moves,elapsed,hints),day:key};
   completionMetric=Object.freeze(metric);viewArt=false;
@@ -494,21 +524,22 @@ function closeRank(){
 function hint(){
   if(won){toast('本局已经通关');return;}
   if(!canPlay())return;
+  const guide=currentHint();
+  if(guide){render();toast(hintInstruction(guide));return;}
   const limit=hintLimit(mode);
   if(hints>=limit){toast('本局提示已用完，重新开始可重置');return;}
   const path=shortestPath(board);if(!path.length)return;
-  hints++;dir=path[0].dir;highlight=path[0].q;render();
-  const button=anchorNodes[highlight];
-  stopHintPulse();
-  if(typeof button.animate==='function'){
-    const pulse=button.animate([{transform:'translate(-50%,-50%) scale(1)'},{transform:'translate(-50%,-50%) scale(1.15)'},{transform:'translate(-50%,-50%) scale(1)'}],{duration:750,iterations:2});
-    hintAnimation=pulse;pulse.finished.catch(()=>{}).then(()=>{if(hintAnimation===pulse)hintAnimation=null;});
-  }
-  const remaining=limit-hints;
-  toast(remaining?`点击高亮旋转点；本局剩余 ${remaining}/${limit} 次提示`:'点击高亮旋转点；本局提示已用完');sound(660,.3);
+  hints++;hintGuide={round:roundSerial,board,q:path[0].q,dir:path[0].dir,stage:'direction'};
+  render();toast(hintInstruction(hintGuide));sound(660,.3);
 }
 function reset(){if(!ready)return;startGame(mode,key);toast('已重置本局');}
-function setDirection(direction){if(!canPlay())return;dir=direction;render();sound(direction===1?390:350);}
+function setDirection(direction){
+  if(!canPlay()||(direction!==1&&direction!==-1))return;
+  dir=direction;
+  const guide=currentHint();
+  if(guide)guide.stage=direction===guide.dir?'target':'direction';
+  render();if(guide)toast(hintInstruction(guide));sound(direction===1?390:350);
+}
 $.anchors.addEventListener('click',event=>{const button=event.target.closest('button[data-q]');if(button)spin(Number(button.dataset.q));});
 el('cwBtn').onclick=()=>setDirection(1);el('ccwBtn').onclick=()=>setDirection(-1);
 el('hintBtn').onclick=hint;el('shareBtn').onclick=share;el('numbersBtn').onclick=toggleNumbers;
@@ -534,14 +565,14 @@ function startTimers(){
 }
 window.addEventListener('pagehide',()=>{cancelRotation();clearInterval(clockTimer);clearInterval(bgTimer);});
 window.addEventListener('pageshow',event=>{if(event.persisted&&ready){render();startTimers();}});
-function onMotionResize(){if(rotating||hintAnimation){cancelRotation();if(puzzle)render();}}
+function onMotionResize(){if(rotating){cancelRotation();if(puzzle)render();}}
 window.addEventListener('resize',onMotionResize);
 window.visualViewport?.addEventListener('resize',onMotionResize);
 document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelRotation();if(puzzle)render();}});
 
 const ART_FILES=[HOME_ART.resource+'.webp',HOME_UI.resource+'.webp','ui-atlas.webp','daily-banner.webp','reference-daily.webp','reference-clean.webp','rank-scene.webp','result-panel.webp'];
 async function preloadTileArtwork(){
-  const response=await fetch(new URL('./cocos/assets/resources/art/referenceLayout.json?v=0.8.14',import.meta.url));
+  const response=await fetch(new URL('./cocos/assets/resources/art/referenceLayout.json?v=0.8.15',import.meta.url));
   if(!response.ok)throw new Error('tile artwork layout could not be loaded');
   const {tileArtwork:art}=await response.json();
   if(!art||!/^[-a-z0-9]+$/.test(art.resource)||art.fit!=='fill'||!Array.isArray(art.imageSize)||art.imageSize.length!==2||art.imageSize.some(v=>!Number.isFinite(v)||v<=0))throw new Error('invalid tile artwork layout');
