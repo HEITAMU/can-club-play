@@ -1,5 +1,5 @@
 {
-  "version": "0.8.19",
+  "version": "0.8.20",
   "atlas": {
     "width": 1254,
     "height": 1254,
@@ -65,7 +65,7 @@
       "alpha": true
     },
     "homeScene": {
-      "resource": "home-celestial-v7",
+      "resource": "home-celestial-v8",
       "width": 941,
       "height": 1672
     },
@@ -85,7 +85,7 @@
       }
     },
     "homeMenu": {
-      "resource": "home-menu-v7",
+      "resource": "home-menu-v8",
       "width": 1536,
       "height": 1024,
       "alpha": true

@@ -7,27 +7,27 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation;-webk
 button:focus-visible{outline:3px solid #534386;outline-offset:3px}button:disabled{cursor:wait}[hidden]{display:none!important}
 .sr-only{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;margin:-1px;padding:0;border:0}
 .shell{position:relative;width:min(100%,460px);height:var(--available-height);min-height:0;margin:0 auto;isolation:isolate;overflow:hidden;box-shadow:0 0 60px #95613716}
-html[data-screen=home],html[data-screen=home] body{background:#f0e8de}
-html[data-screen=home] .shell{box-shadow:0 0 72px #b9874a26}
-/* A pale ivory page separates the star-map fragments from gold and lavender menu panels. */
-.home-screen{--home-u:1px;position:absolute;inset:0;width:100%;height:100%;overflow-x:hidden;overflow-y:auto;background:var(--home-background,#f0e8de);isolation:isolate}
-.home-screen:before{content:"";position:absolute;inset:0;min-height:var(--home-content-height,100%);background:var(--home-background,#f0e8de);z-index:-2}
+html[data-screen=home],html[data-screen=home] body{background:#f5ece4}
+html[data-screen=home] .shell{box-shadow:0 0 72px #8b7e8d1f}
+/* A soft cream page, apricot primary panel and mist-lavender secondary panels. */
+.home-screen{--home-u:1px;position:absolute;inset:0;width:100%;height:100%;overflow-x:hidden;overflow-y:auto;background:var(--home-background,#f5ece4);isolation:isolate}
+.home-screen:before{content:"";position:absolute;inset:0;min-height:var(--home-content-height,100%);background:var(--home-background,#f5ece4);z-index:-2}
 .home-hero{position:absolute;overflow:hidden;pointer-events:none}
 .home-scene{display:block;position:absolute;max-width:none;object-fit:contain;user-select:none;pointer-events:none}
-.home-title,.home-subtitle{position:absolute;display:flex;align-items:center;justify-content:center;margin:0;white-space:nowrap;pointer-events:none}
-.home-title{font-family:"Songti SC","STSong","Noto Serif CJK SC",serif;font-weight:800;line-height:1;letter-spacing:.11em;text-indent:.11em;color:var(--home-title,#523d47);text-shadow:0 1px 0 #fff6e5cc}
-.home-subtitle{font-family:"Times New Roman",Times,serif;font-weight:700;line-height:1;letter-spacing:.32em;text-indent:.32em;color:var(--home-subtitle,#806a70);text-shadow:0 1px 0 #fff6e599}
+.home-title,.home-subtitle{position:absolute;display:flex;align-items:center;justify-content:center;margin:0;white-space:nowrap;pointer-events:none;font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;text-shadow:none}
+.home-title{font-weight:700;line-height:1;letter-spacing:.065em;text-indent:.065em;color:var(--home-title,#47445d)}
+.home-subtitle{font-weight:500;line-height:1;letter-spacing:.22em;text-indent:.22em;color:var(--home-subtitle,#827a8c)}
 .skin{position:absolute;inset:0;display:block;background-image:url('assets/art/ui-atlas.webp');background-repeat:no-repeat;pointer-events:none}
 .icon-button{display:block;position:relative;width:calc(48 * var(--u));height:calc(48 * var(--u));min-width:38px;min-height:38px;padding:0;border:0;background:none;border-radius:28%;flex-shrink:0;transition:transform .12s ease;z-index:3}
-.icon-button:active{transform:translateY(2px) scale(.96)}.home-settings{position:absolute;min-width:44px;min-height:44px;aspect-ratio:1;z-index:3}
+.icon-button:active{transform:translateY(2px) scale(.96)}.home-settings{position:absolute;min-width:44px;min-height:44px;aspect-ratio:1;border-radius:50%;z-index:3}
+.home-settings:active{transform:scale(.96)}.home-settings-icon{display:block;width:100%;height:100%;pointer-events:none;user-select:none}
 .cozy-menu{display:contents}
 .art-button{display:grid;place-items:center;position:relative;width:100%;padding:0 10px calc(4 * var(--u));border:0;background:none;border-radius:100px;min-height:36px;font-weight:850;font-size:calc(23 * var(--u));text-shadow:0 1px #fff2ce80;transition:transform .1s ease,filter .1s ease}
 .art-button:active,.sprite-button:active{transform:translateY(2px) scale(.98);filter:brightness(.97)}.button-label{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:calc(9 * var(--u));white-space:nowrap;line-height:1.1;pointer-events:none}
-.cozy-menu .art-button{position:absolute;min-height:44px;z-index:1;padding:0;border-radius:22px;letter-spacing:.025em}
+.cozy-menu .art-button{position:absolute;min-height:44px;z-index:1;padding:0;border-radius:22px;letter-spacing:.015em;text-shadow:none}
 /* Small screens retain a 44px hit target without stretching the button artwork. */
 .cozy-menu .home-menu-skin{position:absolute;display:block;inset:auto;transform:none;background-repeat:no-repeat;pointer-events:none}
-.cozy-menu .button-label{position:absolute;transform:none;color:var(--home-menu,#523d47);font-family:"Songti SC","STSong","Noto Serif CJK SC",serif;font-weight:750;letter-spacing:0;text-shadow:0 1px 0 #fff6ea80}.menu-symbol{font-size:1.25em;line-height:1;font-weight:500;display:inline-grid;place-items:center;width:1em}.crown{font-family:Georgia,serif;font-weight:700;color:#8f5a32}
-#homeSettings>.skin{filter:saturate(.65) brightness(1.1)}
+.cozy-menu .button-label{position:absolute;transform:none;color:var(--home-menu,#47445d);font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;font-weight:650;letter-spacing:.015em;text-shadow:none}.menu-symbol{font-size:1.25em;line-height:1;font-weight:500;display:inline-grid;place-items:center;width:1em}.crown{font-family:Georgia,serif;font-weight:700;color:#8f5a32}
 .game-screen{position:relative;display:flex;flex-direction:column;width:100%;height:100%;padding:calc(12 * var(--u)) max(13px,calc(16 * var(--u))) calc(16 * var(--u));gap:calc(8 * var(--u));background:radial-gradient(ellipse at 50% 40%,#fff0d1,#ffdfb4 65%,#f6c792);isolation:isolate}
 .game-screen:before,.game-screen:after{content:"";position:absolute;width:105%;aspect-ratio:1;left:-2.5%;border:1px solid #fff1d6;outline:1px solid #f2b578;border-radius:50%;box-shadow:inset 0 0 0 19px #fff0d228,inset 0 0 0 20px #fff5dc8c,inset 0 0 0 50px #fff0d21c,inset 0 0 0 51px #f2b4797d;z-index:-1;pointer-events:none}.game-screen:before{top:-21%}.game-screen:after{bottom:-37%}
 .compact-top{position:relative;display:flex;align-items:center;justify-content:space-between;height:calc(64 * var(--u));flex-shrink:0;padding:0 calc(1 * var(--u))}
