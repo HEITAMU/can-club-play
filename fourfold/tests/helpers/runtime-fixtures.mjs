@@ -104,6 +104,7 @@ export function webFixture({preferences={},storage=memoryStorage(preferences),au
 }
 
 class Graphics {clear(){}roundRect(){}fill(){}stroke(){}moveTo(){}lineTo(){}}
+class UIOpacity {constructor(){this.opacity=255;}}
 class Mask {}Mask.Type={RECT:0,GRAPHICS_STENCIL:1,ELLIPSE:2};
 class Color {static fromHEX(color,value){color.hex=value;}}
 class NativeNode {
@@ -124,7 +125,7 @@ export function nativeFixture({preferences={},storage=memoryStorage(preferences)
   const executable=stripTypeScriptTypes(source.replace(/^import\s*\{[\s\S]*?\}\s*from\s*['"][^'"]+['"];?\s*$/gm,'').replace(/^@ccclass\('FourfoldGame'\)\s*$/m,'').replace('export class FourfoldGame','class FourfoldGame'),{mode:'transform'});
   const clouds=[],events=[],art=[],groups=[],buttons=[],hits=[],shapes=[],texts=[];let clock=1000;
   const sdk={getStorageSync:key=>storage.getItem(key),setStorageSync:(key,value)=>storage.setItem(key,value),setUserCloudStorage:payload=>clouds.push(payload),vibrateShort:()=>events.push('vibrate')};
-  const context={...Core,...Motion,...Home,...Themes,todayCN:()=>TEST_DAY,Component:class{},Node:NativeNode,Graphics,Mask,Color,BlockInputEvents:class{},LabelOutline:class{},
+  const context={...Core,...Motion,...Home,...Themes,todayCN:()=>TEST_DAY,Component:class{},Node:NativeNode,Graphics,UIOpacity,Mask,Color,BlockInputEvents:class{},LabelOutline:class{},
     Vec2:class{constructor(x,y){this.x=x;this.y=y;}},UITransform:class{setContentSize(){}},
     _decorator:{ccclass:()=>{}},localStorage:storage,performance:{now:()=>clock},console:{warn(){},error(){}},wx:useWx?sdk:undefined,...cc};
   const Game=vm.runInNewContext(executable+'\nFourfoldGame;',context,{filename:'Game.ts'}),game=new Game();
