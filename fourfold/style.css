@@ -7,12 +7,18 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation;-webk
 button:focus-visible{outline:3px solid #534386;outline-offset:3px}button:disabled{cursor:wait}[hidden]{display:none!important}
 .sr-only{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;margin:-1px;padding:0;border:0}
 .shell{position:relative;width:min(100%,460px);height:var(--available-height);min-height:0;margin:0 auto;isolation:isolate;overflow:hidden;box-shadow:0 0 60px #95613716}
-/* Width follows the phone. Only empty decoration is cropped on shorter screens. */
+/* The complete home illustration follows phone width; shorter screens scroll. */
 .home-screen{--home-u:1px;position:absolute;inset:0;width:100%;height:100%;overflow-x:hidden;overflow-y:auto;background:#fbd1a4;isolation:isolate}
 .home-screen:before{content:"";position:absolute;inset:0;min-height:var(--home-content-height,100%);background:radial-gradient(ellipse at 50% 25%,#ffe5c3,#fbd2a8 64%,#f8cc9b);z-index:-2}
-.home-screen:after{content:"";position:absolute;left:0;bottom:0;width:100%;height:20%;background:url('assets/art/home-scene.webp') center bottom / 100% auto no-repeat;mask-image:linear-gradient(transparent,#000 70%);pointer-events:none;z-index:-1}
+.home-screen:after{content:"";position:absolute;left:0;bottom:0;width:100%;height:18%;background:radial-gradient(ellipse at 50% 100%,#ffe9bd70,transparent 72%);pointer-events:none;z-index:-1}
 .home-hero{position:absolute;overflow:hidden;pointer-events:none}
 .home-scene{display:block;position:absolute;max-width:none;object-fit:contain;user-select:none;pointer-events:none}
+.home-title,.home-subtitle{position:absolute;display:flex;align-items:center;justify-content:center;margin:0;white-space:nowrap;pointer-events:none}
+.home-title{font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;font-weight:900;line-height:1;letter-spacing:.09em;text-indent:.09em;color:#66321f;text-shadow:0 1px 0 #fff4d9,0 2px 1px #864d2929}
+.home-subtitle{font-family:"Times New Roman",Times,serif;font-weight:700;line-height:1;letter-spacing:.32em;text-indent:.32em;color:#865334;text-shadow:0 1px 0 #fff5da8c}
+.home-launch{position:absolute;padding:0;border:0;background:transparent;border-radius:10%;pointer-events:auto;touch-action:manipulation;cursor:pointer}
+.home-launch:active{background:#fff2cc0a}
+.home-launch:focus-visible{outline:3px solid #7e609e;outline-offset:-4px;background:#fff2cc0d}
 .skin{position:absolute;inset:0;display:block;background-image:url('assets/art/ui-atlas.webp');background-repeat:no-repeat;pointer-events:none}
 .icon-button{display:block;position:relative;width:calc(48 * var(--u));height:calc(48 * var(--u));min-width:38px;min-height:38px;padding:0;border:0;background:none;border-radius:28%;flex-shrink:0;transition:transform .12s ease;z-index:3}
 .icon-button:active{transform:translateY(2px) scale(.96)}.home-settings{position:absolute;min-width:44px;min-height:44px;aspect-ratio:1;z-index:3}

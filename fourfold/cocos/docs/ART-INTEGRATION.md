@@ -1,6 +1,14 @@
 # 四格诡局参考原稿接入
 
-版本：0.8.9；更新：2026-11-21；目标编辑器：Cocos Creator 3.8.8。
+版本：0.8.10；更新：2026-11-21；目标编辑器：Cocos Creator 3.8.8。
+
+## 星盘机关主页（0.8.10）
+
+按用户“星图手册没有实际用途，主页也重绘”的要求，使用内置 image_gen 重新设计主页主视觉。新资源 `home-observatory-v2.png` 为1174×1340：正面九格星盘、四个交点星钮、精细金属机关框、暖色观星室与灯光。书本、书架、天球仪及手册铭牌全部移除。原画不烘焙标题、菜单、设置或关卡进度；网页使用同尺寸WebP。
+
+`HomeScene.js` 为网页与Cocos提供共同的资源信息、标题/英文副标题/星盘热区坐标，以及 `homeLayout` 全宽排布。画面不再使用旧1840高原图的1140/1012裁片。三个菜单独立显示，短屏通过纵向滚动承接内容，绝不为适应高度压窄主页。
+
+标题和副标题绘制于原画空牌内。主按钮文字由真实 `unlocked()` 进度选择“开始解谜”或“挑战第N关”；主页星盘热区复用同一个普通关入口。这里是启动已解锁关卡，不恢复中途局面，也不增加不存在的手册或收藏功能。新图完整提示词见 `home-observatory-v2-design.md`。
 
 ## 连续星图重绘与通关拼合（0.8.9）
 
@@ -58,7 +66,7 @@ H5使用49个Web Animations关键帧，原生由Component.update逐帧采样。�
 
 ## 运行资源与坐标
 
-当前原生加载 `assets/resources/art/` 中的 `home-scene.png`、`ui-atlas.png`、`reference-daily.png`、`reference-clean.png`、`rank-scene.png`、`result-panel.png`，以及由 `referenceLayout.tileArtwork.resource` 指定的完整星图。资源清单为 `assetManifest.json`、`referenceLayout.json` 和 `rankLayout.json`。
+当前原生加载 `assets/resources/art/` 中的 `home-observatory-v2.png`、`ui-atlas.png`、`reference-daily.png`、`reference-clean.png`、`rank-scene.png`、`result-panel.png`，以及由 `referenceLayout.tileArtwork.resource` 指定的完整星图。资源清单为 `assetManifest.json`、`referenceLayout.json` 和 `rankLayout.json`。
 
 - `reference-daily.png` 是用户指定每日挑战图的 854×1842 高清原稿，用于分别裁取横幅、导航、操作按钮、棋盘外框和旋转钮。
 - `reference-clean.png` 为界面组件清理了日期、两个计数和四个旋钮，并补齐遮挡处。该图仅继续用于界面组件，里面的旧图块与编号不再作为运行棋子来源。
@@ -71,7 +79,7 @@ H5使用49个Web Animations关键帧，原生由Component.update逐帧采样。�
 
 原生以真实窗口宽高比例推导逻辑高度，采用 `ResolutionPolicy.FIXED_WIDTH`，并在 `screen` 的 `window-resize` 事件后更新画布、相机及页面。取消固定390×844的 `SHOW_ALL` 和整张长图的高度contain，避免两次缩小导致界面成为中央窄条。微信胶囊下沿和底部安全区按宽度比例换算，不再扣除letterbox。
 
-主页插画和三个菜单独立排布：常规插画裁片为 `[0,0,854,1140]`，短屏为 `[0,128,854,1012]`，仅移除标题上方装饰和下方空白，保留原图y=136至1135的标题、书本主体。常规插画全宽，短屏宽度为页面宽度减8；三个按钮始终为页面宽度的80%，各皮肤保持原比例，点击高度至少44，间距5。常规布局从上方开始，短屏能放下时整组垂直居中。
+主页插画和三个菜单独立排布，由0.8.10的共享 `HomeScene.js` 统一计算，完整显示1174×1340原画。三个菜单按钮仍使用页面宽度的80%，各皮肤保持原比例，触控高度至少44，间距5。内容在较长屏幕中整体居中，短屏保持全宽并可纵向滚动。
 
 每日页根据可用高度在七行与五行布局之间切换。常规为导航、横幅、数据牌、棋盘、方向、提示、分享七行；短屏将导航与横幅合为一行，将提示和分享合为一行。棋盘外框始终为页面宽度减16，保持817:765，数据牌和按钮均独立等比展示。390×650且无额外安全区时，短屏每日内容约639.7高、主页约639.4高，可以完整放入窗口。
 

@@ -1,23 +1,9 @@
 // The artwork keeps its own aspect ratio. Available height changes the arrangement,
 // never the width of the whole screen.
-const HOME_BUTTONS = [[1114,198],[1116,196],[1122,196]];
+import {HOME_ART,homeLayout} from './cocos/assets/scripts/HomeScene.js?v=0.8.10';
+export {homeLayout};
 const fitHeight = (width, sw, sh) => width * sh / sw;
 const box = (x,y,w,h) => ({x,y,w,h});
-
-export function homeLayout(width,height){
-  const menuW=width*.8,buttonHeights=HOME_BUTTONS.map(([w,h])=>Math.max(44,fitHeight(menuW,w,h)));
-  const menuH=buttonHeights.reduce((a,b)=>a+b,0)+10;
-  const regularH=fitHeight(width,854,1140)+16+menuH+16;
-  const compact=regularH>height,heroW=compact?width-8:width;
-  const cropTop=compact?128:0,heroH=fitHeight(heroW,854,1140-cropTop);
-  const gap=compact?4:16,contentH=heroH+gap+menuH+(compact?8:16);
-  const y=compact?4+Math.max(0,(height-contentH)/2):0;
-  let menuY=y+heroH+gap;
-  const buttons=buttonHeights.map(h=>{const r=box((width-menuW)/2,menuY,menuW,h);menuY+=h+5;return r;});
-  return {compact,contentH:Math.max(height,contentH),hero:box((width-heroW)/2,y,heroW,heroH),cropTop,
-    image:box(0,-cropTop*heroW/854,heroW,1840*heroW/854),buttons,
-    settings:box(12,compact?Math.max(10,y+3):14,44,44)};
-}
 
 export function dailyLayout(width,height){
   const c=width-16,cardW=(c-8)/2,directionW=(c-8)/2;
@@ -55,9 +41,12 @@ if(typeof document!=='undefined'){
     const h=homeLayout(width,height),d=dailyLayout(width,height);
     home.dataset.layout=h.compact?'compact':'regular';daily.dataset.layout=d.compact?'compact':'regular';
     place(home.querySelector('.home-hero'),h.hero);place(home.querySelector('.home-scene'),h.image);
+    place(document.getElementById('homeTitle'),h.title);place(document.getElementById('homeSubtitle'),h.subtitle);
+    place(document.getElementById('homeLaunch'),h.launch);
+    document.getElementById('homeTitle').style.fontSize=HOME_ART.titleSize*h.textScale+'px';
+    document.getElementById('homeSubtitle').style.fontSize=HOME_ART.subtitleSize*h.textScale+'px';
     home.style.setProperty('--home-u',width/390+'px');
     home.style.setProperty('--home-content-height',h.contentH+'px');
-    home.style.setProperty('--home-crop-top',h.cropTop);
     home.querySelectorAll('.cozy-menu button').forEach((b,i)=>place(b,h.buttons[i]));
     place(document.getElementById('homeSettings'),h.settings);
     // Values are applied to daily-only selectors; ordinary levels keep their layout.

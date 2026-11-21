@@ -7,11 +7,12 @@ import {
 } from 'cc';
 import {GOAL,SQUARES,makePuzzle,todayCN,rotate,isSolved,shortestPath,honor,resultScore,hintLimit,isBetterResult} from './Core';
 import {TURN_DURATION_MS,createTurnMotion,sampleTurn} from './TurnMotion';
+import {HOME_ART,homeLayout,homeStoryLabel} from './HomeScene';
 const {ccclass}=_decorator;
 const HINT_MODE:'free'|'rewarded'='free'; // 未开通广告时，正式上线也免费提示；开通后再显式切换。
 const AD_IDS={rewarded:'',banner:''}; // 接入时只填写微信公众平台提供的真实 adUnitId。
 const C={background:'#F8DEB7',surface:'#FFF1D6',gold:'#F5CB79',gold2:'#C88B4D',white:'#FFF4D7',muted:'#977253',dark:'#5B301F',edge:'#825037',night:'#1B2345',shadow:'#B27C50'};
-const ART_PATHS={home:'art/home-scene',atlas:'art/ui-atlas',referenceOriginal:'art/reference-daily',referenceClean:'art/reference-clean',rankScene:'art/rank-scene',resultPanel:'art/result-panel'};
+const ART_PATHS={home:'art/'+HOME_ART.resource,atlas:'art/ui-atlas',referenceOriginal:'art/reference-daily',referenceClean:'art/reference-clean',rankScene:'art/rank-scene',resultPanel:'art/result-panel'};
 const REQUIRED_FRAMES=['goldButton','creamButton','lavenderButton','stepsCard','timeCard','rotateKnob','settingsButton','backButton'];
 const at=()=>typeof performance!=='undefined'&&performance.now?performance.now():Date.now();
 const wxSDK=()=>typeof wx!=='undefined'?(wx as any):null;
@@ -22,7 +23,7 @@ function clock(seconds:number){return `${String(Math.floor(seconds/60)).padStart
 @ccclass('FourfoldGame')
 export class FourfoldGame extends Component {
   private canvasNode:Node;private root:Node;private cam:Camera;private width=390;private height=844;
-  private safeTop=0;private safeBottom=0;private inHome=true;private mode='story';private key='1';private puzzle:any;
+  private safeTop=0;private safeBottom=0;private windowScale=1;private inHome=true;private mode='story';private key='1';private puzzle:any;
   private board=GOAL;private direction=1;private moves=0;private hints=0;private elapsed=0;private startAt=0;private won=false;private modal='';private busy=false;
   private clockLabel:Label|null=null;private rewardAd:any=null;private banner:any=null;private toastNode:Node|null=null;
   private numberLayers=new Map<Label,Label[]>();
@@ -65,7 +66,7 @@ export class FourfoldGame extends Component {
     const sdk=wxSDK(),frame=view.getFrameSize();let info:any={},cap:any=null;
     try{info=sdk?.getWindowInfo?.()||sdk?.getSystemInfoSync?.()||{};cap=sdk?.getMenuButtonBoundingClientRect?.();}catch(e){console.warn('window safe area unavailable',e);}
     const ww=Number(info.windowWidth)||frame.width||this.width,wh=Number(info.windowHeight)||frame.height||this.height;
-    const scale=this.width/ww;this.height=wh*scale;
+    const scale=this.width/ww;this.windowScale=scale;this.height=wh*scale;
     const top=Math.max(Number(cap?.bottom)||0,Number(info.safeArea?.top)||0);
     this.safeTop=top?Math.max(0,(top+6)*scale):0;
     this.safeBottom=Math.max(0,(wh-(Number(info.safeArea?.bottom)||wh))*scale);
@@ -152,8 +153,6 @@ export class FourfoldGame extends Component {
     add('referenceMovesCard',r.components.movesCard);add('referenceTimerCard',r.components.timerCard);
     add('referenceBanner',r.components.banner,original);
     for(const key of ['back','settings','clockwise','counterclockwise','hint','share'])add('referenceControl'+key,r.components[key],original);
-    this.frames.homeHero=this.makeFrame(this.textures.home,0,0,this.textures.home.width,1140);
-    this.frames.homeHeroCompact=this.makeFrame(this.textures.home,0,128,this.textures.home.width,1012);
   }
   private disposeArt(){
     for(const frame of Object.values(this.frames))frame.destroy();this.frames={};
@@ -161,6 +160,8 @@ export class FourfoldGame extends Component {
     for(const image of this.images)image.decRef();this.images=[];
   }
   private validateSceneArtwork(){
+    const home=this.manifest?.images?.homeScene,texture=this.textures.home;
+    if(!home||home.resource!==HOME_ART.resource||home.width!==HOME_ART.width||home.height!==HOME_ART.height||texture.width!==home.width||texture.height!==home.height)throw new Error('主页原画尺寸与坐标不一致');
     for(const [key,texture] of [['rank',this.textures.rankScene],['result',this.textures.resultPanel]] as any){
       const layout=this.rankLayout?.[key];
       if(!layout||layout.width!==texture.width||layout.height!==texture.height)throw new Error(`界面原画尺寸与坐标不一致: ${key}`);
@@ -268,14 +269,13 @@ export class FourfoldGame extends Component {
     if(this.modal)this.drawModal();
   }
   private homeGeometry(width:number,height:number){
-    const menuW=width*.8,entries=['goldButton','creamButton','lavenderButton'];
-    const buttonHeights=entries.map(key=>{const r=this.manifest.atlas.frames[key];return Math.max(44,menuW*r.h/r.w);});
-    const menuH=buttonHeights.reduce((sum,h)=>sum+h,0)+10,regularH=width*1140/854+16+menuH+16;
-    const compact=regularH>height,heroW=compact?width-8:width,cropTop=compact?128:0,heroH=heroW*(1140-cropTop)/854;
-    const gap=compact?4:16,contentH=heroH+gap+menuH+(compact?8:16),y=compact?4+Math.max(0,(height-contentH)/2):0;
-    let menuY=y+heroH+gap;
-    const buttons=buttonHeights.map(h=>{const rect={x:(width-menuW)/2,y:menuY,w:menuW,h};menuY+=h+5;return rect;});
-    return {compact,contentH:Math.max(height,contentH),hero:{x:(width-heroW)/2,y,w:heroW,h:heroH},cropTop,buttons,settings:{x:12,y:compact?Math.max(10,y+3):14,w:44,h:44}};
+    // Shared layout dimensions are viewport pixels; convert them back to the
+    // native 390-wide logical canvas so fixed spacing and 44px targets agree.
+    const scale=this.windowScale,layout=homeLayout(width/scale,height/scale);
+    const rect=(r:any)=>({x:r.x*scale,y:r.y*scale,w:r.w*scale,h:r.h*scale});
+    return {...layout,contentH:layout.contentH*scale,textScale:layout.textScale*scale,
+      hero:rect(layout.hero),image:rect(layout.image),title:rect(layout.title),subtitle:rect(layout.subtitle),launch:rect(layout.launch),
+      buttons:layout.buttons.map(rect),settings:rect(layout.settings)};
   }
   private dailyGeometry(width:number,height:number){
     // 与网页layout.mjs共用同一组公式：可用高度只选择排布，不缩整张原画。
@@ -299,20 +299,29 @@ export class FourfoldGame extends Component {
   }
   private drawHome(){
     const w=this.width,uiScale=w/390,layout=this.homeGeometry(w,this.height-this.safeTop-this.safeBottom),parent=this.pageContent('Home',layout.contentH);
+    const launchStory=()=>this.startGame('story',String(this.unlocked()));
     const entries=[
-      {text:'✦ 进入星图',frame:'goldButton',size:22,action:()=>this.startGame('story',String(this.unlocked()))},
+      {text:'✦ '+homeStoryLabel(this.unlocked()),frame:'goldButton',size:22,action:launchStory},
       {text:'◇ 每日挑战',frame:'creamButton',size:21,action:()=>this.startGame('daily',todayCN())},
       {text:'♛ 好友荣誉榜',frame:'lavenderButton',size:21,action:()=>this.showRank()},
     ];
-    // 只裁掉顶部装饰和底部空白，标题/书本保持完整；短屏菜单独立占80%屏宽。
-    const hero=layout.hero;this.art(layout.compact?'homeHeroCompact':'homeHero',hero.x,hero.y,hero.w,hero.h,parent);
+    // The observatory stays full-width and uncropped. Live labels and the actual
+    // story launch hit area share the same artwork coordinates in both clients.
+    const hero=layout.hero,scene=this.group('Home hero',hero.x,hero.y,hero.w,hero.h,parent);
+    this.art('home',0,0,hero.w,hero.h,scene.content);
+    const titleRect=layout.title,subtitleRect=layout.subtitle;
+    const title=this.txt('四格诡局',titleRect.x,titleRect.y,titleRect.w,titleRect.h,HOME_ART.titleSize*layout.textScale,C.dark,true,scene.content);
+    title.node.name='Home title';title.lineHeight=titleRect.h;title.enableWrapText=false;
+    const subtitle=this.txt('FOURFOLD',subtitleRect.x,subtitleRect.y,subtitleRect.w,subtitleRect.h,HOME_ART.subtitleSize*layout.textScale,C.dark,true,scene.content);
+    subtitle.node.name='Home subtitle';subtitle.fontFamily='Times New Roman';subtitle.lineHeight=subtitleRect.h;subtitle.enableWrapText=false;
+    const launch=layout.launch;this.artHit('Home launch',[launch.x,launch.y,launch.w,launch.h],1,scene.content,launchStory);
     entries.forEach((entry,i)=>{
       const r=this.manifest.atlas.frames[entry.frame],rect=layout.buttons[i],buttonH=rect.w*r.h/r.w;
       const button=this.btn(entry.text,rect.x,rect.y+(rect.h-buttonH)/2,rect.w,buttonH,entry.action,entry.frame,entry.size*uiScale,parent);
       // 点击范围可扩大，内部原画仍按素材比例绘制。
-      if(buttonH<44)button.getComponent(UITransform).setContentSize(rect.w,44);
+      if(buttonH<rect.h)button.getComponent(UITransform).setContentSize(rect.w,rect.h);
     });
-    const settings=layout.settings;this.iconButton('settingsButton',settings.x,this.safeTop+settings.y,44,()=>{this.modal='settings';this.draw();});
+    const settings=layout.settings;this.btn('',settings.x,settings.y,settings.w,settings.h,()=>{this.modal='settings';this.draw();},'settingsButton',16,parent);
   }
   private referenceNumber(value:string,x:number,y:number,w:number,h:number,color=C.dark,parent:Node=this.root){
     if(color===C.dark)return this.numberText(value,x,y,w,h,h*.94,parent);
