@@ -1,19 +1,19 @@
 // Shared by the browser and Cocos. The complete portrait scene contains the
 // title and all three entries; short screens scroll without cropping the art.
 export const HOME_ART=Object.freeze({
-  resource:'home-celestial-v6',width:941,height:1672,
+  resource:'home-celestial-v7',width:941,height:1672,
   titleRect:[94.1,133.76,752.8,125.4],subtitleRect:[235.25,284.24,470.5,50.16],
   titleSize:106,subtitleSize:27,
 });
 
-// Homepage-only colors keep the warm cream interface continuous without changing
+// Homepage-only colors keep the pale ivory interface continuous without changing
 // the established game, ranking, result panel, or numeric material colors.
 export const HOME_COLORS=Object.freeze({
-  background:'#FEE7C8',title:'#71482F',subtitle:'#96704D',menu:'#76513A',
+  background:'#F0E8DE',title:'#523D47',subtitle:'#806A70',menu:'#523D47',
 });
 
 export const HOME_UI=Object.freeze({
-  resource:'home-menu-v6',width:1536,height:1024,
+  resource:'home-menu-v7',width:1536,height:1024,
   frames:{story:[48,53,1438,385],daily:[53,509,672,450],rank:[796,509,680,450]},
   // Caption regions are local to each frame, clear of the painted icons.
   labelRects:{story:[362,105,820,190],daily:[62,285,548,115],rank:[66,285,551,115]},
