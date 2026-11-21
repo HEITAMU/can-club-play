@@ -94,11 +94,14 @@ export class FourfoldGame extends Component {
       this.manifest=manifestAsset.json;this.reference=referenceAsset.json;this.rankLayout=rankAsset.json;
       const rects=this.manifest?.atlas?.frames;
       if(!rects||REQUIRED_FRAMES.some(name=>!rects[name]))throw new Error('美术清单缺少必要组件');
+      const muralName=this.reference?.tileArtwork?.resource;
+      if(typeof muralName!=='string'||!/^[a-z0-9][a-z0-9_-]*$/i.test(muralName))throw new Error('完整星图资源名无效');
+      const paths={...ART_PATHS,mural:'art/'+muralName};
       this.disposeArt();
-      const names=Object.keys(ART_PATHS);
+      const names=Object.keys(paths);
       // 逐张入库；重试和销毁能准确释放本次已经装入的资源。
       for(const name of names){
-        const source=await this.loadResource(ART_PATHS[name],ImageAsset);
+        const source=await this.loadResource(paths[name],ImageAsset);
         if(serial!==this.loadSerial)return;
         source.addRef();this.images.push(source);
         const texture=new Texture2D();texture.image=source;this.textures[name]=texture;
@@ -129,18 +132,19 @@ export class FourfoldGame extends Component {
     const f=new SpriteFrame();f.texture=texture;f.rect=new Rect(x,y,w,h);f.originalSize=new Size(w,h);f.packable=false;return f;
   }
   private installReferenceFrames(){
-    const r=this.reference,original=this.textures.referenceOriginal,clean=this.textures.referenceClean;
+    const r=this.reference,original=this.textures.referenceOriginal,clean=this.textures.referenceClean,mural=this.textures.mural;
     if(!r?.size||r.slotRects?.length!==9||r.knobCenters?.length!==4||r.knobCropRects?.length!==4)throw new Error('参考界面坐标清单不完整');
     if([original,clean].some(t=>t.width!==r.size[0]||t.height!==r.size[1]))throw new Error('参考原画尺寸与清单不一致');
+    if(!r.tileArtwork||r.tileArtwork.imageSize?.[0]!==mural.width||r.tileArtwork.imageSize?.[1]!==mural.height)throw new Error('完整星图尺寸与清单不一致');
     const add=(name:string,rect:number[],texture=clean)=>{
       if(!Array.isArray(rect)||rect.length!==4||!rect.every(Number.isFinite)||rect[0]<0||rect[1]<0||rect[2]<=0||rect[3]<=0||rect[0]+rect[2]>texture.width||rect[1]+rect[3]>texture.height)throw new Error(`参考裁片范围错误: ${name}`);
       this.frames[name]=this.makeFrame(texture,rect[0],rect[1],rect[2],rect[3]);
     };
     for(let token=1;token<=9;token++){
-      const [x,y,w,h]=r.tileByToken[token],inset=r.tileSurface.safeCropInsetsByToken?.[token]||r.tileSurface.safeCropInsets;
-      const [left,top,right,bottom]=inset;
-      // Source seams and neighbouring ornaments are not part of a movable tile.
-      add('referenceTile'+token,[x+left,y+top,w-left-right,h-top-bottom]);
+      // Every token is a window into one continuous mural at its GOAL slot.
+      // Keep fractional UV bounds and the hidden rail intervals: independently
+      // cropping or rounding each card would break the restored picture again.
+      add('referenceTile'+token,r.tileArtwork.sourceRectByToken[token],mural);
     }
     for(let q=0;q<4;q++)add('referenceKnob'+q,r.knobCropRects[q],original);
     for(const key of ['date','moves','timer'])add('referencePatch'+key,r.dynamicPatches[key]);
@@ -253,7 +257,7 @@ export class FourfoldGame extends Component {
     this.txt('四格诡局',40,280,this.width-80,60,34,C.dark,true);
     this.txt(this.loadError||'正在展开星图…',35,368,this.width-70,35,16,C.muted);
     if(this.loadError)this.btn('重新加载',80,431,this.width-160,54,()=>this.loadArt(),'creamButton',18);
-    else {this.shape(70,426,this.width-140,7,'#E5BC88','',3);this.shape(70,426,Math.max(7,(this.width-140)*this.loadProgress/Object.keys(ART_PATHS).length),7,C.gold2,'',3);}
+    else {this.shape(70,426,this.width-140,7,'#E5BC88','',3);this.shape(70,426,Math.max(7,(this.width-140)*this.loadProgress/(Object.keys(ART_PATHS).length+1)),7,C.gold2,'',3);}
   }
   private draw(){
     if(!this.root)return;this.clear();
@@ -409,7 +413,8 @@ export class FourfoldGame extends Component {
       const radius=Math.min(r.tileSurface.cornerRadius*scale,Math.min(tw,th)/2),clip=tile.node.addComponent(Mask);clip.type=Mask.Type.GRAPHICS_STENCIL;
       const stencil=tile.node.getComponent(Graphics)||tile.node.addComponent(Graphics);stencil.clear();stencil.fillColor=ink('#FFFFFF');stencil.roundRect(-tw/2,-th/2,tw,th,radius);stencil.fill();
       this.art('referenceTile'+token,0,0,tw,th,tile.content);
-      this.tileSurface(tw,th,radius,r.tileSurface.rimInset*scale,scale,tile.content);this.tileNodes[i]=tile.node;
+      this.tileSurface(tw,th,radius,r.tileSurface.rimInset*scale,scale,tile.content);
+      this.tileIndex(token,tw,th,scale,tile.content);this.tileNodes[i]=tile.node;
     }
     for(let q=0;q<4;q++){
       const center=r.knobCenters[q],crop=r.knobCropRects[q],d=r.knobClipRadius*2*scale,hitD=Math.max(44,d);
@@ -419,6 +424,15 @@ export class FourfoldGame extends Component {
       const cw=crop[2]*scale,ch=crop[3]*scale,knob=this.art('referenceKnob'+q,(d-cw)/2,(d-ch)/2,cw,ch,circle.content);
       if(this.direction<0)knob.setScale(-1,1,1);knob.angle=-this.knobAngles[q];this.knobNodes[q]=hit.node;this.knobArtNodes[q]=knob;this.bindButton(hit.node,()=>this.spin(q));
     }
+  }
+  private tileIndex(token:number,w:number,h:number,scale:number,parent:Node){
+    // The token stays separate from the illustration; its inset also leaves
+    // room for the 48px source-radius knobs at the inner grid intersections.
+    const width=38*scale,height=52*scale,right=36*scale,bottom=14*scale;
+    const label=this.txt(String(token),w-right-width,h-bottom-height,width,height,44*scale,'#FFF2C5',true,parent);
+    label.node.name='Tile index '+token;label.fontFamily='Times New Roman';label.isItalic=true;label.lineHeight=height;label.enableWrapText=false;
+    label.enableShadow=true;label.shadowColor=ink('#080E29C2');label.shadowOffset=new Vec2(0,-1.6*scale);label.shadowBlur=1.2*scale;
+    const outline=label.node.addComponent(LabelOutline);outline.color=ink('#0F193099');outline.width=1.2*scale;
   }
   private cleanBoardRails(scale:number,parent:Node){
     const r=this.reference,a=r.tileArea,slots=r.slotRects;
@@ -440,18 +454,49 @@ export class FourfoldGame extends Component {
     }
   }
   private tileSurface(w:number,h:number,radius:number,inset:number,scale:number,parent:Node){
-    const node=this.createNode('Tile satin rim',0,0,w,h,parent),g=node.addComponent(Graphics),line=Math.max(.35,1.1*scale);
-    const rounded=(pad:number,color:string,width:number)=>{g.clear();g.roundRect(-w/2+pad,-h/2+pad,w-pad*2,h-pad*2,Math.max(1,radius-pad));g.strokeColor=ink(color);g.lineWidth=width;g.stroke();};
-    // A single shared frame replaces the inconsistent baked crop corners.
-    rounded(Math.max(.3,.75*scale),'#A8B4DF4A',Math.max(.4,1.5*scale));
-    const rim=this.createNode('Tile inner rim',0,0,w,h,parent),edge=rim.addComponent(Graphics);
-    edge.roundRect(-w/2+inset,-h/2+inset,w-inset*2,h-inset*2,Math.max(1,radius-inset));edge.strokeColor=ink('#C2C8E039');edge.lineWidth=line;edge.stroke();
-    const accent=(name:string,x1:number,y1:number,x2:number,y2:number,color:string)=>{
-      const n=this.createNode(name,0,0,w,h,parent),path=n.addComponent(Graphics);path.moveTo(x1,y1);path.lineTo(x2,y2);path.strokeColor=ink(color);path.lineWidth=line;path.stroke();
+    // Each movable card has its own enamel finish. All layers stay inside the
+    // existing round mask, so neither image UVs nor solved-image alignment move.
+    const rounded=(name:string,pad:number,color:string,width:number)=>{
+      const g=this.createNode(name,0,0,w,h,parent).addComponent(Graphics);
+      g.roundRect(-w/2+pad,-h/2+pad,w-pad*2,h-pad*2,Math.max(1,radius-pad));g.strokeColor=ink(color);g.lineWidth=width;g.stroke();
     };
-    accent('Tile upper light',-w/2+radius,h/2-inset,w/2-radius,h/2-inset,'#E6D4AA4D');
-    accent('Tile lower shade',-w/2+radius,-h/2+inset,w/2-radius,-h/2+inset,'#0C143D8C');
-    accent('Tile right shade',w/2-inset,-h/2+radius,w/2-inset,h/2-radius,'#68769B30');
+    const accent=(name:string,x1:number,y1:number,x2:number,y2:number,color:string,width=1.4*scale)=>{
+      const path=this.createNode(name,0,0,w,h,parent).addComponent(Graphics);
+      path.moveTo(x1,y1);path.lineTo(x2,y2);path.strokeColor=ink(color);path.lineWidth=width;path.stroke();
+    };
+    // Low-opacity diagonal bands approximate the same upper-left reflection as
+    // the web finish without another texture or any noise over the star map.
+    const clipBand=(points:any[],bound:number,above:boolean)=>{
+      const out:any[]=[];
+      for(let i=0;i<points.length;i++){
+        const a=points[i],b=points[(i+1)%points.length],da=a.x+a.y-bound,db=b.x+b.y-bound,insideA=above?da>=0:da<=0,insideB=above?db>=0:db<=0;
+        if(insideA)out.push(a);
+        if(insideA!==insideB){const t=da/(da-db);out.push({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t});}
+      }
+      return out;
+    };
+    const sheen=(name:string,start:number,end:number,color:string)=>{
+      const points=clipBand(clipBand([{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1}],start,true),end,false);
+      const g=this.createNode(name,0,0,w,h,parent).addComponent(Graphics);
+      points.forEach((p:any,i:number)=>{const x=p.x*w-w/2,y=h/2-p.y*h;if(i)g.lineTo(x,y);else g.moveTo(x,y);});
+      g.lineTo(points[0].x*w-w/2,h/2-points[0].y*h);g.fillColor=ink(color);g.fill();
+    };
+    sheen('Tile enamel upper reflection',0,.26,'#FFF7DC18');
+    sheen('Tile enamel soft reflection',.26,.56,'#DCE8FF08');
+    sheen('Tile enamel reflection falloff',.56,.9,'#DCE8FF02');
+    sheen('Tile enamel lower falloff',1.56,1.8,'#060D2C0D');
+    sheen('Tile enamel lower reflection',1.8,2,'#060D2C25');
+    this.shape(0,h-11.8*scale,w,7*scale,'#07112B32','',0,parent).name='Tile lower soft shade';
+    this.shape(0,h-4.8*scale,w,4.8*scale,'#5B3C30C9','',0,parent).name='Tile copper thickness';
+    rounded('Tile satin rim',1.5*scale,'#67422ED9',1.8*scale);
+    accent('Tile upper bevel',-w/2+radius,h/2-1.5*scale,w/2-radius,h/2-1.5*scale,'#B18C5B70',3*scale);
+    accent('Tile upper champagne edge',-w/2+radius,h/2-1.5*scale,w/2-radius,h/2-1.5*scale,'#F7E0AFBF',1.8*scale);
+    accent('Tile left champagne edge',-w/2+1.5*scale,-h/2+radius,-w/2+1.5*scale,h/2-radius,'#F7E0AFBF',1.8*scale);
+    rounded('Tile inner rim',inset,'#D9BC8570',1.4*scale);
+    accent('Tile upper light',-w/2+radius,h/2-inset,w/2-radius,h/2-inset,'#FFE6AC8C');
+    accent('Tile lower shade',-w/2+radius,-h/2+inset,w/2-radius,-h/2+inset,'#5B392BD9');
+    accent('Tile right shade',w/2-inset,-h/2+radius,w/2-inset,h/2-radius,'#85543280');
+    rounded('Tile navy edge',.6*scale,'#0B1535D9',1.2*scale);
   }
   private spin(q:number){
     if(this.disposed||this.inHome||this.won||this.modal||this.busy||!this.assetsReady||!Number.isInteger(q)||!SQUARES[q]||!this.boardContent)return;

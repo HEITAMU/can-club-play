@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>四格诡局 · 完整星图验收 0.8.9</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#17203b;color:#f6e2b4;font:15px/1.6 system-ui,sans-serif}main{display:flex;flex-wrap:wrap;align-items:flex-start;gap:22px;max-width:1070px;margin:auto;padding:22px}iframe{display:block;flex:none;width:390px;height:650px;border:0;border-radius:12px;background:#f4cf99;box-shadow:0 10px 35px #0005}section{flex:1;min-width:270px;max-width:520px}h1{font-size:23px;line-height:1.3;margin:0 0 12px}p{color:#d7cdb7;margin:12px 0}fieldset{border:1px solid #97805a;border-radius:12px;margin:16px 0;padding:13px}legend{padding:0 7px}label{display:flex;align-items:center;gap:9px;margin:10px 0}input{width:19px;height:19px;accent-color:#d9aa61}button{font:600 14px system-ui;color:#4d291c;background:#f6dfad;border:1px solid #c49b59;border-radius:8px;padding:10px 12px;cursor:pointer;margin:3px}fieldset:disabled{opacity:.6}output{display:block;padding:13px;border-radius:10px;background:#0e152a;white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.7 ui-monospace,monospace}.pass{color:#b2e0af}.fail{color:#ffb0a1}a{color:#f3c978}figure{margin:18px 0 0;max-width:343px}figcaption{color:#ddd1b7;font-size:13px;margin-bottom:7px}.reference-window{aspect-ratio:747 / 694;overflow:hidden;border:1px solid #647196;background:#19213e}.reference-window img{display:block;width:100%;height:100%;object-fit:fill}@media(max-width:460px){main{padding:8px;gap:18px}iframe{max-width:100%;border-radius:8px}}
+</style>
+<main>
+<iframe id="preview" title="真实第一关通关星图" width="390" height="650" src="../?mode=story&amp;level=1&amp;v=0.8.9"></iframe>
+<section>
+<h1>完整星图验收 · 0.8.9</h1>
+<p>左边通过真实旋钮完成第一关。通关后临时隐藏弹窗，直接对照九格拼合后的星图和完整原图。</p>
+<fieldset id="controls" disabled>
+<legend>观察完整画面</legend>
+<label><input id="hideResult" type="checkbox" checked>暂时隐藏通关弹窗</label>
+<label><input id="hideDecoration" type="checkbox">暂时隐藏旋钮、编号和细内框</label>
+<button id="showResult" type="button">恢复通关弹窗</button>
+<button id="solveAgain" type="button">重新完成第一关</button>
+</fieldset>
+<output id="report" role="status" aria-live="polite">正在载入第一关…</output>
+<figure><figcaption>同一张完整原图 · 与棋盘采用相同画布比例</figcaption><div class="reference-window"><img id="mural" alt="用于九格拼图的完整星图"></div></figure>
+<p>开关仅修改此预览的显示，不关闭弹窗、不跳关。恢复后，叉号和“下一关”仍执行游戏原来的操作。</p>
+<p><a href="../?v=0.8.9">打开完整游戏</a> · <a href="board-underlay-preview.html?v=0.8.9">检查棋盘底板</a></p>
+</section>
+</main>
+<script type="module">
+import {GOAL,makePuzzle,shortestPath,rotate} from '../cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.9';
+const VERSION='0.8.9',frame=document.querySelector('#preview'),controls=document.querySelector('#controls'),report=document.querySelector('#report');
+const hideResult=document.querySelector('#hideResult'),hideDecoration=document.querySelector('#hideDecoration'),mural=document.querySelector('#mural');
+const STYLE_ID='fourfold-solved-art-inspector';let generation=0,verified=false,alignmentError=0,artworkPromise=null;
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+const doc=()=>frame.contentDocument,get=id=>doc()?.getElementById(id);
+const sequence=()=>[...(get('board')?.children||[])].map(tile=>tile.dataset.token).join('');
+async function until(check,message,timeout=10000){const end=performance.now()+timeout;for(;;){if(check())return;if(performance.now()>end)throw new Error(message);await sleep(30);}}
+async function loadMuralReference(){
+  const response=await fetch(new URL('../cocos/assets/resources/art/referenceLayout.json?v='+VERSION,import.meta.url));
+  if(!response.ok)throw new Error('共享星图配置未加载');
+  const layout=await response.json(),art=layout.tileArtwork;
+  if(!art||!/^[-a-z0-9]+$/.test(art.resource)||art.fit!=='fill')throw new Error('共享星图配置无效');
+  mural.src=new URL('../assets/art/'+art.resource+'.webp',import.meta.url).href;
+  mural.parentElement.style.aspectRatio=layout.tileArea[2]+' / '+layout.tileArea[3];
+}
+function verifyMuralAlignment(){
+  const board=get('board'),bounds=board.getBoundingClientRect(),w=frame.contentWindow;
+  const muralPath=new URL(mural.src).pathname;let maximum=0;
+  for(const tile of board.children){
+    const r=tile.getBoundingClientRect(),style=w.getComputedStyle(tile);
+    const size=style.backgroundSize.trim().split(/\s+/),position=style.backgroundPosition.trim().split(/\s+/);
+    if(size.length!==2||position.length!==2||[...size,...position].some(v=>!v.endsWith('%')))throw new Error('图块没有使用共享画布百分比裁图');
+    const drawnW=r.width*parseFloat(size[0])/100,drawnH=r.height*parseFloat(size[1])/100;
+    const drawnX=r.left+(r.width-drawnW)*parseFloat(position[0])/100,drawnY=r.top+(r.height-drawnH)*parseFloat(position[1])/100;
+    const image=style.backgroundImage.match(/^url\(["']?(.*?)["']?\)$/)?.[1];
+    if(!image||new URL(image,doc().baseURI).pathname!==muralPath)throw new Error('图块未使用同一张完整星图');
+    maximum=Math.max(maximum,Math.abs(drawnX-bounds.left),Math.abs(drawnY-bounds.top),Math.abs(drawnW-bounds.width),Math.abs(drawnH-bounds.height));
+    if(tile.querySelector('.index')?.textContent!==tile.dataset.token)throw new Error('图块编号没有使用独立文字层');
+  }
+  if(maximum>.35)throw new Error(`完整原图坐标没有对齐，最大偏差 ${maximum.toFixed(3)} px`);
+  return maximum;
+}
+function apply(){
+  const d=doc();if(!d?.getElementById('board'))return;
+  d.getElementById(STYLE_ID)?.remove();const rules=[];
+  if(hideResult.checked)rules.push('#modal{visibility:hidden!important;pointer-events:none!important}');
+  if(hideDecoration.checked)rules.push('.game-screen .anchors,.game-screen .tile .index,.game-screen .tile:after{visibility:hidden!important;pointer-events:none!important}');
+  if(rules.length){const style=d.createElement('style');style.id=STYLE_ID;style.textContent=rules.join('\n');d.head.append(style);}
+  if(verified){
+    report.className='pass';report.textContent=`通过 · 真实旋钮完成第一关\n图块顺序 ${sequence()}\n实际步数 ${get('moves').textContent}\n九格共享原图坐标，最大偏差 ${alignmentError.toFixed(3)} px\n通关弹窗 ${get('modal').hidden?'未打开':hideResult.checked?'仍打开，仅在检查页隐藏':'正常显示'}\n游戏版本 ${d.querySelector('meta[name="fourfold-version"]')?.content||'—'}\n原图 ${mural.naturalWidth} × ${mural.naturalHeight} px`;
+  }
+}
+for(const control of [hideResult,hideDecoration])control.addEventListener('change',apply);
+document.querySelector('#showResult').addEventListener('click',()=>{hideResult.checked=false;hideDecoration.checked=false;apply();});
+document.querySelector('#solveAgain').addEventListener('click',()=>{verified=false;controls.disabled=true;hideResult.checked=true;hideDecoration.checked=false;report.className='';report.textContent='重新载入第一关…';frame.src=`../?mode=story&level=1&v=${VERSION}&inspection=${Date.now()}`;});
+mural.addEventListener('load',()=>{if(verified)apply();});
+async function solve(){
+  const serial=++generation;verified=false;controls.disabled=true;
+  await (artworkPromise||=loadMuralReference());
+  await until(()=>doc()?.documentElement.dataset.gameReady==='true'&&doc().documentElement.dataset.layoutReady==='true'&&get('board')?.children.length===9&&!get('gameScreen').hidden,'第一关资源未准备好',30000);
+  if(serial!==generation)return;
+  const puzzle=makePuzzle('story','1');if(sequence()!==puzzle.board)throw new Error('实际棋盘不是第一关初始局面');
+  if(doc().querySelector('meta[name="fourfold-version"]')?.content!==VERSION)throw new Error('载入版本不匹配，请刷新');
+  const path=shortestPath(sequence());let expected=sequence();
+  report.textContent=`第一关已载入，正通过真实旋钮完成 ${path.length} 步…`;
+  for(const move of path){
+    if(serial!==generation)return;
+    get(move.dir===1?'cwBtn':'ccwBtn').click();
+    get('anchors').querySelector(`[data-q="${move.q}"]`).click();
+    expected=rotate(expected,move.q,move.dir);
+    await until(()=>!get('board').classList.contains('rotating')&&sequence()===expected,'旋钮操作没有正确落位');
+  }
+  await until(()=>sequence()===GOAL&&!get('modal').hidden&&get('modal').classList.contains('result-mode'),'没有出现真实通关结果');
+  if(Number(get('moves').textContent)!==path.length)throw new Error('实际步数与旋钮操作次数不一致');
+  await until(()=>mural.complete&&mural.naturalWidth>0,'完整星图资源未加载');
+  alignmentError=verifyMuralAlignment();
+  if(serial!==generation)return;
+  verified=true;controls.disabled=false;apply();
+}
+function start(){solve().catch(error=>{report.className='fail';report.textContent='未通过 · '+error.message;controls.disabled=false;});}
+frame.addEventListener('load',start);
+if(frame.contentDocument?.readyState==='complete'&&frame.contentDocument.getElementById('board'))start();
+</script>
+</html>

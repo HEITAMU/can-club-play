@@ -6,32 +6,40 @@
 .game-screen .board{display:block;z-index:1;border-radius:0;box-shadow:none;overflow:hidden;background:
 linear-gradient(to right,transparent 32.396%,#8d522e 32.396%,#f9d698 32.8%,#d18c51 33.7%,transparent 34.003%,transparent 66.667%,#8d522e 66.667%,#f9d698 67.05%,#d18c51 67.8%,transparent 68.005%),
 linear-gradient(to bottom,transparent 32.853%,#8d522e 32.853%,#f9d698 33.2%,#d18c51 34.05%,transparent 34.438%,transparent 65.994%,#8d522e 65.994%,#f9d698 66.35%,#d18c51 67.2%,transparent 67.579%)}
-/* Crop only the old baked seams; every card receives the same rounded lacquer rim. */
-.game-screen .tile{position:absolute;min-width:0;min-height:0;background-image:url('assets/art/reference-clean.webp');background-repeat:no-repeat;overflow:hidden;border-radius:var(--tile-radius-x) / var(--tile-radius-y);box-shadow:inset 0 0 0 .55px #a8b4df4a,inset 0 1px 1px #fff2d51a,inset 0 -2px 3px #070c2759}
-.game-screen .tile:before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(145deg,#fff5d912,transparent 35%,transparent 64%,#050b2826);pointer-events:none}
-.game-screen .tile:after{display:block;content:"";position:absolute;inset:var(--tile-rim-y) var(--tile-rim-x);border:.65px solid #9eabd626;border-top-color:#e6d4aa4d;border-left-color:#c2c8e039;border-right-color:#68769b30;border-bottom-color:#0c143d8c;border-radius:var(--tile-inner-radius-x) / var(--tile-inner-radius-y);box-shadow:0 .4px .5px #050b2533;pointer-events:none}
-.game-screen .tile .index{display:none}
+/* Every moving piece has its own enamel face, champagne bevel, and recessed copper edge. */
+.game-screen .tile{
+  position:absolute;min-width:0;min-height:0;background-image:none;background-repeat:no-repeat;overflow:hidden;
+  border-radius:var(--tile-radius-x) / var(--tile-radius-y);
+  box-shadow:inset 0 0 0 .55px #0b1535d9,inset .85px .85px 0 #f7e0afbf,inset -.85px -.85px 0 #67422ed9,inset 0 1.4px 0 #b18c5b70,inset 0 -2.2px 0 #5b3c30c9,inset 0 -3.4px 2px #07112b6b;
+}
+.game-screen .tile:before{
+  content:"";position:absolute;inset:0;border-radius:inherit;
+  background:linear-gradient(160deg,#fff7dc20 0%,#dce8ff0d 20%,transparent 45%),linear-gradient(0deg,#060d2c2e 0%,transparent 22%);
+  pointer-events:none;z-index:0;
+}
+.game-screen .tile:after{
+  display:block;content:"";position:absolute;inset:var(--tile-rim-y) var(--tile-rim-x);
+  border:.65px solid #c9aa704d;border-top-color:#ffe6ac8c;border-left-color:#d9bc8570;border-right-color:#85543280;border-bottom-color:#5b392bd9;
+  border-radius:var(--tile-inner-radius-x) / var(--tile-inner-radius-y);
+  box-shadow:inset 0 .6px .3px #fff6d824,0 1px .5px #050c2d66;pointer-events:none;z-index:1;
+}
+.game-screen .tile .index{display:block;position:absolute;right:var(--tile-number-right);bottom:var(--tile-number-bottom);font:italic 700 clamp(15px,4.85vw,24px)/1 "Times New Roman",Times,serif;color:#fff2c5;text-shadow:0 1px 1px #080e29c2,0 2px 2px #070f2966,0 -.4px 0 #fff8e8;-webkit-text-stroke:.4px #0f193099;z-index:2;pointer-events:none}
+@supports (font-size:1cqw){
+  .game-screen .board{container-type:inline-size}
+  .game-screen .tile .index{font-size:max(15px,5.89022758cqw)}
+}
 .game-screen .spin-node{width:12.85140562%;height:auto;aspect-ratio:1;border-radius:50%;min-width:36px;min-height:36px}
 .game-screen .spin-art{background-image:url('assets/art/reference-daily.webp');border-radius:50%;overflow:hidden;box-shadow:0 2px 3px #42251b55}
 
-.game-screen .tile:nth-child(1){left:0.00000000%;top:0.00000000%;width:32.39625167%;height:32.85302594%;--tile-radius-x:6.61157025%;--tile-radius-y:7.01754386%;--tile-rim-x:1.23966942%;--tile-rim-y:1.31578947%;--tile-inner-radius-x:5.50847458%;--tile-inner-radius-y:5.85585586%;}
-.game-screen .tile:nth-child(2){left:34.00267738%;top:0.00000000%;width:32.66398929%;height:32.85302594%;--tile-radius-x:6.55737705%;--tile-radius-y:7.01754386%;--tile-rim-x:1.22950820%;--tile-rim-y:1.31578947%;--tile-inner-radius-x:5.46218487%;--tile-inner-radius-y:5.85585586%;}
-.game-screen .tile:nth-child(3){left:68.00535475%;top:0.00000000%;width:31.99464525%;height:32.85302594%;--tile-radius-x:6.69456067%;--tile-radius-y:7.01754386%;--tile-rim-x:1.25523013%;--tile-rim-y:1.31578947%;--tile-inner-radius-x:5.57939914%;--tile-inner-radius-y:5.85585586%;}
-.game-screen .tile:nth-child(4){left:0.00000000%;top:34.43804035%;width:32.39625167%;height:31.55619597%;--tile-radius-x:6.61157025%;--tile-radius-y:7.30593607%;--tile-rim-x:1.23966942%;--tile-rim-y:1.36986301%;--tile-inner-radius-x:5.50847458%;--tile-inner-radius-y:6.10328638%;}
-.game-screen .tile:nth-child(5){left:34.00267738%;top:34.43804035%;width:32.66398929%;height:31.55619597%;--tile-radius-x:6.55737705%;--tile-radius-y:7.30593607%;--tile-rim-x:1.22950820%;--tile-rim-y:1.36986301%;--tile-inner-radius-x:5.46218487%;--tile-inner-radius-y:6.10328638%;}
-.game-screen .tile:nth-child(6){left:68.00535475%;top:34.43804035%;width:31.99464525%;height:31.55619597%;--tile-radius-x:6.69456067%;--tile-radius-y:7.30593607%;--tile-rim-x:1.25523013%;--tile-rim-y:1.36986301%;--tile-inner-radius-x:5.57939914%;--tile-inner-radius-y:6.10328638%;}
-.game-screen .tile:nth-child(7){left:0.00000000%;top:67.57925072%;width:32.39625167%;height:32.42074928%;--tile-radius-x:6.61157025%;--tile-radius-y:7.11111111%;--tile-rim-x:1.23966942%;--tile-rim-y:1.33333333%;--tile-inner-radius-x:5.50847458%;--tile-inner-radius-y:5.93607306%;}
-.game-screen .tile:nth-child(8){left:34.00267738%;top:67.57925072%;width:32.66398929%;height:32.42074928%;--tile-radius-x:6.55737705%;--tile-radius-y:7.11111111%;--tile-rim-x:1.22950820%;--tile-rim-y:1.33333333%;--tile-inner-radius-x:5.46218487%;--tile-inner-radius-y:5.93607306%;}
-.game-screen .tile:nth-child(9){left:68.00535475%;top:67.57925072%;width:31.99464525%;height:32.42074928%;--tile-radius-x:6.69456067%;--tile-radius-y:7.11111111%;--tile-rim-x:1.25523013%;--tile-rim-y:1.33333333%;--tile-inner-radius-x:5.57939914%;--tile-inner-radius-y:5.93607306%;}
-.game-screen .tile[data-token="1"]{background-size:393.54838710% 907.38916256%;background-position:89.32496075% 54.05735204%;}
-.game-screen .tile[data-token="2"]{background-size:377.87610619% 868.86792453%;background-position:9.71337580% 39.69325153%;}
-.game-screen .tile[data-token="3"]{background-size:382.95964126% 881.33971292%;background-position:90.17432647% 68.34047765%;}
-.game-screen .tile[data-token="4"]{background-size:377.87610619% 881.33971292%;background-position:9.71337580% 68.34047765%;}
-.game-screen .tile[data-token="5"]{background-size:382.95964126% 868.86792453%;background-position:90.17432647% 39.69325153%;}
-.game-screen .tile[data-token="6"]{background-size:374.56140351% 881.33971292%;background-position:50.31948882% 68.34047765%;}
-.game-screen .tile[data-token="7"]{background-size:388.18181818% 907.38916256%;background-position:9.62145110% 54.05735204%;}
-.game-screen .tile[data-token="8"]{background-size:374.56140351% 907.38916256%;background-position:50.31948882% 54.05735204%;}
-.game-screen .tile[data-token="9"]{background-size:374.56140351% 868.86792453%;background-position:50.31948882% 39.69325153%;}
+.game-screen .tile:nth-child(1){left:0.00000000%;top:0.00000000%;width:32.39625167%;height:32.85302594%;--tile-radius-x:6.61157025%;--tile-radius-y:7.01754386%;--tile-rim-x:1.23966942%;--tile-rim-y:1.31578947%;--tile-inner-radius-x:5.50847458%;--tile-inner-radius-y:5.85585586%;--tile-number-right:15.70247934%;--tile-number-bottom:6.57894737%;}
+.game-screen .tile:nth-child(2){left:34.00267738%;top:0.00000000%;width:32.66398929%;height:32.85302594%;--tile-radius-x:6.55737705%;--tile-radius-y:7.01754386%;--tile-rim-x:1.22950820%;--tile-rim-y:1.31578947%;--tile-inner-radius-x:5.46218487%;--tile-inner-radius-y:5.85585586%;--tile-number-right:15.57377049%;--tile-number-bottom:6.57894737%;}
+.game-screen .tile:nth-child(3){left:68.00535475%;top:0.00000000%;width:31.99464525%;height:32.85302594%;--tile-radius-x:6.69456067%;--tile-radius-y:7.01754386%;--tile-rim-x:1.25523013%;--tile-rim-y:1.31578947%;--tile-inner-radius-x:5.57939914%;--tile-inner-radius-y:5.85585586%;--tile-number-right:15.89958159%;--tile-number-bottom:6.57894737%;}
+.game-screen .tile:nth-child(4){left:0.00000000%;top:34.43804035%;width:32.39625167%;height:31.55619597%;--tile-radius-x:6.61157025%;--tile-radius-y:7.30593607%;--tile-rim-x:1.23966942%;--tile-rim-y:1.36986301%;--tile-inner-radius-x:5.50847458%;--tile-inner-radius-y:6.10328638%;--tile-number-right:15.70247934%;--tile-number-bottom:6.84931507%;}
+.game-screen .tile:nth-child(5){left:34.00267738%;top:34.43804035%;width:32.66398929%;height:31.55619597%;--tile-radius-x:6.55737705%;--tile-radius-y:7.30593607%;--tile-rim-x:1.22950820%;--tile-rim-y:1.36986301%;--tile-inner-radius-x:5.46218487%;--tile-inner-radius-y:6.10328638%;--tile-number-right:15.57377049%;--tile-number-bottom:6.84931507%;}
+.game-screen .tile:nth-child(6){left:68.00535475%;top:34.43804035%;width:31.99464525%;height:31.55619597%;--tile-radius-x:6.69456067%;--tile-radius-y:7.30593607%;--tile-rim-x:1.25523013%;--tile-rim-y:1.36986301%;--tile-inner-radius-x:5.57939914%;--tile-inner-radius-y:6.10328638%;--tile-number-right:15.89958159%;--tile-number-bottom:6.84931507%;}
+.game-screen .tile:nth-child(7){left:0.00000000%;top:67.57925072%;width:32.39625167%;height:32.42074928%;--tile-radius-x:6.61157025%;--tile-radius-y:7.11111111%;--tile-rim-x:1.23966942%;--tile-rim-y:1.33333333%;--tile-inner-radius-x:5.50847458%;--tile-inner-radius-y:5.93607306%;--tile-number-right:15.70247934%;--tile-number-bottom:6.66666667%;}
+.game-screen .tile:nth-child(8){left:34.00267738%;top:67.57925072%;width:32.66398929%;height:32.42074928%;--tile-radius-x:6.55737705%;--tile-radius-y:7.11111111%;--tile-rim-x:1.22950820%;--tile-rim-y:1.33333333%;--tile-inner-radius-x:5.46218487%;--tile-inner-radius-y:5.93607306%;--tile-number-right:15.57377049%;--tile-number-bottom:6.66666667%;}
+.game-screen .tile:nth-child(9){left:68.00535475%;top:67.57925072%;width:31.99464525%;height:32.42074928%;--tile-radius-x:6.69456067%;--tile-radius-y:7.11111111%;--tile-rim-x:1.25523013%;--tile-rim-y:1.33333333%;--tile-inner-radius-x:5.57939914%;--tile-inner-radius-y:5.93607306%;--tile-number-right:15.89958159%;--tile-number-bottom:6.66666667%;}
 .game-screen .spin-node[data-q="0"]{left:33.06559572%!important;top:33.86167147%!important;}
 .game-screen .spin-node[data-q="0"] .spin-art{background-size:889.58333333% 1918.75000000%;background-position:33.24538259% 47.30813288%;}
 .game-screen .spin-node[data-q="1"]{left:67.60374833%!important;top:34.00576369%!important;}

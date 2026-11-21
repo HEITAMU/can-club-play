@@ -1,10 +1,9 @@
-import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.8';
-import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.8';
+import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.9';
+import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.9';
 
 const el=id=>document.getElementById(id);
 const $={board:el('board'),anchors:el('anchors'),target:el('target'),moves:el('moves'),par:el('par'),clock:el('clock'),instruction:el('instruction'),difficulty:el('difficulty'),chapterCaption:el('chapterCaption'),puzzleTitle:el('puzzleTitle'),storyTab:el('storyTab'),dailyTab:el('dailyTab'),cwBtn:el('cwBtn'),ccwBtn:el('ccwBtn'),modal:el('modal'),toast:el('toast')};
 const names=['星图初醒','看似简单','交错轨道','一念之差','不对称','失序之环','倒影之谜','四角对峙','镜像迷宫','群星换位','王冠密码','无声棋局','深空共振','星环审判','暗夜回响','隐秘秩序','星渊终章','逻辑之冠'];
-const pos=i=>`${((i%3)/2)*100}% ${Math.floor(i/3)*50}%`;
 const currentDay=()=>todayCN();
 const read=(key,otherwise)=>{try{const v=localStorage.getItem('fourfold:'+key);return v===null?otherwise:JSON.parse(v);}catch{return otherwise;}};
 const write=(key,value)=>{try{localStorage.setItem('fourfold:'+key,JSON.stringify(value));}catch{}};
@@ -14,6 +13,7 @@ const rankScreen=el('rankScreen');
 const settingsOverlay=el('settingsOverlay');
 const notice=el('startupNotice');
 const tileNodes=new Map();
+let tileArtwork=null;
 const anchorNodes=[];
 const anchorMotionNodes=[],anchorRingNodes=[],knobAngles=[0,0,0,0];
 const turnFocus=el('turnFocus'),boardFrame=el('boardFrame');
@@ -140,9 +140,17 @@ function updateTime(){
 }
 function initBoard(){
   if(tileNodes.size)return;
+  if(!tileArtwork)throw new Error('continuous tile artwork is not ready');
+  const [imageW,imageH]=tileArtwork.imageSize;
+  const sourceUrl=new URL('./assets/art/'+tileArtwork.resource+'.webp',import.meta.url).href;
   for(const token of GOAL){
     const tile=document.createElement('div');tile.className='tile';tile.dataset.token=token;
-    tile.style.setProperty('--pos',pos(Number(token)-1));tile.setAttribute('aria-label','星图碎片 '+token);
+    const [x,y,w,h]=tileArtwork.sourceRectByToken[token];
+    // All nine crops refer to the same full mural, including the space below the rails.
+    tile.style.backgroundImage=`url("${sourceUrl}")`;
+    tile.style.backgroundSize=`${100*imageW/w}% ${100*imageH/h}%`;
+    tile.style.backgroundPosition=`${100*x/(imageW-w)}% ${100*y/(imageH-h)}%`;
+    tile.setAttribute('aria-label','星图碎片 '+token);
     const number=document.createElement('span');number.className='index';number.textContent=token;
     tile.append(number);tileNodes.set(token,tile);$.board.append(tile);
   }
@@ -406,7 +414,20 @@ window.addEventListener('resize',onMotionResize);
 window.visualViewport?.addEventListener('resize',onMotionResize);
 document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelRotation();if(puzzle)render();}});
 
-const ART_FILES=['home-scene.webp','celestial-mural.webp','ui-atlas.webp','daily-banner.webp','reference-daily.webp','reference-clean.webp','rank-scene.webp','result-panel.webp'];
+const ART_FILES=['home-scene.webp','ui-atlas.webp','daily-banner.webp','reference-daily.webp','reference-clean.webp','rank-scene.webp','result-panel.webp'];
+async function preloadTileArtwork(){
+  const response=await fetch(new URL('./cocos/assets/resources/art/referenceLayout.json?v=0.8.9',import.meta.url));
+  if(!response.ok)throw new Error('tile artwork layout could not be loaded');
+  const {tileArtwork:art}=await response.json();
+  if(!art||!/^[-a-z0-9]+$/.test(art.resource)||art.fit!=='fill'||!Array.isArray(art.imageSize)||art.imageSize.length!==2||art.imageSize.some(v=>!Number.isFinite(v)||v<=0))throw new Error('invalid tile artwork layout');
+  const [iw,ih]=art.imageSize;
+  for(const token of GOAL){
+    const r=art.sourceRectByToken?.[token];
+    if(!Array.isArray(r)||r.length!==4||r.some(v=>!Number.isFinite(v))||r[0]<0||r[1]<0||r[2]<=0||r[3]<=0||r[2]>=iw||r[3]>=ih||r[0]+r[2]>iw+1e-7||r[1]+r[3]>ih+1e-7)throw new Error('invalid mural tile crop');
+  }
+  await preloadArt(art.resource+'.webp');
+  tileArtwork=art;
+}
 function preloadArt(file){
   return new Promise((resolve,reject)=>{
     const image=new Image(),timer=setTimeout(()=>reject(new Error('art load timeout')),25000);
@@ -422,9 +443,8 @@ async function boot(){
   document.documentElement.classList.add('art-loading');
   if(notice){notice.hidden=false;notice.textContent='星图正在加载…';}
   try{
-    await Promise.all(ART_FILES.map(file=>preloadArt(file).then(()=>{
-      loaded++;if(notice&&!bootFailed)notice.textContent=`星图正在加载… ${loaded}/${ART_FILES.length}`;
-    })));
+    const progress=()=>{loaded++;if(notice&&!bootFailed)notice.textContent=`星图正在加载… ${loaded}/${ART_FILES.length+1}`;};
+    await Promise.all([...ART_FILES.map(file=>preloadArt(file).then(progress)),preloadTileArtwork().then(progress)]);
     const params=new URLSearchParams(location.search),entry=parseChallenge(params);
     let invalidDate=false;
     claimedBeat=entry.beat;

@@ -1,5 +1,5 @@
 {
-  "version": "0.8.4",
+  "version": "0.8.9",
   "atlas": {
     "width": 1254,
     "height": 1254,
@@ -69,8 +69,9 @@
       "height": 1840
     },
     "celestialMural": {
-      "width": 1254,
-      "height": 1254
+      "resource": "celestial-mural-v2",
+      "width": 1302,
+      "height": 1208
     },
     "dailyBanner": {
       "width": 2126,
