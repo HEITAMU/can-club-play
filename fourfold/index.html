@@ -3,23 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta id="themeColor" name="theme-color" content="#1b2b58">
+<meta id="themeColor" name="theme-color" content="#fee7c8">
 <meta name="description" content="四格诡局：转动四格，复原星图。">
-<meta name="fourfold-version" content="0.8.17">
+<meta name="fourfold-version" content="0.8.18">
 <title>四格诡局 · 星图挑战</title>
 <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
-<link rel="preload" as="image" href="assets/art/home-celestial-v5.webp" fetchpriority="high">
-<link rel="preload" as="image" href="assets/art/home-menu-v5.webp">
+<link rel="preload" as="image" href="assets/art/home-celestial-v6.webp" fetchpriority="high">
+<link rel="preload" as="image" href="assets/art/home-menu-v6.webp">
 <link rel="preload" as="image" href="assets/art/ui-atlas.webp">
-<link rel="stylesheet" href="assets/art/atlas.css?v=0.8.17">
-<link rel="stylesheet" href="style.css?v=0.8.17">
-<link rel="stylesheet" href="reference.css?v=0.8.17">
+<link rel="stylesheet" href="assets/art/atlas.css?v=0.8.18">
+<link rel="stylesheet" href="style.css?v=0.8.18">
+<link rel="stylesheet" href="reference.css?v=0.8.18">
 </head>
 <body>
-<main class="shell" id="app" data-build="0.8.17">
+<main class="shell" id="app" data-build="0.8.18">
 <section id="home" class="home-screen" aria-label="四格诡局主菜单">
 <div class="home-hero">
-<img class="home-scene" src="assets/art/home-celestial-v5.webp" width="941" height="1672" alt="四片星图在云海中旋转归位的星空" fetchpriority="high" draggable="false">
+<img class="home-scene" src="assets/art/home-celestial-v6.webp" width="941" height="1672" alt="四块不规则金边星图拼片悬浮在暖奶油色背景上" fetchpriority="high" draggable="false">
 <h1 id="homeTitle" class="home-title">四格诡局</h1>
 <p id="homeSubtitle" class="home-subtitle" aria-hidden="true">FOURFOLD</p>
 </div>
@@ -86,10 +86,9 @@
 <span class="sr-only">步数更少优先 · 同步数比用时</span>
 <button id="rankDaily" class="rank-position rank-hotspot rank-daily-hotspot" style="--rank-x:428;--rank-y:1730;--rank-w:774;--rank-h:134" type="button" aria-label="挑战今日关卡"></button>
 </div>
-<p id="rankHintRule" class="rank-policy">每日挑战每局可用 2 次提示，成绩照常参与排行</p>
 </section>
 </main>
-<div id="settingsOverlay" class="settings-overlay" hidden><section class="settings-card" role="dialog" aria-modal="true" aria-label="游戏设置"><div class="settings-head"><h2>设置</h2><button id="settingsClose" class="close" aria-label="关闭设置">×</button></div><button id="settingsSound">音乐与音效：开</button><button id="settingsReset">重开本局</button><button id="settingsRank">好友荣誉榜</button><button id="settingsHome">返回主界面</button></section></div>
+<div id="settingsOverlay" class="settings-overlay" hidden><section class="settings-card" role="dialog" aria-modal="true" aria-label="游戏设置"><div class="settings-head"><h2>设置</h2><button id="settingsClose" class="close" aria-label="关闭设置">×</button></div><button id="settingsSound" aria-pressed="true">音效：开</button><button id="settingsReset">重开本局</button><button id="settingsRank">好友荣誉榜</button><button id="settingsHome">返回主界面</button></section></div>
 <div class="overlay" id="modal" hidden><section id="dialogPanel" class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
 <img id="resultArtwork" class="result-artwork result-only" src="assets/art/result-panel.webp" width="1086" height="1448" alt="" draggable="false">
 <button id="closeModal" class="close result-position" style="--result-x:874;--result-y:90;--result-w:148;--result-h:149" type="button" aria-label="关闭弹窗">×</button>
@@ -105,6 +104,6 @@
 <div id="startupNotice" hidden role="status"></div>
 <noscript>请启用 JavaScript 进入星图。</noscript>
 <script>window.ffOpen=function(which){window.ffPending=which;var n=document.getElementById('startupNotice');n.hidden=false;n.textContent='星图正在准备…';};</script>
-<script type="module" src="layout.mjs?v=0.8.17"></script>
-<script type="module" src="app.js?v=0.8.17"></script>
+<script type="module" src="layout.mjs?v=0.8.18"></script>
+<script type="module" src="app.js?v=0.8.18"></script>
 </body></html>

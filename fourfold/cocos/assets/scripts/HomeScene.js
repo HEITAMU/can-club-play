@@ -1,22 +1,22 @@
 // Shared by the browser and Cocos. The complete portrait scene contains the
 // title and all three entries; short screens scroll without cropping the art.
 export const HOME_ART=Object.freeze({
-  resource:'home-celestial-v5',width:941,height:1672,
+  resource:'home-celestial-v6',width:941,height:1672,
   titleRect:[94.1,133.76,752.8,125.4],subtitleRect:[235.25,284.24,470.5,50.16],
   titleSize:106,subtitleSize:27,
 });
 
-// Homepage-only colors keep the night sky continuous without changing
+// Homepage-only colors keep the warm cream interface continuous without changing
 // the established game, ranking, result panel, or numeric material colors.
 export const HOME_COLORS=Object.freeze({
-  background:'#1B2B58',title:'#FFF0C6',subtitle:'#E4D3AE',menu:'#76513A',
+  background:'#FEE7C8',title:'#71482F',subtitle:'#96704D',menu:'#76513A',
 });
 
 export const HOME_UI=Object.freeze({
-  resource:'home-menu-v5',width:1536,height:1024,
-  frames:{story:[48,53,1438,385],daily:[53,509,672,450],rank:[800,509,675,450]},
+  resource:'home-menu-v6',width:1536,height:1024,
+  frames:{story:[48,53,1438,385],daily:[53,509,672,450],rank:[796,509,680,450]},
   // Caption regions are local to each frame, clear of the painted icons.
-  labelRects:{story:[362,105,820,190],daily:[62,285,548,115],rank:[62,285,551,115]},
+  labelRects:{story:[362,105,820,190],daily:[62,285,548,115],rank:[66,285,551,115]},
 });
 
 const BUTTONS=[

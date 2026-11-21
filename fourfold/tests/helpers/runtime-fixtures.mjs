@@ -7,6 +7,7 @@ import * as Core from '../../cocos/assets/scripts/Core.js';
 import * as Motion from '../../cocos/assets/scripts/TurnMotion.js';
 import * as Home from '../../cocos/assets/scripts/HomeScene.js';
 import * as Themes from '../../cocos/assets/scripts/TileThemes.js';
+import {createGameAudio} from '../../audio.mjs';
 
 export const TEST_DAY='2026-11-21';
 export const reference=JSON.parse(readFileSync(new URL('../../cocos/assets/resources/art/referenceLayout.json',import.meta.url),'utf8'));
@@ -33,6 +34,7 @@ class Element extends EventTarget {
     this.classList={add:(...names)=>names.forEach(name=>this.classes.add(name)),remove:(...names)=>names.forEach(name=>this.classes.delete(name)),contains:name=>this.classes.has(name),toggle:(name,force)=>{const enabled=force===undefined?!this.classes.has(name):!!force;enabled?this.classes.add(name):this.classes.delete(name);return enabled;}};
   }
   set id(value){this._id=value;this.ownerDocument.ids.set(value,this);}get id(){return this._id||'';}
+  set hidden(value){this._hidden=!!value;if(this.attributes){if(this._hidden)this.attributes.set('hidden','');else this.attributes.delete('hidden');}}get hidden(){return this._hidden;}
   set className(value){this.classes=new Set(value.split(/\s+/).filter(Boolean));}get className(){return [...this.classes].join(' ');}
   setAttribute(name,value){
     this.attributes.set(name,String(value));
@@ -75,7 +77,7 @@ function documentFromMarkup(markup){
   return doc;
 }
 
-export function webFixture({preferences={},storage=memoryStorage(preferences)}={}){
+export function webFixture({preferences={},storage=memoryStorage(preferences),audioOptions={}}={}){
   const sourceUrl=new URL('../../app.js',import.meta.url),source=readFileSync(sourceUrl,'utf8');
   if(!/\nboot\(\);\s*$/.test(source))throw new Error('Review changed production boot boundary');
   const executable=source.replace(/^import\s+[^;]+;\s*$/gm,'').replace(/import\.meta\.url/g,JSON.stringify(sourceUrl.href)).replace(/\nboot\(\);\s*$/,'\n');
@@ -88,12 +90,14 @@ export function webFixture({preferences={},storage=memoryStorage(preferences)}={
     set src(value){this._src=value;const resource=new URL(value).pathname.split('/').at(-1).replace(/\.webp$/,'');const bytes=readFileSync(new URL(`../../cocos/assets/resources/art/${resource}.png`,import.meta.url));this.naturalWidth=bytes.readUInt32BE(16);this.naturalHeight=bytes.readUInt32BE(20);queueMicrotask(()=>this.onload?.());}
     get src(){return this._src;}async decode(){}
   }
-  const context=vm.createContext({...Core,...Motion,...Home,...Themes,todayCN:()=>TEST_DAY,document,window,localStorage:storage,Image,
+  const audioControllers=[];
+  const fixtureAudio=options=>{const controller=createGameAudio({...options,contextFactory:()=>null,fetchAudio:async()=>({ok:false}),now:()=>clock,...audioOptions});audioControllers.push(controller);return controller;};
+  const context=vm.createContext({...Core,...Motion,...Home,...Themes,createGameAudio:fixtureAudio,todayCN:()=>TEST_DAY,document,window,localStorage:storage,Image,
     performance:{now:()=>clock},setTimeout:timeout,clearTimeout:window.clearTimeout,setInterval:timeout,clearInterval:window.clearTimeout,
     URL,URLSearchParams,location:window.location,navigator:{},console:{warn(){},error(){},log(){}},__reference:reference});
   vm.runInContext(executable,context,{filename:'app.js'});
   vm.runInContext('baseTileArtwork=__reference.tileArtwork;ready=true;',context);
-  return {context,document,window,storage,timers,
+  return {context,document,window,storage,timers,audioControllers,
     run:script=>vm.runInContext(script,context),el:id=>document.getElementById(id),setClock:value=>{clock=value;},
     async start(mode='story',key='1'){context.__testEntry={mode,key};await vm.runInContext('startGame(__testEntry.mode,__testEntry.key)',context);vm.runInContext('showGame()',context);await flush();},
   };
@@ -115,14 +119,14 @@ class NativeNode {
   setPosition(...values){this.position=values;}setScale(...values){this.scale=values;}
 }
 
-export function nativeFixture({preferences={},storage=memoryStorage(preferences),useWx=true}={}){
+export function nativeFixture({preferences={},storage=memoryStorage(preferences),useWx=true,cc={}}={}){
   const source=readFileSync(new URL('../../cocos/assets/scripts/Game.ts',import.meta.url),'utf8');
   const executable=stripTypeScriptTypes(source.replace(/^import\s*\{[\s\S]*?\}\s*from\s*['"][^'"]+['"];?\s*$/gm,'').replace(/^@ccclass\('FourfoldGame'\)\s*$/m,'').replace('export class FourfoldGame','class FourfoldGame'),{mode:'transform'});
   const clouds=[],events=[],art=[],groups=[],buttons=[],hits=[],shapes=[],texts=[];let clock=1000;
   const sdk={getStorageSync:key=>storage.getItem(key),setStorageSync:(key,value)=>storage.setItem(key,value),setUserCloudStorage:payload=>clouds.push(payload),vibrateShort:()=>events.push('vibrate')};
   const context={...Core,...Motion,...Home,...Themes,todayCN:()=>TEST_DAY,Component:class{},Node:NativeNode,Graphics,Mask,Color,BlockInputEvents:class{},LabelOutline:class{},
     Vec2:class{constructor(x,y){this.x=x;this.y=y;}},UITransform:class{setContentSize(){}},
-    _decorator:{ccclass:()=>{}},localStorage:storage,performance:{now:()=>clock},console:{warn(){},error(){}},wx:useWx?sdk:undefined};
+    _decorator:{ccclass:()=>{}},localStorage:storage,performance:{now:()=>clock},console:{warn(){},error(){}},wx:useWx?sdk:undefined,...cc};
   const Game=vm.runInNewContext(executable+'\nFourfoldGame;',context,{filename:'Game.ts'}),game=new Game();
   game.root=new NativeNode('Root');game.reference=reference;game.rankLayout=rankLayout;game.assetsReady=true;game.inHome=false;
   // Keep real clear() and therefore the real UI generation token; only painting

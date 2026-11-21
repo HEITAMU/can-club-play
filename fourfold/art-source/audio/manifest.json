@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "notes": "MP3 container duration includes encoder padding; decoded frame count is authoritative. No captured real-world recording or external sample is used.",
+  "sounds": [
+    {
+      "name": "ui-stone-press-v1",
+      "origin": "original deterministic procedural stone foley",
+      "sampleRate": 48000,
+      "channels": 1,
+      "decodedFrames": 13440,
+      "decodedDurationSeconds": 0.28,
+      "decodedPeakDbFS": -7.14,
+      "decodedRmsDbFS": -23.52,
+      "sha256": "cf556565df47cff6671d69b8f29a8a4614166d5013bf0b50765552f55d056dd7",
+      "mp3Bytes": 8108,
+      "sourceMaster": "art-source/audio/ui-stone-press-v1.wav",
+      "web": "assets/audio/ui-stone-press-v1.mp3",
+      "native": "cocos/assets/resources/audio/ui-stone-press-v1.mp3"
+    },
+    {
+      "name": "stone-turn-v1",
+      "origin": "original deterministic procedural stone foley",
+      "sampleRate": 48000,
+      "channels": 1,
+      "decodedFrames": 57600,
+      "decodedDurationSeconds": 1.2,
+      "decodedPeakDbFS": -5.252,
+      "decodedRmsDbFS": -22.001,
+      "sha256": "661e5b5b73c31b8afaf00c4f9c770258d5498df5f775c4e14c661fd390a0b3ef",
+      "mp3Bytes": 29996,
+      "sourceMaster": "art-source/audio/stone-turn-v1.wav",
+      "web": "assets/audio/stone-turn-v1.mp3",
+      "native": "cocos/assets/resources/audio/stone-turn-v1.mp3"
+    }
+  ]
+}

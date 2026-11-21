@@ -4,6 +4,7 @@ import {
   _decorator,Component,Node,Canvas,Camera,Layers,UITransform,UIOpacity,Label,LabelOutline,instantiate,
   Graphics,Color,view,screen,ResolutionPolicy,director,SubContextView,tween,Tween,Vec2,Vec3,
   Sprite,SpriteFrame,Texture2D,ImageAsset,JsonAsset,Rect,Size,resources,BlockInputEvents,Mask,ScrollView,
+  AudioClip,AudioSource,game as engineGame,Game as EngineGame,
 } from 'cc';
 import {GOAL,SQUARES,makePuzzle,todayCN,rotate,isSolved,shortestPath,honor,resultScore,hintLimit,isBetterResult} from './Core';
 import {TURN_DURATION_MS,createTurnMotion,sampleTurn} from './TurnMotion';
@@ -14,6 +15,7 @@ const HINT_MODE:'free'|'rewarded'='free'; // 未开通广告时，正式上线�
 const AD_IDS={rewarded:'',banner:''}; // 接入时只填写微信公众平台提供的真实 adUnitId。
 const C={background:'#F8DEB7',surface:'#FFF1D6',gold:'#F5CB79',gold2:'#C88B4D',white:'#FFF4D7',muted:'#977253',dark:'#5B301F',edge:'#825037',night:'#1B2345',shadow:'#B27C50'};
 const ART_PATHS={home:'art/'+HOME_ART.resource,homeUI:'art/'+HOME_UI.resource,atlas:'art/ui-atlas',referenceOriginal:'art/reference-daily',referenceClean:'art/reference-clean',rankScene:'art/rank-scene',resultPanel:'art/result-panel'};
+const AUDIO_PATHS={ui:'audio/ui-stone-press-v1',turn:'audio/stone-turn-v1'};
 const REQUIRED_FRAMES=['goldButton','creamButton','lavenderButton','stepsCard','timeCard','rotateKnob','settingsButton','backButton'];
 const at=()=>typeof performance!=='undefined'&&performance.now?performance.now():Date.now();
 const wxSDK=()=>typeof wx!=='undefined'?(wx as any):null;
@@ -39,6 +41,10 @@ export class FourfoldGame extends Component {
   private activeTheme:any=null;private themeArtwork:any=null;private themeImage:ImageAsset|null=null;private themeLoading=false;private themeError='';private themeSerial=0;
   private tileNodes:Node[]=[];private knobNodes:Node[]=[];private knobArtNodes:Node[]=[];private knobAngles=[0,0,0,0];private boardContent:Node|null=null;
   private motionSerial=0;private turnMotion:any=null;private hideSDK:any=null;
+  private soundEnabled=this.storeRead('sound',true)!==false;private audioHidden=false;private audioDisabled=false;
+  private audioNode:Node|null=null;private audioSources:Partial<Record<'ui'|'turn',AudioSource>>={};private audioClips:Partial<Record<'ui'|'turn',AudioClip>>={};
+  private audioWanted={ui:false,turn:false};
+  private audioLoading=false;private audioSerial=0;private audioLifecycleAttached=false;
   private boardLayout={x:0,y:0,size:0,unit:0};private launchQuery:any={};
   private pageScroll:ScrollView|null=null;private pageScrollKey='';private scrollOffsets:Record<string,number>={};
 
@@ -50,6 +56,7 @@ export class FourfoldGame extends Component {
         this.launchQuery=(sdk.getLaunchOptionsSync?.()||{}).query||{};
         sdk.showShareMenu?.({withShareTicket:false});
         if(typeof sdk.onHide==='function'){sdk.onHide(this.onAppHide);this.hideSDK=sdk;}
+        if(typeof sdk.onShow==='function'){sdk.onShow(this.onAppShow);this.hideSDK=sdk;}
       }catch(e){console.warn('launch context unavailable',e);}
     }
     const scene=director.getScene();
@@ -63,8 +70,10 @@ export class FourfoldGame extends Component {
     this.canvasNode.setPosition(this.width/2,this.height/2);
     this.root=new Node('UIRoot');this.root.layer=Layers.Enum.UI_2D;this.root.addComponent(UITransform).setContentSize(this.width,this.height);
     this.canvasNode.addChild(this.root);this.root.setPosition(-this.width/2,this.height/2);
+    engineGame.on(EngineGame.EVENT_HIDE,this.onAppHide,this);engineGame.on(EngineGame.EVENT_SHOW,this.onAppShow,this);this.audioLifecycleAttached=true;
     screen.on('window-resize',this.onWindowResize,this);
     this.schedule(()=>this.updateClock(),.2);
+    void this.prepareAudio(); // Optional audio loads independently of the playable artwork.
     this.loadArt();
   }
 
@@ -92,6 +101,58 @@ export class FourfoldGame extends Component {
   private storeRead(key:string,otherwise:any){try{const sdk=wxSDK();const value=sdk?sdk.getStorageSync('fourfold:'+key):localStorage.getItem('fourfold:'+key);return value?JSON.parse(value):otherwise;}catch{return otherwise;}}
   private storeWrite(key:string,val:any){try{const sdk=wxSDK();if(sdk)sdk.setStorageSync('fourfold:'+key,JSON.stringify(val));else localStorage.setItem('fourfold:'+key,JSON.stringify(val));}catch{}}
   private unlocked(){return Math.min(18,Math.max(1,Number(this.storeRead('unlocked',1))||1));}
+  private async prepareAudio(){
+    if(this.disposed||this.audioLoading||!this.canvasNode?.isValid)return;
+    if(!this.audioNode){
+      try{
+        this.audioNode=new Node('Fourfold audio');this.canvasNode.addChild(this.audioNode);
+        for(const kind of ['ui','turn'] as const){
+          const node=new Node(kind+' sound');this.audioNode.addChild(node);
+          const source=node.addComponent(AudioSource);source.playOnAwake=false;source.loop=false;source.volume=kind==='ui' ? .65 : .8;
+          this.audioSources[kind]=source;
+          // A delayed platform start must never revive a muted or cancelled sound.
+          node.on(AudioSource.EventType.STARTED,()=>{if(!this.audioWanted[kind]||!this.canPlayAudio()||(kind==='turn'&&!this.turnMotion))this.stopAudio(kind);});
+          node.on(AudioSource.EventType.ENDED,()=>{this.audioWanted[kind]=false;});
+        }
+      }catch(error){console.warn('Optional audio unavailable',error);this.disposeAudio();return;}
+    }
+    const missing=(['ui','turn'] as const).filter(kind=>!this.audioClips[kind]);if(!missing.length)return;
+    const serial=this.audioSerial;this.audioLoading=true;
+    await Promise.allSettled(missing.map(async kind=>{
+      const clip=await this.loadResource(AUDIO_PATHS[kind],AudioClip);
+      if(this.disposed||serial!==this.audioSerial||!this.audioNode?.isValid)return;
+      clip.addRef();this.audioClips[kind]=clip;this.audioSources[kind].clip=clip;
+      // Loading never queues a previously missed click or turn for later playback.
+    }));
+    if(serial===this.audioSerial)this.audioLoading=false;
+  }
+  private canPlayAudio(){return this.soundEnabled&&!this.audioHidden&&!this.audioDisabled&&!this.disposed;}
+  private playAudio(kind:'ui'|'turn'){
+    const source=this.audioSources[kind];
+    if(!this.canPlayAudio()||!this.audioClips[kind]||!source?.isValid||(kind==='turn'&&!this.turnMotion))return;
+    try{
+      if(kind==='turn')this.stopAudio('ui');
+      // One controllable source per effect avoids stacked clicks and allows
+      // immediate cancellation, including when the platform is still loading.
+      this.stopAudio(kind);this.audioWanted[kind]=true;source.play();
+    }catch{this.stopAudio(kind);} // Sound support or autoplay failure never interrupts an action.
+  }
+  private stopAudio(kind?:'ui'|'turn'){
+    for(const key of kind?[kind]:['ui','turn']){this.audioWanted[key]=false;try{this.audioSources[key]?.stop();}catch{}}
+  }
+  private disposeAudio(){
+    this.audioSerial++;this.audioLoading=false;this.stopAudio();
+    for(const source of Object.values(this.audioSources))try{source.clip=null;}catch{}
+    if(this.audioNode?.isValid){this.audioNode.active=false;this.audioNode.removeFromParent();this.audioNode.destroy();}
+    this.audioNode=null;this.audioSources={};
+    for(const clip of Object.values(this.audioClips))clip.decRef();this.audioClips={};
+  }
+  private toggleSound(round=this.roundSerial,ui=this.uiSerial){
+    if(this.disposed||this.modal!=='settings'||round!==this.roundSerial||ui!==this.uiSerial)return false;
+    this.soundEnabled=!this.soundEnabled;this.storeWrite('sound',this.soundEnabled);
+    if(this.soundEnabled)void this.prepareAudio();else this.stopAudio();
+    this.draw();return true;
+  }
   private loadResource(path:string,type:any){
     if(this.disposed)return Promise.reject(new Error('Fourfold resource load cancelled'));
     return new Promise<any>((resolve,reject)=>{
@@ -315,11 +376,11 @@ export class FourfoldGame extends Component {
     const n=this.createNode(name,x,y,w,h,parent),sprite=n.addComponent(Sprite);sprite.sizeMode=Sprite.SizeMode.CUSTOM;sprite.type=Sprite.Type.SIMPLE;sprite.spriteFrame=frame;
     n.getComponent(UITransform).setContentSize(w,h);return n;
   }
-  private bindButton(n:Node,action:()=>void,feedback:Node|null=null,allowBusy=false){
+  private bindButton(n:Node,action:()=>unknown,feedback:Node|null=null,allowBusy=false,clickSound=true){
     let pressed=false;
     n.on(Node.EventType.TOUCH_START,(e:any)=>{e.propagationStopped=true;if((this.busy&&!allowBusy)||this.disposed||!n.isValid)return;pressed=true;if(feedback)feedback.active=true;Tween.stopAllByTarget(n);tween(n).to(.06,{scale:new Vec3(.975,.975,1)}).start();});
     n.on(Node.EventType.TOUCH_CANCEL,()=>{pressed=false;if(feedback)feedback.active=false;Tween.stopAllByTarget(n);tween(n).to(.08,{scale:new Vec3(1,1,1)}).start();});
-    n.on(Node.EventType.TOUCH_END,(e:any)=>{e.propagationStopped=true;if(!pressed)return;pressed=false;if(feedback)feedback.active=false;Tween.stopAllByTarget(n);n.setScale(1,1,1);if((!this.busy||allowBusy)&&!this.disposed&&n.isValid&&n.activeInHierarchy!==false)action();});
+    n.on(Node.EventType.TOUCH_END,(e:any)=>{e.propagationStopped=true;if(!pressed)return;pressed=false;if(feedback)feedback.active=false;Tween.stopAllByTarget(n);n.setScale(1,1,1);if((!this.busy||allowBusy)&&!this.disposed&&n.isValid&&n.activeInHierarchy!==false){const accepted=action();if(clickSound&&accepted!==false)this.playAudio('ui');}});
     return n;
   }
   private artHit(name:string,rect:number[],scale:number,parent:Node,action:()=>void,minTop=-Infinity){
@@ -402,14 +463,14 @@ export class FourfoldGame extends Component {
       {text:'每日挑战',frame:'homeDailyButton',source:'daily',action:()=>this.startGame('daily',todayCN())},
       {text:'好友荣誉榜',frame:'homeRankButton',source:'rank',action:()=>this.showRank()},
     ];
-    // The floating star-map pieces are scenery. Entries sit in the lower clouds
-    // of the same full-width illustration and retain their own touch regions.
+    // Gold-edged star-map fragments float over the warm cream page. The three
+    // menu panels retain independent artwork, live captions and touch regions.
     const hero=layout.hero,scene=this.group('Home hero',hero.x,hero.y,hero.w,hero.h,parent);
     this.art('home',0,0,hero.w,hero.h,scene.content);
     const titleRect=layout.title,subtitleRect=layout.subtitle;
     const title=this.txt('四格诡局',titleRect.x,titleRect.y,titleRect.w,titleRect.h,HOME_ART.titleSize*layout.textScale,HOME_COLORS.title,true,scene.content);
     title.node.name='Home title';title.fontFamily='serif';title.lineHeight=titleRect.h;title.enableWrapText=false;
-    const titleOutline=title.node.addComponent(LabelOutline);titleOutline.color=ink('#101B3B66');titleOutline.width=this.windowScale;
+    const titleOutline=title.node.addComponent(LabelOutline);titleOutline.color=ink('#FFF6E5AA');titleOutline.width=this.windowScale;
     const subtitle=this.txt('FOURFOLD',subtitleRect.x,subtitleRect.y,subtitleRect.w,subtitleRect.h,HOME_ART.subtitleSize*layout.textScale,HOME_COLORS.subtitle,true,scene.content);
     subtitle.node.name='Home subtitle';subtitle.fontFamily='Times New Roman';subtitle.lineHeight=subtitleRect.h;subtitle.enableWrapText=false;
     entries.forEach((entry,i)=>{
@@ -475,7 +536,7 @@ export class FourfoldGame extends Component {
     button(this.nextLevelLabel(),'next',()=>this.nextLevel(round,ui),'goldButton');
     button('成绩详情','details',()=>this.openResultDetails(round,ui));
   }
-  private referenceControl(name:string,rect:number[],ox:number,oy:number,scale:number,action:()=>void,selected=false,dim=false,parent:Node=this.root,allowBusy=false){
+  private referenceControl(name:string,rect:number[],ox:number,oy:number,scale:number,action:()=>unknown,selected=false,dim=false,parent:Node=this.root,allowBusy=false){
     const [rx,ry,rw,rh]=rect,w=rw*scale,h=rh*scale,hitW=Math.max(44*this.windowScale,w),hitH=Math.max(44*this.windowScale,h);
     const n=this.createNode(name,ox+rx*scale-(hitW-w)/2,oy+ry*scale-(hitH-h)/2,hitW,hitH,parent),g=n.addComponent(Graphics);
     let pressed=false;
@@ -488,7 +549,7 @@ export class FourfoldGame extends Component {
     feedback();
     n.on(Node.EventType.TOUCH_START,(e:any)=>{e.propagationStopped=true;if((this.busy&&!allowBusy)||this.disposed||!n.isValid)return;pressed=true;feedback();});
     n.on(Node.EventType.TOUCH_CANCEL,()=>{pressed=false;feedback();});
-    n.on(Node.EventType.TOUCH_END,(e:any)=>{e.propagationStopped=true;if(!pressed)return;pressed=false;feedback();if((!this.busy||allowBusy)&&!this.disposed&&n.isValid&&n.activeInHierarchy!==false)action();});
+    n.on(Node.EventType.TOUCH_END,(e:any)=>{e.propagationStopped=true;if(!pressed)return;pressed=false;feedback();if((!this.busy||allowBusy)&&!this.disposed&&n.isValid&&n.activeInHierarchy!==false){const accepted=action();if(accepted!==false)this.playAudio('ui');}});
     return n;
   }
   private drawReferenceDaily(){
@@ -561,7 +622,7 @@ export class FourfoldGame extends Component {
       const hit=this.group('Rotate '+q,cx-hitD/2,cy-hitD/2,hitD,hitD,boardLayer.content);
       const circle=this.group('Knob circle',(hitD-d)/2,(hitD-d)/2,d,d,hit.content),clip=circle.node.addComponent(Mask);clip.type=Mask.Type.ELLIPSE;clip.segments=64;
       const cw=crop[2]*scale,ch=crop[3]*scale,knob=this.art('referenceKnob'+q,(d-cw)/2,(d-ch)/2,cw,ch,circle.content);
-      if(this.direction<0)knob.setScale(-1,1,1);knob.angle=-this.knobAngles[q];this.knobNodes[q]=hit.node;this.knobArtNodes[q]=knob;this.bindButton(hit.node,()=>this.spin(q));
+      if(this.direction<0)knob.setScale(-1,1,1);knob.angle=-this.knobAngles[q];this.knobNodes[q]=hit.node;this.knobArtNodes[q]=knob;this.bindButton(hit.node,()=>this.spin(q),null,false,false);
     }
     this.drawHintTarget(scale,boardLayer.content);
   }
@@ -659,7 +720,7 @@ export class FourfoldGame extends Component {
     const flashes=tiles.map((node,index)=>{const r=rects[index],flash=this.shape(0,0,r.width,r.height,'#FFF5C9','',3,node.children[0]);flash.name='Turn landing flash';flash.addComponent(UIOpacity).opacity=0;effects.push(flash);return flash;});
     if(!this.startAt)this.startAt=at();this.busy=true;
     const motion={serial:++this.motionSerial,round:this.roundSerial,board:this.board,q,dir:this.direction,elapsed:0,geometry,tiles,states,knob,knobStart:this.knobAngles[q],parent:this.boardContent,effects,focus:[outline,edge,pivot,ring],flashes};
-    this.turnMotion=motion;this.applyTurnFrame(motion,0);
+    this.turnMotion=motion;this.applyTurnFrame(motion,0);this.playAudio('turn');
   }
   private turnOutline(name:string,x:number,y:number,width:number,height:number,lineWidth:number,color:string,parent:Node,radius=11){
     const node=this.createNode(name,x,y,width,height,parent),g=node.addComponent(Graphics),inset=lineWidth/2+1;
@@ -696,6 +757,7 @@ export class FourfoldGame extends Component {
     this.draw();
   }
   private cancelTurnMotion(restore=true){
+    this.stopAudio('turn');
     this.motionSerial++;const motion=this.turnMotion;this.turnMotion=null;if(!motion)return;
     for(const state of motion.states){
       if(!state.node.isValid)continue;Tween.stopAllByTarget(state.node);
@@ -706,8 +768,10 @@ export class FourfoldGame extends Component {
     for(const effect of motion.effects)if(effect.isValid){effect.active=false;effect.removeFromParent();effect.destroy();}
     this.busy=false;
   }
-  private onAppHide=()=>{this.cancelTurnMotion();};
-  onDisable(){this.cancelTurnMotion();}
+  private onAppHide=()=>{this.audioHidden=true;this.cancelTurnMotion();this.stopAudio();};
+  private onAppShow=()=>{if(!this.disposed)this.audioHidden=false;};
+  onEnable(){this.audioDisabled=false;}
+  onDisable(){this.audioDisabled=true;this.cancelTurnMotion();this.stopAudio();}
   private toggleNumbers(round=this.roundSerial,ui=this.uiSerial){
     if(this.disposed||this.inHome||this.won||this.modal||this.busy||round!==this.roundSerial||ui!==this.uiSerial||this.themeLoading||this.themeError||!this.activeTheme)return false;
     this.showNumbers=!this.showNumbers;this.storeWrite('showNumbers',this.showNumbers);this.draw();return true;
@@ -922,6 +986,7 @@ export class FourfoldGame extends Component {
       if(!this.inHome)this.btn('重新开始本关',43,top+110,w-86,54,()=>this.startGame(this.mode,this.key),'goldButton',18);
       this.btn('好友荣誉榜',43,top+(this.inHome?112:180),w-86,54,()=>this.showRank(),'creamButton',18);
       this.btn(this.inHome?'进入星图':'返回主页',43,top+250,w-86,54,()=>{if(this.inHome)this.startGame('story',String(this.unlocked()));else this.goHome();},'creamButton',18);
+      this.btn(this.soundEnabled?'音效：开':'音效：关',86,top+312,w-172,44,()=>this.toggleSound(round,ui),'creamButton',17);
       this.btn('继续',86,top+366,w-172,45,()=>this.closeModal(),'creamButton',17);
     }
   }
@@ -952,8 +1017,10 @@ export class FourfoldGame extends Component {
   }
   onDestroy(){
     this.disposed=true;this.clearHintGuide();this.cancelTurnMotion();this.roundSerial++;screen.off('window-resize',this.onWindowResize,this);this.loadSerial++;
+    this.disposeAudio();
     for(const cancel of [...this.pendingResourceLoads])cancel();
-    try{this.hideSDK?.offHide?.(this.onAppHide);}catch{}this.hideSDK=null;
+    try{this.hideSDK?.offHide?.(this.onAppHide);this.hideSDK?.offShow?.(this.onAppShow);}catch{}this.hideSDK=null;
+    if(this.audioLifecycleAttached){engineGame.off(EngineGame.EVENT_HIDE,this.onAppHide,this);engineGame.off(EngineGame.EVENT_SHOW,this.onAppShow,this);this.audioLifecycleAttached=false;}
     if(this.hintRequest)this.releaseHintRequest(this.hintRequest);
     this.hideBanner();try{this.rewardAd?.destroy?.();}catch{}this.rewardAd=null;
     // This canvas is a scene child, not a child of the component's own node.

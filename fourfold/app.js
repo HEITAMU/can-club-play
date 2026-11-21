@@ -1,7 +1,8 @@
-import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.17';
-import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.17';
-import {HOME_ART,HOME_UI,HOME_COLORS,homeStoryLabel} from './cocos/assets/scripts/HomeScene.js?v=0.8.17';
-import {getTileTheme,buildThemeArtwork} from './cocos/assets/scripts/TileThemes.js?v=0.8.17';
+import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.18';
+import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.18';
+import {HOME_ART,HOME_UI,HOME_COLORS,homeStoryLabel} from './cocos/assets/scripts/HomeScene.js?v=0.8.18';
+import {getTileTheme,buildThemeArtwork} from './cocos/assets/scripts/TileThemes.js?v=0.8.18';
+import {createGameAudio} from './audio.mjs?v=0.8.18';
 
 const el=id=>document.getElementById(id);
 const $={board:el('board'),anchors:el('anchors'),target:el('target'),moves:el('moves'),par:el('par'),clock:el('clock'),instruction:el('instruction'),difficulty:el('difficulty'),chapterCaption:el('chapterCaption'),puzzleTitle:el('puzzleTitle'),storyTab:el('storyTab'),dailyTab:el('dailyTab'),cwBtn:el('cwBtn'),ccwBtn:el('ccwBtn'),modal:el('modal'),toast:el('toast')};
@@ -24,7 +25,8 @@ const turnFocus=el('turnFocus'),boardFrame=el('boardFrame');
 
 let mode='story',key='1',dir=1,board=GOAL,puzzle=null,moves=0,hints=0,won=false,started=0,elapsed=0,claimedBeat=null,highlight=-1;
 let hintGuide=null;
-let audio=null,soundEnabled=read('sound',true),clockTimer=0,bgTimer=0,toastTimer=0;
+let soundEnabled=read('sound',true)!==false,clockTimer=0,toastTimer=0;
+const gameAudio=createGameAudio({enabled:soundEnabled,isVisible:()=>!document.hidden});
 let showNumbers=read('showNumbers',true)!==false,viewArt=false,completionMetric=null;
 let ready=false,bootFailed=false,pendingOpen=window.ffPending||null;
 let rotating=false,motionEpoch=0,activeAnimations=[];
@@ -33,23 +35,15 @@ let rankOrigin='home';
 let roundSerial=0,resultRouteToken=null,resultDialogToken=null;
 window.ffReady=false;
 
-function sound(note=440,len=.13,volume=.038){
-  if(!soundEnabled)return;
-  try{
-    audio ||= new (window.AudioContext||window.webkitAudioContext)();
-    if(audio.state==='suspended')audio.resume().catch(()=>{});
-    const osc=audio.createOscillator(),gain=audio.createGain();
-    osc.type='sine';osc.frequency.setValueAtTime(note,audio.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(note*.79,audio.currentTime+len);
-    gain.gain.setValueAtTime(volume,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+len);
-    osc.connect(gain);gain.connect(audio.destination);osc.start();osc.stop(audio.currentTime+len);
-  }catch{}
-}
-function backgroundMusic(){
-  if(!soundEnabled||document.hidden||!audio||audio.state!=='running')return;
-  const notes=[196,247,294,392,330,294,247,220];
-  sound(notes[Math.floor(Date.now()/6000)%notes.length],1.6,.008);
-}
+// Fetching is non-blocking; playback is unlocked by the first real gesture.
+void gameAudio.preload();
+document.addEventListener('pointerdown',()=>{void gameAudio.unlock();},{capture:true,passive:true});
+document.addEventListener('keydown',()=>{void gameAudio.unlock();},true);
+document.addEventListener('click',event=>{
+  const button=event.target.closest?.('button');
+  if(!button||button.disabled||button.closest('[hidden]')||button.classList.contains('spin-node')||button.id==='settingsSound')return;
+  void gameAudio.playButton();
+},true);
 function toast(message){
   $.toast.textContent=message;$.toast.classList.add('show');
   clearTimeout(toastTimer);toastTimer=setTimeout(()=>$.toast.classList.remove('show'),2800);
@@ -85,6 +79,7 @@ function clearTurnVisuals(resetKnobs=false){
   $.cwBtn.disabled=won||!themeReady();$.ccwBtn.disabled=won||!themeReady();el('hintBtn').disabled=won||!themeReady();el('numbersBtn').disabled=won||!themeReady();
 }
 function cancelRotation({resetKnobs=false}={}){
+  gameAudio.stopTurn();
   motionEpoch++;
   for(const animation of activeAnimations)animation.cancel();
   if(motionFallback){motionFallback();motionFallback=null;}
@@ -122,7 +117,7 @@ function openMode(which){
   claimedBeat=null;
   try{
     startGame(which==='daily'?'daily':'story',which==='daily'?currentDay():unlocked());
-    showGame();sound(440,.12,.025);
+    showGame();
   }catch{toast('当前关卡暂时无法打开，请刷新后重试');}
 }
 window.ffOpen=openMode;
@@ -133,7 +128,8 @@ el('enterRank').onclick=()=>openMode('rank');
 el('backHome').onclick=showHome;
 
 function syncSettings(){
-  el('settingsSound').textContent=soundEnabled?'♫　音乐与音效：开':'♩　音乐与音效：关';
+  el('settingsSound').textContent=soundEnabled?'音效：开':'音效：关';
+  el('settingsSound').setAttribute('aria-pressed',String(soundEnabled));
   el('settingsReset').disabled=!ready||gameScreen.hidden;
 }
 function openSettings(){
@@ -146,7 +142,8 @@ el('settingsClose').onclick=()=>{settingsOverlay.hidden=true;};
 settingsOverlay.addEventListener('click',event=>{if(event.target===settingsOverlay)settingsOverlay.hidden=true;});
 el('settingsSound').onclick=()=>{
   soundEnabled=!soundEnabled;write('sound',soundEnabled);
-  if(soundEnabled)sound(523);else if(audio)audio.suspend().catch(()=>{});
+  gameAudio.setEnabled(soundEnabled);
+  if(soundEnabled)void gameAudio.playButton();
   syncSettings();
 };
 el('settingsReset').onclick=()=>{settingsOverlay.hidden=true;reset();};
@@ -379,6 +376,7 @@ async function spin(q){
   const epoch=++motionEpoch,nextBoard=rotate(board,q,dir),direction=dir,startAngle=knobAngles[q];
   const reduceMotion=!!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
   const duration=reduceMotion?120:TURN_DURATION_MS;
+  void gameAudio.playTurn(duration);
   const offsets=reduceMotion?[0,.45,.55,1]:Array.from({length:TURN_KEYFRAME_COUNT},(_,i)=>i/(TURN_KEYFRAME_COUNT-1));
   const fadeAt=p=>p<=.45?1-p/.45:p<.55?0:(p-.55)/.45;
   const focusAt=p=>reduceMotion?Math.sin(Math.PI*p)*.45:sampleTurn(motion,0,p).focus;
@@ -419,8 +417,8 @@ async function spin(q){
   if(!completed){cancelRotation();render();return;}
   board=nextBoard;moves++;knobAngles[q]=(startAngle+direction*90)%360;
   for(const animation of activeAnimations)animation.cancel();
-  activeAnimations=[];rotating=false;clearTurnVisuals();
-  sound(365+q*70);render();
+  activeAnimations=[];rotating=false;gameAudio.stopTurn();clearTurnVisuals();
+  render();
   if(isSolved(board))finish();
 }
 
@@ -435,8 +433,6 @@ function finish(){
   const record=isBetterResult(metric,prev)?metric:prev;
   write('best:'+storageKey(),{...record,score:resultScore(record.moves,record.seconds,record.hints)});
   if(mode==='story')write('unlocked',Math.max(Number(unlocked()),Math.min(18,+key+1)));
-  const round=roundSerial;
-  sound(523,.22,.05);setTimeout(()=>{if(round===roundSerial&&won&&!gameScreen.hidden)sound(659,.25,.043);},110);setTimeout(()=>{if(round===roundSerial&&won&&!gameScreen.hidden)sound(784,.45,.04);},235);
   render();
 }
 function openDialog({emblem='✦',title,text='',stats='',primary='继续',secondary='',onPrimary=()=>{},onSecondary=()=>{}}){
@@ -519,7 +515,6 @@ function showRank(){
   const seconds=hasBest?Math.floor(Number(local.seconds)):0;
   el('rankBestTime').textContent=hasBest?`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`:'—:—';
   el('rankBestNote').textContent=hasBest?'本机已记录':'本机暂无记录';
-  el('rankHintRule').textContent=`每日挑战每局可用 ${hintLimit('daily')} 次提示，成绩照常参与排行`;
   el('home').hidden=true;gameScreen.hidden=true;$.modal.hidden=true;resultDialogToken=null;$.modal.classList.remove('result-mode');settingsOverlay.hidden=true;
   rankScreen.hidden=false;rankScreen.scrollTop=0;
 }
@@ -536,7 +531,7 @@ function hint(){
   if(hints>=limit){toast('本局提示已用完，重新开始可重置');return;}
   const path=shortestPath(board);if(!path.length)return;
   hints++;hintGuide={round:roundSerial,board,q:path[0].q,dir:path[0].dir,stage:'direction'};
-  render();toast(hintInstruction(hintGuide));sound(660,.3);
+  render();toast(hintInstruction(hintGuide));
 }
 function reset(){if(!ready)return;startGame(mode,key);toast('已重置本局');}
 function setDirection(direction){
@@ -544,7 +539,7 @@ function setDirection(direction){
   dir=direction;
   const guide=currentHint();
   if(guide)guide.stage=direction===guide.dir?'target':'direction';
-  render();if(guide)toast(hintInstruction(guide));sound(direction===1?390:350);
+  render();if(guide)toast(hintInstruction(guide));
 }
 $.anchors.addEventListener('click',event=>{const button=event.target.closest('button[data-q]');if(button)spin(Number(button.dataset.q));});
 el('cwBtn').onclick=()=>setDirection(1);el('ccwBtn').onclick=()=>setDirection(-1);
@@ -560,25 +555,25 @@ window.addEventListener('keydown',event=>{
     return;
   }
   if(!canPlay())return;
-  if(event.key==='r'||event.key==='R')reset();
+  if(event.key==='r'||event.key==='R'){void gameAudio.playButton();reset();}
   else if(/^[1-4]$/.test(event.key))spin(Number(event.key)-1);
-  else if(event.key===' '&&!event.target?.closest?.('button,input,select,textarea,a')){event.preventDefault();setDirection(-dir);}
+  else if(event.key===' '&&!event.target?.closest?.('button,input,select,textarea,a')){event.preventDefault();void gameAudio.playButton();setDirection(-dir);}
 });
 
 function startTimers(){
-  clearInterval(clockTimer);clearInterval(bgTimer);
-  clockTimer=window.setInterval(updateTime,220);bgTimer=window.setInterval(backgroundMusic,6600);
+  clearInterval(clockTimer);
+  clockTimer=window.setInterval(updateTime,220);
 }
-window.addEventListener('pagehide',()=>{cancelRotation();clearInterval(clockTimer);clearInterval(bgTimer);});
+window.addEventListener('pagehide',event=>{cancelRotation();clearInterval(clockTimer);if(event.persisted)gameAudio.pause();else gameAudio.dispose();});
 window.addEventListener('pageshow',event=>{if(event.persisted&&ready){render();startTimers();}});
 function onMotionResize(){if(rotating){cancelRotation();if(puzzle)render();}}
 window.addEventListener('resize',onMotionResize);
 window.visualViewport?.addEventListener('resize',onMotionResize);
-document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelRotation();if(puzzle)render();}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelRotation();gameAudio.pause();if(puzzle)render();}});
 
 const ART_FILES=[HOME_ART.resource+'.webp',HOME_UI.resource+'.webp','ui-atlas.webp','daily-banner.webp','reference-daily.webp','reference-clean.webp','rank-scene.webp','result-panel.webp'];
 async function preloadTileArtwork(){
-  const response=await fetch(new URL('./cocos/assets/resources/art/referenceLayout.json?v=0.8.17',import.meta.url));
+  const response=await fetch(new URL('./cocos/assets/resources/art/referenceLayout.json?v=0.8.18',import.meta.url));
   if(!response.ok)throw new Error('tile artwork layout could not be loaded');
   const {tileArtwork:art}=await response.json();
   if(!art||!/^[-a-z0-9]+$/.test(art.resource)||art.fit!=='fill'||!Array.isArray(art.imageSize)||art.imageSize.length!==2||art.imageSize.some(v=>!Number.isFinite(v)||v<=0))throw new Error('invalid tile artwork layout');

@@ -7,16 +7,16 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation;-webk
 button:focus-visible{outline:3px solid #534386;outline-offset:3px}button:disabled{cursor:wait}[hidden]{display:none!important}
 .sr-only{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;margin:-1px;padding:0;border:0}
 .shell{position:relative;width:min(100%,460px);height:var(--available-height);min-height:0;margin:0 auto;isolation:isolate;overflow:hidden;box-shadow:0 0 60px #95613716}
-html[data-screen=home],html[data-screen=home] body{background:#1b2b58}
-html[data-screen=home] .shell{box-shadow:0 0 72px #0b142b55}
-/* One complete sky scene contains the title, primary entry and two side entries. */
-.home-screen{--home-u:1px;position:absolute;inset:0;width:100%;height:100%;overflow-x:hidden;overflow-y:auto;background:var(--home-background,#1b2b58);isolation:isolate}
-.home-screen:before{content:"";position:absolute;inset:0;min-height:var(--home-content-height,100%);background:var(--home-background,#1b2b58);z-index:-2}
+html[data-screen=home],html[data-screen=home] body{background:#fee7c8}
+html[data-screen=home] .shell{box-shadow:0 0 72px #b9874a26}
+/* A warm cream page contains the star-map fragments and three menu panels. */
+.home-screen{--home-u:1px;position:absolute;inset:0;width:100%;height:100%;overflow-x:hidden;overflow-y:auto;background:var(--home-background,#fee7c8);isolation:isolate}
+.home-screen:before{content:"";position:absolute;inset:0;min-height:var(--home-content-height,100%);background:var(--home-background,#fee7c8);z-index:-2}
 .home-hero{position:absolute;overflow:hidden;pointer-events:none}
 .home-scene{display:block;position:absolute;max-width:none;object-fit:contain;user-select:none;pointer-events:none}
 .home-title,.home-subtitle{position:absolute;display:flex;align-items:center;justify-content:center;margin:0;white-space:nowrap;pointer-events:none}
-.home-title{font-family:"Songti SC","STSong","Noto Serif CJK SC",serif;font-weight:800;line-height:1;letter-spacing:.11em;text-indent:.11em;color:var(--home-title,#fff0c6);text-shadow:0 2px 4px #10194380}
-.home-subtitle{font-family:"Times New Roman",Times,serif;font-weight:700;line-height:1;letter-spacing:.32em;text-indent:.32em;color:var(--home-subtitle,#e4d3ae);text-shadow:0 1px 3px #10194370}
+.home-title{font-family:"Songti SC","STSong","Noto Serif CJK SC",serif;font-weight:800;line-height:1;letter-spacing:.11em;text-indent:.11em;color:var(--home-title,#71482f);text-shadow:0 1px 0 #fff6e5cc}
+.home-subtitle{font-family:"Times New Roman",Times,serif;font-weight:700;line-height:1;letter-spacing:.32em;text-indent:.32em;color:var(--home-subtitle,#96704d);text-shadow:0 1px 0 #fff6e599}
 .skin{position:absolute;inset:0;display:block;background-image:url('assets/art/ui-atlas.webp');background-repeat:no-repeat;pointer-events:none}
 .icon-button{display:block;position:relative;width:calc(48 * var(--u));height:calc(48 * var(--u));min-width:38px;min-height:38px;padding:0;border:0;background:none;border-radius:28%;flex-shrink:0;transition:transform .12s ease;z-index:3}
 .icon-button:active{transform:translateY(2px) scale(.96)}.home-settings{position:absolute;min-width:44px;min-height:44px;aspect-ratio:1;z-index:3}
@@ -96,7 +96,6 @@ html[data-screen=home] .shell{box-shadow:0 0 72px #0b142b55}
 .rank-best-note{height:auto;min-height:12px;padding:0 4px;border-radius:6px;background:#ffdfb2e6;color:#805839;font-size:max(10px,calc(22 * var(--rank-unit)));line-height:1.15;white-space:nowrap}
 .rank-best-value{font:700 max(21px,calc(60 * var(--rank-unit)))/1 Georgia,serif;font-variant-numeric:tabular-nums;letter-spacing:.02em}
 #rankBestTime{font-size:max(20px,calc(56 * var(--rank-unit)))}
-.rank-policy{margin:0;padding:2px 14px 16px;text-align:center;font-size:12px;line-height:1.7;color:#875c40;background:#f8d0a2}
 
 /* The new result image owns all decoration; text and hit regions remain live DOM. */
 .result-only{display:none}
