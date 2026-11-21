@@ -1,5 +1,5 @@
 {
-  "version": "0.8.12",
+  "version": "0.8.14",
   "atlas": {
     "width": 1254,
     "height": 1254,
@@ -108,22 +108,22 @@
     },
     {
       "id": "jade",
-      "name": "翠绿星庭",
-      "resource": "celestial-jade-v1",
+      "name": "逐星之鹿",
+      "resource": "celestial-stag-v1",
       "width": 1302,
       "height": 1208
     },
     {
       "id": "amethyst",
-      "name": "紫晶梦境",
-      "resource": "celestial-amethyst-v1",
+      "name": "创生之柱",
+      "resource": "celestial-pillars-v1",
       "width": 1302,
       "height": 1208
     },
     {
       "id": "tide",
-      "name": "青蓝潮汐",
-      "resource": "celestial-tide-v1",
+      "name": "天秤星衡",
+      "resource": "celestial-libra-v2",
       "width": 1301,
       "height": 1209
     },
@@ -136,8 +136,8 @@
     },
     {
       "id": "frost",
-      "name": "银白星霜",
-      "resource": "celestial-frost-v1",
+      "name": "银白引力",
+      "resource": "celestial-frost-v4",
       "width": 1302,
       "height": 1208
     }

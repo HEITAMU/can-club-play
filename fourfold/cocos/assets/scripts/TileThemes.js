@@ -5,11 +5,11 @@ const theme=(id,name,resource,indexColor='#FFF2C5',indexShadowColor='#081025CC',
 export const TILE_THEMES=Object.freeze([
   theme('night','深蓝星月','celestial-mural-v2'),
   theme('ruby','暗红玫瑰','celestial-ruby-v1'),
-  theme('jade','翠绿星庭','celestial-jade-v1'),
-  theme('amethyst','紫晶梦境','celestial-amethyst-v1'),
-  theme('tide','青蓝潮汐','celestial-tide-v1'),
+  theme('jade','逐星之鹿','celestial-stag-v1'),
+  theme('amethyst','创生之柱','celestial-pillars-v1'),
+  theme('tide','天秤星衡','celestial-libra-v2'),
   theme('solar','琥珀日轮','celestial-solar-v1'),
-  theme('frost','银白星霜','celestial-frost-v1','#603823','#FFF9E8B3','#FFF4D899','#FFFEF4'),
+  theme('frost','银白引力','celestial-frost-v4','#ECF5FF','#0A1835E6','#0A1835D9','#FFFFFF'),
 ]);
 
 function themeHash(text){

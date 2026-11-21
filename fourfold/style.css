@@ -109,3 +109,19 @@ button:focus-visible{outline:3px solid #534386;outline-offset:3px}button:disable
 /* Vertical touch scrolling must not reserve a column inside the full-width artwork. */
 .home-screen,.game-screen[data-mode=daily]{scrollbar-width:none}
 .home-screen::-webkit-scrollbar,.game-screen[data-mode=daily]::-webkit-scrollbar{display:none;width:0;height:0}
+
+/* Game controls keep their space below the full-width picture. Short screens scroll. */
+.game-screen[data-mode=story]{overflow-x:hidden;overflow-y:auto;scrollbar-width:none}
+.game-screen[data-mode=story]::-webkit-scrollbar{display:none;width:0;height:0}
+.game-screen[data-mode=story] .board-frame{width:100%;min-width:0;margin:0 auto}
+.game-screen[data-mode=story] .direction{min-height:44px}
+.game-screen[data-mode=story] .direction .art-button{min-height:44px}
+.game-screen[data-mode=story] .icon-button{min-width:44px;min-height:44px}
+.game-screen .tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;min-height:44px;height:max(44px,calc(41 * var(--u)));width:100%}
+.game-screen .tools .art-button{width:100%;min-height:44px;font-size:max(14px,calc(18 * var(--u)))}
+.game-screen .completion-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px 8px;flex-shrink:0;width:100%;margin-top:calc(9 * var(--u))}
+.game-screen .completion-actions .art-button{min-height:44px;height:max(44px,calc(51 * var(--u)));font-size:clamp(13px,3.9vw,18px)}
+.game-screen #resultDetailsBtn{grid-column:1/-1;justify-self:center;width:calc((100% - 8px) / 2);height:44px}
+.game-screen[data-show-numbers=false] .tile .index{visibility:hidden}
+.board-frame.view-art .board,.board-frame.view-art .anchors,.board-frame.view-art .turn-focus{visibility:hidden}
+.complete-art{position:absolute;display:block;object-fit:fill;pointer-events:none;user-select:none;z-index:3}

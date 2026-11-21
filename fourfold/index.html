@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f8d4a5">
 <meta name="description" content="四格诡局：转动四格，复原星图。">
-<meta name="fourfold-version" content="0.8.12">
+<meta name="fourfold-version" content="0.8.14">
 <title>四格诡局 · 星图挑战</title>
 <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
 <link rel="preload" as="image" href="assets/art/home-celestial-v3.webp" fetchpriority="high">
 <link rel="preload" as="image" href="assets/art/home-menu-v3.webp">
 <link rel="preload" as="image" href="assets/art/ui-atlas.webp">
-<link rel="stylesheet" href="assets/art/atlas.css?v=0.8.12">
-<link rel="stylesheet" href="style.css?v=0.8.12">
-<link rel="stylesheet" href="reference.css?v=0.8.12">
+<link rel="stylesheet" href="assets/art/atlas.css?v=0.8.14">
+<link rel="stylesheet" href="style.css?v=0.8.14">
+<link rel="stylesheet" href="reference.css?v=0.8.14">
 </head>
 <body>
-<main class="shell" id="app" data-build="0.8.12">
+<main class="shell" id="app" data-build="0.8.14">
 <section id="home" class="home-screen" aria-label="四格诡局主菜单">
 <div class="home-hero">
 <img class="home-scene" src="assets/art/home-celestial-v3.webp" width="1173" height="1341" alt="金色月牙、紫色云海、行星与星座组成的星空" fetchpriority="high" draggable="false">
@@ -46,15 +46,20 @@
 <div class="stat-card"><span class="skin skin-timeCard" aria-hidden="true"></span><div class="stat-copy"><small>本局用时</small><strong id="clock">00:00</strong></div></div>
 </div>
 <div id="target" class="target" hidden></div>
-<div id="boardFrame" class="board-frame"><div id="board" class="board" role="group" aria-label="九宫格星图"></div><div id="turnFocus" class="turn-focus" aria-hidden="true" hidden></div><div id="anchors" class="anchors" aria-label="旋转节点"></div><div id="themeStatus" class="theme-status" hidden role="status" aria-live="polite"><span id="themeStatusText">星图正在展开…</span><button id="themeRetry" type="button" hidden>重试</button></div></div>
+<div id="boardFrame" class="board-frame"><div id="board" class="board" role="group" aria-label="九宫格星图"></div><div id="turnFocus" class="turn-focus" aria-hidden="true" hidden></div><div id="anchors" class="anchors" aria-label="旋转节点"></div><img id="completeArt" class="complete-art" alt="完整星图" draggable="false" hidden><div id="themeStatus" class="theme-status" hidden role="status" aria-live="polite"><span id="themeStatusText">星图正在展开…</span><button id="themeRetry" type="button" hidden>重试</button></div></div>
 <p class="instruction sr-only" id="instruction" aria-live="polite"></p>
-<div class="direction" aria-label="旋转方向">
+<div id="playDirection" class="direction" aria-label="旋转方向">
 <button id="cwBtn" class="art-button selected"><span class="skin skin-creamButton" aria-hidden="true"></span><span class="button-label"><span class="direction-symbol">↻</span>顺时针</span></button>
 <button id="ccwBtn" class="art-button"><span class="skin skin-creamButton" aria-hidden="true"></span><span class="button-label"><span class="direction-symbol">↺</span>逆时针</span></button>
 </div>
-<div class="tools"><button id="hintBtn" class="art-button" type="button" aria-label="提示，剩余 5 次，本局最多 5 次"><span class="skin skin-creamButton" aria-hidden="true"></span><span id="hintLabel" class="button-label">✧ 提示 5/5</span><span id="hintRemaining" class="hint-remaining" aria-hidden="true">5/5</span></button></div>
+<div id="playTools" class="tools"><button id="hintBtn" class="art-button" type="button" aria-label="提示，剩余 5 次，本局最多 5 次"><span class="skin skin-creamButton" aria-hidden="true"></span><span id="hintLabel" class="button-label">✧ 提示 5/5</span><span id="hintRemaining" class="hint-remaining" aria-hidden="true">5/5</span></button><button id="numbersBtn" class="art-button" type="button" aria-pressed="true"><span class="skin skin-creamButton" aria-hidden="true"></span><span id="numbersLabel" class="button-label">隐藏数字</span></button></div>
+<div id="completionActions" class="completion-actions" aria-label="星图已拼合" hidden>
+<button id="viewArtBtn" class="art-button" type="button" aria-pressed="false"><span class="skin skin-creamButton" aria-hidden="true"></span><span id="viewArtLabel" class="button-label">欣赏星图</span></button>
+<button id="nextBtn" class="art-button" type="button"><span class="skin skin-goldButton" aria-hidden="true"></span><span id="nextLabel" class="button-label">下一关</span></button>
+<button id="resultDetailsBtn" class="art-button" type="button"><span class="skin skin-creamButton" aria-hidden="true"></span><span class="button-label">成绩详情</span></button>
+</div>
 </section>
-<div class="bottom-actions"><button class="art-button" id="shareBtn"><span class="skin skin-goldButton" aria-hidden="true"></span><span class="button-label">✧ 发起同关挑战</span></button><button id="nextBtn" hidden></button></div>
+<div class="bottom-actions"><button class="art-button" id="shareBtn"><span class="skin skin-goldButton" aria-hidden="true"></span><span class="button-label">✧ 发起同关挑战</span></button></div>
 </div>
 <section id="rankScreen" class="rank-screen" aria-labelledby="rankTitle" hidden>
 <h1 id="rankTitle" class="sr-only">好友荣誉榜</h1>
@@ -100,6 +105,6 @@
 <div id="startupNotice" hidden role="status"></div>
 <noscript>请启用 JavaScript 进入星图。</noscript>
 <script>window.ffOpen=function(which){window.ffPending=which;var n=document.getElementById('startupNotice');n.hidden=false;n.textContent='星图正在准备…';};</script>
-<script type="module" src="layout.mjs?v=0.8.12"></script>
-<script type="module" src="app.js?v=0.8.12"></script>
+<script type="module" src="layout.mjs?v=0.8.14"></script>
+<script type="module" src="app.js?v=0.8.14"></script>
 </body></html>

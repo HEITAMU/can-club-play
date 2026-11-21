@@ -1,7 +1,7 @@
-import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.12';
-import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.12';
-import {HOME_ART,HOME_UI,homeStoryLabel} from './cocos/assets/scripts/HomeScene.js?v=0.8.12';
-import {getTileTheme,buildThemeArtwork} from './cocos/assets/scripts/TileThemes.js?v=0.8.12';
+import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.14';
+import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.14';
+import {HOME_ART,HOME_UI,homeStoryLabel} from './cocos/assets/scripts/HomeScene.js?v=0.8.14';
+import {getTileTheme,buildThemeArtwork} from './cocos/assets/scripts/TileThemes.js?v=0.8.14';
 
 const el=id=>document.getElementById(id);
 const $={board:el('board'),anchors:el('anchors'),target:el('target'),moves:el('moves'),par:el('par'),clock:el('clock'),instruction:el('instruction'),difficulty:el('difficulty'),chapterCaption:el('chapterCaption'),puzzleTitle:el('puzzleTitle'),storyTab:el('storyTab'),dailyTab:el('dailyTab'),cwBtn:el('cwBtn'),ccwBtn:el('ccwBtn'),modal:el('modal'),toast:el('toast')};
@@ -24,11 +24,12 @@ const turnFocus=el('turnFocus'),boardFrame=el('boardFrame');
 
 let mode='story',key='1',dir=1,board=GOAL,puzzle=null,moves=0,hints=0,won=false,started=0,elapsed=0,claimedBeat=null,highlight=-1;
 let audio=null,soundEnabled=read('sound',true),clockTimer=0,bgTimer=0,toastTimer=0;
+let showNumbers=read('showNumbers',true)!==false,viewArt=false,completionMetric=null;
 let ready=false,bootFailed=false,pendingOpen=window.ffPending||null;
 let rotating=false,motionEpoch=0,activeAnimations=[];
 let motionFallback=null,hintAnimation=null;
 let rankOrigin='home';
-let roundSerial=0,resultRouteToken=null;
+let roundSerial=0,resultRouteToken=null,resultDialogToken=null;
 window.ffReady=false;
 
 function sound(note=440,len=.13,volume=.038){
@@ -69,7 +70,7 @@ function clearTurnVisuals(resetKnobs=false){
     anchorMotionNodes[q].style.transform=knobAngles[q]?`rotate(${knobAngles[q]}deg)`:'';
     anchorMotionNodes[q].style.opacity='';anchorRingNodes[q].style.opacity='';
   });
-  $.cwBtn.disabled=!themeReady();$.ccwBtn.disabled=!themeReady();el('hintBtn').disabled=!themeReady();
+  $.cwBtn.disabled=won||!themeReady();$.ccwBtn.disabled=won||!themeReady();el('hintBtn').disabled=won||!themeReady();el('numbersBtn').disabled=won||!themeReady();
 }
 function cancelRotation({resetKnobs=false}={}){
   motionEpoch++;
@@ -84,8 +85,15 @@ function syncHomeEntry(){
   el('homeStoryText').textContent=label;
   el('enterStory').setAttribute('aria-label',label);
 }
+function clearCompletion(){
+  viewArt=false;completionMetric=null;resultRouteToken=null;resultDialogToken=null;
+  $.modal.hidden=true;$.modal.classList.remove('result-mode');
+  el('dialogPrimary').onclick=null;el('dialogSecondary').onclick=null;
+  el('completeArt').hidden=true;
+}
 function showHome(){
   cancelRotation({resetKnobs:true});
+  clearCompletion();won=false;started=0;
   syncHomeEntry();
   el('home').hidden=false;gameScreen.hidden=true;rankScreen.hidden=true;$.modal.hidden=true;settingsOverlay.hidden=true;
   if(puzzle)render();
@@ -140,7 +148,7 @@ function startGame(nextMode=mode,nextKey=key){
   if(nextMode==='daily'&&(nextPuzzle.par<9||nextPuzzle.par>11||nextPuzzle.difficulty!=='宗师'))throw new Error('daily puzzle bank validation failed');
   const nextTheme=getTileTheme(nextMode,nextPuzzle.key);
   cancelRotation({resetKnobs:true});
-  roundSerial++;resultRouteToken=null;$.modal.classList.remove('result-mode');
+  roundSerial++;clearCompletion();
   mode=nextMode;puzzle=nextPuzzle;key=puzzle.key;board=puzzle.board;dir=1;
   moves=0;hints=0;elapsed=0;started=0;won=false;highlight=-1;$.modal.hidden=true;
   $.storyTab.classList.toggle('active',mode==='story');$.dailyTab.classList.toggle('active',mode==='daily');
@@ -157,7 +165,7 @@ function initBoard(){
   for(const token of GOAL){
     const tile=document.createElement('div');tile.className='tile';tile.dataset.token=token;
     tile.setAttribute('aria-label','星图碎片 '+token);
-    const number=document.createElement('span');number.className='index';number.textContent=token;
+    const number=document.createElement('span');number.className='index';number.textContent=token;number.setAttribute('aria-hidden','true');
     tile.append(number);tileNodes.set(token,tile);$.board.append(tile);
   }
   SQUARES.forEach((_,q)=>{
@@ -197,6 +205,7 @@ function applyTileArtwork(art,theme){
     number.style.webkitTextStroke=`.4px ${theme.indexOutlineColor}`;
   }
   tileArtwork=art;
+  el('completeArt').src=sourceUrl;el('completeArt').alt=theme.name+'完整星图';
   $.board.setAttribute('aria-label',theme.name+'九宫格星图');
 }
 function loadThemeArtwork(theme){
@@ -255,7 +264,7 @@ function render(){
   el('hintRemaining').textContent=`${remaining}/${limit}`;
   hintButton.classList.toggle('hint-exhausted',remaining===0);
   const blocked=rotating||!themeReady();
-  hintButton.disabled=blocked;$.cwBtn.disabled=blocked;$.ccwBtn.disabled=blocked;
+  hintButton.disabled=blocked||won;$.cwBtn.disabled=blocked||won;$.ccwBtn.disabled=blocked||won;
   hintButton.setAttribute('aria-disabled',String(blocked||won||remaining===0));
   hintButton.setAttribute('aria-label',remaining?`提示，剩余 ${remaining} 次，本局最多 ${limit} 次`:'本局提示已用完');
   hintButton.title=remaining?`本局剩余 ${remaining}/${limit} 次提示`:'本局提示已用完，重新开始可重置';
@@ -268,7 +277,35 @@ function render(){
   });
   $.cwBtn.classList.toggle('selected',dir===1);$.ccwBtn.classList.toggle('selected',dir===-1);
   $.cwBtn.setAttribute('aria-pressed',String(dir===1));$.ccwBtn.setAttribute('aria-pressed',String(dir===-1));
-  el('nextBtn').textContent=won?'下一关':'';
+  gameScreen.dataset.showNumbers=String(showNumbers);gameScreen.dataset.won=String(won);
+  boardFrame.classList.toggle('view-art',won&&viewArt&&themeReady());
+  el('completeArt').hidden=!(won&&viewArt&&themeReady());
+  $.board.setAttribute('aria-hidden',String(won&&viewArt));$.anchors.setAttribute('aria-hidden',String(won&&viewArt));
+  el('playDirection').hidden=won;el('playTools').hidden=won;el('completionActions').hidden=!won;
+  const numbersButton=el('numbersBtn');numbersButton.disabled=blocked||won;
+  numbersButton.setAttribute('aria-pressed',String(showNumbers));
+  numbersButton.setAttribute('aria-label',showNumbers?'隐藏数字，当前显示':'显示数字，当前隐藏');
+  el('numbersLabel').textContent=showNumbers?'隐藏数字':'显示数字';
+  el('viewArtLabel').textContent=viewArt?'返回棋盘':'欣赏星图';
+  el('viewArtBtn').setAttribute('aria-pressed',String(viewArt));
+  el('nextLabel').textContent=mode==='daily'?'继续闯关':+key<18?'下一关':'挑战每日关卡';
+  const route=resultRouteToken,metric=completionMetric;
+  el('viewArtBtn').disabled=el('nextBtn').disabled=el('resultDetailsBtn').disabled=blocked||!completionCurrent(route);
+  el('viewArtBtn').onclick=()=>toggleArtView(route);
+  el('nextBtn').onclick=()=>nextLevel(route);
+  el('resultDetailsBtn').onclick=()=>openResult(metric,route);
+}
+
+function toggleNumbers(){
+  if(!canPlay())return false;
+  showNumbers=!showNumbers;write('showNumbers',showNumbers);render();return true;
+}
+function completionCurrent(route=resultRouteToken){
+  return !!route&&route===resultRouteToken&&!route.consumed&&route.round===roundSerial&&route.mode===mode&&route.key===key&&won&&!rotating&&!gameScreen.hidden;
+}
+function toggleArtView(route=resultRouteToken){
+  if(!completionCurrent(route)||!themeReady()||!$.modal.hidden||!settingsOverlay.hidden)return false;
+  viewArt=!viewArt;render();return true;
 }
 
 function canPlay(){return ready&&themeReady()&&!gameScreen.hidden&&$.modal.hidden&&settingsOverlay.hidden&&!rotating&&!won;}
@@ -322,7 +359,7 @@ async function spin(q){
   $.board.classList.add('rotating');$.anchors.setAttribute('aria-busy','true');
   $.board.dataset.turn=String(q);$.board.dataset.turnDirection=String(direction);$.board.dataset.turnDuration=String(duration);
   anchorNodes.forEach(button=>{button.disabled=true;button.classList.remove('hinted');});anchorNodes[q].classList.add('turning');
-  $.cwBtn.disabled=true;$.ccwBtn.disabled=true;el('hintBtn').disabled=true;
+  $.cwBtn.disabled=true;$.ccwBtn.disabled=true;el('hintBtn').disabled=true;el('numbersBtn').disabled=true;
   const effects=affected.map((tile,index)=>({node:tile,role:'tile-'+tile.dataset.token,at:p=>{
     const sample=sampleTurn(motion,index,reduceMotion?(p<.5?0:1):p);
     const landing=!reduceMotion&&p>=.9?Math.sin(Math.PI*(p-.9)/.1)*.18:0;
@@ -354,29 +391,36 @@ async function spin(q){
 }
 
 function finish(){
+  if(won||rotating||!puzzle||!isSolved(board)||gameScreen.hidden)return;
   won=true;elapsed=started?(performance.now()-started)/1000:0;
   const metric={moves,par:puzzle.par,seconds:Math.floor(elapsed),hints,score:resultScore(moves,elapsed,hints),day:key};
+  completionMetric=Object.freeze(metric);viewArt=false;
+  resultRouteToken={round:roundSerial,mode,key,consumed:false};resultDialogToken=null;
   const prev=best();
   const record=isBetterResult(metric,prev)?metric:prev;
   write('best:'+storageKey(),{...record,score:resultScore(record.moves,record.seconds,record.hints)});
   if(mode==='story')write('unlocked',Math.max(Number(unlocked()),Math.min(18,+key+1)));
-  sound(523,.22,.05);setTimeout(()=>sound(659,.25,.043),110);setTimeout(()=>sound(784,.45,.04),235);
-  render();openResult(metric);
+  const round=roundSerial;
+  sound(523,.22,.05);setTimeout(()=>{if(round===roundSerial&&won&&!gameScreen.hidden)sound(659,.25,.043);},110);setTimeout(()=>{if(round===roundSerial&&won&&!gameScreen.hidden)sound(784,.45,.04);},235);
+  render();
 }
 function openDialog({emblem='✦',title,text='',stats='',primary='继续',secondary='',onPrimary=()=>{},onSecondary=()=>{}}){
-  resultRouteToken=null;el('closeModal').setAttribute('aria-label','关闭弹窗');
+  resultDialogToken=null;el('closeModal').setAttribute('aria-label','关闭弹窗');
   $.modal.classList.remove('result-mode');el('dialogText').hidden=false;el('dialogEmblem').textContent=emblem;
   el('dialogOverline').textContent='';el('dialogOverline').hidden=true;el('dialogTitle').textContent=title;
   el('dialogText').textContent=text;el('dialogStats').textContent=stats;el('dialogPrimary').textContent=primary;
   el('dialogSecondary').textContent=secondary;el('dialogSecondary').style.display=secondary?'':'none';
   el('dialogPrimary').onclick=onPrimary;el('dialogSecondary').onclick=onSecondary;$.modal.hidden=false;
 }
-function openResult(metric){
+function openResult(metric=completionMetric,route=resultRouteToken){
+  if(!completionCurrent(route)||!metric||metric!==completionMetric||!$.modal.hidden||!settingsOverlay.hidden)return false;
   const perfect=metric.moves===metric.par;
-  const route={round:roundSerial,mode,key,consumed:false};
+  const detail={route};
   const primary=mode==='daily'?'继续闯关':+key<18?'挑战下一关':'挑战每日关卡';
-  openDialog({emblem:perfect?'♛':'✦',title:'星图已复原',primary,secondary:'分享此关给好友',onPrimary:()=>nextLevel(route),onSecondary:share});
-  resultRouteToken=route;el('closeModal').setAttribute('aria-label',primary);
+  openDialog({emblem:perfect?'♛':'✦',title:'星图已复原',primary,secondary:'分享此关给好友',onPrimary:()=>{
+    if(resultDialogToken===detail&&!$.modal.hidden&&$.modal.classList.contains('result-mode'))nextLevel(route);
+  },onSecondary:()=>{if(resultDialogToken===detail&&completionCurrent(route)&&!$.modal.hidden)share();}});
+  resultDialogToken=detail;el('closeModal').setAttribute('aria-label','关闭成绩详情，返回星图');
   $.modal.classList.add('result-mode');
   el('resultHonor').textContent=honor(metric.moves,metric.par,metric.hints);
   el('resultNote').textContent=claimedBeat===null?`最优步数 ${metric.par} 步`:`最优 ${metric.par} 步 · 好友目标 ${claimedBeat} 步`;
@@ -392,24 +436,28 @@ function openResult(metric){
     const v=document.createElement('strong');v.id='result'+name;v.className='result-position';v.textContent=String(value);place(v,valueRect);cell.append(l,v);return cell;
   }));
   el('dialogText').hidden=true;
+  return true;
 }
 function nextLevel(route=resultRouteToken){
-  if(!route||route!==resultRouteToken||route.consumed||route.round!==roundSerial||route.mode!==mode||route.key!==key||!won||$.modal.hidden||gameScreen.hidden)return;
+  if(!completionCurrent(route)||!settingsOverlay.hidden)return false;
+  if(!$.modal.hidden&&!$.modal.classList.contains('result-mode'))return false;
   route.consumed=true;resultRouteToken=null;
   try{
     if(route.mode==='daily')startGame('story',unlocked());
     else if(+route.key<18)startGame('story',String(+route.key+1));
     else startGame('daily',currentDay());
     claimedBeat=null;showGame();
+    return true;
   }catch{
     route.consumed=false;resultRouteToken=route;
     toast('下一关暂时无法打开，请重试');
+    render();return false;
   }
 }
 function closeDialog(){
   if($.modal.hidden)return;
-  if($.modal.classList.contains('result-mode')){nextLevel();return;}
-  $.modal.hidden=true;
+  $.modal.hidden=true;resultDialogToken=null;$.modal.classList.remove('result-mode');
+  el('dialogPrimary').onclick=null;el('dialogSecondary').onclick=null;
 }
 function share(){shareChallenge(mode,key);}
 function shareChallenge(challengeMode,challengeKey){
@@ -436,11 +484,11 @@ function showRank(){
   el('rankBestTime').textContent=hasBest?`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`:'—:—';
   el('rankBestNote').textContent=hasBest?'本机已记录':'本机暂无记录';
   el('rankHintRule').textContent=`每日挑战每局可用 ${hintLimit('daily')} 次提示，成绩照常参与排行`;
-  el('home').hidden=true;gameScreen.hidden=true;$.modal.hidden=true;settingsOverlay.hidden=true;
+  el('home').hidden=true;gameScreen.hidden=true;$.modal.hidden=true;resultDialogToken=null;$.modal.classList.remove('result-mode');settingsOverlay.hidden=true;
   rankScreen.hidden=false;rankScreen.scrollTop=0;
 }
 function closeRank(){
-  if(rankOrigin==='game'&&puzzle){render();showGame();}
+  if(rankOrigin==='game'&&puzzle){showGame();render();}
   else showHome();
 }
 function hint(){
@@ -463,7 +511,7 @@ function reset(){if(!ready)return;startGame(mode,key);toast('已重置本局');}
 function setDirection(direction){if(!canPlay())return;dir=direction;render();sound(direction===1?390:350);}
 $.anchors.addEventListener('click',event=>{const button=event.target.closest('button[data-q]');if(button)spin(Number(button.dataset.q));});
 el('cwBtn').onclick=()=>setDirection(1);el('ccwBtn').onclick=()=>setDirection(-1);
-el('hintBtn').onclick=hint;el('shareBtn').onclick=share;el('nextBtn').onclick=()=>nextLevel();
+el('hintBtn').onclick=hint;el('shareBtn').onclick=share;el('numbersBtn').onclick=toggleNumbers;
 $.storyTab.onclick=()=>openMode('story');$.dailyTab.onclick=()=>openMode('daily');
 el('closeModal').onclick=closeDialog;
 $.modal.addEventListener('click',event=>{if(event.target===$.modal)closeDialog();});
@@ -477,7 +525,7 @@ window.addEventListener('keydown',event=>{
   if(!canPlay())return;
   if(event.key==='r'||event.key==='R')reset();
   else if(/^[1-4]$/.test(event.key))spin(Number(event.key)-1);
-  else if(event.key===' '){event.preventDefault();setDirection(-dir);}
+  else if(event.key===' '&&!event.target?.closest?.('button,input,select,textarea,a')){event.preventDefault();setDirection(-dir);}
 });
 
 function startTimers(){
@@ -493,7 +541,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelRota
 
 const ART_FILES=[HOME_ART.resource+'.webp',HOME_UI.resource+'.webp','ui-atlas.webp','daily-banner.webp','reference-daily.webp','reference-clean.webp','rank-scene.webp','result-panel.webp'];
 async function preloadTileArtwork(){
-  const response=await fetch(new URL('./cocos/assets/resources/art/referenceLayout.json?v=0.8.12',import.meta.url));
+  const response=await fetch(new URL('./cocos/assets/resources/art/referenceLayout.json?v=0.8.14',import.meta.url));
   if(!response.ok)throw new Error('tile artwork layout could not be loaded');
   const {tileArtwork:art}=await response.json();
   if(!art||!/^[-a-z0-9]+$/.test(art.resource)||art.fit!=='fill'||!Array.isArray(art.imageSize)||art.imageSize.length!==2||art.imageSize.some(v=>!Number.isFinite(v)||v<=0))throw new Error('invalid tile artwork layout');

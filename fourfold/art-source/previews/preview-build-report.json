@@ -1,0 +1,95 @@
+{
+  "offline": {
+    "path": "art-source/previews/fourfold-live-board.html",
+    "bytes": 3877039,
+    "images": "existing full-size quality95 WebP"
+  },
+  "inline": {
+    "path": "/workspace/fourfold-live-board.html",
+    "bytes": 955922,
+    "format": "AVIF",
+    "quality": 51,
+    "resized": false,
+    "images": [
+      {
+        "key": "reference",
+        "dimensions": [
+          854,
+          1842
+        ],
+        "bytes": 75619,
+        "sourceSha256": "3322f8709cebce6ff2a35847fe3e9f34e38558bdef250ebc9ee09ea5a52c3d1e"
+      },
+      {
+        "key": "celestial-mural-v2",
+        "dimensions": [
+          1302,
+          1208
+        ],
+        "bytes": 82861,
+        "sourceSha256": "afeb45e8e6ab2f866393c446f62306311d690bc8be7e8753ee55d6a2e93744af"
+      },
+      {
+        "key": "celestial-ruby-v1",
+        "dimensions": [
+          1301,
+          1209
+        ],
+        "bytes": 91091,
+        "sourceSha256": "c357ea87dfc588dc3c88b5ca0a19cbf0293c298981324148a65640c58d0098b0"
+      },
+      {
+        "key": "celestial-stag-v1",
+        "dimensions": [
+          1302,
+          1208
+        ],
+        "bytes": 69081,
+        "sourceSha256": "ec8fec31b3271219fa115f8a46242b41ddef8d66d3e45f66df5e1b353859cc20"
+      },
+      {
+        "key": "celestial-pillars-v1",
+        "dimensions": [
+          1302,
+          1208
+        ],
+        "bytes": 92011,
+        "sourceSha256": "ba5b2ebcd8d0b848e0bbc87cc770e14b6769c185bab6369eb3cfca48d880225d"
+      },
+      {
+        "key": "celestial-libra-v2",
+        "dimensions": [
+          1301,
+          1209
+        ],
+        "bytes": 66919,
+        "sourceSha256": "7c67d56ff13330f4b5c140d405a47a25641425d4139d3c63e916d8a93b19e8b9"
+      },
+      {
+        "key": "celestial-solar-v1",
+        "dimensions": [
+          1301,
+          1209
+        ],
+        "bytes": 97817,
+        "sourceSha256": "f866725fb5de8c1730d8c81d89767db64a0ef4a4421caad58b5ff269930278bb"
+      },
+      {
+        "key": "celestial-frost-v4",
+        "dimensions": [
+          1302,
+          1208
+        ],
+        "bytes": 101565,
+        "sourceSha256": "3471cc97e02b806b1637649bb9baa87a331b038cff2a6e2b7923d70ff4367cbc"
+      }
+    ]
+  },
+  "sourceModules": [
+    "Core.js (GOAL/SQUARES/rotate exact source slice)",
+    "TurnMotion.js",
+    "TileThemes.js",
+    "tests/interactive-board.js"
+  ],
+  "networkRequests": false
+}

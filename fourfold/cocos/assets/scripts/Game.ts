@@ -26,11 +26,13 @@ export class FourfoldGame extends Component {
   private canvasNode:Node;private root:Node;private cam:Camera;private width=390;private height=844;
   private safeTop=0;private safeBottom=0;private windowScale=1;private inHome=true;private mode='story';private key='1';private puzzle:any;
   private board=GOAL;private direction=1;private moves=0;private hints=0;private elapsed=0;private startAt=0;private won=false;private modal='';private busy=false;
+  private showNumbers=this.storeRead('showNumbers',true)!==false;private admiring=false;private completedRound=-1;private uiSerial=0;
   private clockLabel:Label|null=null;private rewardAd:any=null;private banner:any=null;private toastNode:Node|null=null;
   private numberLayers=new Map<Label,Label[]>();
   private roundSerial=0;private hintRequest:any=null;private disposed=false;private resultAdvanceRound=-1;
   private rankTemplate:Node|null=null;private rankView:Node|null=null;private rankSettings=false;
   private assetsReady=false;private loading=false;private loadError='';private loadProgress=0;private loadSerial=0;
+  private pendingResourceLoads=new Set<()=>void>();
   private textures:Record<string,Texture2D>={};private frames:Record<string,SpriteFrame>={};private images:ImageAsset[]=[];private manifest:any=null;private reference:any=null;private rankLayout:any=null;
   private activeTheme:any=null;private themeArtwork:any=null;private themeImage:ImageAsset|null=null;private themeLoading=false;private themeError='';private themeSerial=0;
   private tileNodes:Node[]=[];private knobNodes:Node[]=[];private knobArtNodes:Node[]=[];private knobAngles=[0,0,0,0];private boardContent:Node|null=null;
@@ -76,6 +78,7 @@ export class FourfoldGame extends Component {
     view.setDesignResolutionSize(this.width,this.height,ResolutionPolicy.FIXED_WIDTH);
   }
   private onWindowResize(){
+    if(this.disposed)return;
     this.cancelTurnMotion();
     this.fitViewport();if(!this.canvasNode||!this.root)return;
     this.canvasNode.getComponent(UITransform).setContentSize(this.width,this.height);this.canvasNode.setPosition(this.width/2,this.height/2);
@@ -87,28 +90,52 @@ export class FourfoldGame extends Component {
   private storeRead(key:string,otherwise:any){try{const sdk=wxSDK();const value=sdk?sdk.getStorageSync('fourfold:'+key):localStorage.getItem('fourfold:'+key);return value?JSON.parse(value):otherwise;}catch{return otherwise;}}
   private storeWrite(key:string,val:any){try{const sdk=wxSDK();if(sdk)sdk.setStorageSync('fourfold:'+key,JSON.stringify(val));else localStorage.setItem('fourfold:'+key,JSON.stringify(val));}catch{}}
   private unlocked(){return Math.min(18,Math.max(1,Number(this.storeRead('unlocked',1))||1));}
-  private loadResource(path:string,type:any){return new Promise<any>((resolve,reject)=>resources.load(path,type,(err,asset)=>err?reject(err):resolve(asset)));}
+  private loadResource(path:string,type:any){
+    if(this.disposed)return Promise.reject(new Error('Fourfold resource load cancelled'));
+    return new Promise<any>((resolve,reject)=>{
+      let settled=false,timer:any=null;
+      const finish=(error:any,asset?:any)=>{
+        if(settled)return;
+        settled=true;if(timer!==null)clearTimeout(timer);this.pendingResourceLoads.delete(cancel);
+        if(error)reject(error);else if(this.disposed)reject(new Error('Fourfold resource load cancelled'));else resolve(asset);
+      };
+      const cancel=()=>finish(new Error('Fourfold resource load cancelled'));
+      this.pendingResourceLoads.add(cancel);
+      timer=setTimeout(()=>finish(new Error(`Fourfold resource load timed out: ${path}`)),25000);
+      // A timeout cannot cancel the engine's request. Its late callback must not
+      // settle this attempt again or acquire ownership of a stale image.
+      try{resources.load(path,type,finish);}catch(error){finish(error);}
+    });
+  }
   private async loadArt(){
-    if(this.loading)return;
+    if(this.loading||this.disposed)return;
     const serial=++this.loadSerial;this.loading=true;this.loadError='';this.assetsReady=false;this.loadProgress=0;this.draw();
+    const current=()=>!this.disposed&&serial===this.loadSerial;
     try{
       const [manifestAsset,referenceAsset,rankAsset]=await Promise.all([this.loadResource('art/assetManifest',JsonAsset),this.loadResource('art/referenceLayout',JsonAsset),this.loadResource('art/rankLayout',JsonAsset)]);
-      if(serial!==this.loadSerial)return;
+      if(!current())return;
       this.manifest=manifestAsset.json;this.reference=referenceAsset.json;this.rankLayout=rankAsset.json;
       const rects=this.manifest?.atlas?.frames;
       if(!rects||REQUIRED_FRAMES.some(name=>!rects[name]))throw new Error('美术清单缺少必要组件');
       const paths=ART_PATHS;
       this.disposeArt();
       const names=Object.keys(paths);
-      // 逐张入库；重试和销毁能准确释放本次已经装入的资源。
-      for(const name of names){
-        const source=await this.loadResource(paths[name],ImageAsset);
-        if(serial!==this.loadSerial)return;
-        source.addRef();this.images.push(source);
-        const texture=new Texture2D();texture.image=source;this.textures[name]=texture;
-        this.frames[name]=this.makeFrame(texture,0,0,texture.width,texture.height);
-        this.loadProgress++;this.draw();
-      }
+      let next=0;
+      // At most three requests in this attempt. Each continuation checks its
+      // generation before retaining an image or creating rendering resources.
+      const worker=async()=>{
+        while(current()){
+          const index=next++;if(index>=names.length)return;
+          const name=names[index],source=await this.loadResource(paths[name],ImageAsset);
+          if(!current())return;
+          source.addRef();this.images.push(source);
+          const texture=new Texture2D();this.textures[name]=texture;texture.image=source;
+          this.frames[name]=this.makeFrame(texture,0,0,texture.width,texture.height);
+          this.loadProgress++;this.draw();
+        }
+      };
+      await Promise.all(Array.from({length:Math.min(3,names.length)},()=>worker()));
+      if(!current())return;
       const atlas=this.textures.atlas;
       for(const name of Object.keys(rects)){
         const r=rects[name];
@@ -125,8 +152,12 @@ export class FourfoldGame extends Component {
         else this.startGame('story',String(this.unlocked()),true);
       }else if(this.inHome)this.draw();else this.prepareTheme(this.roundSerial);
     }catch(e){
-      if(serial!==this.loadSerial)return;
-      console.error('Fourfold artwork load failed',e);this.loading=false;this.loadError='美术资源未加载完成';this.assetsReady=false;this.draw();
+      if(!current())return;
+      // Invalidate sibling workers before exposing retry or releasing partial
+      // art. Their pending engine callbacks can no longer write into this view
+      // or a subsequent attempt.
+      this.loadSerial++;this.loading=false;this.assetsReady=false;this.disposeArt();
+      console.error('Fourfold artwork load failed',e);this.loadError='美术资源未加载完成';this.draw();
     }
   }
   private makeFrame(texture:Texture2D,x:number,y:number,w:number,h:number){
@@ -208,19 +239,25 @@ export class FourfoldGame extends Component {
     if(rank.width!==854||rank.height!==1842||rank.podium?.length!==3)throw new Error('榜单开放域设计尺寸不匹配');
   }
   private startGame(mode:string,key:string,home=false){
+    if(this.disposed)return;
     this.cancelTurnMotion();
     try{this.puzzle=makePuzzle(mode,key);}catch(e){console.warn('unavailable challenge',e);this.toast('这个日期的挑战暂不可用');if(!this.puzzle){this.puzzle=makePuzzle('story','1');mode='story';key='1';home=true;}else return;}
     this.roundSerial++; // 同一关重开也不能领取上一局尚未结束的广告奖励。
-    this.mode=mode;this.key=key;this.inHome=home;this.board=this.puzzle.board;this.direction=1;this.moves=0;this.hints=0;this.startAt=0;this.elapsed=0;this.won=false;this.busy=false;this.knobAngles=[0,0,0,0];this.modal='';this.rankSettings=false;this.hideBanner();
+    this.mode=mode;this.key=key;this.inHome=home;this.board=this.puzzle.board;this.direction=1;this.moves=0;this.hints=0;this.startAt=0;this.elapsed=0;this.won=false;this.busy=false;this.knobAngles=[0,0,0,0];this.modal='';this.rankSettings=false;this.admiring=false;this.completedRound=-1;this.resultAdvanceRound=-1;this.hideBanner();
     // Keep round changes synchronous: an old victory callback must not advance
     // a second time while the next theme is still arriving.
     if(home){this.themeSerial++;this.themeLoading=false;this.themeError='';this.draw();}else this.prepareTheme(this.roundSerial);
+  }
+  private goHome(){
+    if(this.disposed)return;
+    this.cancelTurnMotion();this.themeSerial++;this.themeLoading=false;this.themeError='';this.inHome=true;this.modal='';this.rankSettings=false;this.admiring=false;this.hideBanner();this.draw();
   }
   private updateClock(){
     if(this.startAt&&!this.won&&!this.inHome)this.elapsed=(at()-this.startAt)/1000;
     if(this.clockLabel){const value=clock(this.elapsed);for(const label of this.numberLayers.get(this.clockLabel)||[this.clockLabel])label.string=value;}
   }
   private clear(){
+    this.uiSerial++;
     this.cancelTurnMotion();if(this.inHome)this.knobAngles=[0,0,0,0];
     this.rankView=null;
     if(this.pageScroll){this.scrollOffsets[this.pageScrollKey]=Math.max(0,this.pageScroll.getScrollOffset().y);this.pageScroll=null;}
@@ -281,7 +318,7 @@ export class FourfoldGame extends Component {
     return n;
   }
   private artHit(name:string,rect:number[],scale:number,parent:Node,action:()=>void,minTop=-Infinity){
-    const [x,y,w,h]=rect.map(v=>v*scale),hitW=Math.max(44,w),hitH=Math.max(44,h),left=x+(w-hitW)/2,top=Math.max(minTop,y+(h-hitH)/2);
+    const [x,y,w,h]=rect.map(v=>v*scale),hitW=Math.max(44*this.windowScale,w),hitH=Math.max(44*this.windowScale,h),left=x+(w-hitW)/2,top=Math.max(minTop,y+(h-hitH)/2);
     const g=this.group(name,left,top,hitW,hitH,parent),feedback=this.shape(0,0,hitW,hitH,'#FFF6DD28','',Math.min(18,hitH/3),g.content);feedback.active=false;
     this.bindButton(g.node,action,feedback);return {node:g.node,x:left,y:top,w:hitW,h:hitH};
   }
@@ -299,14 +336,14 @@ export class FourfoldGame extends Component {
     else {this.shape(70,426,this.width-140,7,'#E5BC88','',3);this.shape(70,426,Math.max(7,(this.width-140)*this.loadProgress/Object.keys(ART_PATHS).length),7,C.gold2,'',3);}
   }
   private drawThemeLoading(){
-    this.iconButton('backButton',16,this.safeTop+8,44,()=>{this.themeSerial++;this.themeLoading=false;this.themeError='';this.inHome=true;this.modal='';this.draw();},true);
+    this.iconButton('backButton',16,this.safeTop+8,44,()=>this.goHome(),true);
     const center=this.safeTop+(this.height-this.safeTop-this.safeBottom)/2;
     this.txt(this.mode==='daily'?'每日挑战':`第${this.key}关`,35,center-85,this.width-70,48,28,C.dark,true);
     this.txt(this.themeError||'正在展开星图…',35,center-22,this.width-70,34,16,C.muted);
     if(this.themeError)this.btn('重新加载星图',80,center+35,this.width-160,54,()=>this.prepareTheme(this.roundSerial),'creamButton',18);
   }
   private draw(){
-    if(!this.root)return;this.clear();
+    if(this.disposed||!this.root)return;this.clear();
     if(!this.assetsReady){this.drawLoading();return;}
     this.shape(0,0,this.width,this.height,C.background,'',0);
     if(this.modal==='rank'||(this.modal==='settings'&&this.rankSettings)){this.drawRankPage();if(this.modal==='settings')this.drawModal();return;}
@@ -323,24 +360,31 @@ export class FourfoldGame extends Component {
       buttons:layout.buttons.map(rect),settings:rect(layout.settings)};
   }
   private dailyGeometry(width:number,height:number){
-    // 与网页layout.mjs共用同一组公式：可用高度只选择排布，不缩整张原画。
+    // Mirror dailyLayout in viewport pixels, then convert to the fixed-width
+    // native canvas. Short screens scroll; 44px controls never shrink with it.
+    const uiScale=this.windowScale;width/=uiScale;height/=uiScale;
     const box=(x:number,y:number,w:number,h:number)=>({x,y,w,h}),fit=(w:number,sw:number,sh:number)=>w*sh/sw;
-    const c=width-16,cardW=(c-8)/2,directionW=(c-8)/2,statsH=fit(cardW,380,181),boardH=fit(c,817,765);
-    const directionH=Math.max(44,fit(directionW,412,123)),hintW=c*401/817,shareW=c*764/817;
-    const hintH=Math.max(44,fit(hintW,401,92)),shareH=Math.max(44,fit(shareW,764,143));
-    const regularHeights=[44,fit(c,807,213),statsH,boardH,directionH,hintH,shareH],regularTotal=regularHeights.reduce((a,b)=>a+b,0)+6*6+16;
+    const c=width-16,cardW=(c-8)/2,directionW=(c-8)/2,toolW=(c-8)/2,statsH=fit(cardW,380,181),boardH=fit(c,817,765);
+    const directionH=Math.max(44,fit(directionW,412,123)),shareW=c*764/817;
+    const toolH=Math.max(44,fit(toolW,401,92)),shareH=Math.max(44,fit(shareW,764,143));
+    const regularHeights=[44,fit(c,807,213),statsH,boardH,directionH,toolH,shareH],regularTotal=regularHeights.reduce((a,b)=>a+b,0)+6*6+16;
     const compact=regularTotal>height,gap=compact?3:6,pad=compact?6:8,bannerW=compact?c-72:c,bannerH=fit(bannerW,807,213);
-    const footerHintW=(c-8)*.36,footerShareW=(c-8)*.64,footerH=Math.max(44,fit(footerHintW,401,92),fit(footerShareW,764,143));
-    const heights=compact?[Math.max(44,bannerH),statsH,boardH,directionH,footerH]:regularHeights,total=heights.reduce((a,b)=>a+b,0)+gap*(heights.length-1)+pad*2;
+    const heights=compact?[Math.max(44,bannerH),statsH,boardH,directionH,toolH,shareH]:regularHeights,total=heights.reduce((a,b)=>a+b,0)+gap*(heights.length-1)+pad*2;
     let y=pad+Math.max(0,(height-total)/2);
     const rows=heights.map(h=>{const rect=box(8,y,c,h);y+=h+gap;return rect;});
     const bannerRow=compact?rows[0]:rows[1],statsRow=compact?rows[1]:rows[2],boardRow=compact?rows[2]:rows[3],directionRow=compact?rows[3]:rows[4],navY=rows[0].y+(rows[0].h-44)/2;
-    const hint=compact?box(8,rows[4].y,footerHintW,footerH):box((width-hintW)/2,rows[5].y,hintW,hintH);
-    const share=compact?box(16+footerHintW,rows[4].y,footerShareW,footerH):box((width-shareW)/2,rows[6].y,shareW,shareH);
-    return {compact,contentH:Math.max(height,total),back:box(compact?0:8,navY,44,44),settings:box(width-(compact?44:52),navY,44,44),iconWidth:compact?32:40,
+    const toolRow=compact?rows[4]:rows[5],shareRow=compact?rows[5]:rows[6];
+    const hint=box(8,toolRow.y,toolW,toolH),numbers=box(16+toolW,toolRow.y,toolW,toolH),share=box((width-shareW)/2,shareRow.y,shareW,shareH);
+    const cw=box(8,directionRow.y,directionW,directionH),ccw=box(16+directionW,directionRow.y,directionW,directionH);
+    const layout:any={compact,contentH:Math.max(height,total),back:box(compact?0:8,navY,44,44),settings:box(width-(compact?44:52),navY,44,44),iconWidth:compact?32:40,
       banner:box((width-bannerW)/2,bannerRow.y+(bannerRow.h-bannerH)/2,bannerW,bannerH),moves:box(8,statsRow.y,cardW,statsH),
       timer:box(16+cardW,statsRow.y+(statsH-fit(cardW,379,180))/2,cardW,fit(cardW,379,180)),board:boardRow,
-      cw:box(8,directionRow.y,directionW,directionH),ccw:box(16+directionW,directionRow.y,directionW,directionH),hint,share};
+      cw,ccw,hint,numbers,share,appreciate:{...cw},next:{...ccw},details:box((width-toolW)/2,toolRow.y,toolW,toolH)};
+    const scaled:any={...layout,contentH:layout.contentH*uiScale,iconWidth:layout.iconWidth*uiScale};
+    for(const key of ['back','settings','banner','moves','timer','board','cw','ccw','hint','numbers','share','appreciate','next','details']){
+      const r=layout[key];scaled[key]=box(r.x*uiScale,r.y*uiScale,r.w*uiScale,r.h*uiScale);
+    }
+    return scaled;
   }
   private drawHome(){
     const w=this.width,uiScale=w/390,layout=this.homeGeometry(w,this.height-this.safeTop-this.safeBottom),parent=this.pageContent('Home',layout.contentH);
@@ -386,24 +430,45 @@ export class FourfoldGame extends Component {
   }
   private drawGame(){
     if(this.mode==='daily'){this.drawReferenceDaily();return;}
-    const w=this.width,top=Math.max(24,this.safeTop+8),bottom=this.height-this.safeBottom-12;
-    this.iconButton('backButton',16,top,42,()=>{this.inHome=true;this.modal='';this.hideBanner();this.draw();},true);
-    this.iconButton('settingsButton',w-58,top,42,()=>{this.modal='settings';this.draw();},true);
-    this.art('creamButton',87,top-2,w-174,52);this.txt(`第${this.key}关`,93,top+1,w-186,44,27,C.dark,true);
-    const statsY=top+67,statW=(w-42)/2,statH=statW*this.reference.components.movesCard[3]/this.reference.components.movesCard[2];
-    this.statCard('stepsCard','当前步数',String(this.moves).padStart(2,'0'),15,statsY,statW,statH);
-    this.statCard('timeCard','本局用时',clock(this.elapsed),27+statW,statsY,statW,statH,true);
-    const shareY=bottom-52,hintY=shareY-8-36,directionY=hintY-7-44;
-    const minBoardY=statsY+statH+10,maxBoardBottom=directionY-14,size=Math.min(w-34,maxBoardBottom-minBoardY);
-    const by=minBoardY+Math.max(0,(maxBoardBottom-minBoardY-size)/2),bx=(w-size)/2;
-    this.drawBoard(bx,by,size);
-    this.btn('↻ 顺时针',14,directionY,(w-35)/2,44,()=>{this.direction=1;this.draw();},this.direction===1?'goldButton':'creamButton',17);
-    this.btn('↺ 逆时针',21+(w-35)/2,directionY,(w-35)/2,44,()=>{this.direction=-1;this.draw();},this.direction===-1?'goldButton':'creamButton',17);
-    this.btn(`✧ 提示 ${this.hintsLeft()}/${hintLimit(this.mode)}`,88,hintY,w-176,36,()=>this.askHint(),'creamButton',16);
-    this.btn('✦ 发起同关挑战',16,shareY,w-32,52,()=>this.share(),'goldButton',20);
+    const w=this.width,u=this.windowScale,available=this.height-this.safeTop-this.safeBottom,top=16*u,buttonH=44*u;
+    const contentW=w-16*u,half=(contentW-8*u)/2,statsY=top+60*u,statH=half*this.reference.components.movesCard[3]/this.reference.components.movesCard[2];
+    const boardY=statsY+statH+10*u,boardH=contentW*this.reference.boardOuter[3]/this.reference.boardOuter[2];
+    const directionY=boardY+boardH+12*u,toolsY=directionY+buttonH+7*u,shareY=toolsY+buttonH+8*u,shareH=52*u;
+    const contentH=shareY+shareH+12*u,parent=this.pageContent('Story',Math.max(available,contentH));
+    const box=(x:number,y:number,width:number,height:number)=>({x,y,w:width,h:height});
+    const layout={cw:box(8*u,directionY,half,buttonH),ccw:box(16*u+half,directionY,half,buttonH),hint:box(8*u,toolsY,half,buttonH),numbers:box(16*u+half,toolsY,half,buttonH),
+      appreciate:box(8*u,directionY,half,buttonH),next:box(16*u+half,directionY,half,buttonH),details:box((w-half)/2,toolsY,half,buttonH)};
+    this.btn('',8*u,top,buttonH,buttonH,()=>this.goHome(),'backButton',16,parent,true);
+    this.btn('',w-52*u,top,buttonH,buttonH,()=>{this.modal='settings';this.draw();},'settingsButton',16,parent,true);
+    this.art('creamButton',68*u,top-2*u,w-136*u,52*u,parent);this.txt(`第${this.key}关`,76*u,top+u,w-152*u,44*u,27*u,C.dark,true,parent);
+    this.statCard('stepsCard','当前步数',String(this.moves).padStart(2,'0'),8*u,statsY,half,statH,false,parent);
+    this.statCard('timeCard','本局用时',clock(this.elapsed),16*u+half,statsY,half,statH,true,parent);
+    this.drawBoard(8*u,boardY,contentW,parent);
+    if(this.won)this.drawCompletionControls(layout,parent);
+    else{
+      this.btn('↻ 顺时针',layout.cw.x,layout.cw.y,half,buttonH,()=>{this.direction=1;this.draw();},this.direction===1?'goldButton':'creamButton',17*u,parent);
+      this.btn('↺ 逆时针',layout.ccw.x,layout.ccw.y,half,buttonH,()=>{this.direction=-1;this.draw();},this.direction===-1?'goldButton':'creamButton',17*u,parent);
+      this.btn(`✧ 提示 ${this.hintsLeft()}/${hintLimit(this.mode)}`,layout.hint.x,toolsY,half,buttonH,()=>this.askHint(),'creamButton',16*u,parent);
+      this.drawNumbersControl(layout.numbers,parent);
+    }
+    this.btn('✦ 发起同关挑战',8*u,shareY,contentW,shareH,()=>this.share(),'goldButton',20*u,parent);
+  }
+  private drawNumbersControl(rect:any,parent:Node){
+    const round=this.roundSerial,ui=this.uiSerial;
+    this.btn(this.showNumbers?'隐藏数字':'显示数字',rect.x,rect.y,rect.w,rect.h,()=>this.toggleNumbers(round,ui),'creamButton',16*this.windowScale,parent);
+  }
+  private nextLevelLabel(){return this.mode==='daily'?'继续闯关':Number(this.key)>=18?'挑战每日关卡':'下一关';}
+  private drawCompletionControls(layout:any,parent:Node){
+    const round=this.roundSerial,ui=this.uiSerial;
+    const button=(text:string,key:string,action:()=>void,skin='creamButton')=>{
+      const r=layout[key];this.btn(text,r.x,r.y,r.w,r.h,action,skin,16*this.windowScale,parent);
+    };
+    button(this.admiring?'返回棋盘':'欣赏星图','appreciate',()=>this.toggleAdmiration(round,ui));
+    button(this.nextLevelLabel(),'next',()=>this.nextLevel(round,ui),'goldButton');
+    button('成绩详情','details',()=>this.openResultDetails(round,ui));
   }
   private referenceControl(name:string,rect:number[],ox:number,oy:number,scale:number,action:()=>void,selected=false,dim=false,parent:Node=this.root,allowBusy=false){
-    const [rx,ry,rw,rh]=rect,w=rw*scale,h=rh*scale,hitW=Math.max(44,w),hitH=Math.max(44,h);
+    const [rx,ry,rw,rh]=rect,w=rw*scale,h=rh*scale,hitW=Math.max(44*this.windowScale,w),hitH=Math.max(44*this.windowScale,h);
     const n=this.createNode(name,ox+rx*scale-(hitW-w)/2,oy+ry*scale-(hitH-h)/2,hitW,hitH,parent),g=n.addComponent(Graphics);
     let pressed=false;
     const feedback=()=>{
@@ -429,7 +494,7 @@ export class FourfoldGame extends Component {
     const control=(key:string,name:string,rect:any,action:()=>void,selected=false,dim=false,maxWidth=rect.w)=>{
       const p=piece(key,rect,maxWidth);this.referenceControl(name,r.components[key],p.ox,p.oy,p.scale,action,selected,dim,parent,key==='back'||key==='settings');
     };
-    control('back','返回主页',layout.back,()=>{this.inHome=true;this.modal='';this.hideBanner();this.draw();},false,false,layout.iconWidth);
+    control('back','返回主页',layout.back,()=>this.goHome(),false,false,layout.iconWidth);
     control('settings','设置',layout.settings,()=>{this.modal='settings';this.draw();},false,false,layout.iconWidth);
     // 横幅、信息牌和按钮都是原稿独立裁片；仅各组件内的实时文字覆盖清理区域。
     const banner=piece('banner',layout.banner),date=r.dynamicPatches.date,dateParts=this.key.split('-');
@@ -439,22 +504,23 @@ export class FourfoldGame extends Component {
     const moves=layout.moves,timer=layout.timer;
     this.statCard('stepsCard','当前步数',String(this.moves).padStart(2,'0'),moves.x,moves.y,moves.w,moves.h,false,parent);
     this.statCard('timeCard','本局用时',clock(this.elapsed),timer.x,timer.y,timer.w,timer.h,true,parent);
-    const board=layout.board,outer=r.boardOuter,boardScale=board.w/outer[2];
-    this.art('referenceBoardFrame',board.x,board.y,board.w,board.h,parent);
-    this.drawReferenceBoard(board.x-outer[0]*boardScale,board.y-outer[1]*boardScale,boardScale,parent);
-    control('clockwise','↻ 顺时针',layout.cw,()=>{this.direction=1;this.draw();},false,this.direction<0);
-    control('counterclockwise','↺ 逆时针',layout.ccw,()=>{this.direction=-1;this.draw();},this.direction<0);
-    control('hint','✧ 提示',layout.hint,()=>this.askHint(),false,this.hintsLeft()===0);
-    const badge={x:layout.hint.x+layout.hint.w-33,y:layout.hint.y+layout.hint.h/2-9};
-    this.shape(badge.x,badge.y,31,18,C.surface,C.gold2,9,parent);
-    this.txt(`${this.hintsLeft()}/${hintLimit(this.mode)}`,badge.x,badge.y,31,18,11,this.hintsLeft()?C.dark:C.muted,true,parent);
+    const board=layout.board;this.drawBoard(board.x,board.y,board.w,parent);
+    if(this.won)this.drawCompletionControls(layout,parent);
+    else{
+      control('clockwise','↻ 顺时针',layout.cw,()=>{this.direction=1;this.draw();},false,this.direction<0);
+      control('counterclockwise','↺ 逆时针',layout.ccw,()=>{this.direction=-1;this.draw();},this.direction<0);
+      control('hint','✧ 提示',layout.hint,()=>this.askHint(),false,this.hintsLeft()===0);
+      const u=this.windowScale,badge={x:layout.hint.x+layout.hint.w-33*u,y:layout.hint.y+layout.hint.h/2-9*u};
+      this.shape(badge.x,badge.y,31*u,18*u,C.surface,C.gold2,9*u,parent);
+      this.txt(`${this.hintsLeft()}/${hintLimit(this.mode)}`,badge.x,badge.y,31*u,18*u,11*u,this.hintsLeft()?C.dark:C.muted,true,parent);
+      this.drawNumbersControl(layout.numbers,parent);
+    }
     control('share','✦ 发起同关挑战',layout.share,()=>this.share());
   }
-  private drawBoard(bx:number,by:number,size:number){
-    const outer=this.reference.boardOuter,outerW=Math.min(this.width-16,size+14),scale=outerW/outer[2],outerH=outer[3]*scale;
-    const x=bx+(size-outerW)/2,y=by+(size-outerH)/2;
-    this.art('referenceBoardFrame',x,y,outerW,outerH);
-    this.drawReferenceBoard(x-outer[0]*scale,y-outer[1]*scale,scale);
+  private drawBoard(x:number,y:number,width:number,parent:Node=this.root){
+    const outer=this.reference.boardOuter,scale=width/outer[2],height=outer[3]*scale;
+    this.art('referenceBoardFrame',x,y,width,height,parent);
+    this.drawReferenceBoard(x-outer[0]*scale,y-outer[1]*scale,scale,parent);
   }
   private drawReferenceBoard(ox:number,oy:number,scale:number,parent:Node=this.root){
     const r=this.reference,a=r.tileArea,w=a[2]*scale,h=a[3]*scale,bx=ox+a[0]*scale,by=oy+a[1]*scale;
@@ -464,6 +530,11 @@ export class FourfoldGame extends Component {
     const bed=r.boardBed,p=bed.rect;
     this.shape(ox+p[0]*scale,oy+p[1]*scale,p[2]*scale,p[3]*scale,bed.color,'',bed.cornerRadius*scale,parent).name='Clean board bed';
     const boardLayer=this.group('Reference board',bx,by,w,h,parent),mask=boardLayer.node.addComponent(Mask);mask.type=Mask.Type.RECT;this.boardContent=boardLayer.content;
+    if(this.won&&this.admiring){
+      // The full, unchanged theme frame occupies the same inner opening. No
+      // tile masks, rails, knobs or labels are built over the approved artwork.
+      this.art('mural',0,0,w,h,boardLayer.content).name='Complete mural';return;
+    }
     this.cleanBoardRails(scale,boardLayer.content);
     for(let i=0;i<9;i++){
       const p=r.slotRects[i],token=Number(this.board[i]),tw=p[2]*scale,th=p[3]*scale;
@@ -475,7 +546,7 @@ export class FourfoldGame extends Component {
       this.tileIndex(token,tw,th,scale,tile.content);this.tileNodes[i]=tile.node;
     }
     for(let q=0;q<4;q++){
-      const center=r.knobCenters[q],crop=r.knobCropRects[q],d=r.knobClipRadius*2*scale,hitD=Math.max(44,d);
+      const center=r.knobCenters[q],crop=r.knobCropRects[q],d=r.knobClipRadius*2*scale,hitD=Math.max(44*this.windowScale,d);
       const cx=(center[0]-a[0])*scale,cy=(center[1]-a[1])*scale;
       const hit=this.group('Rotate '+q,cx-hitD/2,cy-hitD/2,hitD,hitD,boardLayer.content);
       const circle=this.group('Knob circle',(hitD-d)/2,(hitD-d)/2,d,d,hit.content),clip=circle.node.addComponent(Mask);clip.type=Mask.Type.ELLIPSE;clip.segments=64;
@@ -484,6 +555,7 @@ export class FourfoldGame extends Component {
     }
   }
   private tileIndex(token:number,w:number,h:number,scale:number,parent:Node){
+    if(!this.showNumbers)return;
     // The token stays separate from the illustration; its inset also leaves
     // room for the 48px source-radius knobs at the inner grid intersections.
     const width=38*scale,height=52*scale,right=36*scale,bottom=14*scale;
@@ -606,7 +678,7 @@ export class FourfoldGame extends Component {
     // 唯一提交点：整段动画完成后再更新棋盘与步数，不排队补跑连续点击。
     const next=rotate(motion.board,motion.q,motion.dir),angle=(motion.knobStart+motion.dir*90)%360;
     this.cancelTurnMotion(false);this.knobAngles[motion.q]=angle;this.board=next;this.moves++;
-    if(isSolved(this.board)){this.won=true;this.elapsed=(at()-this.startAt)/1000;this.complete();}
+    if(isSolved(this.board)){this.won=true;this.elapsed=(at()-this.startAt)/1000;this.complete(motion.round);}
     this.draw();
   }
   private cancelTurnMotion(restore=true){
@@ -622,28 +694,49 @@ export class FourfoldGame extends Component {
   }
   private onAppHide=()=>{this.cancelTurnMotion();};
   onDisable(){this.cancelTurnMotion();}
-  private complete(){
+  private toggleNumbers(round=this.roundSerial,ui=this.uiSerial){
+    if(this.disposed||this.inHome||this.won||this.modal||this.busy||round!==this.roundSerial||ui!==this.uiSerial||this.themeLoading||this.themeError||!this.activeTheme)return false;
+    this.showNumbers=!this.showNumbers;this.storeWrite('showNumbers',this.showNumbers);this.draw();return true;
+  }
+  private completedRoundCurrent(round:number){
+    return !this.disposed&&!this.inHome&&round===this.roundSerial&&this.completedRound===round&&this.won&&isSolved(this.board);
+  }
+  private toggleAdmiration(round=this.roundSerial,ui=this.uiSerial){
+    if(!this.completedRoundCurrent(round)||ui!==this.uiSerial||this.modal||this.busy||this.themeLoading||this.themeError||!this.activeTheme)return false;
+    this.admiring=!this.admiring;this.draw();return true;
+  }
+  private openResultDetails(round=this.roundSerial,ui=this.uiSerial){
+    if(!this.completedRoundCurrent(round)||ui!==this.uiSerial||this.modal||this.busy)return false;
+    this.modal='result';this.hideBanner();this.draw();this.showBanner();return true;
+  }
+  private complete(round=this.roundSerial){
+    // update() marks won before calling this. The separate round marker guards
+    // storage, unlocks and cloud upload without suppressing the first record.
+    if(this.disposed||this.inHome||round!==this.roundSerial||this.completedRound===round||!this.won||!this.puzzle||!isSolved(this.board))return false;
+    this.completedRound=round;this.admiring=false;this.modal='';this.hideBanner();
     const result={moves:this.moves,par:this.puzzle.par,seconds:Math.floor(this.elapsed),hints:this.hints,score:resultScore(this.moves,this.elapsed,this.hints),day:this.key};
     const prev=this.storeRead('best:'+this.storageKey(),null);
     const best=isBetterResult(result,prev)?result:{...prev,score:resultScore(prev.moves,prev.seconds,prev.hints)};
     this.storeWrite('best:'+this.storageKey(),best);
     if(this.mode==='story')this.storeWrite('unlocked',Math.max(this.unlocked(),Math.min(18,Number(this.key)+1)));
     if(this.mode==='daily'&&this.key===todayCN())this.uploadScore(best);
-    this.modal='result';this.showBanner();wxSDK()?.vibrateShort?.({type:'light'});
+    wxSDK()?.vibrateShort?.({type:'light'});return true;
   }
   private uploadScore(result:any){
     const sdk=wxSDK();if(!sdk?.setUserCloudStorage)return;
     const value=[todayCN(),String(result.score),String(result.moves),String(result.seconds)].join('|');
     try{sdk.setUserCloudStorage({KVDataList:[{key:KEY,value}],fail:(e:any)=>console.warn('ranking cloud sync unavailable',e)});}catch(e){console.warn('ranking cloud sync failed',e);}
   }
-  private nextLevel(round=this.roundSerial){
-    // 关闭和继续共用同一条通关路由；被销毁弹窗的迟到点击不能再推进新一局。
-    if(this.disposed||round!==this.roundSerial||this.resultAdvanceRound===round||this.modal!=='result'||!this.won)return;
+  private nextLevel(round=this.roundSerial,ui=this.uiSerial){
+    // Only explicit next buttons use this route. Each captures its rendered
+    // round and view, so double taps or an old dialog cannot advance again.
+    if(!this.completedRoundCurrent(round)||ui!==this.uiSerial||this.resultAdvanceRound===round||(this.modal!==''&&this.modal!=='result'))return false;
     this.resultAdvanceRound=round;
     if(this.mode==='daily')this.startGame('story',String(this.unlocked()));
     else if(Number(this.key)<18)this.startGame('story',String(Number(this.key)+1));
     else this.startGame('daily',todayCN());
     if(this.roundSerial===round)this.resultAdvanceRound=-1; // 日期不可用时保留重试机会。
+    return this.roundSerial!==round;
   }
   private hintsLeft(){return Math.max(0,hintLimit(this.mode)-this.hints);}
   private applyHint(){
@@ -755,13 +848,13 @@ export class FourfoldGame extends Component {
     this.artHit('Rank next',r.next,scale,parent,()=>{if(canUseFriends)this.rankPage(1);});
     this.artHit('Rank daily',r.daily,scale,parent,()=>this.startGame('daily',todayCN()));
   }
-  private closeModal(){
-    if(this.modal==='result'){this.nextLevel();return;}
-    this.modal=this.modal==='settings'&&this.rankSettings?'rank':'';this.rankSettings=false;this.hideBanner();this.draw();
+  private closeModal(round=this.roundSerial,ui=this.uiSerial){
+    if(this.disposed||round!==this.roundSerial||ui!==this.uiSerial||!this.modal)return false;
+    this.modal=this.modal==='settings'&&this.rankSettings?'rank':'';this.rankSettings=false;this.hideBanner();this.draw();return true;
   }
   private drawModal(){
     if(this.modal==='result'){this.drawResultModal();return;}
-    const w=this.width,h=this.height,close=()=>this.closeModal();
+    const w=this.width,h=this.height,round=this.roundSerial,ui=this.uiSerial,close=()=>this.closeModal(round,ui);
     const shade=this.shape(0,0,w,h,'#32201CCB','',0);shade.addComponent(BlockInputEvents);shade.on(Node.EventType.TOUCH_END,close);
     const top=Math.max(this.safeTop+24,(h-456)/2),height=456;
     const panel=this.shape(24,top,w-48,height,C.surface,C.edge,20);panel.addComponent(BlockInputEvents);
@@ -770,15 +863,15 @@ export class FourfoldGame extends Component {
       this.txt('设置',62,top+29,w-124,44,28,C.dark,true);
       if(!this.inHome)this.btn('重新开始本关',43,top+110,w-86,54,()=>this.startGame(this.mode,this.key),'goldButton',18);
       this.btn('好友荣誉榜',43,top+(this.inHome?112:180),w-86,54,()=>this.showRank(),'creamButton',18);
-      this.btn(this.inHome?'进入星图':'返回主页',43,top+250,w-86,54,()=>{if(this.inHome)this.startGame('story',String(this.unlocked()));else{this.inHome=true;this.modal='';this.rankSettings=false;this.hideBanner();this.draw();}},'creamButton',18);
+      this.btn(this.inHome?'进入星图':'返回主页',43,top+250,w-86,54,()=>{if(this.inHome)this.startGame('story',String(this.unlocked()));else this.goHome();},'creamButton',18);
       this.btn('继续',86,top+366,w-172,45,()=>this.closeModal(),'creamButton',17);
     }
   }
   private drawResultModal(){
-    const r=this.rankLayout.result,round=this.roundSerial,advance=()=>this.nextLevel(round);
+    const r=this.rankLayout.result,round=this.roundSerial,ui=this.uiSerial,advance=()=>this.nextLevel(round,ui),close=()=>this.closeModal(round,ui);
     const available=Math.max(1,this.height-this.safeTop-this.safeBottom),scale=Math.min((this.width-24)/r.width,Math.max(1,available-20)/r.height);
     const width=r.width*scale,height=r.height*scale,left=(this.width-width)/2,top=this.safeTop+Math.max(0,(available-height)/2);
-    const shade=this.shape(0,0,this.width,this.height,'#211A32C9','',0);shade.addComponent(BlockInputEvents);shade.on(Node.EventType.TOUCH_END,advance);
+    const shade=this.shape(0,0,this.width,this.height,'#211A32C9','',0);shade.addComponent(BlockInputEvents);shade.on(Node.EventType.TOUCH_END,close);
     const panel=this.group('Result artwork',left,top,width,height);panel.node.addComponent(BlockInputEvents);this.art('resultPanel',0,0,width,height,panel.content);
     const text=(value:string,key:string,size:number,color=C.dark,bold=true)=>{const p=r[key];return this.txt(value,p[0]*scale,p[1]*scale,p[2]*scale,p[3]*scale,size*scale,color,bold,panel.content);};
     text('星图已复原','title',78,C.white);
@@ -786,12 +879,12 @@ export class FourfoldGame extends Component {
     text('当前步数','movesLabel',38);text('本局用时','timeLabel',38);
     for(const [value,key,size] of [[String(this.moves).padStart(2,'0'),'movesValue',78],[clock(this.elapsed),'timeValue',73]] as any){const p=r[key];this.numberText(value,p[0]*scale,p[1]*scale,p[2]*scale,p[3]*scale,size*scale,panel.content);}
     text(`最优步数 ${this.puzzle.par} 步`,'note',38,C.muted,false);
-    const primary=this.mode==='daily'?'继续闯关':Number(this.key)>=18?'挑战每日关卡':'挑战下一关';
+    const primary=this.nextLevelLabel();
     text(primary,'primary',63);text('分享此关给好友','share',44);
-    this.artHit('Result close',r.close,scale,panel.content,advance);
+    this.artHit('Result close',r.close,scale,panel.content,close);
     const primaryHit=this.artHit('Result next',r.primary,scale,panel.content,advance);
     // 小尺寸时分享按钮的点击区向下扩展，和上一个44px点击区保持间隔。
-    this.artHit('Result share',r.share,scale,panel.content,()=>{if(this.modal==='result'&&this.roundSerial===round)this.share();},primaryHit.y+primaryHit.h+2);
+    this.artHit('Result share',r.share,scale,panel.content,()=>{if(this.modal==='result'&&this.roundSerial===round&&this.uiSerial===ui)this.share();},primaryHit.y+primaryHit.h+2);
   }
   private toast(message:string){
     if(!this.root)return;if(this.toastNode){this.toastNode.active=false;this.toastNode.destroy();}
@@ -801,8 +894,13 @@ export class FourfoldGame extends Component {
   }
   onDestroy(){
     this.disposed=true;this.cancelTurnMotion();this.roundSerial++;screen.off('window-resize',this.onWindowResize,this);this.loadSerial++;
+    for(const cancel of [...this.pendingResourceLoads])cancel();
     try{this.hideSDK?.offHide?.(this.onAppHide);}catch{}this.hideSDK=null;
     if(this.hintRequest)this.releaseHintRequest(this.hintRequest);
-    this.hideBanner();try{this.rewardAd?.destroy?.();}catch{}this.rewardAd=null;this.disposeArt();
+    this.hideBanner();try{this.rewardAd?.destroy?.();}catch{}this.rewardAd=null;
+    // This canvas is a scene child, not a child of the component's own node.
+    // Remove its renderers before destroying the textures they still reference.
+    if(this.canvasNode?.isValid){this.canvasNode.active=false;this.canvasNode.removeFromParent();this.canvasNode.destroy();}
+    this.disposeArt();
   }
 }

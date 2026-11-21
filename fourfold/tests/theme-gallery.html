@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#111a30">
-<meta name="fourfold-gallery-version" content="0.8.12">
+<meta name="fourfold-gallery-version" content="0.8.14">
 <title>七套星图 · 四格诡局</title>
-<link rel="stylesheet" href="../reference.css?v=0.8.12">
+<link rel="stylesheet" href="../reference.css?v=0.8.14">
 <style>
 :root{color-scheme:dark;font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;color:#f7e9c9;background:#111a30}
 *{box-sizing:border-box}body{margin:0;min-width:280px;background:radial-gradient(ellipse at 50% -15%,#3a3247 0,transparent 54%),#111a30;line-height:1.6}button,a{-webkit-tap-highlight-color:transparent}button{font:inherit;cursor:pointer}button:disabled{cursor:wait;opacity:.55}button:focus-visible,a:focus-visible{outline:2px solid #ffe2a2;outline-offset:5px}[hidden]{display:none!important}a{color:#ecd09b;text-decoration:none}a:hover{text-decoration:underline}
@@ -25,7 +25,7 @@
 <main class="page">
   <header class="masthead">
     <div><p class="eyebrow">FOURFOLD · ART COLLECTION</p><h1>七套星图</h1><p class="intro">点开任意星图，查看整幅画面与九块拼片。<br>普通关卡使用深蓝星月，每日挑战每天随机换一套。</p></div>
-    <a class="back-link" href="../?v=0.8.12">返回游戏</a>
+    <nav aria-label="星图导航" style="display:flex;gap:20px;align-items:center"><a href="./interactive-board.html?v=0.8.14" style="font-size:13px;white-space:nowrap">实时试转 →</a><a class="back-link" href="../?v=0.8.14">返回游戏</a></nav>
   </header>
   <div id="galleryMessage" class="gallery-message" role="status" hidden><span id="galleryMessageText"></span><button id="reloadGallery" class="small-button" type="button">重新载入</button></div>
   <section id="gallery" class="gallery" aria-label="七套星图作品"></section>
@@ -48,10 +48,10 @@
   </div>
 </dialog>
 <script type="module">
-import {TILE_THEMES,buildThemeArtwork} from '../cocos/assets/scripts/TileThemes.js?v=0.8.12';
-import {GOAL} from '../cocos/assets/scripts/Core.js?v=0.8.12';
+import {TILE_THEMES,buildThemeArtwork} from '../cocos/assets/scripts/TileThemes.js?v=0.8.14';
+import {GOAL} from '../cocos/assets/scripts/Core.js?v=0.8.14';
 
-const VERSION='0.8.12',get=id=>document.getElementById(id);
+const VERSION='0.8.14',get=id=>document.getElementById(id);
 const gallery=get('gallery'),viewer=get('viewer'),stage=get('themeStage'),board=get('tilePreview'),fullArt=get('fullArt');
 const wholeButton=get('wholeMode'),tileButton=get('tileMode'),shuffleButton=get('shufflePreview');
 const imageCache=new Map(),cardNodes=new Map();

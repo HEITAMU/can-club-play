@@ -126,3 +126,16 @@ linear-gradient(to bottom,transparent 32.853%,#8d522e 32.853%,#f9d698 33.2%,#d18
   }
 }
 .game-screen[data-mode] #clock,.rank-screen #rankBestTime,.result-mode #resultTime{letter-spacing:0}
+
+/* The complete artwork occupies the same interior as the nine sampled pieces. */
+.game-screen .complete-art{left:4.28396573%;top:3.13725490%;width:91.43206854%;height:90.71895425%;border-radius:1.9%}
+/* New controls use existing atlas buttons with live, readable labels. */
+.game-screen[data-mode=daily] .completion-actions{display:contents}
+.game-screen[data-mode=daily] #numbersBtn,
+.game-screen[data-mode=daily] #viewArtBtn,
+.game-screen[data-mode=daily] #nextBtn,
+.game-screen[data-mode=daily] #resultDetailsBtn{position:absolute;left:var(--daily-x);top:var(--daily-y);width:var(--daily-w);height:var(--daily-h);margin:0;padding:0;min-width:44px;min-height:44px;max-width:none;transform:none;z-index:5}
+.game-screen[data-mode=daily] #numbersBtn .skin,
+.game-screen[data-mode=daily] .completion-actions .skin{inset:0;width:100%;height:100%;aspect-ratio:auto;transform:none;background-image:url('assets/art/ui-atlas.webp')}
+.game-screen[data-mode=daily] #numbersBtn .button-label,
+.game-screen[data-mode=daily] .completion-actions .button-label{position:relative;inset:auto;width:auto;height:auto;overflow:visible;clip-path:none;font-size:clamp(13px,3.9vw,18px);line-height:1.1;color:#61331f;text-shadow:0 1px #fff2ce80}

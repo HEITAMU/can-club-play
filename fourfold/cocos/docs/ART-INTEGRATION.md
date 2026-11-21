@@ -1,8 +1,33 @@
 # 四格诡局参考原稿接入
 
-版本：0.8.12；更新：2026-11-21；目标编辑器：Cocos Creator 3.8.8。
+版本：0.8.14；更新：2026-11-21；目标编辑器：Cocos Creator 3.8.8。
 
-## 七套完整星图（0.8.12）
+## 数字开关与通关原画欣赏（0.8.14，本地未发布）
+
+正式游戏新增持久化数字开关；通关后停留在成图，不自动弹出结算或进下一关。玩家可主动进入完整原画欣赏、查看成绩详情或继续；关闭成绩详情只返回成图。欣赏画面复用当前完整星图，保留原金色外框，隐藏格缝、旋钮与编号。原画、裁片与旋转轨迹未修改。行为与验证边界见 `completion-art-view.md`。
+
+## 第3、4、5、7套定稿接入（0.8.13，本地未发布）
+
+用户已确认鹿后半身修正版，并要求把后续定稿替换到棋盘。当前采用的四张新图如下；第1、2、6套和主页保留。第7套保留确认的黑洞构图、浅刻纹、色釉层次和四颗立体金属星。
+
+| 序号 | 内部ID | 名称 | 运行资源 | 原画尺寸 |
+| --- | --- | --- | --- | --- |
+| 3 | jade | 逐星之鹿 | celestial-stag-v1 | 1302×1208 |
+| 4 | amethyst | 创生之柱 | celestial-pillars-v1 | 1302×1208 |
+| 5 | tide | 天秤星衡 | celestial-libra-v2 | 1301×1209 |
+| 7 | frost | 银白引力 | celestial-frost-v4 | 1302×1208 |
+
+创生之柱以原深蓝、暗红、琥珀三张作为材质与画风参考，保持金属倒角、雕纹和色釉体积感；已移除左上装饰月亮。用户确认主体后，按追加要求在左上加一颗较大的金色四芒星。
+
+第3套采用的是后腰、骨盆和两条后腿已修复的 `fourfold/art-source/candidates/celestial-stag-v1.png`，保留原定前半身与画风，不是十稿目录中的修订前图。第5套采用 `fourfold/art-source/candidates/celestial-libra-v2.png`。这两张确认原稿继续保存在来源目录，PNG逐字节复制到 `cocos/assets/resources/art/`，WebP以quality95写入 `assets/art/`，不缩放、不裁切或重画。采用记录见 `stag-anatomy-refinement.md` 和 `themes-3-5-fresh-redraws.md`；原10张仍为历史候选。银色细化见 `silver-gravity-refinement.md`。0.8.13仅接入本地，尚未公开发布。
+
+保留主题ID和顺序，取图窗口与旋转轨迹不变；只按实际新图尺寸映射完整原画。第7套保持银白色编号 `#ECF5FF`、深蓝描边和阴影，其余编号样式不变。旧 `celestial-jade-v1`、`celestial-tide-v2` 的PNG和WebP已完整移至 `fourfold/art-source/archive/`，不再进入运行目录；早期被替换的原画继续在此归档。初轮提示词见 `cosmic-themes-v2-design.md`，追加重绘与去月亮提示词见 `pillars-jade-redraw-v1-design.md`。
+
+原生 `loadResource` 增加25秒应用侧超时与一次结算清理；公共图每次加载最多3个并发，首个失败会使本轮失效，旧请求不再创建或覆盖渲染资源。超时无法取消引擎底层请求，其晚到回调被忽略；重试沿用当前局。组件销毁先移除独立创建的Canvas，再释放纹理，避免残留画布引用已销毁资源。`tests/native-loading.test.mjs` 使用实际组件方法和cc替身覆盖六个生命周期场景，不构成GPU或微信真机验证。
+
+第3、5套采用后，`tile-themes.test.mjs` 与 `tile-artwork.test.mjs` 合计5项通过。七套PNG/WebP的真实尺寸与主题清单一致；两张新运行PNG与确认原稿逐字节相同，旧绿色和青蓝四个归档文件的哈希保持。其他五套、主页、规则、取图函数与旋转实现未变。本次资源核验未执行Creator构建或微信真机验收。
+
+## 七套完整星图（0.8.12历史接入，第3、4、5、7套见上节）
 
 保留已验收的深蓝星月 `celestial-mural-v2`，新增 `celestial-ruby-v1`、`celestial-jade-v1`、`celestial-amethyst-v1`、`celestial-tide-v1`、`celestial-solar-v1`、`celestial-frost-v1`。六套通过内置 image_gen 以原星图和新主页作为材质参考重新绘制，分别采用玫瑰藤蔓、翡翠枝树、纵向紫晶、珍珠海螺、日轮火焰、六枝冰霜的不同构图，不是统一图案的颜色滤镜。原生PNG与网页WebP保持同尺寸；实际尺寸列在 `assetManifest.tileThemes`。
 
