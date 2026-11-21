@@ -7,12 +7,12 @@ import {
 } from 'cc';
 import {GOAL,SQUARES,makePuzzle,todayCN,rotate,isSolved,shortestPath,honor,resultScore,hintLimit,isBetterResult} from './Core';
 import {TURN_DURATION_MS,createTurnMotion,sampleTurn} from './TurnMotion';
-import {HOME_ART,homeLayout,homeStoryLabel} from './HomeScene';
+import {HOME_ART,HOME_UI,homeLayout,homeStoryLabel} from './HomeScene';
 const {ccclass}=_decorator;
 const HINT_MODE:'free'|'rewarded'='free'; // 未开通广告时，正式上线也免费提示；开通后再显式切换。
 const AD_IDS={rewarded:'',banner:''}; // 接入时只填写微信公众平台提供的真实 adUnitId。
 const C={background:'#F8DEB7',surface:'#FFF1D6',gold:'#F5CB79',gold2:'#C88B4D',white:'#FFF4D7',muted:'#977253',dark:'#5B301F',edge:'#825037',night:'#1B2345',shadow:'#B27C50'};
-const ART_PATHS={home:'art/'+HOME_ART.resource,atlas:'art/ui-atlas',referenceOriginal:'art/reference-daily',referenceClean:'art/reference-clean',rankScene:'art/rank-scene',resultPanel:'art/result-panel'};
+const ART_PATHS={home:'art/'+HOME_ART.resource,homeUI:'art/'+HOME_UI.resource,atlas:'art/ui-atlas',referenceOriginal:'art/reference-daily',referenceClean:'art/reference-clean',rankScene:'art/rank-scene',resultPanel:'art/result-panel'};
 const REQUIRED_FRAMES=['goldButton','creamButton','lavenderButton','stepsCard','timeCard','rotateKnob','settingsButton','backButton'];
 const at=()=>typeof performance!=='undefined'&&performance.now?performance.now():Date.now();
 const wxSDK=()=>typeof wx!=='undefined'?(wx as any):null;
@@ -153,6 +153,7 @@ export class FourfoldGame extends Component {
     add('referenceMovesCard',r.components.movesCard);add('referenceTimerCard',r.components.timerCard);
     add('referenceBanner',r.components.banner,original);
     for(const key of ['back','settings','clockwise','counterclockwise','hint','share'])add('referenceControl'+key,r.components[key],original);
+    for(const [key,name] of [['story','homeStoryButton'],['daily','homeDailyButton'],['rank','homeRankButton']])add(name,HOME_UI.frames[key],this.textures.homeUI);
   }
   private disposeArt(){
     for(const frame of Object.values(this.frames))frame.destroy();this.frames={};
@@ -162,6 +163,8 @@ export class FourfoldGame extends Component {
   private validateSceneArtwork(){
     const home=this.manifest?.images?.homeScene,texture=this.textures.home;
     if(!home||home.resource!==HOME_ART.resource||home.width!==HOME_ART.width||home.height!==HOME_ART.height||texture.width!==home.width||texture.height!==home.height)throw new Error('主页原画尺寸与坐标不一致');
+    const menu=this.manifest?.images?.homeMenu,menuTexture=this.textures.homeUI;
+    if(!menu||menu.resource!==HOME_UI.resource||menu.width!==HOME_UI.width||menu.height!==HOME_UI.height||menuTexture.width!==menu.width||menuTexture.height!==menu.height)throw new Error('主页按钮尺寸与坐标不一致');
     for(const [key,texture] of [['rank',this.textures.rankScene],['result',this.textures.resultPanel]] as any){
       const layout=this.rankLayout?.[key];
       if(!layout||layout.width!==texture.width||layout.height!==texture.height)throw new Error(`界面原画尺寸与坐标不一致: ${key}`);
@@ -274,7 +277,7 @@ export class FourfoldGame extends Component {
     const scale=this.windowScale,layout=homeLayout(width/scale,height/scale);
     const rect=(r:any)=>({x:r.x*scale,y:r.y*scale,w:r.w*scale,h:r.h*scale});
     return {...layout,contentH:layout.contentH*scale,textScale:layout.textScale*scale,
-      hero:rect(layout.hero),image:rect(layout.image),title:rect(layout.title),subtitle:rect(layout.subtitle),launch:rect(layout.launch),
+      hero:rect(layout.hero),image:rect(layout.image),title:rect(layout.title),subtitle:rect(layout.subtitle),
       buttons:layout.buttons.map(rect),settings:rect(layout.settings)};
   }
   private dailyGeometry(width:number,height:number){
@@ -301,12 +304,12 @@ export class FourfoldGame extends Component {
     const w=this.width,uiScale=w/390,layout=this.homeGeometry(w,this.height-this.safeTop-this.safeBottom),parent=this.pageContent('Home',layout.contentH);
     const launchStory=()=>this.startGame('story',String(this.unlocked()));
     const entries=[
-      {text:'✦ '+homeStoryLabel(this.unlocked()),frame:'goldButton',size:22,action:launchStory},
-      {text:'◇ 每日挑战',frame:'creamButton',size:21,action:()=>this.startGame('daily',todayCN())},
-      {text:'♛ 好友荣誉榜',frame:'lavenderButton',size:21,action:()=>this.showRank()},
+      {text:homeStoryLabel(this.unlocked()),frame:'homeStoryButton',source:'story',action:launchStory},
+      {text:'每日挑战',frame:'homeDailyButton',source:'daily',action:()=>this.startGame('daily',todayCN())},
+      {text:'好友荣誉榜',frame:'homeRankButton',source:'rank',action:()=>this.showRank()},
     ];
-    // The observatory stays full-width and uncropped. Live labels and the actual
-    // story launch hit area share the same artwork coordinates in both clients.
+    // The continuous celestial scene stays full-width and uncropped. It has no
+    // gameplay hit area; only the three separate menu buttons launch a feature.
     const hero=layout.hero,scene=this.group('Home hero',hero.x,hero.y,hero.w,hero.h,parent);
     this.art('home',0,0,hero.w,hero.h,scene.content);
     const titleRect=layout.title,subtitleRect=layout.subtitle;
@@ -314,10 +317,14 @@ export class FourfoldGame extends Component {
     title.node.name='Home title';title.lineHeight=titleRect.h;title.enableWrapText=false;
     const subtitle=this.txt('FOURFOLD',subtitleRect.x,subtitleRect.y,subtitleRect.w,subtitleRect.h,HOME_ART.subtitleSize*layout.textScale,C.dark,true,scene.content);
     subtitle.node.name='Home subtitle';subtitle.fontFamily='Times New Roman';subtitle.lineHeight=subtitleRect.h;subtitle.enableWrapText=false;
-    const launch=layout.launch;this.artHit('Home launch',[launch.x,launch.y,launch.w,launch.h],1,scene.content,launchStory);
     entries.forEach((entry,i)=>{
-      const r=this.manifest.atlas.frames[entry.frame],rect=layout.buttons[i],buttonH=rect.w*r.h/r.w;
-      const button=this.btn(entry.text,rect.x,rect.y+(rect.h-buttonH)/2,rect.w,buttonH,entry.action,entry.frame,entry.size*uiScale,parent);
+      const [, ,sourceW,sourceH]=HOME_UI.frames[entry.source],rect=layout.buttons[i],buttonH=rect.w*sourceH/sourceW;
+      const button=this.btn('',rect.x,rect.y+(rect.h-buttonH)/2,rect.w,buttonH,entry.action,entry.frame,0,parent);button.name=entry.text;
+      // Icons are in the new artwork. Shift the live caption toward the clear
+      // center-right area without duplicating a Unicode icon over the drawing.
+      const offset=23*uiScale,fontSize=Math.min(30,Math.max(18,26*(w/this.windowScale)/390))*this.windowScale;
+      const label=this.txt(entry.text,8+offset*2,0,rect.w-16-offset*2,buttonH-2*uiScale,fontSize,C.dark,true,button.children[0]);
+      label.node.name='Home menu label';label.enableWrapText=false;
       // 点击范围可扩大，内部原画仍按素材比例绘制。
       if(buttonH<rect.h)button.getComponent(UITransform).setContentSize(rect.w,rect.h);
     });

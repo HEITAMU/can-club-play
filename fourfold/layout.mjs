@@ -1,6 +1,6 @@
 // The artwork keeps its own aspect ratio. Available height changes the arrangement,
 // never the width of the whole screen.
-import {HOME_ART,homeLayout} from './cocos/assets/scripts/HomeScene.js?v=0.8.10';
+import {HOME_ART,HOME_UI,homeLayout} from './cocos/assets/scripts/HomeScene.js?v=0.8.11';
 export {homeLayout};
 const fitHeight = (width, sw, sh) => width * sh / sw;
 const box = (x,y,w,h) => ({x,y,w,h});
@@ -42,12 +42,18 @@ if(typeof document!=='undefined'){
     home.dataset.layout=h.compact?'compact':'regular';daily.dataset.layout=d.compact?'compact':'regular';
     place(home.querySelector('.home-hero'),h.hero);place(home.querySelector('.home-scene'),h.image);
     place(document.getElementById('homeTitle'),h.title);place(document.getElementById('homeSubtitle'),h.subtitle);
-    place(document.getElementById('homeLaunch'),h.launch);
     document.getElementById('homeTitle').style.fontSize=HOME_ART.titleSize*h.textScale+'px';
     document.getElementById('homeSubtitle').style.fontSize=HOME_ART.subtitleSize*h.textScale+'px';
     home.style.setProperty('--home-u',width/390+'px');
     home.style.setProperty('--home-content-height',h.contentH+'px');
-    home.querySelectorAll('.cozy-menu button').forEach((b,i)=>place(b,h.buttons[i]));
+    home.querySelectorAll('.cozy-menu button').forEach((b,i)=>{
+      place(b,h.buttons[i]);
+      const [sx,sy,sw,sh]=HOME_UI.frames[['story','daily','rank'][i]],skin=b.querySelector('.home-menu-skin');
+      b.style.setProperty('--button-ratio',sw+' / '+sh);
+      skin.style.backgroundImage=`url("${new URL('./assets/art/'+HOME_UI.resource+'.webp',import.meta.url).href}")`;
+      skin.style.backgroundSize=`${100*HOME_UI.width/sw}% ${100*HOME_UI.height/sh}%`;
+      skin.style.backgroundPosition=`${100*sx/(HOME_UI.width-sw)}% ${100*sy/(HOME_UI.height-sh)}%`;
+    });
     place(document.getElementById('homeSettings'),h.settings);
     // Values are applied to daily-only selectors; ordinary levels keep their layout.
     const positions={backHome:d.back,settingsBtn:d.settings,dailyBanner:d.banner,cwBtn:d.cw,ccwBtn:d.ccw,hintBtn:d.hint,shareBtn:d.share};

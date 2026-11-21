@@ -1,8 +1,16 @@
 # 四格诡局参考原稿接入
 
-版本：0.8.10；更新：2026-11-21；目标编辑器：Cocos Creator 3.8.8。
+版本：0.8.11；更新：2026-11-21；目标编辑器：Cocos Creator 3.8.8。
 
-## 星盘机关主页（0.8.10）
+## 开放星空主页与专属菜单（0.8.11）
+
+用户认可0.8.10的细腻材质，但明确要求主页不要棋盘，应将月牙、云层、行星和星座融合到整页。本轮使用内置 image_gen 重绘为开放天穹，删除九格、旋钮、棋盘框、罗盘盘面和台座。`home-celestial-v3.png` 为1173×1341，保留空标题牌供真实文字叠加，主体由不同距离的金属月牙、紫色云海、带环行星、星座与斜向轨道组成。
+
+同时重新绘制主页专用透明菜单图集 `home-menu-v3.png`（1448×1086，RGBA）：金色星芒、奶油月牙和淡紫桂冠三种皮肤，标签区域为空。原生加载独立homeUI纹理；网页使用相同尺寸的WebP及相同源矩形。图集原画不做重新缩放或手工重画，源框定位在完整金属胶囊轮廓周围。其他游戏页面继续使用原来的UI图集。
+
+`HomeScene.js` 共同导出 `HOME_ART`、`HOME_UI` 和全宽排布，三个按钮的画面比例来自图集源框。取消 `homeLaunch` 隐形点击区，插画仅展示场景；真实入口仍是普通关、每日挑战与好友荣誉榜。普通关文案读取实际解锁记录，规则与存档不变。完整生成和边缘清理提示词见 `home-celestial-v3-design.md`。
+
+## 星盘机关主页（0.8.10，已由0.8.11替换）
 
 按用户“星图手册没有实际用途，主页也重绘”的要求，使用内置 image_gen 重新设计主页主视觉。新资源 `home-observatory-v2.png` 为1174×1340：正面九格星盘、四个交点星钮、精细金属机关框、暖色观星室与灯光。书本、书架、天球仪及手册铭牌全部移除。原画不烘焙标题、菜单、设置或关卡进度；网页使用同尺寸WebP。
 
@@ -66,7 +74,7 @@ H5使用49个Web Animations关键帧，原生由Component.update逐帧采样。�
 
 ## 运行资源与坐标
 
-当前原生加载 `assets/resources/art/` 中的 `home-observatory-v2.png`、`ui-atlas.png`、`reference-daily.png`、`reference-clean.png`、`rank-scene.png`、`result-panel.png`，以及由 `referenceLayout.tileArtwork.resource` 指定的完整星图。资源清单为 `assetManifest.json`、`referenceLayout.json` 和 `rankLayout.json`。
+当前原生加载 `assets/resources/art/` 中的 `home-celestial-v3.png`、`home-menu-v3.png`、`ui-atlas.png`、`reference-daily.png`、`reference-clean.png`、`rank-scene.png`、`result-panel.png`，以及由 `referenceLayout.tileArtwork.resource` 指定的完整星图。资源清单为 `assetManifest.json`、`referenceLayout.json` 和 `rankLayout.json`。
 
 - `reference-daily.png` 是用户指定每日挑战图的 854×1842 高清原稿，用于分别裁取横幅、导航、操作按钮、棋盘外框和旋转钮。
 - `reference-clean.png` 为界面组件清理了日期、两个计数和四个旋钮，并补齐遮挡处。该图仅继续用于界面组件，里面的旧图块与编号不再作为运行棋子来源。
@@ -79,7 +87,7 @@ H5使用49个Web Animations关键帧，原生由Component.update逐帧采样。�
 
 原生以真实窗口宽高比例推导逻辑高度，采用 `ResolutionPolicy.FIXED_WIDTH`，并在 `screen` 的 `window-resize` 事件后更新画布、相机及页面。取消固定390×844的 `SHOW_ALL` 和整张长图的高度contain，避免两次缩小导致界面成为中央窄条。微信胶囊下沿和底部安全区按宽度比例换算，不再扣除letterbox。
 
-主页插画和三个菜单独立排布，由0.8.10的共享 `HomeScene.js` 统一计算，完整显示1174×1340原画。三个菜单按钮仍使用页面宽度的80%，各皮肤保持原比例，触控高度至少44，间距5。内容在较长屏幕中整体居中，短屏保持全宽并可纵向滚动。
+主页插画和三个菜单独立排布，由共享 `HomeScene.js` 统一计算，完整显示1173×1341原画。三个菜单按钮使用页面宽度的80%，各皮肤保持新图集比例，触控高度至少44，间距3。内容在较长屏幕中整体居中，短屏保持全宽并可纵向滚动。
 
 每日页根据可用高度在七行与五行布局之间切换。常规为导航、横幅、数据牌、棋盘、方向、提示、分享七行；短屏将导航与横幅合为一行，将提示和分享合为一行。棋盘外框始终为页面宽度减16，保持817:765，数据牌和按钮均独立等比展示。390×650且无额外安全区时，短屏每日内容约639.7高、主页约639.4高，可以完整放入窗口。
 
