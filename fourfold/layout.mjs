@@ -1,6 +1,6 @@
 // The artwork keeps its own aspect ratio. Available height changes the arrangement,
 // never the width of the whole screen.
-import {HOME_ART,HOME_UI,HOME_COLORS,homeLayout} from './cocos/assets/scripts/HomeScene.js?v=0.8.21';
+import {HOME_ART,HOME_UI,HOME_COLORS,homeLayout} from './cocos/assets/scripts/HomeScene.js?v=0.8.22';
 export {homeLayout};
 const fitHeight = (width, sw, sh) => width * sh / sw;
 const box = (x,y,w,h) => ({x,y,w,h});
@@ -36,6 +36,7 @@ export function dailyLayout(width,height){
 if(typeof document!=='undefined'){
   const shell=document.getElementById('app'),home=document.getElementById('home'),daily=document.getElementById('gameScreen');
   for(const [name,color] of Object.entries(HOME_COLORS))home.style.setProperty('--home-'+name,color);
+  home.style.setProperty('--home-edge-fade',(HOME_ART.edgeFade*100)+'%');
   const place=(element,r)=>{element.style.left=r.x+'px';element.style.top=r.y+'px';element.style.width=r.w+'px';element.style.height=r.h+'px';};
   function applyLayout(){
     const {width,height}=shell.getBoundingClientRect();

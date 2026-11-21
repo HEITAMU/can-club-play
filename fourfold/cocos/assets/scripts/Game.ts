@@ -466,6 +466,20 @@ export class FourfoldGame extends Component {
     // Match the game pages' bold live lettering and shared painted controls.
     const hero=layout.hero,scene=this.group('Home hero',hero.x,hero.y,hero.w,hero.h,parent);
     this.art('home',0,0,hero.w,hero.h,scene.content);
+    // Blend the full, uncropped illustration into the page above and below it.
+    // One Graphics node approximates the web image mask without fading live UI.
+    const fadeH=hero.h*HOME_ART.edgeFade;
+    if(fadeH>0){
+      const fade=this.group('Home edge blend',0,0,hero.w,hero.h,scene.content).node.addComponent(Graphics),segments=64;
+      for(let i=0;i<segments;i++){
+        const top=i*fadeH/segments,bottom=(i+1)*fadeH/segments;
+        const alpha=Math.round(255*(1-i/(segments-1))).toString(16).padStart(2,'0');
+        fade.fillColor=ink(HOME_COLORS.background+alpha);
+        fade.roundRect(-hero.w/2,hero.h/2-bottom,hero.w,bottom-top,0);
+        fade.roundRect(-hero.w/2,-hero.h/2+top,hero.w,bottom-top,0);
+        fade.fill();
+      }
+    }
     const titleRect=layout.title,subtitleRect=layout.subtitle;
     const title=this.txt('四格诡局',titleRect.x,titleRect.y,titleRect.w,titleRect.h,HOME_ART.titleSize*layout.textScale,HOME_COLORS.title,true,scene.content);
     title.node.name='Home title';title.lineHeight=titleRect.h;title.enableWrapText=false;

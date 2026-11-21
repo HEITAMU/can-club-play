@@ -2,6 +2,7 @@
 // title and all three entries; short screens scroll without cropping the art.
 export const HOME_ART=Object.freeze({
   resource:'home-celestial-v9',width:981,height:1602,
+  edgeFade:.08,
   titleRect:[98.1,128.16,784.8,120.15],subtitleRect:[245.25,272.34,490.5,48.06],
   titleSize:110.506,subtitleSize:28.148,
 });
