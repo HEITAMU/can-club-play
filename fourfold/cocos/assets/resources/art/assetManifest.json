@@ -1,5 +1,5 @@
 {
-  "version": "0.8.11",
+  "version": "0.8.12",
   "atlas": {
     "width": 1254,
     "height": 1254,
@@ -90,5 +90,56 @@
       "height": 1086,
       "alpha": true
     }
-  }
+  },
+  "tileThemes": [
+    {
+      "id": "night",
+      "name": "深蓝星月",
+      "resource": "celestial-mural-v2",
+      "width": 1302,
+      "height": 1208
+    },
+    {
+      "id": "ruby",
+      "name": "暗红玫瑰",
+      "resource": "celestial-ruby-v1",
+      "width": 1301,
+      "height": 1209
+    },
+    {
+      "id": "jade",
+      "name": "翠绿星庭",
+      "resource": "celestial-jade-v1",
+      "width": 1302,
+      "height": 1208
+    },
+    {
+      "id": "amethyst",
+      "name": "紫晶梦境",
+      "resource": "celestial-amethyst-v1",
+      "width": 1302,
+      "height": 1208
+    },
+    {
+      "id": "tide",
+      "name": "青蓝潮汐",
+      "resource": "celestial-tide-v1",
+      "width": 1301,
+      "height": 1209
+    },
+    {
+      "id": "solar",
+      "name": "琥珀日轮",
+      "resource": "celestial-solar-v1",
+      "width": 1301,
+      "height": 1209
+    },
+    {
+      "id": "frost",
+      "name": "银白星霜",
+      "resource": "celestial-frost-v1",
+      "width": 1302,
+      "height": 1208
+    }
+  ]
 }

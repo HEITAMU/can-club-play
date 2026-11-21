@@ -1,6 +1,7 @@
-import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.11';
-import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.11';
-import {HOME_ART,HOME_UI,homeStoryLabel} from './cocos/assets/scripts/HomeScene.js?v=0.8.11';
+import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.12';
+import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.12';
+import {HOME_ART,HOME_UI,homeStoryLabel} from './cocos/assets/scripts/HomeScene.js?v=0.8.12';
+import {getTileTheme,buildThemeArtwork} from './cocos/assets/scripts/TileThemes.js?v=0.8.12';
 
 const el=id=>document.getElementById(id);
 const $={board:el('board'),anchors:el('anchors'),target:el('target'),moves:el('moves'),par:el('par'),clock:el('clock'),instruction:el('instruction'),difficulty:el('difficulty'),chapterCaption:el('chapterCaption'),puzzleTitle:el('puzzleTitle'),storyTab:el('storyTab'),dailyTab:el('dailyTab'),cwBtn:el('cwBtn'),ccwBtn:el('ccwBtn'),modal:el('modal'),toast:el('toast')};
@@ -14,7 +15,9 @@ const rankScreen=el('rankScreen');
 const settingsOverlay=el('settingsOverlay');
 const notice=el('startupNotice');
 const tileNodes=new Map();
-let tileArtwork=null;
+const themeCache=new Map();
+let baseTileArtwork=null,tileArtwork=null,tileTheme=null;
+let themeLoadSerial=0,themeLoading=false,themeError=false;
 const anchorNodes=[];
 const anchorMotionNodes=[],anchorRingNodes=[],knobAngles=[0,0,0,0];
 const turnFocus=el('turnFocus'),boardFrame=el('boardFrame');
@@ -62,11 +65,11 @@ function clearTurnVisuals(resetKnobs=false){
   $.board.classList.remove('rotating');$.anchors.removeAttribute('aria-busy');
   delete $.board.dataset.turn;delete $.board.dataset.turnDirection;delete $.board.dataset.turnDuration;
   anchorNodes.forEach((button,q)=>{
-    button.disabled=won;button.classList.remove('turning');
+    button.disabled=won||!themeReady();button.classList.remove('turning');
     anchorMotionNodes[q].style.transform=knobAngles[q]?`rotate(${knobAngles[q]}deg)`:'';
     anchorMotionNodes[q].style.opacity='';anchorRingNodes[q].style.opacity='';
   });
-  $.cwBtn.disabled=false;$.ccwBtn.disabled=false;el('hintBtn').disabled=false;
+  $.cwBtn.disabled=!themeReady();$.ccwBtn.disabled=!themeReady();el('hintBtn').disabled=!themeReady();
 }
 function cancelRotation({resetKnobs=false}={}){
   motionEpoch++;
@@ -135,12 +138,15 @@ function best(){return read('best:'+storageKey(),null);}
 function startGame(nextMode=mode,nextKey=key){
   const nextPuzzle=makePuzzle(nextMode,String(nextKey));
   if(nextMode==='daily'&&(nextPuzzle.par<9||nextPuzzle.par>11||nextPuzzle.difficulty!=='宗师'))throw new Error('daily puzzle bank validation failed');
+  const nextTheme=getTileTheme(nextMode,nextPuzzle.key);
   cancelRotation({resetKnobs:true});
   roundSerial++;resultRouteToken=null;$.modal.classList.remove('result-mode');
   mode=nextMode;puzzle=nextPuzzle;key=puzzle.key;board=puzzle.board;dir=1;
   moves=0;hints=0;elapsed=0;started=0;won=false;highlight=-1;$.modal.hidden=true;
   $.storyTab.classList.toggle('active',mode==='story');$.dailyTab.classList.toggle('active',mode==='daily');
+  const loading=prepareTheme(nextTheme);
   render();
+  return loading;
 }
 function updateTime(){
   if(started&&!won)elapsed=(performance.now()-started)/1000;
@@ -148,16 +154,8 @@ function updateTime(){
 }
 function initBoard(){
   if(tileNodes.size)return;
-  if(!tileArtwork)throw new Error('continuous tile artwork is not ready');
-  const [imageW,imageH]=tileArtwork.imageSize;
-  const sourceUrl=new URL('./assets/art/'+tileArtwork.resource+'.webp',import.meta.url).href;
   for(const token of GOAL){
     const tile=document.createElement('div');tile.className='tile';tile.dataset.token=token;
-    const [x,y,w,h]=tileArtwork.sourceRectByToken[token];
-    // All nine crops refer to the same full mural, including the space below the rails.
-    tile.style.backgroundImage=`url("${sourceUrl}")`;
-    tile.style.backgroundSize=`${100*imageW/w}% ${100*imageH/h}%`;
-    tile.style.backgroundPosition=`${100*x/(imageW-w)}% ${100*y/(imageH-h)}%`;
     tile.setAttribute('aria-label','星图碎片 '+token);
     const number=document.createElement('span');number.className='index';number.textContent=token;
     tile.append(number);tileNodes.set(token,tile);$.board.append(tile);
@@ -171,8 +169,78 @@ function initBoard(){
     motion.append(art);button.append(motion,ring);anchorNodes.push(button);anchorMotionNodes.push(motion);anchorRingNodes.push(ring);$.anchors.append(button);
   });
 }
+function themeReady(){return !!tileArtwork&&!themeLoading&&!themeError&&tileArtwork.resource===tileTheme?.resource;}
+function syncThemeStatus(){
+  const available=themeReady();
+  boardFrame.classList.toggle('theme-pending',!available);
+  boardFrame.dataset.theme=tileTheme?.id||'';
+  boardFrame.dataset.themeState=available?'ready':themeError?'error':'loading';
+  boardFrame.setAttribute('aria-busy',String(themeLoading));
+  el('themeStatus').hidden=available;
+  el('themeStatusText').textContent=themeError?'星图暂时未能展开':'星图正在展开…';
+  el('themeRetry').hidden=!themeError;
+  el('themeRetry').disabled=themeLoading;
+}
+function applyTileArtwork(art,theme){
+  initBoard();
+  const [imageW,imageH]=art.imageSize;
+  const sourceUrl=new URL('./assets/art/'+art.resource+'.webp',import.meta.url).href;
+  for(const token of GOAL){
+    const tile=tileNodes.get(token),[x,y,w,h]=art.sourceRectByToken[token];
+    // Every piece shares one continuous mural, including the strips below the rails.
+    tile.style.backgroundImage=`url("${sourceUrl}")`;
+    tile.style.backgroundSize=`${100*imageW/w}% ${100*imageH/h}%`;
+    tile.style.backgroundPosition=`${100*x/(imageW-w)}% ${100*y/(imageH-h)}%`;
+    const number=tile.firstElementChild;
+    number.style.color=theme.indexColor;
+    number.style.textShadow=`0 1px 1px ${theme.indexShadowColor},0 2px 2px ${theme.indexShadowColor},0 -.4px 0 ${theme.indexHighlightColor}`;
+    number.style.webkitTextStroke=`.4px ${theme.indexOutlineColor}`;
+  }
+  tileArtwork=art;
+  $.board.setAttribute('aria-label',theme.name+'九宫格星图');
+}
+function loadThemeArtwork(theme){
+  const cached=themeCache.get(theme.resource);
+  if(cached)return cached;
+  const entry={artwork:null,image:null,promise:null};
+  entry.promise=preloadArt(theme.resource+'.webp').then(image=>{
+    entry.artwork=buildThemeArtwork(baseTileArtwork,theme,image.naturalWidth,image.naturalHeight);
+    entry.image=image;
+    return entry.artwork;
+  }).catch(error=>{
+    if(themeCache.get(theme.resource)===entry)themeCache.delete(theme.resource);
+    throw error;
+  });
+  themeCache.set(theme.resource,entry);
+  return entry;
+}
+function prepareTheme(theme){
+  const serial=++themeLoadSerial,round=roundSerial;
+  tileTheme=theme;themeError=false;
+  const cached=loadThemeArtwork(theme);
+  if(cached.artwork){
+    applyTileArtwork(cached.artwork,theme);themeLoading=false;syncThemeStatus();
+    return Promise.resolve(true);
+  }
+  themeLoading=true;syncThemeStatus();
+  const stillCurrent=()=>serial===themeLoadSerial&&round===roundSerial&&tileTheme===theme;
+  return cached.promise.then(art=>{
+    if(!stillCurrent())return false;
+    applyTileArtwork(art,theme);themeLoading=false;themeError=false;render();
+    return true;
+  }).catch(()=>{
+    if(!stillCurrent())return false;
+    themeLoading=false;themeError=true;render();
+    return false;
+  });
+}
+el('themeRetry').onclick=()=>{
+  if(!puzzle||themeLoading||!themeError)return;
+  prepareTheme(getTileTheme(mode,key));render();
+};
 function render(){
   initBoard();
+  syncThemeStatus();
   gameScreen.dataset.mode=mode;
   const stageTitle=el('stageTitle'),dailyBanner=el('dailyBanner'),dailyDate=el('dailyDate');
   if(stageTitle){stageTitle.hidden=mode==='daily';stageTitle.textContent=`第${key}关`;}
@@ -186,14 +254,15 @@ function render(){
   el('hintLabel').textContent=`✧ 提示 ${remaining}/${limit}`;
   el('hintRemaining').textContent=`${remaining}/${limit}`;
   hintButton.classList.toggle('hint-exhausted',remaining===0);
-  hintButton.disabled=rotating;$.cwBtn.disabled=rotating;$.ccwBtn.disabled=rotating;
-  hintButton.setAttribute('aria-disabled',String(won||remaining===0));
+  const blocked=rotating||!themeReady();
+  hintButton.disabled=blocked;$.cwBtn.disabled=blocked;$.ccwBtn.disabled=blocked;
+  hintButton.setAttribute('aria-disabled',String(blocked||won||remaining===0));
   hintButton.setAttribute('aria-label',remaining?`提示，剩余 ${remaining} 次，本局最多 ${limit} 次`:'本局提示已用完');
   hintButton.title=remaining?`本局剩余 ${remaining}/${limit} 次提示`:'本局提示已用完，重新开始可重置';
   $.instruction.textContent=won?'✦ 完成':`提示剩余 ${remaining}/${limit} 次`;
   for(const token of board)$.board.append(tileNodes.get(token));
   anchorNodes.forEach((button,q)=>{
-    button.dataset.direction=String(dir);button.disabled=won||rotating;
+    button.dataset.direction=String(dir);button.disabled=won||blocked;
     button.setAttribute('aria-label',`${q+1}号旋转点，${dir===1?'顺':'逆'}时针旋转四格`);
     button.classList.toggle('hinted',q===highlight);
   });
@@ -202,7 +271,7 @@ function render(){
   el('nextBtn').textContent=won?'下一关':'';
 }
 
-function canPlay(){return ready&&!gameScreen.hidden&&$.modal.hidden&&settingsOverlay.hidden&&!rotating&&!won;}
+function canPlay(){return ready&&themeReady()&&!gameScreen.hidden&&$.modal.hidden&&settingsOverlay.hidden&&!rotating&&!won;}
 function screenScale(node,rect){
   const style=window.getComputedStyle?.(node);
   const width=parseFloat(style?.width)||node.offsetWidth||rect.width;
@@ -424,7 +493,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelRota
 
 const ART_FILES=[HOME_ART.resource+'.webp',HOME_UI.resource+'.webp','ui-atlas.webp','daily-banner.webp','reference-daily.webp','reference-clean.webp','rank-scene.webp','result-panel.webp'];
 async function preloadTileArtwork(){
-  const response=await fetch(new URL('./cocos/assets/resources/art/referenceLayout.json?v=0.8.11',import.meta.url));
+  const response=await fetch(new URL('./cocos/assets/resources/art/referenceLayout.json?v=0.8.12',import.meta.url));
   if(!response.ok)throw new Error('tile artwork layout could not be loaded');
   const {tileArtwork:art}=await response.json();
   if(!art||!/^[-a-z0-9]+$/.test(art.resource)||art.fit!=='fill'||!Array.isArray(art.imageSize)||art.imageSize.length!==2||art.imageSize.some(v=>!Number.isFinite(v)||v<=0))throw new Error('invalid tile artwork layout');
@@ -433,8 +502,7 @@ async function preloadTileArtwork(){
     const r=art.sourceRectByToken?.[token];
     if(!Array.isArray(r)||r.length!==4||r.some(v=>!Number.isFinite(v))||r[0]<0||r[1]<0||r[2]<=0||r[3]<=0||r[2]>=iw||r[3]>=ih||r[0]+r[2]>iw+1e-7||r[1]+r[3]>ih+1e-7)throw new Error('invalid mural tile crop');
   }
-  await preloadArt(art.resource+'.webp');
-  tileArtwork=art;
+  baseTileArtwork=art;
 }
 function preloadArt(file){
   return new Promise((resolve,reject)=>{
@@ -454,11 +522,15 @@ async function boot(){
     const progress=()=>{loaded++;if(notice&&!bootFailed)notice.textContent=`星图正在加载… ${loaded}/${ART_FILES.length+1}`;};
     await Promise.all([...ART_FILES.map(file=>preloadArt(file).then(progress)),preloadTileArtwork().then(progress)]);
     const params=new URLSearchParams(location.search),entry=parseChallenge(params);
+    const initialRequest=pendingOpen||window.ffPending;
+    if(initialRequest==='story'||initialRequest==='daily'){
+      entry.mode=initialRequest;entry.key=initialRequest==='daily'?currentDay():unlocked();entry.beat=null;
+    }else if(!params.has('mode')&&!params.has('level'))entry.key=unlocked();
     let invalidDate=false;
     claimedBeat=entry.beat;
-    try{startGame(entry.mode,entry.key);}catch(error){
+    try{await startGame(entry.mode,entry.key);}catch(error){
       if(entry.mode!=='daily')throw error;
-      invalidDate=true;claimedBeat=null;startGame('daily',currentDay());
+      invalidDate=true;claimedBeat=null;await startGame('daily',currentDay());
     }
     ready=true;window.ffReady=true;document.documentElement.dataset.gameReady='true';
     document.documentElement.classList.remove('art-loading');if(notice)notice.hidden=true;

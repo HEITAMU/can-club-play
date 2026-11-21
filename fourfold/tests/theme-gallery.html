@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#111a30">
+<meta name="fourfold-gallery-version" content="0.8.12">
+<title>七套星图 · 四格诡局</title>
+<link rel="stylesheet" href="../reference.css?v=0.8.12">
+<style>
+:root{color-scheme:dark;font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;color:#f7e9c9;background:#111a30}
+*{box-sizing:border-box}body{margin:0;min-width:280px;background:radial-gradient(ellipse at 50% -15%,#3a3247 0,transparent 54%),#111a30;line-height:1.6}button,a{-webkit-tap-highlight-color:transparent}button{font:inherit;cursor:pointer}button:disabled{cursor:wait;opacity:.55}button:focus-visible,a:focus-visible{outline:2px solid #ffe2a2;outline-offset:5px}[hidden]{display:none!important}a{color:#ecd09b;text-decoration:none}a:hover{text-decoration:underline}
+.page{max-width:1160px;margin:0 auto;padding:54px 28px 32px}.masthead{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding-bottom:28px;margin-bottom:28px;border-bottom:1px solid #c7a56c42}.eyebrow{margin:0 0 10px;font:600 11px/1.4 Georgia,serif;letter-spacing:.28em;color:#cba976}.masthead h1{margin:0;font:650 clamp(30px,4vw,42px)/1.2 "Songti SC","Noto Serif CJK SC",serif;letter-spacing:.08em}.intro{margin:13px 0 0;color:#bfc4d5;font-size:14px}.back-link{flex:none;padding:9px 0;font-size:13px;white-space:nowrap}.back-link:before{content:"←";margin-right:8px}
+.gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}.theme-card{margin:0;min-width:0}.card-button{display:block;width:100%;padding:0;text-align:left;color:inherit;background:#19233b;border:1px solid #b3966352;border-radius:16px;overflow:hidden;box-shadow:0 10px 26px #05091745;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}.card-button:hover{transform:translateY(-3px);border-color:#d6b372b3;box-shadow:0 14px 30px #05091766}.art-window{position:relative;display:block;aspect-ratio:747/694;overflow:hidden;background:#10192d}.card-image{display:block;width:100%;height:100%;object-fit:fill;opacity:0;transition:opacity .3s ease}.is-loaded .card-image{opacity:1}.image-message{position:absolute;inset:0;display:grid;place-items:center;padding:26px;text-align:center;font-size:13px;color:#d2bf9b;background:radial-gradient(ellipse,#27314c,#121c31);z-index:1}.is-loaded .image-message{display:none}.is-error .image-message{color:#e5c0a2}.card-caption{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 18px 18px;background:linear-gradient(110deg,#222b41,#171f33)}.theme-name{font-size:17px;font-weight:600;letter-spacing:.05em}.open-mark{display:grid;place-items:center;width:26px;height:26px;border:1px solid #af915b66;border-radius:50%;font-size:18px;line-height:1;font-weight:300;color:#d3b578}
+.gallery-message{display:flex;align-items:center;gap:14px;padding:15px 18px;margin:0 0 24px;border:1px solid #b48d656b;border-radius:10px;background:#352b32;color:#ecd1b0;font-size:14px}.small-button{border:1px solid #b99a63;border-radius:7px;background:#292d3b;color:#f2d7a4;padding:7px 13px;font-size:13px;white-space:nowrap}.page-footer{margin-top:34px;padding-top:20px;border-top:1px solid #c7a56c2b;text-align:center;color:#8994af;font-size:12px;letter-spacing:.04em}
+.viewer{width:min(820px,calc(100% - 28px));max-width:none;max-height:calc(100vh - 28px);max-height:calc(100dvh - 28px);margin:auto;padding:0;border:1px solid #c8aa7094;border-radius:20px;background:#151e32;color:#f6e6c2;box-shadow:0 24px 90px #0009;overflow:auto;overscroll-behavior:contain}.viewer::backdrop{background:#050914de;backdrop-filter:blur(6px)}.viewer-inner{padding:22px 24px 20px}.viewer-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}.viewer-heading h2{margin:0;font:600 24px/1.4 "Songti SC","Noto Serif CJK SC",serif;letter-spacing:.06em}.close-viewer{display:grid;place-items:center;flex:none;width:40px;height:40px;border:1px solid #a98d5e7a;border-radius:50%;background:#202b41;color:#e7cd9f;font-size:28px;line-height:1}.viewer-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:18px 0}.view-switch{display:flex;gap:3px;padding:3px;border:1px solid #b397624a;border-radius:10px;background:#0d1628}.view-switch button{min-height:38px;padding:7px 15px;border:0;border-radius:7px;background:transparent;color:#bbc1d2;font-size:13px;white-space:nowrap}.view-switch button[aria-pressed=true]{background:linear-gradient(#efd29e,#d9b578);color:#412b1c;box-shadow:0 2px 4px #0004;font-weight:600}.shuffle{min-height:44px;padding:7px 12px;border:1px solid #b397625c;border-radius:9px;background:#1c2840;color:#e2c797;font-size:13px;white-space:nowrap}
+.stage-shell{width:min(100%,700px);margin:0 auto;padding:5px;border:1px solid #b3956270;border-radius:14px;background:linear-gradient(145deg,#8a6840,#e8c68b 42%,#8b603b 72%,#3f302a);box-shadow:0 12px 30px #03091870}.theme-stage{position:relative;width:100%;aspect-ratio:747/694;overflow:hidden;border-radius:8px;background:#19213e;isolation:isolate}.full-art{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:fill}.theme-stage.game-screen .board{position:absolute;inset:0;left:0;top:0;width:100%;height:100%;margin:0;border-radius:0;box-shadow:none}.theme-stage.game-screen .tile{background-color:#19213e;user-select:none}.theme-stage.game-screen .tile .index{font-variant-numeric:lining-nums}.viewer-loading{position:absolute;inset:0;z-index:4;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:28px;background:#172239;color:#d6c19a;text-align:center;font-size:14px}.mode-caption{margin:13px 0 0;text-align:center;color:#d6c49f;font-size:13px}.preview-note{margin:5px 0 0;text-align:center;color:#8f9bb5;font-size:12px}.is-viewing{overflow:hidden}
+@media(max-width:800px){.gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.page{padding:36px 22px 25px}.masthead{gap:16px}.intro{max-width:27em}}
+@media(max-width:520px){.page{padding:28px 16px 22px}.masthead{align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:22px;padding-bottom:20px}.masthead h1{font-size:32px}.intro{font-size:13px}.back-link{padding:2px 0}.gallery{grid-template-columns:minmax(0,1fr);gap:22px}.card-caption{padding:15px 17px}.viewer{width:calc(100% - 18px);max-height:calc(100dvh - 18px);border-radius:16px}.viewer-inner{padding:15px 12px 16px}.viewer-heading h2{font-size:22px}.viewer-toolbar{gap:7px;margin:14px 0}.view-switch button{padding:7px 10px;font-size:12px}.shuffle{padding:7px 9px;font-size:12px}.stage-shell{padding:4px;border-radius:11px}.preview-note{font-size:11px}.gallery-message{align-items:flex-start;flex-direction:column}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="masthead">
+    <div><p class="eyebrow">FOURFOLD · ART COLLECTION</p><h1>七套星图</h1><p class="intro">点开任意星图，查看整幅画面与九块拼片。<br>普通关卡使用深蓝星月，每日挑战每天随机换一套。</p></div>
+    <a class="back-link" href="../?v=0.8.12">返回游戏</a>
+  </header>
+  <div id="galleryMessage" class="gallery-message" role="status" hidden><span id="galleryMessageText"></span><button id="reloadGallery" class="small-button" type="button">重新载入</button></div>
+  <section id="gallery" class="gallery" aria-label="七套星图作品"></section>
+  <footer class="page-footer">四格诡局 · 星图画廊</footer>
+</main>
+<dialog id="viewer" class="viewer" aria-labelledby="viewerTitle" aria-describedby="modeCaption previewNote">
+  <div class="viewer-inner">
+    <header class="viewer-heading"><h2 id="viewerTitle">星图</h2><button id="closeViewer" class="close-viewer" type="button" aria-label="关闭大图" autofocus>×</button></header>
+    <div class="viewer-toolbar">
+      <div class="view-switch" role="group" aria-label="预览方式"><button id="wholeMode" type="button" aria-pressed="true">完整画面</button><button id="tileMode" type="button" aria-pressed="false">九块预览</button></div>
+      <button id="shufflePreview" class="shuffle" type="button">打乱预览</button>
+    </div>
+    <div class="stage-shell"><div id="themeStage" class="theme-stage game-screen">
+      <img id="fullArt" class="full-art" alt="">
+      <div id="tilePreview" class="board" role="img" hidden></div>
+      <div id="viewerLoading" class="viewer-loading" role="status"><span id="viewerLoadingText">正在展开星图…</span><button id="retryImage" class="small-button" type="button" hidden>重新载入</button></div>
+    </div></div>
+    <p id="modeCaption" class="mode-caption" aria-live="polite">完整画面</p>
+    <p id="previewNote" class="preview-note">打乱仅改变这里的展示，不会影响游戏进度。</p>
+  </div>
+</dialog>
+<script type="module">
+import {TILE_THEMES,buildThemeArtwork} from '../cocos/assets/scripts/TileThemes.js?v=0.8.12';
+import {GOAL} from '../cocos/assets/scripts/Core.js?v=0.8.12';
+
+const VERSION='0.8.12',get=id=>document.getElementById(id);
+const gallery=get('gallery'),viewer=get('viewer'),stage=get('themeStage'),board=get('tilePreview'),fullArt=get('fullArt');
+const wholeButton=get('wholeMode'),tileButton=get('tileMode'),shuffleButton=get('shufflePreview');
+const imageCache=new Map(),cardNodes=new Map();
+let reference=null,selectedTheme=null,selectedArtwork=null,opener=null,viewSerial=0,mode='whole',order=[...GOAL],scrambled=false;
+
+const imageUrl=theme=>new URL('../assets/art/'+theme.resource+'.webp',import.meta.url).href;
+function loadImage(theme,retry=false){
+  if(retry)imageCache.delete(theme.id);
+  if(!imageCache.has(theme.id)){
+    const promise=new Promise((resolve,reject)=>{
+      const image=new Image();image.decoding='async';
+      image.onload=()=>image.naturalWidth>0&&image.naturalHeight>0?resolve(image):reject(new Error('Empty theme image'));
+      image.onerror=()=>reject(new Error('Theme image unavailable'));
+      image.src=imageUrl(theme);
+    });
+    imageCache.set(theme.id,promise);
+    promise.catch(()=>{if(imageCache.get(theme.id)===promise)imageCache.delete(theme.id);});
+  }
+  return imageCache.get(theme.id);
+}
+const referencePromise=(async()=>{
+  const response=await fetch(new URL('../cocos/assets/resources/art/referenceLayout.json?v='+VERSION,import.meta.url));
+  if(!response.ok)throw new Error('Theme layout unavailable');
+  const value=await response.json();
+  if(!Array.isArray(value.tileArea)||value.tileArea.length!==4||value.tileArea.some(x=>!Number.isFinite(x))||value.tileArea[2]<=0||value.tileArea[3]<=0||value.slotRects?.length!==GOAL.length)throw new Error('Invalid theme layout');
+  reference=value;return value;
+})();
+referencePromise.catch(()=>{get('galleryMessageText').textContent='星图预览暂时未准备好，请重新载入。';get('galleryMessage').hidden=false;});
+
+function makeCard(theme){
+  const article=document.createElement('article');article.className='theme-card';article.dataset.theme=theme.id;
+  const button=document.createElement('button');button.type='button';button.className='card-button';button.setAttribute('aria-label','查看'+theme.name);button.setAttribute('aria-haspopup','dialog');
+  const window=document.createElement('span');window.className='art-window';
+  const image=document.createElement('img');image.className='card-image';image.alt=theme.name+'完整星图';image.decoding='async';image.loading='lazy';
+  const message=document.createElement('span');message.className='image-message';message.textContent='星图载入中…';
+  image.addEventListener('load',()=>{article.classList.add('is-loaded');article.classList.remove('is-error');});
+  image.addEventListener('error',()=>{article.classList.add('is-error');message.textContent='暂未载入 · 点开重试';});
+  image.src=imageUrl(theme);window.append(image,message);
+  const caption=document.createElement('span');caption.className='card-caption';
+  const name=document.createElement('span');name.className='theme-name';name.textContent=theme.name;
+  const mark=document.createElement('span');mark.className='open-mark';mark.textContent='＋';mark.setAttribute('aria-hidden','true');caption.append(name,mark);
+  button.append(window,caption);button.addEventListener('click',()=>openViewer(theme,button));article.append(button);gallery.append(article);cardNodes.set(theme.id,{article,image});
+}
+
+function setControlsReady(ready){for(const button of [wholeButton,tileButton,shuffleButton])button.disabled=!ready;}
+function applyView(){
+  fullArt.hidden=mode!=='whole';board.hidden=mode!=='tiles';
+  wholeButton.setAttribute('aria-pressed',String(mode==='whole'));tileButton.setAttribute('aria-pressed',String(mode==='tiles'));
+  shuffleButton.textContent=scrambled?'恢复拼合':'打乱预览';
+  get('modeCaption').textContent=mode==='whole'?'完整画面':scrambled?'九块预览 · 打乱摆放':'九块预览 · 完整拼合';
+}
+function drawTiles(){
+  if(!reference||!selectedArtwork||!selectedTheme)return;
+  const [areaX,areaY,areaW,areaH]=reference.tileArea,[imageW,imageH]=selectedArtwork.imageSize,url=imageUrl(selectedTheme);
+  const radius=reference.tileSurface?.cornerRadius??16,rim=reference.tileSurface?.rimInset??3;
+  const fragment=document.createDocumentFragment();
+  for(const [index,token] of order.entries()){
+    const [slotX,slotY,slotW,slotH]=reference.slotRects[index],[x,y,w,h]=selectedArtwork.sourceRectByToken[token];
+    const tile=document.createElement('div');tile.className='tile';tile.dataset.token=token;
+    Object.assign(tile.style,{left:100*(slotX-areaX)/areaW+'%',top:100*(slotY-areaY)/areaH+'%',width:100*slotW/areaW+'%',height:100*slotH/areaH+'%',backgroundImage:`url("${url}")`,backgroundSize:`${100*imageW/w}% ${100*imageH/h}%`,backgroundPosition:`${100*x/(imageW-w)}% ${100*y/(imageH-h)}%`});
+    for(const [property,value] of Object.entries({'--tile-radius-x':100*radius/slotW,'--tile-radius-y':100*radius/slotH,'--tile-rim-x':100*rim/slotW,'--tile-rim-y':100*rim/slotH,'--tile-inner-radius-x':100*(radius-rim)/(slotW-2*rim),'--tile-inner-radius-y':100*(radius-rim)/(slotH-2*rim),'--tile-number-right':100*38/slotW,'--tile-number-bottom':100*15/slotH}))tile.style.setProperty(property,value+'%');
+    const number=document.createElement('span');number.className='index';number.textContent=token;number.setAttribute('aria-hidden','true');
+    number.style.color=selectedTheme.indexColor;
+    number.style.textShadow=`0 1px 1px ${selectedTheme.indexShadowColor},0 2px 2px ${selectedTheme.indexShadowColor},0 -.4px 0 ${selectedTheme.indexHighlightColor}`;
+    number.style.webkitTextStroke='.4px '+selectedTheme.indexOutlineColor;
+    tile.append(number);fragment.append(tile);
+  }
+  board.replaceChildren(fragment);board.setAttribute('aria-label',selectedTheme.name+(scrambled?'九块打乱预览':'九块完整拼合预览'));board.dataset.order=order.join('');
+}
+async function fillViewer(theme,retry=false){
+  const serial=++viewSerial;selectedArtwork=null;setControlsReady(false);get('viewerLoading').hidden=false;get('retryImage').hidden=true;get('viewerLoadingText').textContent='正在展开星图…';
+  try{
+    const [layout,image]=await Promise.all([referencePromise,loadImage(theme,retry)]);
+    if(serial!==viewSerial||!viewer.open)return;
+    selectedArtwork=buildThemeArtwork(layout.tileArtwork,theme,image.naturalWidth,image.naturalHeight);
+    stage.style.aspectRatio=layout.tileArea[2]+' / '+layout.tileArea[3];fullArt.src=image.src;fullArt.alt=theme.name+'完整星图';
+    const card=cardNodes.get(theme.id);if(card){card.image.src=image.src;card.article.classList.remove('is-error');card.article.classList.add('is-loaded');}
+    drawTiles();applyView();setControlsReady(true);get('viewerLoading').hidden=true;viewer.dataset.ready='true';
+  }catch(error){
+    if(serial!==viewSerial||!viewer.open)return;
+    get('viewerLoadingText').textContent='这套星图暂未载入，请重试。';get('retryImage').hidden=false;viewer.dataset.ready='false';
+  }
+}
+function openViewer(theme,button){
+  selectedTheme=theme;opener=button;mode='whole';order=[...GOAL];scrambled=false;viewer.dataset.theme=theme.id;viewer.dataset.ready='false';get('viewerTitle').textContent=theme.name;fullArt.removeAttribute('src');board.replaceChildren();applyView();
+  viewer.showModal();document.body.classList.add('is-viewing');fillViewer(theme);
+}
+wholeButton.addEventListener('click',()=>{mode='whole';applyView();});
+tileButton.addEventListener('click',()=>{mode='tiles';applyView();});
+shuffleButton.addEventListener('click',()=>{
+  if(!selectedArtwork)return;
+  if(scrambled){order=[...GOAL];scrambled=false;}else{
+    order=[...GOAL];for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+    if(order.join('')===GOAL)[order[0],order[1]]=[order[1],order[0]];scrambled=true;
+  }
+  mode='tiles';drawTiles();applyView();
+});
+get('retryImage').addEventListener('click',()=>fillViewer(selectedTheme,true));
+get('closeViewer').addEventListener('click',()=>viewer.close());
+viewer.addEventListener('close',()=>{viewSerial++;document.body.classList.remove('is-viewing');opener?.focus({preventScroll:true});});
+viewer.addEventListener('click',event=>{if(event.target!==viewer)return;const box=viewer.getBoundingClientRect();if(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom)viewer.close();});
+get('reloadGallery').addEventListener('click',()=>location.reload());
+TILE_THEMES.forEach(makeCard);
+gallery.dataset.themeCount=String(TILE_THEMES.length);
+</script>
+</body>
+</html>

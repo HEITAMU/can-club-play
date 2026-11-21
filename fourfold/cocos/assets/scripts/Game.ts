@@ -8,6 +8,7 @@ import {
 import {GOAL,SQUARES,makePuzzle,todayCN,rotate,isSolved,shortestPath,honor,resultScore,hintLimit,isBetterResult} from './Core';
 import {TURN_DURATION_MS,createTurnMotion,sampleTurn} from './TurnMotion';
 import {HOME_ART,HOME_UI,homeLayout,homeStoryLabel} from './HomeScene';
+import {getTileTheme,buildThemeArtwork} from './TileThemes';
 const {ccclass}=_decorator;
 const HINT_MODE:'free'|'rewarded'='free'; // 未开通广告时，正式上线也免费提示；开通后再显式切换。
 const AD_IDS={rewarded:'',banner:''}; // 接入时只填写微信公众平台提供的真实 adUnitId。
@@ -31,6 +32,7 @@ export class FourfoldGame extends Component {
   private rankTemplate:Node|null=null;private rankView:Node|null=null;private rankSettings=false;
   private assetsReady=false;private loading=false;private loadError='';private loadProgress=0;private loadSerial=0;
   private textures:Record<string,Texture2D>={};private frames:Record<string,SpriteFrame>={};private images:ImageAsset[]=[];private manifest:any=null;private reference:any=null;private rankLayout:any=null;
+  private activeTheme:any=null;private themeArtwork:any=null;private themeImage:ImageAsset|null=null;private themeLoading=false;private themeError='';private themeSerial=0;
   private tileNodes:Node[]=[];private knobNodes:Node[]=[];private knobArtNodes:Node[]=[];private knobAngles=[0,0,0,0];private boardContent:Node|null=null;
   private motionSerial=0;private turnMotion:any=null;private hideSDK:any=null;
   private boardLayout={x:0,y:0,size:0,unit:0};private launchQuery:any={};
@@ -95,9 +97,7 @@ export class FourfoldGame extends Component {
       this.manifest=manifestAsset.json;this.reference=referenceAsset.json;this.rankLayout=rankAsset.json;
       const rects=this.manifest?.atlas?.frames;
       if(!rects||REQUIRED_FRAMES.some(name=>!rects[name]))throw new Error('美术清单缺少必要组件');
-      const muralName=this.reference?.tileArtwork?.resource;
-      if(typeof muralName!=='string'||!/^[a-z0-9][a-z0-9_-]*$/i.test(muralName))throw new Error('完整星图资源名无效');
-      const paths={...ART_PATHS,mural:'art/'+muralName};
+      const paths=ART_PATHS;
       this.disposeArt();
       const names=Object.keys(paths);
       // 逐张入库；重试和销毁能准确释放本次已经装入的资源。
@@ -123,7 +123,7 @@ export class FourfoldGame extends Component {
         if(q.mode==='daily'&&/^20\d\d-\d\d-\d\d$/.test(q.day||''))this.startGame('daily',q.day);
         else if(q.mode==='story'&&q.level)this.startGame('story',String(Math.min(18,Math.max(1,parseInt(q.level,10)||1))));
         else this.startGame('story',String(this.unlocked()),true);
-      }else this.draw();
+      }else if(this.inHome)this.draw();else this.prepareTheme(this.roundSerial);
     }catch(e){
       if(serial!==this.loadSerial)return;
       console.error('Fourfold artwork load failed',e);this.loading=false;this.loadError='美术资源未加载完成';this.assetsReady=false;this.draw();
@@ -133,20 +133,13 @@ export class FourfoldGame extends Component {
     const f=new SpriteFrame();f.texture=texture;f.rect=new Rect(x,y,w,h);f.originalSize=new Size(w,h);f.packable=false;return f;
   }
   private installReferenceFrames(){
-    const r=this.reference,original=this.textures.referenceOriginal,clean=this.textures.referenceClean,mural=this.textures.mural;
+    const r=this.reference,original=this.textures.referenceOriginal,clean=this.textures.referenceClean;
     if(!r?.size||r.slotRects?.length!==9||r.knobCenters?.length!==4||r.knobCropRects?.length!==4)throw new Error('参考界面坐标清单不完整');
     if([original,clean].some(t=>t.width!==r.size[0]||t.height!==r.size[1]))throw new Error('参考原画尺寸与清单不一致');
-    if(!r.tileArtwork||r.tileArtwork.imageSize?.[0]!==mural.width||r.tileArtwork.imageSize?.[1]!==mural.height)throw new Error('完整星图尺寸与清单不一致');
     const add=(name:string,rect:number[],texture=clean)=>{
       if(!Array.isArray(rect)||rect.length!==4||!rect.every(Number.isFinite)||rect[0]<0||rect[1]<0||rect[2]<=0||rect[3]<=0||rect[0]+rect[2]>texture.width||rect[1]+rect[3]>texture.height)throw new Error(`参考裁片范围错误: ${name}`);
       this.frames[name]=this.makeFrame(texture,rect[0],rect[1],rect[2],rect[3]);
     };
-    for(let token=1;token<=9;token++){
-      // Every token is a window into one continuous mural at its GOAL slot.
-      // Keep fractional UV bounds and the hidden rail intervals: independently
-      // cropping or rounding each card would break the restored picture again.
-      add('referenceTile'+token,r.tileArtwork.sourceRectByToken[token],mural);
-    }
     for(let q=0;q<4;q++)add('referenceKnob'+q,r.knobCropRects[q],original);
     for(const key of ['date','moves','timer'])add('referencePatch'+key,r.dynamicPatches[key]);
     add('referenceBoardFrame',r.boardOuter,original);
@@ -156,9 +149,48 @@ export class FourfoldGame extends Component {
     for(const [key,name] of [['story','homeStoryButton'],['daily','homeDailyButton'],['rank','homeRankButton']])add(name,HOME_UI.frames[key],this.textures.homeUI);
   }
   private disposeArt(){
+    this.themeSerial++;this.themeLoading=false;this.themeError='';this.activeTheme=null;this.themeArtwork=null;this.themeImage=null;
     for(const frame of Object.values(this.frames))frame.destroy();this.frames={};
     for(const texture of Object.values(this.textures))texture.destroy();this.textures={};
     for(const image of this.images)image.decRef();this.images=[];
+  }
+  private releaseTheme(){
+    for(const name of ['mural',...Array.from({length:9},(_,i)=>'referenceTile'+(i+1))]){this.frames[name]?.destroy();delete this.frames[name];}
+    this.textures.mural?.destroy();delete this.textures.mural;
+    if(this.themeImage){this.images=this.images.filter(image=>image!==this.themeImage);this.themeImage.decRef();this.themeImage=null;}
+    this.activeTheme=null;this.themeArtwork=null;
+  }
+  private async prepareTheme(round=this.roundSerial){
+    if(this.disposed||!this.assetsReady)return;
+    const theme=getTileTheme(this.mode,this.key),serial=++this.themeSerial;
+    const current=()=>!this.disposed&&this.assetsReady&&serial===this.themeSerial&&round===this.roundSerial;
+    this.themeError='';
+    if(this.activeTheme?.id===theme.id&&this.textures.mural){this.themeLoading=false;this.draw();return;}
+    this.themeLoading=true;this.draw();
+    let image:ImageAsset|null=null,texture:Texture2D|null=null,nextFrames:Record<string,SpriteFrame>={};
+    const discard=()=>{for(const frame of Object.values(nextFrames))frame.destroy();nextFrames={};texture?.destroy();texture=null;image?.decRef();image=null;};
+    try{
+      image=await this.loadResource('art/'+theme.resource,ImageAsset);image.addRef();
+      if(!current()){discard();return;}
+      texture=new Texture2D();texture.image=image;
+      const artwork=buildThemeArtwork(this.reference.tileArtwork,theme,texture.width,texture.height);
+      nextFrames.mural=this.makeFrame(texture,0,0,texture.width,texture.height);
+      for(const token of GOAL){
+        const [x,y,w,h]=artwork.sourceRectByToken[token];
+        // Each theme uses the same goal windows, with the gold rail intervals
+        // kept intact. No tile is independently inset or rounded to pixels.
+        nextFrames['referenceTile'+token]=this.makeFrame(texture,x,y,w,h);
+      }
+      if(!current()){discard();return;}
+      // The old board has been removed by the loading view. Commit all nine
+      // frames together, then release the preceding theme instead of caching seven.
+      this.releaseTheme();this.textures.mural=texture;Object.assign(this.frames,nextFrames);this.images.push(image);
+      this.themeImage=image;this.activeTheme=theme;this.themeArtwork=artwork;
+      image=null;texture=null;nextFrames={};this.themeLoading=false;this.draw();
+    }catch(error){
+      discard();if(!current())return;
+      console.error('Fourfold theme load failed',error);this.themeLoading=false;this.themeError='星图暂时未能展开';this.draw();
+    }
   }
   private validateSceneArtwork(){
     const home=this.manifest?.images?.homeScene,texture=this.textures.home;
@@ -179,7 +211,10 @@ export class FourfoldGame extends Component {
     this.cancelTurnMotion();
     try{this.puzzle=makePuzzle(mode,key);}catch(e){console.warn('unavailable challenge',e);this.toast('这个日期的挑战暂不可用');if(!this.puzzle){this.puzzle=makePuzzle('story','1');mode='story';key='1';home=true;}else return;}
     this.roundSerial++; // 同一关重开也不能领取上一局尚未结束的广告奖励。
-    this.mode=mode;this.key=key;this.inHome=home;this.board=this.puzzle.board;this.direction=1;this.moves=0;this.hints=0;this.startAt=0;this.elapsed=0;this.won=false;this.busy=false;this.knobAngles=[0,0,0,0];this.modal='';this.rankSettings=false;this.hideBanner();this.draw();
+    this.mode=mode;this.key=key;this.inHome=home;this.board=this.puzzle.board;this.direction=1;this.moves=0;this.hints=0;this.startAt=0;this.elapsed=0;this.won=false;this.busy=false;this.knobAngles=[0,0,0,0];this.modal='';this.rankSettings=false;this.hideBanner();
+    // Keep round changes synchronous: an old victory callback must not advance
+    // a second time while the next theme is still arriving.
+    if(home){this.themeSerial++;this.themeLoading=false;this.themeError='';this.draw();}else this.prepareTheme(this.roundSerial);
   }
   private updateClock(){
     if(this.startAt&&!this.won&&!this.inHome)this.elapsed=(at()-this.startAt)/1000;
@@ -261,14 +296,21 @@ export class FourfoldGame extends Component {
     this.txt('四格诡局',40,280,this.width-80,60,34,C.dark,true);
     this.txt(this.loadError||'正在展开星图…',35,368,this.width-70,35,16,C.muted);
     if(this.loadError)this.btn('重新加载',80,431,this.width-160,54,()=>this.loadArt(),'creamButton',18);
-    else {this.shape(70,426,this.width-140,7,'#E5BC88','',3);this.shape(70,426,Math.max(7,(this.width-140)*this.loadProgress/(Object.keys(ART_PATHS).length+1)),7,C.gold2,'',3);}
+    else {this.shape(70,426,this.width-140,7,'#E5BC88','',3);this.shape(70,426,Math.max(7,(this.width-140)*this.loadProgress/Object.keys(ART_PATHS).length),7,C.gold2,'',3);}
+  }
+  private drawThemeLoading(){
+    this.iconButton('backButton',16,this.safeTop+8,44,()=>{this.themeSerial++;this.themeLoading=false;this.themeError='';this.inHome=true;this.modal='';this.draw();},true);
+    const center=this.safeTop+(this.height-this.safeTop-this.safeBottom)/2;
+    this.txt(this.mode==='daily'?'每日挑战':`第${this.key}关`,35,center-85,this.width-70,48,28,C.dark,true);
+    this.txt(this.themeError||'正在展开星图…',35,center-22,this.width-70,34,16,C.muted);
+    if(this.themeError)this.btn('重新加载星图',80,center+35,this.width-160,54,()=>this.prepareTheme(this.roundSerial),'creamButton',18);
   }
   private draw(){
     if(!this.root)return;this.clear();
     if(!this.assetsReady){this.drawLoading();return;}
     this.shape(0,0,this.width,this.height,C.background,'',0);
     if(this.modal==='rank'||(this.modal==='settings'&&this.rankSettings)){this.drawRankPage();if(this.modal==='settings')this.drawModal();return;}
-    if(this.inHome)this.drawHome();else this.drawGame();
+    if(this.inHome)this.drawHome();else if(this.themeLoading||this.themeError||!this.activeTheme)this.drawThemeLoading();else this.drawGame();
     if(this.modal)this.drawModal();
   }
   private homeGeometry(width:number,height:number){
@@ -445,10 +487,11 @@ export class FourfoldGame extends Component {
     // The token stays separate from the illustration; its inset also leaves
     // room for the 48px source-radius knobs at the inner grid intersections.
     const width=38*scale,height=52*scale,right=36*scale,bottom=14*scale;
-    const label=this.txt(String(token),w-right-width,h-bottom-height,width,height,44*scale,'#FFF2C5',true,parent);
+    const theme=this.activeTheme;
+    const label=this.txt(String(token),w-right-width,h-bottom-height,width,height,44*scale,theme?.indexColor||'#FFF2C5',true,parent);
     label.node.name='Tile index '+token;label.fontFamily='Times New Roman';label.isItalic=true;label.lineHeight=height;label.enableWrapText=false;
-    label.enableShadow=true;label.shadowColor=ink('#080E29C2');label.shadowOffset=new Vec2(0,-1.6*scale);label.shadowBlur=1.2*scale;
-    const outline=label.node.addComponent(LabelOutline);outline.color=ink('#0F193099');outline.width=1.2*scale;
+    label.enableShadow=true;label.shadowColor=ink(theme?.indexShadowColor||'#080E29C2');label.shadowOffset=new Vec2(0,-1.6*scale);label.shadowBlur=1.2*scale;
+    const outline=label.node.addComponent(LabelOutline);outline.color=ink(theme?.indexOutlineColor||'#0F193099');outline.width=1.2*scale;
   }
   private cleanBoardRails(scale:number,parent:Node){
     const r=this.reference,a=r.tileArea,slots=r.slotRects;
@@ -515,7 +558,7 @@ export class FourfoldGame extends Component {
     rounded('Tile navy edge',.6*scale,'#0B1535D9',1.2*scale);
   }
   private spin(q:number){
-    if(this.disposed||this.inHome||this.won||this.modal||this.busy||!this.assetsReady||!Number.isInteger(q)||!SQUARES[q]||!this.boardContent)return;
+    if(this.disposed||this.inHome||this.won||this.modal||this.busy||!this.assetsReady||this.themeLoading||this.themeError||!this.activeTheme||!Number.isInteger(q)||!SQUARES[q]||!this.boardContent)return;
     const squares=SQUARES[q],tiles=squares.map(index=>this.tileNodes[index]),knob=this.knobArtNodes[q],hit=this.knobNodes[q];
     if(tiles.some(node=>!node?.isValid)||!knob?.isValid||!hit?.isValid)return;
     const rects=tiles.map(node=>{const t=node.getComponent(UITransform);return {x:node.position.x-t.width/2,y:-node.position.y-t.height/2,width:t.width,height:t.height};});
@@ -604,7 +647,7 @@ export class FourfoldGame extends Component {
   }
   private hintsLeft(){return Math.max(0,hintLimit(this.mode)-this.hints);}
   private applyHint(){
-    if(this.won||this.disposed||this.inHome)return;
+    if(this.won||this.disposed||this.inHome||this.themeLoading||this.themeError||!this.activeTheme)return;
     if(!this.hintsLeft()){this.toast(`本局 ${hintLimit(this.mode)} 次提示已用完`);return;}
     const path=shortestPath(this.board);if(!path.length)return;
     this.hints++;this.direction=path[0].dir;this.draw();
@@ -621,7 +664,7 @@ export class FourfoldGame extends Component {
     if(current)this.toast('提示广告暂不可用，请稍后再试');
   }
   private async askHint(){
-    if(this.disposed||this.won||this.inHome||this.busy||!this.assetsReady)return;
+    if(this.disposed||this.won||this.inHome||this.busy||!this.assetsReady||this.themeLoading||this.themeError||!this.activeTheme)return;
     if(!this.hintsLeft()){this.toast(`本局 ${hintLimit(this.mode)} 次提示已用完`);return;}
     const sdk=wxSDK();
     // 免费期不创建广告对象；以后填入 ID 也不会自动改变玩家当前的提示方式。
