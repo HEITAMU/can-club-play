@@ -1,0 +1,40 @@
+{
+  "version": 4,
+  "source": "Original deterministic procedural foley, no external samples or recordings. Softer contact and cushioned seating; subjective ASMR quality requires listening.",
+  "sounds": [
+    {
+      "name": "ui-soft-press-v4",
+      "origin": "original deterministic procedural stone foley",
+      "sampleRate": 48000,
+      "channels": 1,
+      "decodedFrames": 11040,
+      "decodedDurationSeconds": 0.23,
+      "decodedPeakDbFS": -7.264,
+      "decodedRmsDbFS": -23.977,
+      "sha256": "10ec202b8e7ebe065e35fa6fd10994754c3718d6b61c377cd01f8b34c0f5807f",
+      "mp3Bytes": 6956,
+      "sourceMaster": "art-source/audio/ui-soft-press-v4.wav",
+      "web": "assets/audio/ui-soft-press-v4.mp3",
+      "native": "cocos/assets/resources/audio/ui-soft-press-v4.mp3",
+      "above3kHzEnergyPercent": 0.2773159995704912,
+      "truePeakDbFS": -7.257542133331299
+    },
+    {
+      "name": "soft-seat-v4",
+      "origin": "original deterministic procedural stone foley",
+      "sampleRate": 48000,
+      "channels": 1,
+      "decodedFrames": 14400,
+      "decodedDurationSeconds": 0.3,
+      "decodedPeakDbFS": -7.265,
+      "decodedRmsDbFS": -27.407,
+      "sha256": "0eedefb0675b375226be5f28260792d7a404343d35ac6208631002eb5f80443f",
+      "mp3Bytes": 8684,
+      "sourceMaster": "art-source/audio/soft-seat-v4.wav",
+      "web": "assets/audio/soft-seat-v4.mp3",
+      "native": "cocos/assets/resources/audio/soft-seat-v4.mp3",
+      "above3kHzEnergyPercent": 0.05075028575072104,
+      "truePeakDbFS": -7.25942850112915
+    }
+  ]
+}

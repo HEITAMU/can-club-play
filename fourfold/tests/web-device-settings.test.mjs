@@ -35,7 +35,7 @@ test('settings show executing app/audio build IDs independently of HTML and reta
   const before=audio.getDiagnostics();
   f.el('app').dataset.build='old-html';
   click(f,'settingsBtn');await flush();
-  assert.match(f.el('settingsBuild').textContent,/脚本 0\.8\.28 · 音频 0\.8\.28 · 页面 old-html/);
+  assert.match(f.el('settingsBuild').textContent,/脚本 0\.8\.29 · 音频 0\.8\.29 · 页面 old-html/);
   assert.equal(f.el('settingsBuild').classList.contains('settings-build-mismatch'),true);
   for(const cue of ['press','seat','test'])assert.deepEqual(audio.getDiagnostics().cues[cue],before.cues[cue],cue+' survives the settings button sound');
   assert.match(f.el('settingsAudioCues').textContent,/按下 已结束；落位 已结束/);
@@ -92,19 +92,19 @@ test('device checks report specific production failures and never infer that the
   f.audioControllers[0].dispose();
 });
 
-test('explicit full/gentle preference survives reload and both modes measure completed WAAPI turns at 1200 ms',async()=>{
+test('explicit full/gentle preference survives reload and both modes measure completed WAAPI turns at 800 ms',async()=>{
   for(const mode of ['full','gentle']){
     const {f,audio}=await ready({turnMotion:mode});f.window.matchMedia=()=>({matches:true});
     f.run('openSettings()');assert.equal(f.el('settingsMotion').textContent,mode==='full'?'旋转动画：完整':'旋转动画：轻柔');
     f.run('closeSettings()');const pending=animations(f),turn=f.run('spin(0)');await flush();
-    assert(pending.length>0);assert(pending.every(animation=>animation.options.duration===1200));
+    assert(pending.length>0);assert(pending.every(animation=>animation.options.duration===800));
     assert.equal(pending[0].frames.length,mode==='gentle'?4:f.run('TURN_KEYFRAME_COUNT'));
-    f.setClock(2208);pending.forEach(animation=>animation.finish());await turn;await flush();
-    f.run('openSettings()');assert.match(f.el('settingsTurn').textContent,/1\.208 秒 \/ 目标 1\.200 秒 · 已完成/);
+    f.setClock(1808);pending.forEach(animation=>animation.finish());await turn;await flush();
+    f.run('openSettings()');assert.match(f.el('settingsTurn').textContent,/0\.808 秒 \/ 目标 0\.800 秒 · 已完成/);
     assert.match(f.el('settingsMotionStatus').textContent,/WAAPI；系统减少动态：开/);
     click(f,'settingsMotion');await flush();
     assert.equal(f.storage.getItem('fourfold:turnMotion'),JSON.stringify(mode==='full'?'gentle':'full'));
-    assert.match(f.el('settingsTurn').textContent,/1\.208 秒/,'changing the next mode retains the last measured result');
+    assert.match(f.el('settingsTurn').textContent,/0\.808 秒/,'changing the next mode retains the last measured result');
     audio.dispose();
   }
 });
@@ -112,14 +112,14 @@ test('explicit full/gentle preference survives reload and both modes measure com
 test('cancelled WAAPI and completed RAF turns keep distinct observed durations without inventing a completion',async()=>{
   const cancelled=await ready(),f=cancelled.f,pending=animations(f),turn=f.run('spin(0)');await flush();
   f.setClock(1375);f.run('openSettings()');await turn;
-  assert.match(f.el('settingsTurn').textContent,/0\.375 秒 \/ 目标 1\.200 秒 · 已取消/);
+  assert.match(f.el('settingsTurn').textContent,/0\.375 秒 \/ 目标 0\.800 秒 · 已取消/);
   assert.equal(f.run('moves'),0);pending.forEach(animation=>animation.finish());await flush();
   assert.equal(f.run('lastTurnMeasure.state'),'cancelled');
   const fallback=await ready({turnMotion:'gentle'}),g=fallback.f,rafTurn=g.run('spin(0)');await flush();
   g.setClock(2205);
   const [id,timer]=[...g.timers].find(([,timer])=>timer.delay===16);g.timers.delete(id);timer.callback();
   await rafTurn;g.run('openSettings()');
-  assert.match(g.el('settingsTurn').textContent,/1\.205 秒 \/ 目标 1\.200 秒 · 已完成/);
+  assert.match(g.el('settingsTurn').textContent,/1\.205 秒 \/ 目标 0\.800 秒 · 已完成/);
   assert.match(g.el('settingsMotionStatus').textContent,/轻柔 · RAF/);
   cancelled.audio.dispose();fallback.audio.dispose();
 });

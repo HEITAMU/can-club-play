@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createMediaAudio} from '../media-audio.mjs';
 
-const files={button:'https://example.invalid/ui-stone-press-v3.mp3',seat:'https://example.invalid/stone-seat-v3.mp3'};
+const files={button:'https://example.invalid/ui-soft-press-v4.mp3',seat:'https://example.invalid/soft-seat-v4.mp3'};
 const flush=()=>new Promise(setImmediate);
 function platform({legacy=false,seekThrows=false,playThrows=null,observer=()=>{}}={}){
   const clock={ms:0},statuses=[],calls=[],listeners=new Map();let created=0,source='',time=0;

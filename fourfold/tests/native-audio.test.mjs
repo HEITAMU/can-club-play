@@ -47,7 +47,7 @@ function audioFixture(options={}){
 
 test('native optional tactile clips load independently and never replay a click missed during loading',async()=>{
   const f=audioFixture(),g=f.game,loading=g.prepareAudio();
-  assert.deepEqual(f.requests.map(request=>request.path),['audio/ui-stone-press-v3','audio/stone-seat-v3']);
+  assert.deepEqual(f.requests.map(request=>request.path),['audio/ui-soft-press-v4','audio/soft-seat-v4']);
   assert(f.channels.every(source=>source.playOnAwake===false&&source.loop===false));
   assert.equal(g.assetsReady,true);assert.equal(g.loading,false);
   const button=new f.NativeNode('Button');let actions=0;g.bindButton(button,()=>{actions++;});
@@ -74,7 +74,7 @@ test('native valid touches retry missing clips once without queuing the missed s
   assert.equal(f.requests.length,2,'rejected actions do not retry audio');
   f.tap(button);f.tap(button);
   assert.equal(actions,4);assert.equal(f.requests.length,3,'in-flight recovery is deduplicated');
-  assert.equal(f.requests[2].path,'audio/ui-stone-press-v3');assert.equal(g.audioSources.press.plays,0);
+  assert.equal(f.requests[2].path,'audio/ui-soft-press-v4');assert.equal(g.audioSources.press.plays,0);
   f.finish(f.requests[2]);await flush();
   assert.equal(g.audioSources.press.plays,0,'finishing recovery cannot replay either missed tap');
   assert.equal(g.audioClips.press.refs,1);assert.equal(g.audioLoading,false);
@@ -94,14 +94,14 @@ test('native UI sounds fire once after accepted touches and ignore busy, cancell
   f.tap(daily);assert.equal(actions,2);assert.equal(g.audioSources.press.plays,2,'daily reference controls use the same sound policy');
 });
 
-test('native rotation presses once, stays silent through 1199ms and seats once after the 1200ms commit',async()=>{
+test('native rotation presses once, stays silent through 799ms and seats once after the 800ms commit',async()=>{
   const f=audioFixture(),g=f.game;await f.ready();const knob=f.board();
   f.tap(knob);const motion=g.turnMotion;assert(motion);
   const press=g.audioSources.press,seat=g.audioSources.seat;
   assert.equal(press.plays,1);assert.equal(press.volume,1);assert.equal(seat.plays,0);
   f.tap(knob);assert.equal(press.plays,1,'rapid clicks do not layer a generic click or another press');
-  g.update(.6);assert.equal(g.moves,0);assert.equal(seat.plays,0,'the 600ms midpoint has not committed the turn');
-  g.update(.599);assert.equal(g.moves,0);assert.equal(seat.plays,0);assert.equal(g.turnMotion,motion);
+  g.update(.4);assert.equal(g.moves,0);assert.equal(seat.plays,0,'the 400ms midpoint has not committed the turn');
+  g.update(.399);assert.equal(g.moves,0);assert.equal(seat.plays,0);assert.equal(g.turnMotion,motion);
   g.update(.001);assert.equal(g.turnMotion,null);assert.equal(press.playing,false);assert.equal(g.moves,1);
   assert.equal(seat.plays,1);assert.equal(seat.volume,1);assert.equal(seat.playing,true,'successful redraw does not cancel the landing');
   g.update(10);g.playAudio('seat',motion);assert.equal(seat.plays,1,'later frames cannot replay the committed landing');
@@ -160,7 +160,7 @@ test('native a missing landing is retried but never replayed after the optional 
   f.finish(f.requests[0]);f.finish(f.requests[1],new Error('temporary seat load failure'));await loading;
   f.tap(f.board());g.update(1.2);const seat=g.audioSources.seat;
   assert.equal(g.moves,1);assert.equal(seat.plays,0);assert.equal(f.requests.length,3);
-  assert.equal(f.requests[2].path,'audio/stone-seat-v3');f.finish(f.requests[2]);await flush();
+  assert.equal(f.requests[2].path,'audio/soft-seat-v4');f.finish(f.requests[2]);await flush();
   assert.equal(seat.plays,0,'loading cannot add a late sound to the previous turn');
   g.drawReferenceBoard(0,0,1);f.tap(g.knobNodes[0]);g.update(1.2);assert.equal(seat.plays,1,'the next completed turn can use the recovered clip');
 });

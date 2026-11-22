@@ -152,7 +152,7 @@ test('controller isolates out-of-order theme image loads and renders the current
   assert.equal(h.field('full').alt, '天秤星衡完整原画'); h.api.destroy();
 });
 
-test('controller accepts one click, samples four upright pieces for 1200ms, and animates undo', async () => {
+test('controller accepts one click, samples four upright pieces for 800ms, and animates undo', async () => {
   const h = await readyHarness();
   const turn = h.api.rotate(0, 1); assert.equal(await h.api.rotate(3, -1), false);
   assert.equal(h.api.getState().moves, 0); assert.equal(h.root.querySelectorAll('.spin-node').every(button => button.disabled), true);
