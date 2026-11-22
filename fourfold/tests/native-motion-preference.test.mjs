@@ -62,17 +62,17 @@ test('native animation setting rejects detached, wrong-round, closed and dispose
   assert.equal(g.turnMotionMode,'full');assert.equal(f.storage.values.has('fourfold:turnMotion'),false);
 });
 
-test('native full and gentle turns keep the press/commit/landing boundaries at exactly 800ms',()=>{
-  assert.equal(TURN_DURATION_MS,800);
+test('native full and gentle turns keep the press/commit/landing boundaries at exactly 600ms',()=>{
+  assert.equal(TURN_DURATION_MS,600);
   for(const mode of ['full','gentle']){
     const f=motionFixture({preferences:{turnMotion:mode}}),g=f.game;f.board();
     const initial=g.board,expected=rotate(initial,0,1);g.spin(0);const motion=g.turnMotion;assert(motion);
     assert.deepEqual(f.sounds.map(sound=>sound.kind),['press']);assert.equal(motion.gentle,mode==='gentle');
-    g.update(.4);assert.equal(g.board,initial);assert.equal(g.moves,0);
+    g.update(.3);assert.equal(g.board,initial);assert.equal(g.moves,0);
     if(mode==='gentle')assert(motion.tiles.every(tile=>tile.getComponent(f.UIOpacity).opacity===0));
     else assert(motion.tiles.every(tile=>tile.getComponent(f.UIOpacity).opacity===255));
-    g.update(.399);assert.equal(g.turnMotion,motion);assert.equal(g.board,initial);assert.equal(g.moves,0);
-    assert.deepEqual(f.sounds.map(sound=>sound.kind),['press'],'799ms is too early to seat either mode');
+    g.update(.299);assert.equal(g.turnMotion,motion);assert.equal(g.board,initial);assert.equal(g.moves,0);
+    assert.deepEqual(f.sounds.map(sound=>sound.kind),['press'],'599ms is too early to seat either mode');
     g.update(.001);assert.equal(g.turnMotion,null);assert.equal(g.board,expected);assert.equal(g.moves,1);
     assert.deepEqual(f.sounds.map(sound=>sound.kind),['press','seat']);
     assert.deepEqual(f.sounds[1],{kind:'seat',moves:1,board:expected},'landing is requested only after the committed board redraw');
@@ -83,26 +83,26 @@ test('native full and gentle turns keep the press/commit/landing boundaries at e
 test('native gentle mode changes positions only at full transparency and uses a weak focus without landing flash',()=>{
   const f=motionFixture({preferences:{turnMotion:'gentle'}}),g=f.game;f.board();g.spin(0);
   const motion=g.turnMotion,original=motion.tiles.map(position);
-  g.update(.2);
+  g.update(.15);
   motion.tiles.forEach((tile,index)=>{nearPosition(position(tile),original[index]);const opacity=tile.getComponent(f.UIOpacity).opacity;assert(opacity>0&&opacity<255);});
   assert.equal(motion.knob.angle,-motion.knobStart);
-  g.update(.16);
+  g.update(.12);
   motion.tiles.forEach((tile,index)=>{nearPosition(position(tile),original[index]);assert.equal(tile.getComponent(f.UIOpacity).opacity,0);});
   assert.equal(motion.knobOpacity.opacity,0);
-  g.update(.04);
+  g.update(.03);
   motion.tiles.forEach((tile,index)=>{nearPosition(position(tile),original[(index+1)%4]);assert.equal(tile.getComponent(f.UIOpacity).opacity,0);});
   assert.equal(motion.knobOpacity.opacity,0);assert.equal(motion.knob.angle,-(motion.knobStart+90));
   assert(motion.focus.every(node=>node.getComponent(f.UIOpacity).opacity<=115),'gentle focus stays below half opacity');
   assert(motion.states.filter(state=>!motion.tiles.includes(state.node)).every(state=>state.opacity.opacity>=219),'stationary tiles remain lightly shaded');
-  g.update(.2);
+  g.update(.15);
   motion.tiles.forEach((tile,index)=>{nearPosition(position(tile),original[(index+1)%4]);const opacity=tile.getComponent(f.UIOpacity).opacity;assert(opacity>0&&opacity<255);});
-  g.update(.16);assert(motion.flashes.every(node=>node.getComponent(f.UIOpacity).opacity===0));
-  assert.equal(g.moves,0);g.update(.04);assert.equal(g.moves,1);
+  g.update(.12);assert(motion.flashes.every(node=>node.getComponent(f.UIOpacity).opacity===0));
+  assert.equal(g.moves,0);g.update(.03);assert.equal(g.moves,1);
 });
 
 test('native cancelling a transparent gentle turn restores all tiles and knob without committing or landing',()=>{
   const f=motionFixture({preferences:{turnMotion:'gentle'}}),g=f.game;f.board();const initial=g.board;g.spin(0);
-  const motion=g.turnMotion,original=motion.tiles.map(position);g.update(.4);
+  const motion=g.turnMotion,original=motion.tiles.map(position);g.update(.3);
   assert(motion.tiles.every(tile=>tile.getComponent(f.UIOpacity).opacity===0));assert.equal(motion.knobOpacity.opacity,0);
   g.cancelTurnMotion();assert.equal(g.turnMotion,null);assert.equal(g.busy,false);
   motion.tiles.forEach((tile,index)=>{nearPosition(position(tile),original[index]);assert.equal(tile.getComponent(f.UIOpacity).opacity,255);});

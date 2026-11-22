@@ -11,11 +11,11 @@ function audioPlatform({fetchAudio,decodeAudioData}={}){
   const context={state:'suspended',destination:{},resumeCount:0,suspendCount:0,closeCount:0,
     get currentTime(){return clock.ms/1000;},
     async resume(){this.resumeCount++;this.state='running';},async suspend(){this.suspendCount++;this.state='suspended';},async close(){this.closeCount++;this.state='closed';},
-    decodeAudioData(bytes,...callbacks){return decodeAudioData?decodeAudioData(bytes,...callbacks):Promise.resolve({kind:new Uint8Array(bytes)[0]===2?'seat':'button',duration:new Uint8Array(bytes)[0]===2?.32:.24});},
+    decodeAudioData(bytes,...callbacks){return decodeAudioData?decodeAudioData(bytes,...callbacks):Promise.resolve({kind:new Uint8Array(bytes)[0]===2?'seat':new Uint8Array(bytes)[0]===3?'press':'button',duration:new Uint8Array(bytes)[0]===2?.32:.24});},
     createGain(){return {gain:param(),connect(){},disconnect(){this.disconnected=true;}};},
     createBufferSource(){const source={starts:[],stops:[],connect(){},disconnect(){this.disconnected=true;},start(...args){this.starts.push(args);},stop(...args){this.stops.push(args);}};sources.push(source);return source;},
   };
-  const response=url=>({ok:true,arrayBuffer:async()=>Uint8Array.of(url===SOUND_FILES.seat?2:1).buffer});
+  const response=url=>({ok:true,arrayBuffer:async()=>Uint8Array.of(url===SOUND_FILES.seat?2:url===SOUND_FILES.press?3:1).buffer});
   const options={contextFactory:()=>{contexts.push(context);return context;},fetchAudio:async url=>{fetches.push(url);return fetchAudio?fetchAudio(url,response):response(url);},now:()=>clock.ms};
   return {clock,sources,fetches,contexts,context,options};
 }
@@ -26,7 +26,7 @@ test('audio preloads samples without opening a context and unlocks sampled playb
   assert.deepEqual(new Set(p.fetches),new Set(Object.values(SOUND_FILES)));
   assert.equal(await audio.playButton(),true);assert.equal(p.context.resumeCount,1);
   assert.equal(p.sources[0].buffer.kind,'button');assert.deepEqual(p.sources[0].starts[0],[0,0,.24]);
-  assert.equal(await audio.playButton(),true);assert.equal(p.contexts.length,1);assert.equal(p.fetches.length,2,'repeat taps reuse the downloaded/decoded assets');
+  assert.equal(await audio.playButton(),true);assert.equal(p.contexts.length,1);assert.equal(p.fetches.length,3,'repeat taps reuse the downloaded/decoded assets');
   assert.deepEqual(p.sources[0].stops.at(-1),[.008],'a new tap fades and stops the preceding UI voice');
   audio.dispose();assert.equal(p.context.closeCount,1);
 });
@@ -78,7 +78,7 @@ test('a turn presses once and seats only when its one-use completion token is co
   const p=audioPlatform(),audio=createGameAudio(p.options);await audio.preload();await audio.playButton();
   const token=audio.beginTurn();await flush();
   assert.deepEqual(p.sources[0].stops.at(-1),[.008]);
-  assert.equal(p.sources[1].buffer.kind,'button');assert.deepEqual(p.sources[1].starts[0],[0,0,.24]);
+  assert.equal(p.sources[1].buffer.kind,'press');assert.deepEqual(p.sources[1].starts[0],[0,0,.24]);
   p.clock.ms=5000;await flush();assert.equal(p.sources.length,2,'elapsed time alone never schedules a landing');
   assert.equal(await audio.finishTurn({}),false,'an unrelated caller cannot complete this turn');
   assert.equal(await audio.finishTurn(token),true);
@@ -131,11 +131,11 @@ test('mute cancels active voices, quick re-enable resumes safely, and unsupporte
 
 test('a fresh gesture resumes an interrupted context and callback-only decoders remain supported',async()=>{
   let decodes=0;
-  const p=audioPlatform({decodeAudioData:(bytes,resolve)=>{decodes++;queueMicrotask(()=>resolve({kind:new Uint8Array(bytes)[0]===2?'seat':'button',duration:.24}));}});
+  const p=audioPlatform({decodeAudioData:(bytes,resolve)=>{decodes++;queueMicrotask(()=>resolve({kind:new Uint8Array(bytes)[0]===2?'seat':new Uint8Array(bytes)[0]===3?'press':'button',duration:.24}));}});
   p.context.state='interrupted';const audio=createGameAudio(p.options);
   const first=audio.playButton();assert.equal(p.context.resumeCount,1,'resume is requested synchronously inside the initiating gesture');
-  assert.equal(await first,true);assert.equal(p.sources.length,1);assert.equal(decodes,2,'each asset is decoded once through the legacy callback API');
-  p.context.state='interrupted';assert.equal(await audio.playButton(),true);assert.equal(p.context.resumeCount,2);assert.equal(decodes,2);
+  assert.equal(await first,true);assert.equal(p.sources.length,1);assert.equal(decodes,3,'each asset is decoded once through the legacy callback API');
+  p.context.state='interrupted';assert.equal(await audio.playButton(),true);assert.equal(p.context.resumeCount,2);assert.equal(decodes,3);
   audio.dispose();
 });
 
@@ -184,7 +184,7 @@ test('production turn starts one press and every cancel route prevents a landing
   for(const action of ['reset','home','settings','resize','hidden','pagehide']){
     const {f,sources}=await readyApp(),pending=wireAnimations(f),board=f.run('board');
     const turn=f.run('spin(0)');await flush();
-    assert.equal(sources.length,1);assert.equal(sources[0].buffer.kind,'button');
+    assert.equal(sources.length,1);assert.equal(sources[0].buffer.kind,'press');
     await f.run('spin(0)');assert.equal(sources.length,1,'busy repeated taps cannot start a second sample');
     if(action==='reset')f.run('reset()');
     if(action==='home')f.run('showHome()');
@@ -200,18 +200,25 @@ test('production turn starts one press and every cancel route prevents a landing
   }
 });
 
-test('full and gentle production animations last 800ms regardless of OS preference and only a completed board commit seats',async()=>{
+test('full and gentle production animations last 600ms regardless of OS preference and only a completed board commit seats',async()=>{
   for(const reduced of [false,true])for(const turnMotion of ['full','gentle']){
     const {f,sources,clock}=await readyApp({preferences:{turnMotion}});
     f.run('hint()');await f.run('spin(0)');await flush();assert.equal(sources.length,0,'selecting a direction is required before turn audio');
     f.run('setDirection(hintGuide.dir)');f.window.matchMedia=()=>({matches:reduced});
-    const pending=wireAnimations(f),turn=f.run('spin(hintGuide.q)'),duration=800;await flush();
+    const pending=wireAnimations(f),turn=f.run('spin(hintGuide.q)'),duration=600;await flush();
     assert(pending.every(animation=>animation.duration===duration));
-    assert.equal(sources.length,1);assert.equal(sources[0].buffer.kind,'button');assert.equal(sources[0].starts[0][2],.24);
+    assert.equal(sources.length,1);assert.equal(sources[0].buffer.kind,'press');assert.equal(sources[0].starts[0][2],.24);
     clock.ms=duration-1;await flush();assert.equal(sources.length,1);assert.equal(f.run('moves'),0);
     clock.ms=duration;pending.forEach(animation=>animation.finish());await turn;await flush();
     assert.equal(f.run('moves'),1);assert.equal(sources.length,2);assert.equal(sources[1].buffer.kind,'seat');assert.deepEqual(sources[1].starts[0],[duration/1000,0,.32]);
     f.run('render()');await flush();assert.equal(sources.length,2,'normal redraw cannot replay completion');assert.equal(sources[1].disconnected,undefined,'normal redraw preserves the landing tail');
     f.audioControllers[0].dispose();
   }
+});
+
+test('UI, knob press and seat use three distinct downloaded samples',async()=>{
+  assert.equal(new Set(Object.values(SOUND_FILES)).size,3);
+  const p=audioPlatform(),audio=createGameAudio(p.options);await audio.preload();
+  await audio.playButton();const token=audio.beginTurn();await flush();await audio.finishTurn(token);
+  assert.deepEqual(p.sources.map(source=>source.buffer.kind),['button','press','seat']);audio.dispose();
 });

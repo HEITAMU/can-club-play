@@ -47,61 +47,61 @@ function audioFixture(options={}){
 
 test('native optional tactile clips load independently and never replay a click missed during loading',async()=>{
   const f=audioFixture(),g=f.game,loading=g.prepareAudio();
-  assert.deepEqual(f.requests.map(request=>request.path),['audio/ui-soft-press-v4','audio/soft-seat-v4']);
+  assert.deepEqual(f.requests.map(request=>request.path),['audio/ui-tap-v5','audio/knob-click-v5','audio/stone-seat-v5']);
   assert(f.channels.every(source=>source.playOnAwake===false&&source.loop===false));
   assert.equal(g.assetsReady,true);assert.equal(g.loading,false);
   const button=new f.NativeNode('Button');let actions=0;g.bindButton(button,()=>{actions++;});
-  f.tap(button);assert.equal(actions,1);assert.equal(g.audioSources.press.plays,0);
-  const clip=f.finish(f.requests[0]);f.finish(f.requests[1],new Error('optional landing clip missing'));await loading;
-  assert.equal(g.audioSources.press.plays,0,'the old touch is not queued for replay');
+  f.tap(button);assert.equal(actions,1);assert.equal(g.audioSources.ui.plays,0);
+  const clip=f.finish(f.requests[0]);f.finish(f.requests[1]);f.finish(f.requests[2],new Error('optional landing clip missing'));await loading;
+  assert.equal(g.audioSources.ui.plays,0,'the old touch is not queued for replay');
   assert.equal(clip.refs,1);assert.equal(g.audioClips.seat,undefined);assert.equal(g.loadError,'');
   assert.equal(f.timers.size,0);assert.equal(g.pendingResourceLoads.size,0);
-  f.tap(button);assert.equal(actions,2);assert.equal(g.audioSources.press.plays,1);
-  assert.equal(g.audioSources.press.volume,.9,'ordinary buttons have the full tactile press at UI volume');
-  g.audioSources.press.failPlay=true;assert.doesNotThrow(()=>f.tap(button));assert.equal(actions,3);
-  const retry=g.prepareAudio();assert.equal(f.requests.length,3,'retry only the missing clip');f.finish(f.requests[2]);await retry;
+  f.tap(button);assert.equal(actions,2);assert.equal(g.audioSources.ui.plays,1);
+  assert.equal(g.audioSources.ui.volume,.9,'ordinary buttons have the full tactile press at UI volume');
+  g.audioSources.ui.failPlay=true;assert.doesNotThrow(()=>f.tap(button));assert.equal(actions,3);
+  const retry=g.prepareAudio();assert.equal(f.requests.length,4,'retry only the missing clip');f.finish(f.requests[3]);await retry;
   assert.equal(g.audioSources.seat.plays,0);assert.equal(g.audioClips.seat.refs,1);
 });
 
 test('native valid touches retry missing clips once without queuing the missed sound',async()=>{
   const f=audioFixture(),g=f.game,loading=g.prepareAudio();
-  f.finish(f.requests[0],new Error('temporary network failure'));f.finish(f.requests[1]);await loading;
+  f.finish(f.requests[0],new Error('temporary network failure'));f.finish(f.requests[1]);f.finish(f.requests[2]);await loading;
   const button=new f.NativeNode('Retry button');let actions=0;g.bindButton(button,()=>{actions++;});
-  g.soundEnabled=false;f.tap(button);assert.equal(f.requests.length,2,'muted touches do not retry audio');
-  g.soundEnabled=true;g.audioHidden=true;f.tap(button);assert.equal(f.requests.length,2,'hidden touches do not retry audio');
+  g.soundEnabled=false;f.tap(button);assert.equal(f.requests.length,3,'muted touches do not retry audio');
+  g.soundEnabled=true;g.audioHidden=true;f.tap(button);assert.equal(f.requests.length,3,'hidden touches do not retry audio');
   g.audioHidden=false;
   const stale=new f.NativeNode('Stale button');g.bindButton(stale,()=>false);f.tap(stale);
-  assert.equal(f.requests.length,2,'rejected actions do not retry audio');
+  assert.equal(f.requests.length,3,'rejected actions do not retry audio');
   f.tap(button);f.tap(button);
-  assert.equal(actions,4);assert.equal(f.requests.length,3,'in-flight recovery is deduplicated');
-  assert.equal(f.requests[2].path,'audio/ui-soft-press-v4');assert.equal(g.audioSources.press.plays,0);
-  f.finish(f.requests[2]);await flush();
-  assert.equal(g.audioSources.press.plays,0,'finishing recovery cannot replay either missed tap');
-  assert.equal(g.audioClips.press.refs,1);assert.equal(g.audioLoading,false);
-  f.tap(button);assert.equal(g.audioSources.press.plays,1);assert.equal(f.requests.length,3);
+  assert.equal(actions,4);assert.equal(f.requests.length,4,'in-flight recovery is deduplicated');
+  assert.equal(f.requests[3].path,'audio/ui-tap-v5');assert.equal(g.audioSources.ui.plays,0);
+  f.finish(f.requests[3]);await flush();
+  assert.equal(g.audioSources.ui.plays,0,'finishing recovery cannot replay either missed tap');
+  assert.equal(g.audioClips.ui.refs,1);assert.equal(g.audioLoading,false);
+  f.tap(button);assert.equal(g.audioSources.ui.plays,1);assert.equal(f.requests.length,4);
 });
 
 test('native UI sounds fire once after accepted touches and ignore busy, cancelled or stale actions',async()=>{
   const f=audioFixture(),g=f.game;await f.ready();let actions=0;
   const button=new f.NativeNode('Button');g.bindButton(button,()=>{actions++;});
   button.emit('end');assert.equal(actions,0);
-  f.tap(button);button.emit('end');assert.equal(actions,1);assert.equal(g.audioSources.press.plays,1);
+  f.tap(button);button.emit('end');assert.equal(actions,1);assert.equal(g.audioSources.ui.plays,1);
   button.emit('start');button.emit('cancel');button.emit('end');assert.equal(actions,1);
   g.busy=true;f.tap(button);g.busy=false;assert.equal(actions,1);
   button.emit('start');button.activeInHierarchy=false;button.emit('end');assert.equal(actions,1);
-  const stale=new f.NativeNode('Stale');g.bindButton(stale,()=>false);f.tap(stale);assert.equal(g.audioSources.press.plays,1);
+  const stale=new f.NativeNode('Stale');g.bindButton(stale,()=>false);f.tap(stale);assert.equal(g.audioSources.ui.plays,1);
   const daily=g.referenceControl('Daily direction',[0,0,120,48],0,0,1,()=>{actions++;});
-  f.tap(daily);assert.equal(actions,2);assert.equal(g.audioSources.press.plays,2,'daily reference controls use the same sound policy');
+  f.tap(daily);assert.equal(actions,2);assert.equal(g.audioSources.ui.plays,2,'daily reference controls use the same sound policy');
 });
 
-test('native rotation presses once, stays silent through 799ms and seats once after the 800ms commit',async()=>{
+test('native rotation presses once, stays silent through 599ms and seats once after the 600ms commit',async()=>{
   const f=audioFixture(),g=f.game;await f.ready();const knob=f.board();
   f.tap(knob);const motion=g.turnMotion;assert(motion);
   const press=g.audioSources.press,seat=g.audioSources.seat;
   assert.equal(press.plays,1);assert.equal(press.volume,1);assert.equal(seat.plays,0);
   f.tap(knob);assert.equal(press.plays,1,'rapid clicks do not layer a generic click or another press');
-  g.update(.4);assert.equal(g.moves,0);assert.equal(seat.plays,0,'the 400ms midpoint has not committed the turn');
-  g.update(.399);assert.equal(g.moves,0);assert.equal(seat.plays,0);assert.equal(g.turnMotion,motion);
+  g.update(.3);assert.equal(g.moves,0);assert.equal(seat.plays,0,'the 300ms midpoint has not committed the turn');
+  g.update(.299);assert.equal(g.moves,0);assert.equal(seat.plays,0);assert.equal(g.turnMotion,motion);
   g.update(.001);assert.equal(g.turnMotion,null);assert.equal(press.playing,false);assert.equal(g.moves,1);
   assert.equal(seat.plays,1);assert.equal(seat.volume,1);assert.equal(seat.playing,true,'successful redraw does not cancel the landing');
   g.update(10);g.playAudio('seat',motion);assert.equal(seat.plays,1,'later frames cannot replay the committed landing');
@@ -157,10 +157,10 @@ test('native landed sound survives completion but stops before another turn, dia
 
 test('native a missing landing is retried but never replayed after the optional clip arrives',async()=>{
   const f=audioFixture(),g=f.game,loading=g.prepareAudio();
-  f.finish(f.requests[0]);f.finish(f.requests[1],new Error('temporary seat load failure'));await loading;
+  f.finish(f.requests[0]);f.finish(f.requests[1]);f.finish(f.requests[2],new Error('temporary seat load failure'));await loading;
   f.tap(f.board());g.update(1.2);const seat=g.audioSources.seat;
-  assert.equal(g.moves,1);assert.equal(seat.plays,0);assert.equal(f.requests.length,3);
-  assert.equal(f.requests[2].path,'audio/soft-seat-v4');f.finish(f.requests[2]);await flush();
+  assert.equal(g.moves,1);assert.equal(seat.plays,0);assert.equal(f.requests.length,4);
+  assert.equal(f.requests[3].path,'audio/stone-seat-v5');f.finish(f.requests[3]);await flush();
   assert.equal(seat.plays,0,'loading cannot add a late sound to the previous turn');
   g.drawReferenceBoard(0,0,1);f.tap(g.knobNodes[0]);g.update(1.2);assert.equal(seat.plays,1,'the next completed turn can use the recovered clip');
 });
@@ -190,9 +190,19 @@ test('native muting a committed landing stops its tail and prevents a late platf
 
 test('native audio teardown releases owned clips and refuses late loader callbacks',async()=>{
   const f=audioFixture(),g=f.game,loading=g.prepareAudio(),clip=f.finish(f.requests[0]);await flush();
-  const source=g.audioSources.press;g.playAudio('ui');assert.equal(source.playing,true);assert.equal(clip.refs,1);
+  const source=g.audioSources.ui;g.playAudio('ui');assert.equal(source.playing,true);assert.equal(clip.refs,1);
   g.onDestroy();await loading;assert.equal(source.playing,false);assert.equal(source.clip,null);assert.equal(clip.refs,0);
   assert.equal(g.audioNode,null);assert.equal(g.pendingResourceLoads.size,0);assert.equal(f.timers.size,0);
-  const late=f.finish(f.requests[1]);await flush();assert.equal(late.refs,0);assert.deepEqual(Object.keys(g.audioClips),[]);
+  const late=f.finish(f.requests[1]);f.finish(f.requests[2]);await flush();assert.equal(late.refs,0);assert.deepEqual(Object.keys(g.audioClips),[]);
   const requestCount=f.requests.length;await g.prepareAudio();assert.equal(f.requests.length,requestCount);
+});
+
+test('native UI, knob and landing keep distinct clips and sources',async()=>{
+  const f=audioFixture(),g=f.game;await f.ready();
+  assert.equal(new Set(f.requests.map(request=>request.path)).size,3);
+  g.playAudio('ui');assert.equal(g.audioSources.ui.plays,1);assert.equal(g.audioSources.press.plays,0);
+  f.tap(f.board());assert.equal(g.audioSources.press.plays,1);assert.equal(g.audioSources.seat.plays,0);
+  g.update(.6);assert.equal(g.audioSources.seat.plays,1);assert.equal(g.audioSources.ui.plays,1);
+  assert.notEqual(g.audioSources.ui.clip,g.audioSources.press.clip);
+  assert.notEqual(g.audioSources.press.clip,g.audioSources.seat.clip);
 });

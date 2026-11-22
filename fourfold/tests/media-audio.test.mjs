@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createMediaAudio} from '../media-audio.mjs';
 
-const files={button:'https://example.invalid/ui-soft-press-v4.mp3',seat:'https://example.invalid/soft-seat-v4.mp3'};
+const files={press:'https://example.invalid/knob-click-v5.mp3',button:'https://example.invalid/ui-tap-v5.mp3',seat:'https://example.invalid/stone-seat-v5.mp3'};
 const flush=()=>new Promise(setImmediate);
 function platform({legacy=false,seekThrows=false,playThrows=null,observer=()=>{}}={}){
   const clock={ms:0},statuses=[],calls=[],listeners=new Map();let created=0,source='',time=0;
@@ -184,4 +184,11 @@ test('missing sources, unavailable media, and status observer errors do not esca
   const missing=createMediaAudio({files,createElement:()=>null});assert.equal(await missing.play('button',1),false);missing.dispose();
   const q=platform({observer:()=>{throw new Error('observer failed');}}),request=q.audio.play('button',1);
   q.start();assert.equal(await request,true);q.audio.dispose();
+});
+
+
+test('media compatibility selects a dedicated file for each of the three cues',async()=>{
+ const p=platform();
+ for(const kind of ['button','press','seat']){const pending=p.audio.play(kind);p.start();assert.equal(await pending,true);assert.equal(p.element.src,files[kind]);p.end();}
+ assert.equal(new Set(p.calls.map(call=>call.src)).size,3);p.audio.dispose();
 });

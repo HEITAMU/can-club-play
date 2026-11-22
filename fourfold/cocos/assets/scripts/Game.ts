@@ -16,7 +16,7 @@ const HINT_PULSE_SECONDS=2.2,HINT_PULSE_MIN=102;
 const AD_IDS={rewarded:'',banner:''}; // 接入时只填写微信公众平台提供的真实 adUnitId。
 const C={background:'#F8DEB7',surface:'#FFF1D6',gold:'#F5CB79',gold2:'#C88B4D',white:'#FFF4D7',muted:'#977253',dark:'#5B301F',edge:'#825037',night:'#1B2345',shadow:'#B27C50'};
 const ART_PATHS={home:'art/'+HOME_ART.resource,homeUI:'art/'+HOME_UI.resource,atlas:'art/ui-atlas',referenceOriginal:'art/reference-daily',referenceClean:'art/reference-clean',rankScene:'art/rank-scene',resultPanel:'art/result-panel'};
-const AUDIO_PATHS={press:'audio/ui-soft-press-v4',seat:'audio/soft-seat-v4'};
+const AUDIO_PATHS={ui:'audio/ui-tap-v5',press:'audio/knob-click-v5',seat:'audio/stone-seat-v5'};
 const REQUIRED_FRAMES=['goldButton','creamButton','lavenderButton','stepsCard','timeCard','rotateKnob','settingsButton','backButton'];
 const at=()=>typeof performance!=='undefined'&&performance.now?performance.now():Date.now();
 const wxSDK=()=>typeof wx!=='undefined'?(wx as any):null;
@@ -46,8 +46,8 @@ export class FourfoldGame extends Component {
   private motionSerial=0;private turnMotion:any=null;private hideSDK:any=null;
   private turnMotionMode:'full'|'gentle'=this.storeRead('turnMotion','full')==='gentle'?'gentle':'full';
   private soundEnabled=this.storeRead('sound',true)!==false;private audioHidden=false;private audioDisabled=false;
-  private audioNode:Node|null=null;private audioSources:Partial<Record<'press'|'seat',AudioSource>>={};private audioClips:Partial<Record<'press'|'seat',AudioClip>>={};
-  private audioWanted:{press:any;seat:any}={press:null,seat:null};private audioEpoch=0;
+  private audioNode:Node|null=null;private audioSources:Partial<Record<'ui'|'press'|'seat',AudioSource>>={};private audioClips:Partial<Record<'ui'|'press'|'seat',AudioClip>>={};
+  private audioWanted:{ui:any;press:any;seat:any}={ui:null,press:null,seat:null};private audioEpoch=0;
   private audioLoading=false;private audioSerial=0;private audioLifecycleAttached=false;
   private boardLayout={x:0,y:0,size:0,unit:0};private launchQuery:any={};
   private pageScroll:ScrollView|null=null;private pageScrollKey='';private scrollOffsets:Record<string,number>={};
@@ -110,7 +110,7 @@ export class FourfoldGame extends Component {
     if(!this.audioNode){
       try{
         this.audioNode=new Node('Fourfold audio');this.canvasNode.addChild(this.audioNode);
-        for(const kind of ['press','seat'] as const){
+        for(const kind of ['ui','press','seat'] as const){
           const node=new Node(kind+' sound');this.audioNode.addChild(node);
           const source=node.addComponent(AudioSource);source.playOnAwake=false;source.loop=false;source.volume=1;
           this.audioSources[kind]=source;
@@ -120,7 +120,7 @@ export class FourfoldGame extends Component {
         }
       }catch(error){console.warn('Optional audio unavailable',error);this.disposeAudio();return;}
     }
-    const missing=(['press','seat'] as const).filter(kind=>!this.audioClips[kind]);if(!missing.length)return;
+    const missing=(['ui','press','seat'] as const).filter(kind=>!this.audioClips[kind]);if(!missing.length)return;
     const serial=this.audioSerial;this.audioLoading=true;
     await Promise.allSettled(missing.map(async kind=>{
       const clip=await this.loadResource(AUDIO_PATHS[kind],AudioClip);
@@ -146,8 +146,8 @@ export class FourfoldGame extends Component {
     // The landing belongs to this committed move, even if its optional clip is
     // still missing. A later load must not replay the old landing.
     if(kind==='seat')motion.audioSeated=true;
-    const channel=kind==='seat'?'seat':'press',source=this.audioSources[channel];
-    this.stopAudio('press');this.stopAudio('seat');
+    const channel=kind,source=this.audioSources[channel];
+    this.stopAudio('ui');this.stopAudio('press');this.stopAudio('seat');
     if(!this.audioClips[channel]||!source?.isValid){
       // A later valid touch retries missing optional clips without replaying this
       // touch when loading finishes. prepareAudio deduplicates in-flight loads.
@@ -159,9 +159,9 @@ export class FourfoldGame extends Component {
       source.volume=kind==='ui' ? .9 : 1;this.audioWanted[channel]=cue;source.play();
     }catch{this.stopAudio(channel);} // Sound support or autoplay failure never interrupts an action.
   }
-  private stopAudio(kind?:'press'|'seat'){
+  private stopAudio(kind?:'ui'|'press'|'seat'){
     if(!kind)this.audioEpoch++;
-    for(const key of kind?[kind]:['press','seat']){this.audioWanted[key]=null;try{this.audioSources[key]?.stop();}catch{}}
+    for(const key of kind?[kind]:['ui','press','seat']){this.audioWanted[key]=null;try{this.audioSources[key]?.stop();}catch{}}
   }
   private disposeAudio(){
     this.audioSerial++;this.audioLoading=false;this.stopAudio();
@@ -812,7 +812,7 @@ export class FourfoldGame extends Component {
     if(motion&&restore)this.audioEpoch++;
     // A committed landing may finish across a same-board redraw. Navigation,
     // dialogs, cancellation and lifecycle changes invalidate its owner instead.
-    for(const kind of ['press','seat'] as const)if(!this.audioCueIsCurrent(this.audioWanted[kind]))this.stopAudio(kind);
+    for(const kind of ['ui','press','seat'] as const)if(!this.audioCueIsCurrent(this.audioWanted[kind]))this.stopAudio(kind);
     if(!motion)return;
     for(const state of motion.states){
       if(!state.node.isValid)continue;Tween.stopAllByTarget(state.node);

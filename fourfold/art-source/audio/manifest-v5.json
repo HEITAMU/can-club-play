@@ -1,0 +1,51 @@
+{
+  "version": 5,
+  "source": "Original procedural impulse-excited foley. No generated-model audio or recordings.",
+  "sounds": [
+    {
+      "name": "ui-tap-v5",
+      "origin": "original deterministic procedural stone foley",
+      "sampleRate": 48000,
+      "channels": 1,
+      "decodedFrames": 7200,
+      "decodedDurationSeconds": 0.15,
+      "decodedPeakDbFS": -12.263,
+      "decodedRmsDbFS": -34.564,
+      "sha256": "7153aa68b3373230f6242f159db403b0b1f5575d92f5f85e5ccf77d9fb305475",
+      "mp3Bytes": 5228,
+      "sourceMaster": "art-source/audio/ui-tap-v5.wav",
+      "web": "assets/audio/ui-tap-v5.mp3",
+      "native": "cocos/assets/resources/audio/ui-tap-v5.mp3"
+    },
+    {
+      "name": "knob-click-v5",
+      "origin": "original deterministic procedural stone foley",
+      "sampleRate": 48000,
+      "channels": 1,
+      "decodedFrames": 10560,
+      "decodedDurationSeconds": 0.22,
+      "decodedPeakDbFS": -5.136,
+      "decodedRmsDbFS": -22.477,
+      "sha256": "7d8674969764fc213d07a94cb29a85390a019079c6dd9b3caa1d8ccb22a4968a",
+      "mp3Bytes": 6956,
+      "sourceMaster": "art-source/audio/knob-click-v5.wav",
+      "web": "assets/audio/knob-click-v5.mp3",
+      "native": "cocos/assets/resources/audio/knob-click-v5.mp3"
+    },
+    {
+      "name": "stone-seat-v5",
+      "origin": "original deterministic procedural stone foley",
+      "sampleRate": 48000,
+      "channels": 1,
+      "decodedFrames": 14400,
+      "decodedDurationSeconds": 0.3,
+      "decodedPeakDbFS": -5.669,
+      "decodedRmsDbFS": -21.978,
+      "sha256": "86598dd3f60d49d539e8b282c1cdb6f9b6c378f8a1359b4081112735fbf82cd9",
+      "mp3Bytes": 8684,
+      "sourceMaster": "art-source/audio/stone-seat-v5.wav",
+      "web": "assets/audio/stone-seat-v5.mp3",
+      "native": "cocos/assets/resources/audio/stone-seat-v5.mp3"
+    }
+  ]
+}

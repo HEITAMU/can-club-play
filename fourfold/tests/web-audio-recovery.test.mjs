@@ -55,7 +55,7 @@ test('explicit compatibility mode without AudioSession reuses one media element 
   const audio=createGameAudio({...p.options,sessionFactory:()=>null,mediaFactory,outputMode:'media'});
   const token=audio.beginTurn();assert.equal(players[0].plays,1,'media play stays inside the click call stack');await tick();
   assert.equal(p.sources.length,0,'only one backend is used');assert.equal(await audio.finishTurn(token),true);assert.equal(players.length,1);
-  assert.equal(players[0].plays,2);assert.match(players[0].src,/soft-seat-v4/);
+  assert.equal(players[0].plays,2);assert.match(players[0].src,/stone-seat-v5/);
   assert.equal(await audio.finishTurn(token),false);
   const next=audio.beginTurn();audio.stopTurn();assert.equal(await audio.finishTurn(next),false);assert.equal(players[0].paused,true);
   audio.dispose();
@@ -63,7 +63,7 @@ test('explicit compatibility mode without AudioSession reuses one media element 
 test('diagnostics keep knob and test failures separate from an ordinary settings click',async()=>{
   const p=platform(),audio=createGameAudio({...p.options,enabled:false});
   audio.beginTurn();await audio.testSound();audio.setEnabled(true);await audio.playButton();
-  const info=audio.getDiagnostics();assert.equal(info.build,'0.8.29');assert.equal(info.cues.press.reason,'muted');assert.equal(info.cues.test.reason,'muted');assert.equal(info.cues.button.state,'started');
+  const info=audio.getDiagnostics();assert.equal(info.build,'0.8.30');assert.equal(info.cues.press.reason,'muted');assert.equal(info.cues.test.reason,'muted');assert.equal(info.cues.button.state,'started');
   info.cues.press.reason='edited';assert.equal(audio.getDiagnostics().cues.press.reason,'muted','snapshots cannot edit the controller');audio.dispose();
 });
 function mediaPlatform(){

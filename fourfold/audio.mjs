@@ -1,10 +1,11 @@
 // Optional tactile audio. Every cue belongs to a current user action; a slow
 // resume/load may be retried by another gesture, never by replaying an old cue.
-import {createMediaAudio} from './media-audio.mjs?v=0.8.29';
-export const AUDIO_BUILD='0.8.29';
+import {createMediaAudio} from './media-audio.mjs?v=0.8.30';
+export const AUDIO_BUILD='0.8.30';
 export const SOUND_FILES=Object.freeze({
-  button:new URL('./assets/audio/ui-soft-press-v4.mp3',import.meta.url).href,
-  seat:new URL('./assets/audio/soft-seat-v4.mp3',import.meta.url).href,
+  button:new URL('./assets/audio/ui-tap-v5.mp3',import.meta.url).href,
+  press:new URL('./assets/audio/knob-click-v5.mp3',import.meta.url).href,
+  seat:new URL('./assets/audio/stone-seat-v5.mp3',import.meta.url).href,
 });
 
 export function createGameAudio({
@@ -21,7 +22,7 @@ export function createGameAudio({
   let sessionOwner=null,previousSessionType=null,sessionType='default',backend='web-audio',unlockState='idle';
   const raw=new Map(),decoded=new Map(),voices=new Map(),fading=new Set();
   const epochs={button:0,press:0,seat:0,test:0},cues={button:null,press:null,seat:null,test:null};
-  const assets={button:'idle',seat:'idle'};
+  const assets={button:'idle',press:'idle',seat:'idle'};
   const allowed=()=>enabled&&!disposed&&isVisible();
   const getDiagnostics=()=>({build:AUDIO_BUILD,enabled,mode:outputMode,backend,
     contextState:backend==='html-media'?(media?.getState()?.state||'idle'):(context?.state||'uncreated'),
@@ -197,7 +198,7 @@ export function createGameAudio({
   function beginTurn(){
     stopTurn();invalidate('button');invalidate('test');
     if(!allowed()){record('press','blocked',!enabled?'muted':'hidden');return null;}
-    const token=activeTurn={};void play('press','button',260,1);return token;
+    const token=activeTurn={};void play('press','press',260,1);return token;
   }
   function finishTurn(token){
     if(!token||token!==activeTurn)return Promise.resolve(false);

@@ -81,7 +81,7 @@ export function createMediaAudio({
       started:false,settled:false,promiseMode:null,sawPlaying:false,listeners:[],timer:null,resolve:null,source:''};
     const result=new Promise(resolve=>{request.resolve=resolve;});active=request;
     if(!valid(request)){fail(request,'blocked',{reason:'stale'});return result;}
-    const file=(kind==='button'||kind==='seat')?files[kind]:null;
+    const file=(kind==='button'||kind==='press'||kind==='seat')?files[kind]:null;
     if(typeof file!=='string'||!file){fail(request,'error',{name:'NotSupportedError',reason:'missing-source'});return result;}
     report('request',request);
     // Status observers may synchronously cancel or dispose this request.
