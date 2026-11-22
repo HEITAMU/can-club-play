@@ -1,7 +1,7 @@
 // Optional tactile audio. Every cue belongs to a current user action; a slow
 // resume/load may be retried by another gesture, never by replaying an old cue.
-import {createMediaAudio} from './media-audio.mjs?v=0.8.27';
-export const AUDIO_BUILD='0.8.27';
+import {createMediaAudio} from './media-audio.mjs?v=0.8.28';
+export const AUDIO_BUILD='0.8.28';
 export const SOUND_FILES=Object.freeze({
   button:new URL('./assets/audio/ui-stone-press-v3.mp3',import.meta.url).href,
   seat:new URL('./assets/audio/stone-seat-v3.mp3',import.meta.url).href,

@@ -22,7 +22,7 @@ await preview.ready;
 
 返回接口：`ready`、`selectTheme(id)`、`rotate(q, dir)`、`shuffle()`、`reset()`、`undo()`、`setDirection(1 | -1)`、`setNumbersVisible(boolean)`、`setCompare(boolean)`、`getState()`、`destroy()`。`rotate`、`undo`、`selectTheme` 返回 Promise<boolean>；被中止或被忙状态拒绝时返回 false。独立页面公开 `window.fourfoldBoardPreview` 以便检查。
 
-每次旋转沿 `TurnMotion.js` 的 2400ms 轨迹换位，图块自身和数字保持正立。原稿不等宽槽位、源图裁切、真实旋钮中心全部取自 reference JSON；没有均分成规则九宫格。系统启用减少动态效果时，采用180ms轻微淡入，规则更新相同。
+每次旋转沿 `TurnMotion.js` 的 1200ms 轨迹换位，图块自身和数字保持正立。原稿不等宽槽位、源图裁切、真实旋钮中心全部取自 reference JSON；没有均分成规则九宫格。系统启用减少动态效果时，采用180ms轻微淡入，规则更新相同。
 
 切换主题恢复该主题的完整拼合，并清空当前试转历史；恢复拼合、重新打乱也建立新局。打乱由18次合法四格旋转生成，之后的撤销只撤销用户在该乱局上完成的动作。整图对照取消未完成的动作，保留已经完成的棋盘与撤销历史，再点返回棋盘可继续。
 

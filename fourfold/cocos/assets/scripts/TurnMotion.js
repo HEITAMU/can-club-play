@@ -1,7 +1,7 @@
 // Shared by the web preview and Cocos. Coordinates use x right / y down.
 // The puzzle moves whole illustrated tiles; their artwork remains upright.
-// A deliberate page-turn pace: 240ms focus, 1920ms travel, 240ms soft landing.
-export const TURN_DURATION_MS = 2400;
+// A tactile turn: 120ms focus, 960ms travel, 120ms soft landing.
+export const TURN_DURATION_MS = 1200;
 export const TURN_KEYFRAME_COUNT = 49;
 
 const clamp01 = value => Math.max(0, Math.min(1, value));

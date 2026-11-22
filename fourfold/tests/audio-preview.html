@@ -21,7 +21,7 @@
 </style>
 <main>
   <h1>四格诡局 · 音频验收</h1>
-  <p>点击后使用生产音频模块播放。旋转持续 2.4 秒，实际动画完成后才播放落位声。数值取自通往真实扬声器输出的分析节点；非零峰值表示浏览器输出链路有信号，听感需实际试听。</p>
+  <p>点击后使用生产音频模块播放。旋转持续 1.2 秒，实际动画完成后才播放落位声。数值取自通往真实扬声器输出的分析节点；非零峰值表示浏览器输出链路有信号，听感需实际试听。</p>
   <div class="controls">
     <button id="button-preview" type="button">试听按钮</button>
     <button id="turn-preview" type="button">旋转并落位</button>
@@ -38,7 +38,7 @@
   <pre id="log" aria-label="音频事件日志"></pre>
 </main>
 <script type="module">
-  import { createGameAudio } from '../audio.mjs?v=0.8.27';
+  import { createGameAudio } from '../audio.mjs?v=0.8.28';
 
   const $ = id => document.getElementById(id);
   const logs = [], windows = new Map();
@@ -126,7 +126,7 @@
     cancelTurn('新的旋转', false);
     resetSeat();
     measure('press', 430);
-    $('phase').textContent = '旋转中（2400 ms）';
+    $('phase').textContent = '旋转中（1200 ms）';
     const token = audio.beginTurn();
     const nextAngle = angle + 90;
     const animation = $('tiles').animate([
@@ -134,7 +134,7 @@
       { transform: `rotate(${angle + 4}deg) scale(1.04)`, offset: .10 },
       { transform: `rotate(${nextAngle}deg) scale(1.02)`, offset: .94 },
       { transform: `rotate(${nextAngle}deg) scale(1)` },
-    ], { duration: 2400, easing: 'cubic-bezier(.25,.65,.25,1)', fill: 'forwards' });
+    ], { duration: 1200, easing: 'cubic-bezier(.25,.65,.25,1)', fill: 'forwards' });
     const turn = activeTurn = { token, animation };
     log(`旋转开始，按下触点 ${token ? '有效' : '静音'}`);
     animation.finished.then(async () => {

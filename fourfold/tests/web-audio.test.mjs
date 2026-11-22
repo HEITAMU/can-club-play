@@ -200,12 +200,12 @@ test('production turn starts one press and every cancel route prevents a landing
   }
 });
 
-test('full and gentle production animations last 2400ms regardless of OS preference and only a completed board commit seats',async()=>{
+test('full and gentle production animations last 1200ms regardless of OS preference and only a completed board commit seats',async()=>{
   for(const reduced of [false,true])for(const turnMotion of ['full','gentle']){
     const {f,sources,clock}=await readyApp({preferences:{turnMotion}});
     f.run('hint()');await f.run('spin(0)');await flush();assert.equal(sources.length,0,'selecting a direction is required before turn audio');
     f.run('setDirection(hintGuide.dir)');f.window.matchMedia=()=>({matches:reduced});
-    const pending=wireAnimations(f),turn=f.run('spin(hintGuide.q)'),duration=2400;await flush();
+    const pending=wireAnimations(f),turn=f.run('spin(hintGuide.q)'),duration=1200;await flush();
     assert(pending.every(animation=>animation.duration===duration));
     assert.equal(sources.length,1);assert.equal(sources[0].buffer.kind,'button');assert.equal(sources[0].starts[0][2],.24);
     clock.ms=duration-1;await flush();assert.equal(sources.length,1);assert.equal(f.run('moves'),0);

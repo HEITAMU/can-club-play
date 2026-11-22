@@ -94,14 +94,14 @@ test('native UI sounds fire once after accepted touches and ignore busy, cancell
   f.tap(daily);assert.equal(actions,2);assert.equal(g.audioSources.press.plays,2,'daily reference controls use the same sound policy');
 });
 
-test('native rotation presses once, stays silent through 2399ms and seats once after the 2400ms commit',async()=>{
+test('native rotation presses once, stays silent through 1199ms and seats once after the 1200ms commit',async()=>{
   const f=audioFixture(),g=f.game;await f.ready();const knob=f.board();
   f.tap(knob);const motion=g.turnMotion;assert(motion);
   const press=g.audioSources.press,seat=g.audioSources.seat;
   assert.equal(press.plays,1);assert.equal(press.volume,1);assert.equal(seat.plays,0);
   f.tap(knob);assert.equal(press.plays,1,'rapid clicks do not layer a generic click or another press');
-  g.update(1.2);assert.equal(g.moves,0);assert.equal(seat.plays,0,'the previous 1200ms duration is now only half a turn');
-  g.update(1.199);assert.equal(g.moves,0);assert.equal(seat.plays,0);assert.equal(g.turnMotion,motion);
+  g.update(.6);assert.equal(g.moves,0);assert.equal(seat.plays,0,'the 600ms midpoint has not committed the turn');
+  g.update(.599);assert.equal(g.moves,0);assert.equal(seat.plays,0);assert.equal(g.turnMotion,motion);
   g.update(.001);assert.equal(g.turnMotion,null);assert.equal(press.playing,false);assert.equal(g.moves,1);
   assert.equal(seat.plays,1);assert.equal(seat.volume,1);assert.equal(seat.playing,true,'successful redraw does not cancel the landing');
   g.update(10);g.playAudio('seat',motion);assert.equal(seat.plays,1,'later frames cannot replay the committed landing');
@@ -138,7 +138,7 @@ test('native landed sound survives completion but stops before another turn, dia
   for(const leave of ['turn','result','settings','home','restart','next','hide','disable','destroy']){
     const f=audioFixture(),g=f.game;await f.ready();f.board();
     if(leave==='result'||leave==='next'){g.board=rotate(GOAL,0,-1);g.draw();g.drawReferenceBoard(0,0,1);}
-    f.tap(g.knobNodes[0]);g.update(2.4);
+    f.tap(g.knobNodes[0]);g.update(1.2);
     const press=g.audioSources.press,seat=g.audioSources.seat;assert.equal(seat.playing,true,leave);assert.equal(seat.plays,1);
     if(leave==='result'||leave==='next'){assert.equal(g.won,true);assert.equal(g.completedRound,g.roundSerial);}
     if(leave==='turn'){g.drawReferenceBoard(0,0,1);f.tap(g.knobNodes[0]);assert.equal(press.plays,2);}
@@ -158,11 +158,11 @@ test('native landed sound survives completion but stops before another turn, dia
 test('native a missing landing is retried but never replayed after the optional clip arrives',async()=>{
   const f=audioFixture(),g=f.game,loading=g.prepareAudio();
   f.finish(f.requests[0]);f.finish(f.requests[1],new Error('temporary seat load failure'));await loading;
-  f.tap(f.board());g.update(2.4);const seat=g.audioSources.seat;
+  f.tap(f.board());g.update(1.2);const seat=g.audioSources.seat;
   assert.equal(g.moves,1);assert.equal(seat.plays,0);assert.equal(f.requests.length,3);
   assert.equal(f.requests[2].path,'audio/stone-seat-v3');f.finish(f.requests[2]);await flush();
   assert.equal(seat.plays,0,'loading cannot add a late sound to the previous turn');
-  g.drawReferenceBoard(0,0,1);f.tap(g.knobNodes[0]);g.update(2.4);assert.equal(seat.plays,1,'the next completed turn can use the recovered clip');
+  g.drawReferenceBoard(0,0,1);f.tap(g.knobNodes[0]);g.update(1.2);assert.equal(seat.plays,1,'the next completed turn can use the recovered clip');
 });
 
 test('native sound setting shares the persisted sound key and muted state immediately stops both channels',async()=>{
@@ -181,7 +181,7 @@ test('native sound setting shares the persisted sound key and muted state immedi
 });
 
 test('native muting a committed landing stops its tail and prevents a late platform restart',async()=>{
-  const f=audioFixture(),g=f.game;await f.ready();f.tap(f.board());g.update(2.4);
+  const f=audioFixture(),g=f.game;await f.ready();f.tap(f.board());g.update(1.2);
   const seat=g.audioSources.seat;assert.equal(seat.playing,true);
   g.modal='settings';g.toggleSound();assert.equal(seat.playing,false);
   g.toggleSound();seat.playing=true;seat.node.emit(f.AudioSource.EventType.STARTED);assert.equal(seat.playing,false);
