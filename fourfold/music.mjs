@@ -1,5 +1,5 @@
 // Separate media channel: music preference never changes the sound-effects flag.
-export const MUSIC_FILE=new URL('./assets/audio/starlight-sampled-v4.mp3',import.meta.url).href;
+export const MUSIC_FILE=new URL('./assets/audio/sidewalk-shade-slower-v1.mp3',import.meta.url).href;
 export function createBackgroundMusic({enabled=true,createElement=()=>{const element=new Audio();element.hidden=true;element.setAttribute("aria-hidden","true");document.body.append(element);return element;},isVisible=()=>true}={}){
   let player=null,disposed=false,activated=false,epoch=0;
   const allowed=()=>enabled&&activated&&!disposed&&isVisible();

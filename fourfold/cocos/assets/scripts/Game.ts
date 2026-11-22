@@ -181,7 +181,7 @@ export class FourfoldGame extends Component {
       if(this.musicLoading)return this.musicLoading;
       const loading=(async()=>{
         try{
-          const clip=await this.loadResource('audio/starlight-sampled-v4',AudioClip);
+          const clip=await this.loadResource('audio/sidewalk-shade-slower-v1',AudioClip);
           if(this.disposed||!this.canvasNode?.isValid)return;
           clip.addRef();this.musicClip=clip;
           const node=new Node('Background music');this.canvasNode.addChild(node);this.musicNode=node;
@@ -1149,6 +1149,7 @@ export class FourfoldGame extends Component {
       this.btn(this.musicEnabled?'音乐：开':'音乐：关',53+(w-96)/2,top+312,(w-96)/2,44,()=>this.toggleMusic(round,ui),'creamButton',17);
       this.btn(this.turnMotionMode==='gentle'?'旋转动画：轻柔':'旋转动画：完整',86,top+366,w-172,44,()=>this.toggleTurnMotionMode(round,ui),'creamButton',17);
       this.btn('继续',86,top+420,w-172,45,()=>this.closeModal(),'creamButton',17);
+      this.txt('Sidewalk Shade - slower / Kevin MacLeod (incompetech.com)\nCC BY 4.0 · creativecommons.org/licenses/by/4.0/\n已降低音量并转码',38,top+470,w-76,36,10,C.muted,false);
     }
   }
   private drawResultModal(){
