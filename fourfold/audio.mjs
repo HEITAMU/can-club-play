@@ -1,10 +1,10 @@
 // Optional tactile audio. Every cue belongs to a current user action; a slow
 // resume/load may be retried by another gesture, never by replaying an old cue.
-import {createMediaAudio} from './media-audio.mjs?v=0.8.30';
-export const AUDIO_BUILD='0.8.30';
+import {createMediaAudio} from './media-audio.mjs?v=0.8.31';
+export const AUDIO_BUILD='0.8.31';
 export const SOUND_FILES=Object.freeze({
   button:new URL('./assets/audio/ui-tap-v5.mp3',import.meta.url).href,
-  press:new URL('./assets/audio/knob-click-v5.mp3',import.meta.url).href,
+  press:new URL('./assets/audio/rotary-detent-v6.mp3',import.meta.url).href,
   seat:new URL('./assets/audio/stone-seat-v5.mp3',import.meta.url).href,
 });
 

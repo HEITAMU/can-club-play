@@ -65,11 +65,7 @@ test('native story and daily controls draw only the current step and use the sam
     assert.deepEqual(Array.from(g.hintVisualNodes,node=>node.name),['Hint direction '+dir]);
     const oldDirectionOutline=g.hintVisualNodes[0],oldShade=g.hintMaskNode;
     assert.deepEqual(oldShade.rect,{x:0,y:0,w:g.width,h:g.height});
-    if(mode==='story')f.buttons.findLast(button=>button.label===(dir===1?'↻ 顺时针':'↺ 逆时针')).action();
-    else{
-      const button=f.created.findLast(node=>node.name===(dir===1?'↻ 顺时针':'↺ 逆时针'));
-      button.emit('start');button.emit('end');
-    }
+    f.buttons.findLast(button=>button.label===(dir===1?'↻ 顺时针':'↺ 逆时针')).action();
     assert.equal(g.hintGuide.stage,'target');assert.equal(oldDirectionOutline.isValid,false);assert.equal(oldShade.isValid,false);
     g.drawGame();assert.deepEqual(Array.from(g.hintVisualNodes,node=>node.name),[...SQUARES[3].map(index=>'Hint target tile '+index),'Hint target knob 3']);
     const spot=g.hintFocus.lastRect,scale=g.boardLayout.size/reference.tileArea[2],slots=SQUARES[3].map(index=>reference.slotRects[index]),a=reference.tileArea;
@@ -145,12 +141,14 @@ test('native redraws and number settings preserve guidance; new rounds, home, co
 });
 
 test('native daily keeps the last active hint visibly available until that guidance is cleared',()=>{
-  const f=paintingFixture('daily'),g=f.game,original=g.referenceControl,dims=[];
-  g.referenceControl=function(...args){if(args[0]==='✧ 提示')dims.push(args[7]);return original.apply(this,args);};
+  const f=paintingFixture('daily'),g=f.game,original=g.btn,nodes=[];
+  g.btn=function(...args){const node=original.apply(this,args);if(args[0].startsWith('✧ 提示'))nodes.push(node);return node;};
+  const opacity=()=>[...nodes.at(-1).components.values()].find(component=>'opacity' in component).opacity;
   g.hints=hintLimit('daily')-1;g.applyHint();g.drawGame();
-  assert.equal(g.hintsLeft(),0);assert.equal(dims.at(-1),false);
-  g.setDirection(g.hintGuide.dir);g.drawGame();assert.equal(dims.at(-1),false);
-  g.clearHintGuide();g.draw();g.drawGame();assert.equal(dims.at(-1),true);
+  assert.equal(g.hintsLeft(),0);assert.equal(opacity(),255);
+  g.setDirection(g.hintGuide.dir);g.drawGame();assert.equal(opacity(),255);
+  g.clearHintGuide();g.draw();g.drawGame();assert.equal(opacity(),170);
+
 });
 
 test('native invalidates and detaches pending hint requests on round changes and home',()=>{

@@ -49,19 +49,17 @@ linear-gradient(to bottom,transparent 32.853%,#8d522e 32.853%,#f9d698 33.2%,#d18
 .game-screen .spin-node[data-q="3"]{left:67.60374833%!important;top:67.43515850%!important;}
 .game-screen .spin-node[data-q="3"] .spin-art{background-size:889.58333333% 1918.75000000%;background-position:67.28232190% 60.65292096%;}
 
-/* Daily controls are independent crops; the phone width is never height-limited. */
+/* Daily layout retains its date header; lower controls share the story atlas. */
 .game-screen[data-mode=daily]{position:absolute;inset:0;width:100%;height:100%;display:block;padding:0;transform:none;overflow-x:hidden;overflow-y:auto;background:radial-gradient(ellipse at 50% 38%,#ffe1b8,#fbd0a1 72%,#f8ca98)}
 .game-screen[data-mode=daily]:before,.game-screen[data-mode=daily]:after{display:none}
 .game-screen[data-mode=daily] .compact-top,.game-screen[data-mode=daily] .game-panel,.game-screen[data-mode=daily] .metric-row,.game-screen[data-mode=daily] .direction,.game-screen[data-mode=daily] .tools,.game-screen[data-mode=daily] .bottom-actions{display:contents}
 .game-screen[data-mode=daily] .icon-button,.game-screen[data-mode=daily] .direction .art-button,.game-screen[data-mode=daily] #hintBtn,.game-screen[data-mode=daily] #shareBtn,.game-screen[data-mode=daily] .daily-banner,.game-screen[data-mode=daily] .stat-card,.game-screen[data-mode=daily] .board-frame{position:absolute;left:var(--daily-x);top:var(--daily-y);width:var(--daily-w);height:var(--daily-h);margin:0;padding:0;min-width:0;min-height:0;max-width:none;transform:none}
 .game-screen[data-mode=daily] .icon-button,.game-screen[data-mode=daily] .art-button{border:0;background:none;box-shadow:none;z-index:5;border-radius:30px}
-.game-screen[data-mode=daily] .skin,.game-screen[data-mode=daily] .banner-skin{display:block;background-image:url('assets/art/reference-daily.webp');background-repeat:no-repeat}
+.game-screen[data-mode=daily] .icon-button .skin,.game-screen[data-mode=daily] .banner-skin{display:block;background-image:url('assets/art/reference-daily.webp');background-repeat:no-repeat}
 .game-screen[data-mode=daily] .icon-button .skin{inset:auto;left:50%;top:50%;width:var(--daily-icon-width);height:auto;transform:translate(-50%,-50%)}
-.game-screen[data-mode=daily] .art-button .skin{inset:auto;left:0;top:50%;width:100%;height:auto;transform:translateY(-50%);border-radius:100px}
-.game-screen[data-mode=daily] .button-label,.game-screen[data-mode=daily] .stat-copy small,.game-screen[data-mode=daily] .daily-copy>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.game-screen[data-mode=daily] .art-button .skin{inset:0;width:100%;height:100%;aspect-ratio:auto;transform:none;background-image:url('assets/art/ui-atlas.webp')}
+.game-screen[data-mode=daily] .stat-copy small,.game-screen[data-mode=daily] .daily-copy>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .game-screen[data-mode=daily] .icon-button:active,.game-screen[data-mode=daily] .art-button:active{transform:scale(.98);filter:brightness(1.04)}
-.game-screen[data-mode=daily] #cwBtn:not(.selected):not(.hint-direction) .skin{filter:saturate(.7) brightness(1.04);opacity:.7}
-.game-screen[data-mode=daily] #ccwBtn.selected .skin{box-shadow:inset 0 0 0 2px #c5852b,0 0 0 1px #f5bd5d}
 .game-screen[data-mode=daily] .daily-banner{z-index:2;background:none}
 .game-screen[data-mode=daily] .banner-skin{inset:0;background-image:url('assets/art/reference-clean.webp')}
 .game-screen[data-mode=daily] .daily-copy{left:32.83767038%;top:29.57746479%;width:34.94423792%;height:30.98591549%;right:auto;bottom:auto;gap:0;color:#fff0c4;text-shadow:0 1px 1px #231b37}
@@ -89,10 +87,6 @@ linear-gradient(to bottom,transparent 32.853%,#8d522e 32.853%,#f9d698 33.2%,#d18
 .game-screen[data-mode=daily] #backHome .skin{aspect-ratio:109 / 106;background-size:783.48623853% 1737.73584906%;background-position:3.89261745% 5.64516129%;}
 .game-screen[data-mode=daily] #settingsBtn .skin{aspect-ratio:109 / 106;background-size:783.48623853% 1737.73584906%;background-position:95.97315436% 5.64516129%;}
 .game-screen[data-mode=daily] .banner-skin{aspect-ratio:807 / 213;background-size:105.82403965% 864.78873239%;background-position:51.06382979% 13.50521793%;}
-.game-screen[data-mode=daily] #cwBtn .skin{aspect-ratio:412 / 123;background-size:207.28155340% 1497.56097561%;background-position:4.07239819% 81.03548575%;}
-.game-screen[data-mode=daily] #ccwBtn .skin{aspect-ratio:411 / 122;background-size:207.78588808% 1509.83606557%;background-position:95.71106095% 81.04651163%;}
-.game-screen[data-mode=daily] #hintBtn .skin{aspect-ratio:401 / 92;background-size:212.96758105% 2002.17391304%;background-position:49.88962472% 87.20000000%;}
-.game-screen[data-mode=daily] #shareBtn .skin{aspect-ratio:764 / 143;background-size:111.78010471% 1288.11188811%;background-position:48.88888889% 95.93878752%;}
 
 /* Engraved bronze numerals share a baseline and finish on cards and results. */
 .game-screen[data-mode] .stat-copy strong,
@@ -139,3 +133,6 @@ linear-gradient(to bottom,transparent 32.853%,#8d522e 32.853%,#f9d698 33.2%,#d18
 .game-screen[data-mode=daily] .completion-actions .skin{inset:0;width:100%;height:100%;aspect-ratio:auto;transform:none;background-image:url('assets/art/ui-atlas.webp')}
 .game-screen[data-mode=daily] #numbersBtn .button-label,
 .game-screen[data-mode=daily] .completion-actions .button-label{position:relative;inset:auto;width:auto;height:auto;overflow:visible;clip-path:none;font-size:clamp(13px,3.9vw,18px);line-height:1.1;color:#61331f;text-shadow:0 1px #fff2ce80}
+
+/* The hint count is live text in the same button label used by story levels. */
+.game-screen[data-mode=daily] #hintBtn .hint-remaining{display:none}

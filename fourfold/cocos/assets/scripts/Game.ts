@@ -16,7 +16,7 @@ const HINT_PULSE_SECONDS=2.2,HINT_PULSE_MIN=102;
 const AD_IDS={rewarded:'',banner:''}; // 接入时只填写微信公众平台提供的真实 adUnitId。
 const C={background:'#F8DEB7',surface:'#FFF1D6',gold:'#F5CB79',gold2:'#C88B4D',white:'#FFF4D7',muted:'#977253',dark:'#5B301F',edge:'#825037',night:'#1B2345',shadow:'#B27C50'};
 const ART_PATHS={home:'art/'+HOME_ART.resource,homeUI:'art/'+HOME_UI.resource,atlas:'art/ui-atlas',referenceOriginal:'art/reference-daily',referenceClean:'art/reference-clean',rankScene:'art/rank-scene',resultPanel:'art/result-panel'};
-const AUDIO_PATHS={ui:'audio/ui-tap-v5',press:'audio/knob-click-v5',seat:'audio/stone-seat-v5'};
+const AUDIO_PATHS={ui:'audio/ui-tap-v5',press:'audio/rotary-detent-v6',seat:'audio/stone-seat-v5'};
 const REQUIRED_FRAMES=['goldButton','creamButton','lavenderButton','stepsCard','timeCard','rotateKnob','settingsButton','backButton'];
 const at=()=>typeof performance!=='undefined'&&performance.now?performance.now():Date.now();
 const wxSDK=()=>typeof wx!=='undefined'?(wx as any):null;
@@ -618,17 +618,15 @@ export class FourfoldGame extends Component {
     const board=layout.board;this.drawBoard(board.x,board.y,board.w,parent);
     if(this.won)this.drawCompletionControls(layout,parent);
     else{
-      const round=this.roundSerial,ui=this.uiSerial,guide=this.currentHintGuide();
-      control('clockwise','↻ 顺时针',layout.cw,()=>this.setDirection(1,round,ui),false,this.direction<0&&!(guide?.stage==='direction'&&guide.dir===1));
-      control('counterclockwise','↺ 逆时针',layout.ccw,()=>this.setDirection(-1,round,ui),this.direction<0);
+      const round=this.roundSerial,ui=this.uiSerial,u=this.windowScale;
+      this.btn('↻ 顺时针',layout.cw.x,layout.cw.y,layout.cw.w,layout.cw.h,()=>this.setDirection(1,round,ui),this.direction===1?'goldButton':'creamButton',17*u,parent);
+      this.btn('↺ 逆时针',layout.ccw.x,layout.ccw.y,layout.ccw.w,layout.ccw.h,()=>this.setDirection(-1,round,ui),this.direction===-1?'goldButton':'creamButton',17*u,parent);
       this.drawHintDirection(layout,parent);
-      control('hint','✧ 提示',layout.hint,()=>this.askHint(),false,this.hintsLeft()===0&&!this.currentHintGuide());
-      const u=this.windowScale,badge={x:layout.hint.x+layout.hint.w-33*u,y:layout.hint.y+layout.hint.h/2-9*u};
-      this.shape(badge.x,badge.y,31*u,18*u,C.surface,C.gold2,9*u,parent);
-      this.txt(`${this.hintsLeft()}/${hintLimit(this.mode)}`,badge.x,badge.y,31*u,18*u,11*u,this.hintsLeft()?C.dark:C.muted,true,parent);
+      const hintButton=this.btn(`✧ 提示 ${this.hintsLeft()}/${hintLimit(this.mode)}`,layout.hint.x,layout.hint.y,layout.hint.w,layout.hint.h,()=>this.askHint(),'creamButton',16*u,parent);
+      hintButton.addComponent(UIOpacity).opacity=this.hintsLeft()===0&&!this.currentHintGuide()?170:255;
       this.drawNumbersControl(layout.numbers,parent);
     }
-    control('share','✦ 发起同关挑战',layout.share,()=>this.share());
+    this.btn('✦ 发起同关挑战',layout.share.x,layout.share.y,layout.share.w,layout.share.h,()=>this.share(),'goldButton',20*this.windowScale,parent);
     this.drawHintSpotlight();
   }
   private drawBoard(x:number,y:number,width:number,parent:Node=this.root){
