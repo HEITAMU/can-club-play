@@ -63,7 +63,7 @@ test('explicit compatibility mode without AudioSession reuses one media element 
 test('diagnostics keep knob and test failures separate from an ordinary settings click',async()=>{
   const p=platform(),audio=createGameAudio({...p.options,enabled:false});
   audio.beginTurn();await audio.testSound();audio.setEnabled(true);await audio.playButton();
-  const info=audio.getDiagnostics();assert.equal(info.build,'0.8.35');assert.equal(info.cues.press.reason,'muted');assert.equal(info.cues.test.reason,'muted');assert.equal(info.cues.button.state,'started');
+  const info=audio.getDiagnostics();assert.equal(info.build,'0.8.36');assert.equal(info.cues.press.reason,'muted');assert.equal(info.cues.test.reason,'muted');assert.equal(info.cues.button.state,'started');
   info.cues.press.reason='edited';assert.equal(audio.getDiagnostics().cues.press.reason,'muted','snapshots cannot edit the controller');audio.dispose();
 });
 function mediaPlatform(){

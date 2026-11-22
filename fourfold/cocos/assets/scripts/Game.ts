@@ -181,7 +181,7 @@ export class FourfoldGame extends Component {
       if(this.musicLoading)return this.musicLoading;
       const loading=(async()=>{
         try{
-          const clip=await this.loadResource('audio/starlight-groove-v2',AudioClip);
+          const clip=await this.loadResource('audio/starlight-groove-v3',AudioClip);
           if(this.disposed||!this.canvasNode?.isValid)return;
           clip.addRef();this.musicClip=clip;
           const node=new Node('Background music');this.canvasNode.addChild(node);this.musicNode=node;
