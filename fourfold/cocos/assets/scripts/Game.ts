@@ -12,7 +12,7 @@ import {HOME_ART,HOME_UI,HOME_COLORS,homeLayout,homeStoryLabel} from './HomeScen
 import {getTileTheme,buildThemeArtwork} from './TileThemes';
 const {ccclass}=_decorator;
 const HINT_MODE:'free'|'rewarded'='free'; // 未开通广告时，正式上线也免费提示；开通后再显式切换。
-const HINT_PULSE_SECONDS=2.2,HINT_PULSE_MIN=102;
+const HINT_PULSE_SECONDS=3,HINT_PULSE_MIN=31;
 const AD_IDS={rewarded:'',banner:''}; // 接入时只填写微信公众平台提供的真实 adUnitId。
 const C={background:'#F8DEB7',surface:'#FFF1D6',gold:'#F5CB79',gold2:'#C88B4D',white:'#FFF4D7',muted:'#977253',dark:'#5B301F',edge:'#825037',night:'#1B2345',shadow:'#B27C50'};
 const ART_PATHS={home:'art/'+HOME_ART.resource,homeUI:'art/'+HOME_UI.resource,atlas:'art/ui-atlas',referenceOriginal:'art/reference-daily',referenceClean:'art/reference-clean',rankScene:'art/rank-scene',resultPanel:'art/result-panel'};

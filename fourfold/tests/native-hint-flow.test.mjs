@@ -82,12 +82,12 @@ test('native spotlight keeps the screen shade static, follows scrolling and clea
   const f=paintingFixture('daily',2,-1),g=f.game;
   g.draw=()=>{g.clear();g.drawGame();};g.applyHint();
   const shade=g.hintMaskNode,glow=g.hintVisualNodes[0],opacity=[...glow.components.values()].find(component=>'opacity' in component);
-  assert.equal(opacity.opacity,102);assert.equal([...shade.components.values()].some(component=>'opacity' in component),false);
+  assert.equal(opacity.opacity,31);assert.equal([...shade.components.values()].some(component=>'opacity' in component),false);
   assert.equal(shade.events.size,0,'the visual shade cannot consume button input');
-  for(let i=0;i<11;i++)g.updateHintPulse(.1);
+  for(let i=0;i<15;i++)g.updateHintPulse(.1);
   assert.equal(opacity.opacity,255);assert.equal(g.hintMaskNode,shade,'breathing cannot replace or animate the shade');
-  for(let i=0;i<11;i++)g.updateHintPulse(.1);
-  assert.equal(opacity.opacity,102);
+  for(let i=0;i<15;i++)g.updateHintPulse(.1);
+  assert.equal(opacity.opacity,31);
   g.setDirection(-1);const guide=g.hintGuide,target=g.hintFocus,previousY=target.lastRect.y,parent=target.parent,position=parent.position,glowPositions=g.hintVisualNodes.map(node=>node.position[1]);
   parent.setPosition(position[0],position[1]+28);g.updateHintPulse(.1);
   assert.equal(target.lastRect.y,previousY-28,'the hole follows its scrolled target in root coordinates');
