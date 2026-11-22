@@ -44,6 +44,7 @@ export class FourfoldGame extends Component {
   private activeTheme:any=null;private themeArtwork:any=null;private themeImage:ImageAsset|null=null;private themeLoading=false;private themeError='';private themeSerial=0;
   private tileNodes:Node[]=[];private knobNodes:Node[]=[];private knobArtNodes:Node[]=[];private knobAngles=[0,0,0,0];private boardContent:Node|null=null;
   private motionSerial=0;private turnMotion:any=null;private hideSDK:any=null;
+  private turnMotionMode:'full'|'gentle'=this.storeRead('turnMotion','full')==='gentle'?'gentle':'full';
   private soundEnabled=this.storeRead('sound',true)!==false;private audioHidden=false;private audioDisabled=false;
   private audioNode:Node|null=null;private audioSources:Partial<Record<'press'|'seat',AudioSource>>={};private audioClips:Partial<Record<'press'|'seat',AudioClip>>={};
   private audioWanted:{press:any;seat:any}={press:null,seat:null};private audioEpoch=0;
@@ -173,6 +174,11 @@ export class FourfoldGame extends Component {
     if(this.disposed||this.modal!=='settings'||round!==this.roundSerial||ui!==this.uiSerial)return false;
     this.soundEnabled=!this.soundEnabled;this.storeWrite('sound',this.soundEnabled);
     if(this.soundEnabled)void this.prepareAudio();else this.stopAudio();
+    this.draw();return true;
+  }
+  private toggleTurnMotionMode(round=this.roundSerial,ui=this.uiSerial){
+    if(this.disposed||this.modal!=='settings'||round!==this.roundSerial||ui!==this.uiSerial)return false;
+    this.turnMotionMode=this.turnMotionMode==='full'?'gentle':'full';this.storeWrite('turnMotion',this.turnMotionMode);
     this.draw();return true;
   }
   private loadResource(path:string,type:any){
@@ -748,6 +754,7 @@ export class FourfoldGame extends Component {
     const geometry=createTurnMotion(rects,this.direction,{x:hit.position.x,y:-hit.position.y});
     this.clearHintGuide(); // Any chosen turn consumes the shown guidance, never another allowance.
     const states=this.tileNodes.map(node=>{const opacity=node.getComponent(UIOpacity)||node.addComponent(UIOpacity);return {node,position:node.position.clone(),scale:node.scale.clone(),opacity,value:opacity.opacity};});
+    const knobOpacity=knob.getComponent(UIOpacity)||knob.addComponent(UIOpacity);
     const bounds=geometry.bounds,width=bounds.right-bounds.left,height=bounds.bottom-bounds.top,effects:Node[]=[];
     const outline=this.turnOutline('Turn selection',bounds.left,bounds.top,width,height,7,'#FFD56C44',this.boardContent);effects.push(outline);
     const edge=this.turnOutline('Turn selection edge',bounds.left,bounds.top,width,height,2.4,'#FFE5A0',this.boardContent);effects.push(edge);
@@ -756,7 +763,7 @@ export class FourfoldGame extends Component {
     const ring=this.turnOutline('Turn pivot ring',geometry.pivot.x-d/2,geometry.pivot.y-d/2,d,d,2,'#FFF0B2',this.boardContent,d/2);effects.push(ring);
     const flashes=tiles.map((node,index)=>{const r=rects[index],flash=this.shape(0,0,r.width,r.height,'#FFF5C9','',3,node.children[0]);flash.name='Turn landing flash';flash.addComponent(UIOpacity).opacity=0;effects.push(flash);return flash;});
     if(!this.startAt)this.startAt=at();this.busy=true;
-    const motion={serial:++this.motionSerial,round:this.roundSerial,board:this.board,q,dir:this.direction,elapsed:0,geometry,tiles,states,knob,knobStart:this.knobAngles[q],parent:this.boardContent,effects,focus:[outline,edge,pivot,ring],flashes,audioEpoch:this.audioEpoch,audioEnabled:this.canPlayAudio()};
+    const motion={serial:++this.motionSerial,round:this.roundSerial,board:this.board,q,dir:this.direction,elapsed:0,geometry,tiles,states,knob,knobStart:this.knobAngles[q],knobOpacity,knobOpacityValue:knobOpacity.opacity,gentle:this.turnMotionMode==='gentle',parent:this.boardContent,effects,focus:[outline,edge,pivot,ring],flashes,audioEpoch:this.audioEpoch,audioEnabled:this.canPlayAudio()};
     this.turnMotion=motion;this.applyTurnFrame(motion,0);this.playAudio('press',motion);
   }
   private turnOutline(name:string,x:number,y:number,width:number,height:number,lineWidth:number,color:string,parent:Node,radius=11){
@@ -768,16 +775,22 @@ export class FourfoldGame extends Component {
     return !!motion&&this.turnMotion===motion&&motion.serial===this.motionSerial&&motion.round===this.roundSerial&&motion.board===this.board&&!this.disposed&&!this.inHome&&!this.won&&!this.modal&&this.assetsReady&&this.boardContent===motion.parent&&motion.parent.isValid&&motion.tiles.every((node:Node)=>node.isValid);
   }
   private applyTurnFrame(motion:any,progress:number){
-    const first=sampleTurn(motion.geometry,0,progress),focus=first.focus;
+    // Both modes keep the same 2.4s contact-to-landing timing. Gentle mode
+    // swaps positions only while the tiles and knob are fully transparent.
+    const sampledProgress=motion.gentle?(progress<.5?0:1):progress;
+    const first=sampleTurn(motion.geometry,0,sampledProgress),focus=motion.gentle?Math.sin(Math.PI*progress)*.45:first.focus;
+    const fade=motion.gentle?(progress<=.45?1-progress/.45:progress<.55?0:(progress-.55)/.45):1;
     motion.tiles.forEach((node:Node,index:number)=>{
-      const point=index?sampleTurn(motion.geometry,index,progress):first;
+      const point=index?sampleTurn(motion.geometry,index,sampledProgress):first;
       // 共享数学使用y向下；Cocos节点局部坐标y向上。图块自身不旋转。
       node.setPosition(point.x,-point.y);node.setScale(point.scaleX,point.scaleY,1);
     });
-    motion.states.forEach((state:any)=>{state.opacity.opacity=Math.round(state.value*(motion.tiles.includes(state.node)?1:1-.44*focus));});
+    const dim=motion.gentle ? .14*Math.sin(Math.PI*progress) : .44*focus;
+    motion.states.forEach((state:any)=>{state.opacity.opacity=Math.round(state.value*(motion.tiles.includes(state.node)?fade:1-dim));});
     motion.knob.angle=-(motion.knobStart+first.angle);
+    motion.knobOpacity.opacity=Math.round(motion.knobOpacityValue*fade);
     motion.focus.forEach((node:Node)=>{node.getComponent(UIOpacity).opacity=Math.round(255*focus);});
-    const landing=Math.max(0,Math.min(1,(progress-.9)/.1)),flash=Math.round(58*Math.sin(Math.PI*landing));
+    const landing=Math.max(0,Math.min(1,(progress-.9)/.1)),flash=motion.gentle?0:Math.round(58*Math.sin(Math.PI*landing));
     motion.flashes.forEach((node:Node)=>{node.getComponent(UIOpacity).opacity=Math.max(0,flash);});
   }
   update(deltaTime:number){
@@ -806,7 +819,7 @@ export class FourfoldGame extends Component {
       if(restore){state.node.setPosition(state.position);state.node.setScale(state.scale);}
       state.opacity.opacity=state.value;
     }
-    if(motion.knob.isValid){Tween.stopAllByTarget(motion.knob);if(restore)motion.knob.angle=-motion.knobStart;}
+    if(motion.knob.isValid){Tween.stopAllByTarget(motion.knob);if(restore)motion.knob.angle=-motion.knobStart;motion.knobOpacity.opacity=motion.knobOpacityValue;}
     for(const effect of motion.effects)if(effect.isValid){effect.active=false;effect.removeFromParent();effect.destroy();}
     this.busy=false;
   }
@@ -1096,7 +1109,7 @@ export class FourfoldGame extends Component {
     if(this.modal==='result'){this.drawResultModal();return;}
     const w=this.width,h=this.height,round=this.roundSerial,ui=this.uiSerial,close=()=>this.closeModal(round,ui);
     const shade=this.shape(0,0,w,h,'#32201CCB','',0);shade.addComponent(BlockInputEvents);shade.on(Node.EventType.TOUCH_END,close);
-    const top=Math.max(this.safeTop+24,(h-456)/2),height=456;
+    const top=Math.max(this.safeTop+24,(h-510)/2),height=510;
     const panel=this.shape(24,top,w-48,height,C.surface,C.edge,20);panel.addComponent(BlockInputEvents);
     this.btn('×',w-69,top+12,35,35,close,'creamButton',21);
     if(this.modal==='settings'){
@@ -1105,7 +1118,8 @@ export class FourfoldGame extends Component {
       this.btn('好友荣誉榜',43,top+(this.inHome?112:180),w-86,54,()=>this.showRank(),'creamButton',18);
       this.btn(this.inHome?'进入星图':'返回主页',43,top+250,w-86,54,()=>{if(this.inHome)this.startGame('story',String(this.unlocked()));else this.goHome();},'creamButton',18);
       this.btn(this.soundEnabled?'音效：开':'音效：关',86,top+312,w-172,44,()=>this.toggleSound(round,ui),'creamButton',17);
-      this.btn('继续',86,top+366,w-172,45,()=>this.closeModal(),'creamButton',17);
+      this.btn(this.turnMotionMode==='gentle'?'旋转动画：轻柔':'旋转动画：完整',86,top+366,w-172,44,()=>this.toggleTurnMotionMode(round,ui),'creamButton',17);
+      this.btn('继续',86,top+420,w-172,45,()=>this.closeModal(),'creamButton',17);
     }
   }
   private drawResultModal(){

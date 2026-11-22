@@ -1,9 +1,10 @@
-import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.26';
-import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.26';
-import {HOME_ART,HOME_UI,HOME_COLORS,homeStoryLabel} from './cocos/assets/scripts/HomeScene.js?v=0.8.26';
-import {getTileTheme,buildThemeArtwork} from './cocos/assets/scripts/TileThemes.js?v=0.8.26';
-import {createGameAudio} from './audio.mjs?v=0.8.26';
+import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.27';
+import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.27';
+import {HOME_ART,HOME_UI,HOME_COLORS,homeStoryLabel} from './cocos/assets/scripts/HomeScene.js?v=0.8.27';
+import {getTileTheme,buildThemeArtwork} from './cocos/assets/scripts/TileThemes.js?v=0.8.27';
+import {createGameAudio} from './audio.mjs?v=0.8.27';
 
+const APP_BUILD='0.8.27';
 const el=id=>document.getElementById(id);
 const $={board:el('board'),anchors:el('anchors'),target:el('target'),moves:el('moves'),par:el('par'),clock:el('clock'),instruction:el('instruction'),difficulty:el('difficulty'),chapterCaption:el('chapterCaption'),puzzleTitle:el('puzzleTitle'),storyTab:el('storyTab'),dailyTab:el('dailyTab'),cwBtn:el('cwBtn'),ccwBtn:el('ccwBtn'),modal:el('modal'),toast:el('toast')};
 const names=['星图初醒','看似简单','交错轨道','一念之差','不对称','失序之环','倒影之谜','四角对峙','镜像迷宫','群星换位','王冠密码','无声棋局','深空共振','星环审判','暗夜回响','隐秘秩序','星渊终章','逻辑之冠'];
@@ -26,7 +27,10 @@ const turnFocus=el('turnFocus'),boardFrame=el('boardFrame');
 let mode='story',key='1',dir=1,board=GOAL,puzzle=null,moves=0,hints=0,won=false,started=0,elapsed=0,claimedBeat=null,highlight=-1;
 let hintGuide=null,hintSpotlightFrame=0;
 let soundEnabled=read('sound',true)!==false,clockTimer=0,toastTimer=0;
-const gameAudio=createGameAudio({enabled:soundEnabled,isVisible:()=>!document.hidden});
+let soundOutputMode=read('soundOutput','standard')==='media'?'media':'standard';
+let turnMotionMode=read('turnMotion','full')==='gentle'?'gentle':'full';
+let audioSnapshot=null,activeTurnMeasure=null,lastTurnMeasure=null;
+const gameAudio=createGameAudio({enabled:soundEnabled,outputMode:soundOutputMode,isVisible:()=>!document.hidden,onStatus:onAudioStatus});
 let showNumbers=read('showNumbers',true)!==false,viewArt=false,completionMetric=null;
 let ready=false,bootFailed=false,pendingOpen=window.ffPending||null;
 let rotating=false,motionEpoch=0,activeAnimations=[];
@@ -37,11 +41,13 @@ window.ffReady=false;
 
 // Fetching is non-blocking; playback is unlocked by the first real gesture.
 void gameAudio.preload();
-document.addEventListener('pointerdown',()=>{void gameAudio.unlock();},{capture:true,passive:true});
+document.addEventListener('pointerdown',event=>{if(event.pointerType==='mouse')void gameAudio.unlock();},{capture:true,passive:true});
+document.addEventListener('pointerup',event=>{if(event.pointerType!=='mouse')void gameAudio.unlock();},{capture:true,passive:true});
+document.addEventListener('touchend',()=>{void gameAudio.unlock();},{capture:true,passive:true});
 document.addEventListener('keydown',()=>{void gameAudio.unlock();},true);
 document.addEventListener('click',event=>{
   const button=event.target.closest?.('button');
-  if(!button||button.disabled||button.closest('[hidden]')||button.classList.contains('spin-node')||button.id==='settingsSound')return;
+  if(!button||button.disabled||button.closest('[hidden]')||button.classList.contains('spin-node')||['settingsSound','settingsTestSound','settingsSoundOutput'].includes(button.id))return;
   void gameAudio.playButton();
 },true);
 function toast(message){
@@ -124,6 +130,7 @@ function clearTurnVisuals(resetKnobs=false){
   $.cwBtn.disabled=won||!themeReady();$.ccwBtn.disabled=won||!themeReady();el('hintBtn').disabled=won||!themeReady();el('numbersBtn').disabled=won||!themeReady();
 }
 function cancelRotation({resetKnobs=false}={}){
+  recordTurnMeasure('cancelled');
   gameAudio.stopTurn();
   motionEpoch++;
   for(const animation of activeAnimations)animation.cancel();
@@ -172,10 +179,62 @@ el('enterDaily').onclick=()=>openMode('daily');
 el('enterRank').onclick=()=>openMode('rank');
 el('backHome').onclick=showHome;
 
+function onAudioStatus(snapshot){
+  // The controller may report synchronously while it is being constructed.
+  // Render from the supplied snapshot; do not read gameAudio in this callback.
+  audioSnapshot=snapshot;
+  if(!settingsOverlay.hidden)renderDeviceDiagnostics(snapshot);
+}
+function audioCueText(cue){
+  if(!cue)return '未触发';
+  const states={requested:'请求中',started:'已启动',ended:'已结束',cancelled:'已取消',blocked:'未启动',failed:'失败',error:'失败',late:'未启动'};
+  const reasons={muted:'音效关闭',disposed:'音频已销毁',hidden:'页面已隐藏',cancelled:'操作取消',replaced:'被后续操作替换',unsupported:'音频接口不可用',closed:'音频上下文已关闭',suspended:'音频仍处于暂停',interrupted:'音频被系统中断','resume-timeout':'恢复等待超时','resume-blocked':'音频上下文未运行','resume-error':'音频恢复失败','not-ready':'素材尚未就绪','download-error':'素材下载失败','decode-error':'素材解码失败',late:'请求已过时','empty-clip':'素材为空','play-error':'播放调用失败',deadline:'播放启动超时',stale:'操作已过期','source-changed':'音频来源已切换','busy-audio':'当前触点仍在播放','missing-source':'音频资源未配置','media-error':'媒体资源加载失败','play-rejected':'浏览器拒绝播放',MediaError:'媒体资源加载失败',NotAllowedError:'浏览器未允许播放',NotSupportedError:'浏览器不支持此音频',AbortError:'播放已中止'};
+  const reason=cue.reason?`：${reasons[cue.reason]||cue.reason}`:'';
+  const delay=Number.isFinite(cue.delayMs)&&cue.delayMs>0?` · ${Math.round(cue.delayMs)} ms`:'';
+  return (states[cue.state]||cue.state||'未知状态')+reason+delay;
+}
+function renderDeviceDiagnostics(snapshot=audioSnapshot){
+  const status=snapshot||{},htmlBuild=el('app')?.dataset.build||'未知',audioBuild=status.build||'未加载';
+  const build=el('settingsBuild');
+  const mismatch=htmlBuild!==APP_BUILD||!!status.build&&status.build!==APP_BUILD;
+  build.textContent=`脚本 ${APP_BUILD} · 音频 ${audioBuild} · 页面 ${htmlBuild}${mismatch?' · 版本不一致':''}`;
+  build.dataset.appBuild=APP_BUILD;build.dataset.audioBuild=audioBuild;build.dataset.htmlBuild=htmlBuild;
+  build.classList.toggle('settings-build-mismatch',mismatch);
+  const recent=lastTurnMeasure;
+  el('settingsTurn').textContent=recent?`最近旋转：${(recent.elapsedMs/1000).toFixed(3)} 秒 / 目标 ${(recent.targetMs/1000).toFixed(3)} 秒 · ${recent.state==='completed'?'已完成':'已取消'}`:`本页尚未完成旋转 · 目标 ${(TURN_DURATION_MS/1000).toFixed(3)} 秒`;
+  const osReduced=!!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  el('settingsMotionStatus').textContent=`${(recent?.mode||turnMotionMode)==='gentle'?'轻柔':'完整'}${recent?' · '+recent.backend:''}；系统减少动态：${osReduced?'开':'关'}`;
+  const backend=status.backend==='html-media'?'媒体播放':'网页音频';
+  el('settingsAudioState').textContent=`${status.enabled??soundEnabled?'音效开':'音效关'} · ${status.mode==='media'?'兼容':'标准'} · ${backend} / ${status.contextState||'未创建'}`;
+  const unlock={idle:'未请求',unsupported:'接口不支持',closed:'已关闭',resuming:'恢复中',running:'已运行','media-ready':'媒体已准备','resume-timeout':'恢复等待超时','resume-blocked':'上下文仍未运行','resume-error':'恢复失败'};
+  el('settingsAudioSession').textContent=`${status.sessionType||'不可用'} / ${unlock[status.unlockState]||status.unlockState||'未请求'}`;
+  const assetNames={idle:'未载入',loading:'下载中',downloaded:'已下载',decoded:'已解码','download-error':'下载失败','decode-error':'解码失败'};
+  const assetText=kind=>assetNames[status.assets?.[kind]]||status.assets?.[kind]||'未载入';
+  el('settingsAudioAssets').textContent=`按下：${assetText('button')} · 落位：${assetText('seat')}`;
+  el('settingsAudioCues').textContent=`按下 ${audioCueText(status.cues?.press)}；落位 ${audioCueText(status.cues?.seat)}`;
+  el('settingsAudioTest').textContent=status.cues?.test?audioCueText(status.cues.test):(status.enabled??soundEnabled)?'尚未试听':'音效关闭，尚未试听';
+}
+function recordTurnMeasure(state){
+  if(!activeTurnMeasure)return;
+  lastTurnMeasure={...activeTurnMeasure,state,elapsedMs:Math.max(0,performance.now()-activeTurnMeasure.startedAt)};
+  activeTurnMeasure=null;
+  if(!settingsOverlay.hidden)renderDeviceDiagnostics();
+}
 function syncSettings(){
   el('settingsSound').textContent=soundEnabled?'音效：开':'音效：关';
   el('settingsSound').setAttribute('aria-pressed',String(soundEnabled));
+  el('settingsMotion').textContent=turnMotionMode==='gentle'?'旋转动画：轻柔':'旋转动画：完整';
+  el('settingsMotion').setAttribute('aria-pressed',String(turnMotionMode==='gentle'));
+  el('settingsSoundOutput').textContent=soundOutputMode==='media'?'恢复标准音效':'手机兼容并试听';
+  el('settingsSoundOutput').setAttribute('aria-pressed',String(soundOutputMode==='media'));
   el('settingsReset').disabled=!ready||gameScreen.hidden;
+  audioSnapshot=gameAudio.getDiagnostics();renderDeviceDiagnostics(audioSnapshot);
+}
+async function testSettingsSound(){
+  el('settingsDiagnostics').setAttribute('open','');
+  const pending=gameAudio.testSound();
+  syncSettings();
+  try{await pending;}finally{syncSettings();}
 }
 function openSettings(){
   if(rotating){cancelRotation();if(puzzle)render();}
@@ -192,6 +251,16 @@ el('settingsSound').onclick=()=>{
   if(soundEnabled)void gameAudio.playButton();
   syncSettings();
 };
+el('settingsMotion').onclick=()=>{
+  turnMotionMode=turnMotionMode==='full'?'gentle':'full';write('turnMotion',turnMotionMode);syncSettings();
+};
+el('settingsTestSound').onclick=()=>{void testSettingsSound();};
+el('settingsSoundOutput').onclick=()=>{
+  soundOutputMode=soundOutputMode==='standard'?'media':'standard';write('soundOutput',soundOutputMode);
+  gameAudio.setOutputMode(soundOutputMode);el('settingsDiagnostics').setAttribute('open','');syncSettings();
+  if(soundOutputMode==='media')void testSettingsSound();
+};
+el('settingsDiagnostics').addEventListener('toggle',()=>{if(!settingsOverlay.hidden)syncSettings();});
 el('settingsReset').onclick=()=>{settingsOverlay.hidden=true;reset();};
 el('settingsRank').onclick=()=>openMode('rank');
 el('settingsHome').onclick=showHome;
@@ -420,12 +489,12 @@ async function spin(q){
   if(!started)started=performance.now();
   clearHintGuide();rotating=true;
   const epoch=++motionEpoch,nextBoard=rotate(board,q,dir),direction=dir,startAngle=knobAngles[q];
-  const reduceMotion=!!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-  const duration=reduceMotion?240:TURN_DURATION_MS;
+  const gentleMotion=turnMotionMode==='gentle';
+  const duration=TURN_DURATION_MS;
   const turnSound=gameAudio.beginTurn();
-  const offsets=reduceMotion?[0,.45,.55,1]:Array.from({length:TURN_KEYFRAME_COUNT},(_,i)=>i/(TURN_KEYFRAME_COUNT-1));
+  const offsets=gentleMotion?[0,.45,.55,1]:Array.from({length:TURN_KEYFRAME_COUNT},(_,i)=>i/(TURN_KEYFRAME_COUNT-1));
   const fadeAt=p=>p<=.45?1-p/.45:p<.55?0:(p-.55)/.45;
-  const focusAt=p=>reduceMotion?Math.sin(Math.PI*p)*.45:sampleTurn(motion,0,p).focus;
+  const focusAt=p=>gentleMotion?Math.sin(Math.PI*p)*.45:sampleTurn(motion,0,p).focus;
   const selected=new Set(affected);
   for(const tile of tileNodes.values()){
     tile.classList.toggle('turn-selected',selected.has(tile));tile.classList.toggle('turn-muted',!selected.has(tile));
@@ -439,17 +508,19 @@ async function spin(q){
   anchorNodes.forEach(button=>{button.disabled=true;button.classList.remove('hinted');});anchorNodes[q].classList.add('turning');
   $.cwBtn.disabled=true;$.ccwBtn.disabled=true;el('hintBtn').disabled=true;el('numbersBtn').disabled=true;
   const effects=affected.map((tile,index)=>({node:tile,role:'tile-'+tile.dataset.token,at:p=>{
-    const sample=sampleTurn(motion,index,reduceMotion?(p<.5?0:1):p);
-    const landing=!reduceMotion&&p>=.9?Math.sin(Math.PI*(p-.9)/.1)*.18:0;
-    return {transform:`translate(${sample.dx/scales[index].x}px,${sample.dy/scales[index].y}px) scale(${sample.scaleX},${sample.scaleY})`,opacity:reduceMotion?fadeAt(p):1,filter:`brightness(${1+(reduceMotion?0:.08*sample.focus)+landing})`};
+    const sample=sampleTurn(motion,index,gentleMotion?(p<.5?0:1):p);
+    const landing=!gentleMotion&&p>=.9?Math.sin(Math.PI*(p-.9)/.1)*.18:0;
+    return {transform:`translate(${sample.dx/scales[index].x}px,${sample.dy/scales[index].y}px) scale(${sample.scaleX},${sample.scaleY})`,opacity:gentleMotion?fadeAt(p):1,filter:`brightness(${1+(gentleMotion?0:.08*sample.focus)+landing})`};
   }}));
-  for(const tile of tileNodes.values())if(!selected.has(tile))effects.push({node:tile,role:'dim-'+tile.dataset.token,at:p=>({opacity:1-(reduceMotion ? .14*Math.sin(Math.PI*p) : .44*focusAt(p))})});
+  for(const tile of tileNodes.values())if(!selected.has(tile))effects.push({node:tile,role:'dim-'+tile.dataset.token,at:p=>({opacity:1-(gentleMotion ? .14*Math.sin(Math.PI*p) : .44*focusAt(p))})});
   effects.push({node:turnFocus,role:'focus',at:p=>({opacity:focusAt(p)})});
   effects.push({node:anchorRingNodes[q],role:'ring',at:p=>({opacity:focusAt(p)})});
-  effects.push({node:anchorMotionNodes[q],role:'knob',at:p=>({transform:`rotate(${startAngle+(reduceMotion?(p<.5?0:direction*90):sampleTurn(motion,0,p).angle)}deg)`,opacity:reduceMotion?fadeAt(p):1})});
+  effects.push({node:anchorMotionNodes[q],role:'knob',at:p=>({transform:`rotate(${startAngle+(gentleMotion?(p<.5?0:direction*90):sampleTurn(motion,0,p).angle)}deg)`,opacity:gentleMotion?fadeAt(p):1})});
+  const animationBackend=typeof affected[0].animate==='function'?'WAAPI':'RAF';
+  activeTurnMeasure={startedAt:performance.now(),targetMs:duration,mode:turnMotionMode,backend:animationBackend};
   let completed=false;
   try{
-    if(typeof affected[0].animate==='function'){
+    if(animationBackend==='WAAPI'){
       activeAnimations=[];
       for(const effect of effects){
         const animation=effect.node.animate(offsets.map(offset=>({...effect.at(offset),offset})),{duration,easing:'linear',fill:'both'});
@@ -461,6 +532,7 @@ async function spin(q){
   }catch{completed=false;}
   if(epoch!==motionEpoch)return;
   if(!completed){cancelRotation();render();return;}
+  recordTurnMeasure('completed');
   board=nextBoard;moves++;knobAngles[q]=(startAngle+direction*90)%360;
   for(const animation of activeAnimations)animation.cancel();
   activeAnimations=[];rotating=false;clearTurnVisuals();
@@ -622,7 +694,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelRota
 
 const ART_FILES=[HOME_ART.resource+'.webp',HOME_UI.resource+'.webp','ui-atlas.webp','daily-banner.webp','reference-daily.webp','reference-clean.webp','rank-scene.webp','result-panel.webp'];
 async function preloadTileArtwork(){
-  const response=await fetch(new URL('./cocos/assets/resources/art/referenceLayout.json?v=0.8.26',import.meta.url));
+  const response=await fetch(new URL('./cocos/assets/resources/art/referenceLayout.json?v=0.8.27',import.meta.url));
   if(!response.ok)throw new Error('tile artwork layout could not be loaded');
   const {tileArtwork:art}=await response.json();
   if(!art||!/^[-a-z0-9]+$/.test(art.resource)||art.fit!=='fill'||!Array.isArray(art.imageSize)||art.imageSize.length!==2||art.imageSize.some(v=>!Number.isFinite(v)||v<=0))throw new Error('invalid tile artwork layout');

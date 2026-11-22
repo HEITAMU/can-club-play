@@ -5,18 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta id="themeColor" name="theme-color" content="#fdd4aa">
 <meta name="description" content="四格诡局：转动四格，复原星图。">
-<meta name="fourfold-version" content="0.8.26">
+<meta name="fourfold-version" content="0.8.27">
 <title>四格诡局 · 星图挑战</title>
 <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
 <link rel="preload" as="image" href="assets/art/home-celestial-v9.webp" fetchpriority="high">
 <link rel="preload" as="image" href="assets/art/home-menu-v9.webp">
 <link rel="preload" as="image" href="assets/art/ui-atlas.webp">
-<link rel="stylesheet" href="assets/art/atlas.css?v=0.8.26">
-<link rel="stylesheet" href="style.css?v=0.8.26">
-<link rel="stylesheet" href="reference.css?v=0.8.26">
+<link rel="stylesheet" href="assets/art/atlas.css?v=0.8.27">
+<link rel="stylesheet" href="style.css?v=0.8.27">
+<link rel="stylesheet" href="reference.css?v=0.8.27">
 </head>
 <body>
-<main class="shell" id="app" data-build="0.8.26">
+<main class="shell" id="app" data-build="0.8.27">
 <section id="home" class="home-screen" aria-label="四格诡局主菜单">
 <div class="home-hero">
 <img class="home-scene" src="assets/art/home-celestial-v9.webp" width="981" height="1602" alt="四块带浅金细边的不规则星图拼片，配暖杏奶油底与厚涂星空" fetchpriority="high" draggable="false">
@@ -89,7 +89,26 @@
 </section>
 </main>
 <div id="hintSpotlight" aria-hidden="true" hidden><div id="hintSpotlightFocus"></div></div>
-<div id="settingsOverlay" class="settings-overlay" hidden><section class="settings-card" role="dialog" aria-modal="true" aria-label="游戏设置"><div class="settings-head"><h2>设置</h2><button id="settingsClose" class="close" aria-label="关闭设置">×</button></div><button id="settingsSound" aria-pressed="true">音效：开</button><button id="settingsReset">重开本局</button><button id="settingsRank">好友荣誉榜</button><button id="settingsHome">返回主界面</button></section></div>
+<div id="settingsOverlay" class="settings-overlay" hidden><section class="settings-card" role="dialog" aria-modal="true" aria-label="游戏设置">
+<div class="settings-head"><h2>设置</h2><button id="settingsClose" class="close" aria-label="关闭设置">×</button></div>
+<div class="settings-controls">
+<button id="settingsSound" type="button" aria-pressed="true">音效：开</button>
+<button id="settingsTestSound" type="button">试听音效</button>
+<button id="settingsSoundOutput" class="settings-wide" type="button" aria-pressed="false">手机兼容并试听</button>
+<p class="settings-note settings-wide">兼容音效使用媒体音量，静音模式也可发声。</p>
+<button id="settingsMotion" class="settings-wide" type="button" aria-pressed="false">旋转动画：完整</button>
+</div>
+<div class="settings-meta"><p id="settingsBuild"></p><p id="settingsTurn">本页尚未完成旋转</p></div>
+<details id="settingsDiagnostics" class="settings-diagnostics"><summary>运行检查</summary><dl>
+<dt>动画</dt><dd id="settingsMotionStatus"></dd>
+<dt>音频链路</dt><dd id="settingsAudioState"></dd>
+<dt>会话 / 恢复</dt><dd id="settingsAudioSession"></dd>
+<dt>素材</dt><dd id="settingsAudioAssets"></dd>
+<dt>最近旋钮</dt><dd id="settingsAudioCues"></dd>
+<dt>本次试听</dt><dd id="settingsAudioTest" role="status" aria-live="polite"></dd>
+</dl><p class="settings-note">播放状态不代表手机已经外放。</p></details>
+<div class="settings-nav"><button id="settingsReset" type="button">重开本局</button><button id="settingsRank" type="button">好友荣誉榜</button><button id="settingsHome" type="button">返回主页</button></div>
+</section></div>
 <div class="overlay" id="modal" hidden><section id="dialogPanel" class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
 <img id="resultArtwork" class="result-artwork result-only" src="assets/art/result-panel.webp" width="1086" height="1448" alt="" draggable="false">
 <button id="closeModal" class="close result-position" style="--result-x:874;--result-y:90;--result-w:148;--result-h:149" type="button" aria-label="关闭弹窗">×</button>
@@ -105,6 +124,6 @@
 <div id="startupNotice" hidden role="status"></div>
 <noscript>请启用 JavaScript 进入星图。</noscript>
 <script>window.ffOpen=function(which){window.ffPending=which;var n=document.getElementById('startupNotice');n.hidden=false;n.textContent='星图正在准备…';};</script>
-<script type="module" src="layout.mjs?v=0.8.26"></script>
-<script type="module" src="app.js?v=0.8.26"></script>
+<script type="module" src="layout.mjs?v=0.8.27"></script>
+<script type="module" src="app.js?v=0.8.27"></script>
 </body></html>

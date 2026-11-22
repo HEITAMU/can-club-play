@@ -38,7 +38,7 @@
   <pre id="log" aria-label="音频事件日志"></pre>
 </main>
 <script type="module">
-  import { createGameAudio } from '../audio.mjs?v=0.8.26';
+  import { createGameAudio } from '../audio.mjs?v=0.8.27';
 
   const $ = id => document.getElementById(id);
   const logs = [], windows = new Map();
@@ -111,7 +111,9 @@
     if (previous) log(`旋转取消：${reason}，不会播放落位声`);
   }
   for (const id of ['button-preview', 'turn-preview']) {
-    $(id).addEventListener('pointerdown', () => { void audio.unlock(); });
+    $(id).addEventListener('pointerdown', event => { if(event.pointerType === 'mouse') void audio.unlock(); });
+    $(id).addEventListener('pointerup', event => { if(event.pointerType !== 'mouse') void audio.unlock(); });
+    $(id).addEventListener('touchend', () => { void audio.unlock(); });
   }
   $('button-preview').addEventListener('click', async () => {
     cancelTurn('试听按钮', false);
