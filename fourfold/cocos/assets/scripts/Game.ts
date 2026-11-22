@@ -16,7 +16,7 @@ const HINT_PULSE_SECONDS=2.2,HINT_PULSE_MIN=102;
 const AD_IDS={rewarded:'',banner:''}; // 接入时只填写微信公众平台提供的真实 adUnitId。
 const C={background:'#F8DEB7',surface:'#FFF1D6',gold:'#F5CB79',gold2:'#C88B4D',white:'#FFF4D7',muted:'#977253',dark:'#5B301F',edge:'#825037',night:'#1B2345',shadow:'#B27C50'};
 const ART_PATHS={home:'art/'+HOME_ART.resource,homeUI:'art/'+HOME_UI.resource,atlas:'art/ui-atlas',referenceOriginal:'art/reference-daily',referenceClean:'art/reference-clean',rankScene:'art/rank-scene',resultPanel:'art/result-panel'};
-const AUDIO_PATHS={ui:'audio/ui-tap-v5',press:'audio/rotary-detent-v7',seat:'audio/stone-seat-v5'};
+const AUDIO_PATHS={ui:'audio/ui-tap-v5',press:'audio/rotary-detent-v8',seat:'audio/stone-seat-v5'};
 const REQUIRED_FRAMES=['goldButton','creamButton','lavenderButton','stepsCard','timeCard','rotateKnob','settingsButton','backButton'];
 const at=()=>typeof performance!=='undefined'&&performance.now?performance.now():Date.now();
 const wxSDK=()=>typeof wx!=='undefined'?(wx as any):null;
@@ -48,6 +48,8 @@ export class FourfoldGame extends Component {
   private soundEnabled=this.storeRead('sound',true)!==false;private audioHidden=false;private audioDisabled=false;
   private audioNode:Node|null=null;private audioSources:Partial<Record<'ui'|'press'|'seat',AudioSource>>={};private audioClips:Partial<Record<'ui'|'press'|'seat',AudioClip>>={};
   private audioWanted:{ui:any;press:any;seat:any}={ui:null,press:null,seat:null};private audioEpoch=0;
+  private musicEnabled=this.storeRead('music',true)!==false;private musicActivated=false;
+  private musicSource:AudioSource|null=null;private musicClip:AudioClip|null=null;private musicNode:Node|null=null;private musicLoading:Promise<void>|null=null;
   private audioLoading=false;private audioSerial=0;private audioLifecycleAttached=false;
   private boardLayout={x:0,y:0,size:0,unit:0};private launchQuery:any={};
   private pageScroll:ScrollView|null=null;private pageScrollKey='';private scrollOffsets:Record<string,number>={};
@@ -138,6 +140,7 @@ export class FourfoldGame extends Component {
     return !this.inHome&&!this.modal&&cue.motion.completedBoard===this.board;
   }
   private playAudio(kind:'ui'|'press'|'seat',motion:any=null){
+    if(kind!=='seat')void this.resumeMusic(true);
     if(!this.canPlayAudio())return;
     if(kind==='press'&&!this.turnIsCurrent(motion))return;
     if(kind==='seat'&&(!motion?.audioEnabled||!motion.completedBoard||motion.audioSeated||motion.audioEpoch!==this.audioEpoch||motion.round!==this.roundSerial||motion.completedBoard!==this.board))return;
@@ -169,6 +172,33 @@ export class FourfoldGame extends Component {
     if(this.audioNode?.isValid){this.audioNode.active=false;this.audioNode.removeFromParent();this.audioNode.destroy();}
     this.audioNode=null;this.audioSources={};
     for(const clip of Object.values(this.audioClips))clip.decRef();this.audioClips={};
+  }
+  private musicAllowed(){return this.musicEnabled&&this.musicActivated&&!this.audioHidden&&!this.audioDisabled&&!this.disposed;}
+  private async resumeMusic(gesture=false){
+    if(gesture)this.musicActivated=true;
+    if(!this.musicAllowed()||!this.canvasNode?.isValid)return;
+    if(!this.musicClip){
+      if(this.musicLoading)return this.musicLoading;
+      const loading=(async()=>{
+        try{
+          const clip=await this.loadResource('audio/starlight-loop-v1',AudioClip);
+          if(this.disposed||!this.canvasNode?.isValid)return;
+          clip.addRef();this.musicClip=clip;
+          const node=new Node('Background music');this.canvasNode.addChild(node);this.musicNode=node;
+          const source=node.addComponent(AudioSource);source.playOnAwake=false;source.loop=true;source.volume=1;source.clip=clip;this.musicSource=source;
+          node.on(AudioSource.EventType.STARTED,()=>{if(!this.musicAllowed())this.pauseMusic();});
+          if(this.musicAllowed())source.play();
+        }catch{}finally{this.musicLoading=null;}
+      })();this.musicLoading=loading;return loading;
+    }
+    if(!this.musicSource?.playing)try{this.musicSource.play();}catch{}
+  }
+  private pauseMusic(){try{this.musicSource?.pause();}catch{}}
+  private disposeMusic(){this.pauseMusic();if(this.musicSource)this.musicSource.clip=null;this.musicNode?.destroy();this.musicNode=null;this.musicSource=null;this.musicClip?.decRef();this.musicClip=null;}
+  private toggleMusic(round=this.roundSerial,ui=this.uiSerial){
+    if(this.disposed||this.modal!=='settings'||round!==this.roundSerial||ui!==this.uiSerial)return false;
+    this.musicEnabled=!this.musicEnabled;this.storeWrite('music',this.musicEnabled);
+    if(this.musicEnabled)void this.resumeMusic(true);else this.pauseMusic();this.draw();return true;
   }
   private toggleSound(round=this.roundSerial,ui=this.uiSerial){
     if(this.disposed||this.modal!=='settings'||round!==this.roundSerial||ui!==this.uiSerial)return false;
@@ -821,10 +851,10 @@ export class FourfoldGame extends Component {
     for(const effect of motion.effects)if(effect.isValid){effect.active=false;effect.removeFromParent();effect.destroy();}
     this.busy=false;
   }
-  private onAppHide=()=>{this.audioHidden=true;this.clearHintVisuals();this.cancelTurnMotion();this.stopAudio();};
-  private onAppShow=()=>{if(this.disposed)return;const hidden=this.audioHidden;this.audioHidden=false;if(hidden&&this.currentHintGuide())this.draw();};
-  onEnable(){const disabled=this.audioDisabled;this.audioDisabled=false;if(disabled&&this.root&&this.currentHintGuide())this.draw();}
-  onDisable(){this.audioDisabled=true;this.clearHintVisuals();this.cancelTurnMotion();this.stopAudio();}
+  private onAppHide=()=>{this.audioHidden=true;this.pauseMusic();this.clearHintVisuals();this.cancelTurnMotion();this.stopAudio();};
+  private onAppShow=()=>{if(this.disposed)return;const hidden=this.audioHidden;this.audioHidden=false;void this.resumeMusic();if(hidden&&this.currentHintGuide())this.draw();};
+  onEnable(){const disabled=this.audioDisabled;this.audioDisabled=false;if(disabled)void this.resumeMusic();if(disabled&&this.root&&this.currentHintGuide())this.draw();}
+  onDisable(){this.audioDisabled=true;this.pauseMusic();this.clearHintVisuals();this.cancelTurnMotion();this.stopAudio();}
   private toggleNumbers(round=this.roundSerial,ui=this.uiSerial){
     if(this.disposed||this.inHome||this.won||this.modal||this.busy||round!==this.roundSerial||ui!==this.uiSerial||this.themeLoading||this.themeError||!this.activeTheme)return false;
     this.showNumbers=!this.showNumbers;this.storeWrite('showNumbers',this.showNumbers);this.draw();return true;
@@ -1115,7 +1145,8 @@ export class FourfoldGame extends Component {
       if(!this.inHome)this.btn('重新开始本关',43,top+110,w-86,54,()=>this.startGame(this.mode,this.key),'goldButton',18);
       this.btn('好友荣誉榜',43,top+(this.inHome?112:180),w-86,54,()=>this.showRank(),'creamButton',18);
       this.btn(this.inHome?'进入星图':'返回主页',43,top+250,w-86,54,()=>{if(this.inHome)this.startGame('story',String(this.unlocked()));else this.goHome();},'creamButton',18);
-      this.btn(this.soundEnabled?'音效：开':'音效：关',86,top+312,w-172,44,()=>this.toggleSound(round,ui),'creamButton',17);
+      this.btn(this.soundEnabled?'音效：开':'音效：关',43,top+312,(w-96)/2,44,()=>this.toggleSound(round,ui),'creamButton',17);
+      this.btn(this.musicEnabled?'音乐：开':'音乐：关',53+(w-96)/2,top+312,(w-96)/2,44,()=>this.toggleMusic(round,ui),'creamButton',17);
       this.btn(this.turnMotionMode==='gentle'?'旋转动画：轻柔':'旋转动画：完整',86,top+366,w-172,44,()=>this.toggleTurnMotionMode(round,ui),'creamButton',17);
       this.btn('继续',86,top+420,w-172,45,()=>this.closeModal(),'creamButton',17);
     }
@@ -1155,7 +1186,7 @@ export class FourfoldGame extends Component {
   }
   onDestroy(){
     this.disposed=true;this.clearHintGuide();this.cancelTurnMotion();this.roundSerial++;screen.off('window-resize',this.onWindowResize,this);this.loadSerial++;
-    this.disposeAudio();
+    this.disposeMusic();this.disposeAudio();
     for(const cancel of [...this.pendingResourceLoads])cancel();
     try{this.hideSDK?.offHide?.(this.onAppHide);this.hideSDK?.offShow?.(this.onAppShow);}catch{}this.hideSDK=null;
     if(this.audioLifecycleAttached){engineGame.off(EngineGame.EVENT_HIDE,this.onAppHide,this);engineGame.off(EngineGame.EVENT_SHOW,this.onAppShow,this);this.audioLifecycleAttached=false;}

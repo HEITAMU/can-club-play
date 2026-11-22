@@ -1,3 +1,4 @@
+import {createBackgroundMusic} from '../../music.mjs';
 // Execute production app/component logic with small platform substitutes.
 // These fixtures do not run a browser renderer, Cocos GPU, or a WeChat device.
 import {readFileSync} from 'node:fs';
@@ -77,7 +78,7 @@ function documentFromMarkup(markup){
   return doc;
 }
 
-export function webFixture({preferences={},storage=memoryStorage(preferences),audioOptions={}}={}){
+export function webFixture({preferences={},storage=memoryStorage(preferences),audioOptions={},musicOptions={}}={}){
   const sourceUrl=new URL('../../app.js',import.meta.url),source=readFileSync(sourceUrl,'utf8');
   if(!/\nboot\(\);\s*$/.test(source))throw new Error('Review changed production boot boundary');
   const executable=source.replace(/^import\s+[^;]+;\s*$/gm,'').replace(/import\.meta\.url/g,JSON.stringify(sourceUrl.href)).replace(/\nboot\(\);\s*$/,'\n');
@@ -92,7 +93,7 @@ export function webFixture({preferences={},storage=memoryStorage(preferences),au
   }
   const audioControllers=[];
   const fixtureAudio=options=>{const controller=createGameAudio({...options,contextFactory:()=>null,fetchAudio:async()=>({ok:false}),now:()=>clock,...audioOptions});audioControllers.push(controller);return controller;};
-  const context=vm.createContext({...Core,...Motion,...Home,...Themes,createGameAudio:fixtureAudio,todayCN:()=>TEST_DAY,document,window,localStorage:storage,Image,
+  const context=vm.createContext({...Core,...Motion,...Home,...Themes,createBackgroundMusic:options=>createBackgroundMusic({...options,createElement:()=>{throw new Error("Media unavailable in DOM fixture");},...musicOptions}),createGameAudio:fixtureAudio,todayCN:()=>TEST_DAY,document,window,localStorage:storage,Image,
     performance:{now:()=>clock},setTimeout:timeout,clearTimeout:window.clearTimeout,setInterval:timeout,clearInterval:window.clearTimeout,
     URL,URLSearchParams,location:window.location,navigator:{},console:{warn(){},error(){},log(){}},__reference:reference});
   vm.runInContext(executable,context,{filename:'app.js'});
@@ -132,6 +133,7 @@ export function nativeFixture({preferences={},storage=memoryStorage(preferences)
   game.root=new NativeNode('Root');game.reference=reference;game.rankLayout=rankLayout;game.assetsReady=true;game.inHome=false;
   // Keep real clear() and therefore the real UI generation token; only painting
   // and image I/O are replaced. No routing or preference implementation is copied.
+  game.resumeMusic=()=>Promise.resolve(); // Music I/O is covered by its dedicated lifecycle tests.
   game.draw=()=>{game.clear();events.push('draw');};
   game.prepareTheme=()=>{game.activeTheme=Themes.getTileTheme(game.mode,game.key);game.themeLoading=false;game.themeError='';game.draw();return Promise.resolve();};
   game.hideBanner=()=>events.push('banner:hide');game.showBanner=()=>events.push('banner:show');game.toast=message=>events.push('toast:'+message);

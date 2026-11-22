@@ -1,10 +1,11 @@
-import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.32';
-import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.32';
-import {HOME_ART,HOME_UI,HOME_COLORS,homeStoryLabel} from './cocos/assets/scripts/HomeScene.js?v=0.8.32';
-import {getTileTheme,buildThemeArtwork} from './cocos/assets/scripts/TileThemes.js?v=0.8.32';
-import {createGameAudio} from './audio.mjs?v=0.8.32';
+import {createBackgroundMusic} from './music.mjs?v=0.8.33';
+import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.33';
+import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.33';
+import {HOME_ART,HOME_UI,HOME_COLORS,homeStoryLabel} from './cocos/assets/scripts/HomeScene.js?v=0.8.33';
+import {getTileTheme,buildThemeArtwork} from './cocos/assets/scripts/TileThemes.js?v=0.8.33';
+import {createGameAudio} from './audio.mjs?v=0.8.33';
 
-const APP_BUILD='0.8.32';
+const APP_BUILD='0.8.33';
 const el=id=>document.getElementById(id);
 const $={board:el('board'),anchors:el('anchors'),target:el('target'),moves:el('moves'),par:el('par'),clock:el('clock'),instruction:el('instruction'),difficulty:el('difficulty'),chapterCaption:el('chapterCaption'),puzzleTitle:el('puzzleTitle'),storyTab:el('storyTab'),dailyTab:el('dailyTab'),cwBtn:el('cwBtn'),ccwBtn:el('ccwBtn'),modal:el('modal'),toast:el('toast')};
 const names=['星图初醒','看似简单','交错轨道','一念之差','不对称','失序之环','倒影之谜','四角对峙','镜像迷宫','群星换位','王冠密码','无声棋局','深空共振','星环审判','暗夜回响','隐秘秩序','星渊终章','逻辑之冠'];
@@ -26,6 +27,8 @@ const turnFocus=el('turnFocus'),boardFrame=el('boardFrame');
 
 let mode='story',key='1',dir=1,board=GOAL,puzzle=null,moves=0,hints=0,won=false,started=0,elapsed=0,claimedBeat=null,highlight=-1;
 let hintGuide=null,hintSpotlightFrame=0;
+let musicEnabled=read('music',true)!==false;
+const backgroundMusic=createBackgroundMusic({enabled:musicEnabled,isVisible:()=>!document.hidden});
 let soundEnabled=read('sound',true)!==false,clockTimer=0,toastTimer=0;
 let soundOutputMode=read('soundOutput','standard')==='media'?'media':'standard';
 let turnMotionMode=read('turnMotion','full')==='gentle'?'gentle':'full';
@@ -44,9 +47,10 @@ void gameAudio.preload();
 document.addEventListener('pointerdown',event=>{if(event.pointerType==='mouse')void gameAudio.unlock();},{capture:true,passive:true});
 document.addEventListener('pointerup',event=>{if(event.pointerType!=='mouse')void gameAudio.unlock();},{capture:true,passive:true});
 document.addEventListener('touchend',()=>{void gameAudio.unlock();},{capture:true,passive:true});
-document.addEventListener('keydown',()=>{void gameAudio.unlock();},true);
+document.addEventListener('keydown',()=>{void gameAudio.unlock();void backgroundMusic.resume({gesture:true});},true);
 document.addEventListener('click',event=>{
   const button=event.target.closest?.('button');
+  if(button?.id!=='settingsMusic')void backgroundMusic.resume({gesture:true});
   if(!button||button.disabled||button.closest('[hidden]')||button.classList.contains('spin-node')||['settingsSound','settingsTestSound','settingsSoundOutput'].includes(button.id))return;
   void gameAudio.playButton();
 },true);
@@ -221,6 +225,8 @@ function recordTurnMeasure(state){
   if(!settingsOverlay.hidden)renderDeviceDiagnostics();
 }
 function syncSettings(){
+  el('settingsMusic').textContent=musicEnabled?'音乐：开':'音乐：关';
+  el('settingsMusic').setAttribute('aria-pressed',String(musicEnabled));
   el('settingsSound').textContent=soundEnabled?'音效：开':'音效：关';
   el('settingsSound').setAttribute('aria-pressed',String(soundEnabled));
   el('settingsMotion').textContent=turnMotionMode==='gentle'?'旋转动画：轻柔':'旋转动画：完整';
@@ -245,6 +251,10 @@ el('settingsBtn').onclick=openSettings;
 if(el('homeSettings'))el('homeSettings').onclick=openSettings;
 el('settingsClose').onclick=closeSettings;
 settingsOverlay.addEventListener('click',event=>{if(event.target===settingsOverlay)closeSettings();});
+el('settingsMusic').onclick=()=>{
+  musicEnabled=!musicEnabled;write('music',musicEnabled);backgroundMusic.setEnabled(musicEnabled);
+  if(musicEnabled)void backgroundMusic.resume({gesture:true});syncSettings();
+};
 el('settingsSound').onclick=()=>{
   soundEnabled=!soundEnabled;write('sound',soundEnabled);
   gameAudio.setEnabled(soundEnabled);
@@ -684,17 +694,17 @@ function startTimers(){
   clearInterval(clockTimer);
   clockTimer=window.setInterval(updateTime,220);
 }
-window.addEventListener('pagehide',event=>{cancelRotation();hideHintSpotlight();clearInterval(clockTimer);if(event.persisted)gameAudio.pause();else gameAudio.dispose();});
-window.addEventListener('pageshow',event=>{if(event.persisted&&ready){render();startTimers();}});
+window.addEventListener('pagehide',event=>{cancelRotation();hideHintSpotlight();clearInterval(clockTimer);if(event.persisted){gameAudio.pause();backgroundMusic.pause();}else{gameAudio.dispose();backgroundMusic.dispose();}});
+window.addEventListener('pageshow',event=>{if(event.persisted&&ready){render();startTimers();void backgroundMusic.resume();}});
 function onMotionResize(){if(rotating){cancelRotation();if(puzzle)render();}queueHintSpotlight();}
 window.addEventListener('resize',onMotionResize);
 window.visualViewport?.addEventListener('resize',onMotionResize);
 document.addEventListener('scroll',queueHintSpotlight,{capture:true,passive:true});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelRotation();gameAudio.pause();if(puzzle)render();hideHintSpotlight();}else syncHintSpotlight();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelRotation();gameAudio.pause();backgroundMusic.pause();if(puzzle)render();hideHintSpotlight();}else{syncHintSpotlight();void backgroundMusic.resume();}});
 
 const ART_FILES=[HOME_ART.resource+'.webp',HOME_UI.resource+'.webp','ui-atlas.webp','daily-banner.webp','reference-daily.webp','reference-clean.webp','rank-scene.webp','result-panel.webp'];
 async function preloadTileArtwork(){
-  const response=await fetch(new URL('./cocos/assets/resources/art/referenceLayout.json?v=0.8.32',import.meta.url));
+  const response=await fetch(new URL('./cocos/assets/resources/art/referenceLayout.json?v=0.8.33',import.meta.url));
   if(!response.ok)throw new Error('tile artwork layout could not be loaded');
   const {tileArtwork:art}=await response.json();
   if(!art||!/^[-a-z0-9]+$/.test(art.resource)||art.fit!=='fill'||!Array.isArray(art.imageSize)||art.imageSize.length!==2||art.imageSize.some(v=>!Number.isFinite(v)||v<=0))throw new Error('invalid tile artwork layout');

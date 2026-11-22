@@ -16,6 +16,7 @@ function audioFixture(options={}){
     constructor(){this.isValid=true;this.playing=false;this.plays=0;this.stops=0;channels.push(this);}
     play(){if(this.failPlay)throw new Error('audio unavailable');this.plays++;this.playing=true;this.node.emit(AudioSource.EventType.STARTED);}
     stop(){this.stops++;this.playing=false;}
+    pause(){this.playing=false;}
   }
   class UITransform{setContentSize(w,h){this.width=w;this.height=h;}}
   class UIOpacity{constructor(){this.opacity=255;}}
@@ -47,7 +48,7 @@ function audioFixture(options={}){
 
 test('native optional tactile clips load independently and never replay a click missed during loading',async()=>{
   const f=audioFixture(),g=f.game,loading=g.prepareAudio();
-  assert.deepEqual(f.requests.map(request=>request.path),['audio/ui-tap-v5','audio/rotary-detent-v7','audio/stone-seat-v5']);
+  assert.deepEqual(f.requests.map(request=>request.path),['audio/ui-tap-v5','audio/rotary-detent-v8','audio/stone-seat-v5']);
   assert(f.channels.every(source=>source.playOnAwake===false&&source.loop===false));
   assert.equal(g.assetsReady,true);assert.equal(g.loading,false);
   const button=new f.NativeNode('Button');let actions=0;g.bindButton(button,()=>{actions++;});
@@ -205,4 +206,21 @@ test('native UI, knob and landing keep distinct clips and sources',async()=>{
   g.update(.6);assert.equal(g.audioSources.seat.plays,1);assert.equal(g.audioSources.ui.plays,1);
   assert.notEqual(g.audioSources.ui.clip,g.audioSources.press.clip);
   assert.notEqual(g.audioSources.press.clip,g.audioSources.seat.clip);
+});
+
+test('native music loads once, loops independently of effects and obeys visibility and teardown',async()=>{
+ const f=audioFixture(),g=f.game;delete g.resumeMusic;g.soundEnabled=false;
+ const pending=g.resumeMusic(true);assert.equal(f.requests.length,1);assert.equal(f.requests[0].path,'audio/starlight-loop-v1');
+ const clip=f.finish(f.requests[0]);await pending;const source=g.musicSource;
+ assert(source.loop);assert.equal(source.playing,true);assert.equal(clip.refs,1);
+ await g.resumeMusic(true);assert.equal(source.plays,1);assert.equal(f.requests.length,1);
+ g.onAppHide();assert.equal(source.playing,false);g.onAppShow();assert.equal(source.playing,true);
+ g.modal='settings';g.toggleMusic();assert.equal(g.musicEnabled,false);assert.equal(source.playing,false);assert.equal(f.storage.values.get('fourfold:music'),'false');
+ g.onDestroy();assert.equal(clip.refs,0);assert.equal(g.musicSource,null);
+});
+
+test('native music finishing loading while hidden cannot autoplay',async()=>{
+ const f=audioFixture(),g=f.game;delete g.resumeMusic;const pending=g.resumeMusic(true);
+ g.onAppHide();f.finish(f.requests[0]);await pending;assert.equal(g.musicSource.plays,0);
+ g.onAppShow();assert.equal(g.musicSource.plays,1);g.onDestroy();
 });
