@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {nativeFixture,flush} from './helpers/runtime-fixtures.mjs';
+import {musicContext} from './helpers/music-context.mjs';
 import {GOAL,rotate} from '../cocos/assets/scripts/Core.js';
 
 // Run production loading, touch handlers, spin and teardown. These substitutes
@@ -208,19 +209,19 @@ test('native UI, knob and landing keep distinct clips and sources',async()=>{
   assert.notEqual(g.audioSources.press.clip,g.audioSources.seat.clip);
 });
 
-test('native music loads once, loops independently of effects and obeys visibility and teardown',async()=>{
- const f=audioFixture(),g=f.game;delete g.resumeMusic;g.soundEnabled=false;
- const pending=g.resumeMusic(true);assert.equal(f.requests.length,1);assert.equal(f.requests[0].path,'audio/starlight-sampled-v4');
- const clip=f.finish(f.requests[0]);await pending;const source=g.musicSource;
- assert(source.loop);assert.equal(source.playing,true);assert.equal(clip.refs,1);
- await g.resumeMusic(true);assert.equal(source.plays,1);assert.equal(f.requests.length,1);
- g.onAppHide();assert.equal(source.playing,false);g.onAppShow();assert.equal(source.playing,true);
- g.modal='settings';g.toggleMusic();assert.equal(g.musicEnabled,false);assert.equal(source.playing,false);assert.equal(f.storage.values.get('fourfold:music'),'false');
- g.onDestroy();assert.equal(clip.refs,0);assert.equal(g.musicSource,null);
+test('native realtime music shares its engine, stays independent of effects, and closes on teardown',async()=>{
+ const c=musicContext(),f=audioFixture({musicOptions:c.options}),g=f.game;delete g.resumeMusic;g.soundEnabled=false;
+ await g.resumeMusic(true);assert.equal(f.requests.length,0);const music=g.musicController;
+ assert.equal(music.getState().backend,'realtime-web-audio');assert.equal(music.getState().running,true);
+ await g.resumeMusic(true);assert.equal(c.created,1);assert.equal(c.timers.size,1);
+ g.onAppHide();assert.equal(music.getState().running,false);g.onAppShow();await flush();assert.equal(music.getState().running,true);
+ g.modal='settings';g.toggleMusic();assert.equal(g.musicEnabled,false);assert.equal(music.getState().running,false);assert.equal(f.storage.values.get('fourfold:music'),'false');
+ g.onDestroy();assert.equal(music.getState().disposed,true);assert.equal(g.musicController,null);assert.equal(c.context.state,'closed');
 });
 
-test('native music finishing loading while hidden cannot autoplay',async()=>{
- const f=audioFixture(),g=f.game;delete g.resumeMusic;const pending=g.resumeMusic(true);
- g.onAppHide();f.finish(f.requests[0]);await pending;assert.equal(g.musicSource.plays,0);
- g.onAppShow();assert.equal(g.musicSource.plays,1);g.onDestroy();
+test('native pending Web Audio resume cannot start while hidden',async()=>{
+ const c=musicContext();let finish;c.context.state='suspended';c.context.resume=()=>new Promise(resolve=>{finish=()=>{c.context.state='running';resolve();};});
+ const f=audioFixture({musicOptions:c.options}),g=f.game;delete g.resumeMusic;const pending=g.resumeMusic(true);
+ g.onAppHide();finish();await pending;assert.equal(g.musicController.getState().running,false);
+ g.onAppShow();await flush();assert.equal(g.musicController.getState().running,true);g.onDestroy();
 });

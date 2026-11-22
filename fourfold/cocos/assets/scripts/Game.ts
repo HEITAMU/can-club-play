@@ -10,6 +10,7 @@ import {GOAL,SQUARES,makePuzzle,todayCN,rotate,isSolved,shortestPath,honor,resul
 import {TURN_DURATION_MS,createTurnMotion,sampleTurn} from './TurnMotion';
 import {HOME_ART,HOME_UI,HOME_COLORS,homeLayout,homeStoryLabel} from './HomeScene';
 import {getTileTheme,buildThemeArtwork} from './TileThemes';
+import {createBackgroundMusic} from './GrooveMusic';
 const {ccclass}=_decorator;
 const HINT_MODE:'free'|'rewarded'='free'; // 未开通广告时，正式上线也免费提示；开通后再显式切换。
 const HINT_PULSE_SECONDS=3,HINT_PULSE_MIN=31;
@@ -49,7 +50,7 @@ export class FourfoldGame extends Component {
   private audioNode:Node|null=null;private audioSources:Partial<Record<'ui'|'press'|'seat',AudioSource>>={};private audioClips:Partial<Record<'ui'|'press'|'seat',AudioClip>>={};
   private audioWanted:{ui:any;press:any;seat:any}={ui:null,press:null,seat:null};private audioEpoch=0;
   private musicEnabled=this.storeRead('music',true)!==false;private musicActivated=false;
-  private musicSource:AudioSource|null=null;private musicClip:AudioClip|null=null;private musicNode:Node|null=null;private musicLoading:Promise<void>|null=null;
+  private musicController:any=null;
   private audioLoading=false;private audioSerial=0;private audioLifecycleAttached=false;
   private boardLayout={x:0,y:0,size:0,unit:0};private launchQuery:any={};
   private pageScroll:ScrollView|null=null;private pageScrollKey='';private scrollOffsets:Record<string,number>={};
@@ -177,27 +178,16 @@ export class FourfoldGame extends Component {
   private async resumeMusic(gesture=false){
     if(gesture)this.musicActivated=true;
     if(!this.musicAllowed()||!this.canvasNode?.isValid)return;
-    if(!this.musicClip){
-      if(this.musicLoading)return this.musicLoading;
-      const loading=(async()=>{
-        try{
-          const clip=await this.loadResource('audio/starlight-sampled-v4',AudioClip);
-          if(this.disposed||!this.canvasNode?.isValid)return;
-          clip.addRef();this.musicClip=clip;
-          const node=new Node('Background music');this.canvasNode.addChild(node);this.musicNode=node;
-          const source=node.addComponent(AudioSource);source.playOnAwake=false;source.loop=true;source.volume=1;source.clip=clip;this.musicSource=source;
-          node.on(AudioSource.EventType.STARTED,()=>{if(!this.musicAllowed())this.pauseMusic();});
-          if(this.musicAllowed())source.play();
-        }catch{}finally{this.musicLoading=null;}
-      })();this.musicLoading=loading;return loading;
-    }
-    if(!this.musicSource?.playing)try{this.musicSource.play();}catch{}
+    if(!this.musicController)this.musicController=createBackgroundMusic({enabled:this.musicEnabled,isVisible:()=>this.musicAllowed()});
+    this.musicController.setEnabled(this.musicEnabled);
+    return this.musicController.resume({gesture});
   }
-  private pauseMusic(){try{this.musicSource?.pause();}catch{}}
-  private disposeMusic(){this.pauseMusic();if(this.musicSource)this.musicSource.clip=null;this.musicNode?.destroy();this.musicNode=null;this.musicSource=null;this.musicClip?.decRef();this.musicClip=null;}
+  private pauseMusic(){this.musicController?.pause();}
+  private disposeMusic(){this.musicController?.dispose();this.musicController=null;}
   private toggleMusic(round=this.roundSerial,ui=this.uiSerial){
     if(this.disposed||this.modal!=='settings'||round!==this.roundSerial||ui!==this.uiSerial)return false;
     this.musicEnabled=!this.musicEnabled;this.storeWrite('music',this.musicEnabled);
+    this.musicController?.setEnabled(this.musicEnabled);
     if(this.musicEnabled)void this.resumeMusic(true);else this.pauseMusic();this.draw();return true;
   }
   private toggleSound(round=this.roundSerial,ui=this.uiSerial){

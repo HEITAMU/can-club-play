@@ -93,7 +93,7 @@ export function webFixture({preferences={},storage=memoryStorage(preferences),au
   }
   const audioControllers=[];
   const fixtureAudio=options=>{const controller=createGameAudio({...options,contextFactory:()=>null,fetchAudio:async()=>({ok:false}),now:()=>clock,...audioOptions});audioControllers.push(controller);return controller;};
-  const context=vm.createContext({...Core,...Motion,...Home,...Themes,createBackgroundMusic:options=>createBackgroundMusic({...options,createElement:()=>{throw new Error("Media unavailable in DOM fixture");},...musicOptions}),createGameAudio:fixtureAudio,todayCN:()=>TEST_DAY,document,window,localStorage:storage,Image,
+  const context=vm.createContext({...Core,...Motion,...Home,...Themes,createBackgroundMusic:options=>createBackgroundMusic({...options,contextFactory:()=>null,...musicOptions}),createGameAudio:fixtureAudio,todayCN:()=>TEST_DAY,document,window,localStorage:storage,Image,
     performance:{now:()=>clock},setTimeout:timeout,clearTimeout:window.clearTimeout,setInterval:timeout,clearInterval:window.clearTimeout,
     URL,URLSearchParams,location:window.location,navigator:{},console:{warn(){},error(){},log(){}},__reference:reference});
   vm.runInContext(executable,context,{filename:'app.js'});
@@ -121,12 +121,12 @@ class NativeNode {
   setPosition(...values){this.position=values;}setScale(...values){this.scale=values;}
 }
 
-export function nativeFixture({preferences={},storage=memoryStorage(preferences),useWx=true,cc={}}={}){
+export function nativeFixture({preferences={},storage=memoryStorage(preferences),useWx=true,cc={},musicOptions={}}={}){
   const source=readFileSync(new URL('../../cocos/assets/scripts/Game.ts',import.meta.url),'utf8');
   const executable=stripTypeScriptTypes(source.replace(/^import\s*\{[\s\S]*?\}\s*from\s*['"][^'"]+['"];?\s*$/gm,'').replace(/^@ccclass\('FourfoldGame'\)\s*$/m,'').replace('export class FourfoldGame','class FourfoldGame'),{mode:'transform'});
   const clouds=[],events=[],art=[],groups=[],buttons=[],hits=[],shapes=[],texts=[];let clock=1000;
   const sdk={getStorageSync:key=>storage.getItem(key),setStorageSync:(key,value)=>storage.setItem(key,value),setUserCloudStorage:payload=>clouds.push(payload),vibrateShort:()=>events.push('vibrate')};
-  const context={...Core,...Motion,...Home,...Themes,todayCN:()=>TEST_DAY,Component:class{},Node:NativeNode,Graphics,UIOpacity,Mask,Color,BlockInputEvents:class{},LabelOutline:class{},
+  const context={...Core,...Motion,...Home,...Themes,createBackgroundMusic:options=>createBackgroundMusic({...options,contextFactory:()=>null,...musicOptions}),todayCN:()=>TEST_DAY,Component:class{},Node:NativeNode,Graphics,UIOpacity,Mask,Color,BlockInputEvents:class{},LabelOutline:class{},
     Vec2:class{constructor(x,y){this.x=x;this.y=y;}},UITransform:class{setContentSize(){}},
     _decorator:{ccclass:()=>{}},localStorage:storage,performance:{now:()=>clock},console:{warn(){},error(){}},wx:useWx?sdk:undefined,...cc};
   const Game=vm.runInNewContext(executable+'\nFourfoldGame;',context,{filename:'Game.ts'}),game=new Game();
