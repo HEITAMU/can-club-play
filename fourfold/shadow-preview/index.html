@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f9dbb7">
+<meta name="description" content="滑走留影，借影子让星星停回星座。《星图有点乱》独立玩法试玩。">
+<title>借个影子 · 独立试玩</title>
+<link rel="icon" type="image/svg+xml" href="../assets/icon.svg">
+<link rel="preload" as="image" href="../starlight-preview/assets/tile-v1.webp">
+<link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+<main class="page">
+  <header class="brand-row"><img src="../assets/art/home-title-starmap-v1.webp" width="1086" height="362" alt="星图有点乱"><span class="demo-badge">独立试玩</span></header>
+  <div class="title-row"><div><h1>借个影子</h1><p class="tagline">滑走留影，借影子停回星座</p></div><button id="sound" class="sound-button" type="button" aria-label="关闭声音" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4zM16 8q5 4 0 8M18.5 5q8 7 0 14"/></svg><span>声音</span></button></div>
+  <div class="chapter-row"><label class="chapter-select"><span class="sr-only">选择关卡</span><select id="level" aria-label="选择关卡"></select><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg></label><div class="light-count"><span class="tiny-star" aria-hidden="true">✦</span><span id="count">0 / 1</span><span class="count-label">归位</span></div></div>
+  <div class="board-shell"><div id="board" class="board" role="group" aria-label="影子星图棋盘"><div id="cells" class="cells"></div><div id="pieces" class="pieces"></div><div id="gestureCue" class="gesture-cue" aria-hidden="true"></div></div><div id="finishGlow" class="finish-glow" aria-hidden="true"></div></div>
+  <div class="legend" aria-hidden="true"><span><i class="legend-star">✦</i>星星</span><span><i class="legend-shadow">✦</i>留下的影子</span><span><i class="legend-goal">✧</i>星座空位</span></div>
+  <section id="feedback" class="feedback" aria-live="polite"><p id="message"></p><span id="detail"></span></section>
+  <div class="action-area"><div class="tool-row"><button id="undo" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6 4 10l4 4M4 10h10a5 5 0 0 1 0 10"/></svg>退一步</button><button id="reset" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10a8 8 0 1 0 0 5M20 4v6h-6"/></svg>重来</button><button id="hint" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 6.4L21 12l-6.4 2.6L12 21l-2.6-6.4L3 12l6.4-2.6z"/></svg>提示</button></div>
+  <button id="next" class="next-button" type="button" hidden>下一关</button></div>
+  <footer><span id="progress">5 关试玩 · 可直接选关</span><span id="moves">0 次滑动</span></footer>
+</main>
+<noscript>请启用 JavaScript 开始试玩。</noscript>
+<script type="module" src="app.mjs?v=1"></script>
+</body>
+</html>
