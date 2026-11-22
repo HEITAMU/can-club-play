@@ -82,7 +82,7 @@ export function mountBoardPreview(root, { reference, themes = TILE_THEMES, asset
   root.classList.add('ff-lb');
   root.innerHTML = `
     <header class="ff-lb-heading">
-      <div><p class="ff-lb-kicker">四格诡局</p><h1>星图试转</h1></div>
+      <div><p class="ff-lb-kicker">星图有点乱</p><h1>星图试转</h1></div>
     </header>
     <div class="ff-lb-theme-row">
       <label class="ff-lb-theme-label"><span class="ff-lb-visually-hidden">当前星图</span><select data-field="theme" aria-label="选择星图主题"></select></label>

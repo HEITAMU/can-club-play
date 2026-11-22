@@ -1,6 +1,6 @@
 // The artwork keeps its own aspect ratio. Available height changes the arrangement,
 // never the width of the whole screen.
-import {HOME_ART,HOME_UI,HOME_COLORS,homeLayout} from './cocos/assets/scripts/HomeScene.js?v=0.8.28';
+import {HOME_ART,HOME_UI,HOME_COLORS,homeLayout} from './cocos/assets/scripts/HomeScene.js?v=0.8.39';
 export {homeLayout};
 const fitHeight = (width, sw, sh) => width * sh / sw;
 const box = (x,y,w,h) => ({x,y,w,h});
@@ -44,9 +44,7 @@ if(typeof document!=='undefined'){
     const h=homeLayout(width,height),d=dailyLayout(width,height);
     home.dataset.layout=h.compact?'compact':'regular';daily.dataset.layout=d.compact?'compact':'regular';
     place(home.querySelector('.home-hero'),h.hero);place(home.querySelector('.home-scene'),h.image);
-    place(document.getElementById('homeTitle'),h.title);place(document.getElementById('homeSubtitle'),h.subtitle);
-    document.getElementById('homeTitle').style.fontSize=HOME_ART.titleSize*h.textScale+'px';
-    document.getElementById('homeSubtitle').style.fontSize=HOME_ART.subtitleSize*h.textScale+'px';
+    place(document.getElementById('homeTitle'),h.title);
     home.style.setProperty('--home-u',width/390+'px');
     home.style.setProperty('--home-content-height',h.contentH+'px');
     home.querySelectorAll('.cozy-menu button').forEach((b,i)=>{

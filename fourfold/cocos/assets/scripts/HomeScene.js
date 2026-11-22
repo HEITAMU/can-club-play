@@ -3,14 +3,14 @@
 export const HOME_ART=Object.freeze({
   resource:'home-celestial-v9',width:981,height:1602,
   edgeFade:.08,
-  titleRect:[98.1,128.16,784.8,120.15],subtitleRect:[245.25,272.34,490.5,48.06],
-  titleSize:110.506,subtitleSize:28.148,
+  titleResource:'home-title-starmap-v1',titleWidth:1086,titleHeight:362,
+  titleRect:[128,126,725,241.6666666667],
 });
 
 // Match the established game pages with warm cream, painted gold and brown ink.
-// The live title and labels remain clear and unembellished over the artwork.
+// A transparent painted wordmark shares the scene's indigo enamel and gold edges.
 export const HOME_COLORS=Object.freeze({
-  background:'#FDD4AA',title:'#61331F',subtitle:'#936744',menu:'#61331F',
+  background:'#FDD4AA',title:'#61331F',menu:'#61331F',
 });
 
 export const HOME_UI=Object.freeze({
@@ -44,10 +44,10 @@ export function homeLayout(width,height){
     return box(width*entry.x-insetX,top+heroH*entry.y-insetY,hitW,hitH);
   });
   const scaleRect=([x,y,w,h])=>box(x*textScale,y*textScale,w*textScale,h*textScale);
-  // Image/title/subtitle rects are local to the illustration. Hero, buttons and
+  // Image/title rects are local to the illustration. Hero, buttons and
   // settings are page coordinates; artwork and captions are local to each hit.
   return {compact:heroH>height,contentH:Math.max(height,heroH),textScale,cropTop:0,
     hero:box(0,top,width,heroH),image:box(0,0,width,heroH),
-    title:scaleRect(HOME_ART.titleRect),subtitle:scaleRect(HOME_ART.subtitleRect),
+    title:scaleRect(HOME_ART.titleRect),
     buttons,buttonArtwork,buttonLabels,buttonFontSizes,settings:box(12,top+10,44,44)};
 }

@@ -16,7 +16,7 @@ const HINT_MODE:'free'|'rewarded'='free'; // 未开通广告时，正式上线�
 const HINT_PULSE_SECONDS=3,HINT_PULSE_MIN=31;
 const AD_IDS={rewarded:'',banner:''}; // 接入时只填写微信公众平台提供的真实 adUnitId。
 const C={background:'#F8DEB7',surface:'#FFF1D6',gold:'#F5CB79',gold2:'#C88B4D',white:'#FFF4D7',muted:'#977253',dark:'#5B301F',edge:'#825037',night:'#1B2345',shadow:'#B27C50'};
-const ART_PATHS={home:'art/'+HOME_ART.resource,homeUI:'art/'+HOME_UI.resource,atlas:'art/ui-atlas',referenceOriginal:'art/reference-daily',referenceClean:'art/reference-clean',rankScene:'art/rank-scene',resultPanel:'art/result-panel'};
+const ART_PATHS={home:'art/'+HOME_ART.resource,homeTitle:'art/'+HOME_ART.titleResource,homeUI:'art/'+HOME_UI.resource,atlas:'art/ui-atlas',referenceOriginal:'art/reference-daily',referenceClean:'art/reference-clean',rankScene:'art/rank-scene',resultPanel:'art/result-panel'};
 const AUDIO_PATHS={ui:'audio/ui-tap-v5',press:'audio/rotary-detent-v8',seat:'audio/stone-seat-v5'};
 const REQUIRED_FRAMES=['goldButton','creamButton','lavenderButton','stepsCard','timeCard','rotateKnob','settingsButton','backButton'];
 const at=()=>typeof performance!=='undefined'&&performance.now?performance.now():Date.now();
@@ -444,7 +444,7 @@ export class FourfoldGame extends Component {
   private iconButton(frame:string,x:number,y:number,size:number,action:()=>void,allowBusy=false){return this.btn('',x,y,size,size,action,frame,16,this.root,allowBusy);}
   private drawLoading(){
     this.shape(0,0,this.width,this.height,C.background,'',0);
-    this.txt('四格诡局',40,280,this.width-80,60,34,C.dark,true);
+    this.txt('星图有点乱',40,280,this.width-80,60,34,C.dark,true);
     this.txt(this.loadError||'正在展开星图…',35,368,this.width-70,35,16,C.muted);
     if(this.loadError)this.btn('重新加载',80,431,this.width-160,54,()=>this.loadArt(),'creamButton',18);
     else {this.shape(70,426,this.width-140,7,'#E5BC88','',3);this.shape(70,426,Math.max(7,(this.width-140)*this.loadProgress/Object.keys(ART_PATHS).length),7,C.gold2,'',3);}
@@ -472,7 +472,7 @@ export class FourfoldGame extends Component {
     const scale=this.windowScale,layout=homeLayout(width/scale,height/scale);
     const rect=(r:any)=>({x:r.x*scale,y:r.y*scale,w:r.w*scale,h:r.h*scale});
     return {...layout,contentH:layout.contentH*scale,textScale:layout.textScale*scale,
-      hero:rect(layout.hero),image:rect(layout.image),title:rect(layout.title),subtitle:rect(layout.subtitle),
+      hero:rect(layout.hero),image:rect(layout.image),title:rect(layout.title),
       buttons:layout.buttons.map(rect),buttonArtwork:layout.buttonArtwork.map(rect),buttonLabels:layout.buttonLabels.map(rect),
       buttonFontSizes:layout.buttonFontSizes.map(size=>size*scale),settings:rect(layout.settings)};
   }
@@ -511,7 +511,7 @@ export class FourfoldGame extends Component {
       {text:'每日挑战',frame:'homeDailyButton',source:'daily',action:()=>this.startGame('daily',todayCN())},
       {text:'好友荣誉榜',frame:'homeRankButton',source:'rank',action:()=>this.showRank()},
     ];
-    // Match the game pages' bold live lettering and shared painted controls.
+    // Shared painted title and controls match the game pages' celestial materials.
     const hero=layout.hero,scene=this.group('Home hero',hero.x,hero.y,hero.w,hero.h,parent);
     this.art('home',0,0,hero.w,hero.h,scene.content);
     // Blend the full, uncropped illustration into the page above and below it.
@@ -528,11 +528,8 @@ export class FourfoldGame extends Component {
         fade.fill();
       }
     }
-    const titleRect=layout.title,subtitleRect=layout.subtitle;
-    const title=this.txt('四格诡局',titleRect.x,titleRect.y,titleRect.w,titleRect.h,HOME_ART.titleSize*layout.textScale,HOME_COLORS.title,true,scene.content);
-    title.node.name='Home title';title.lineHeight=titleRect.h;title.enableWrapText=false;
-    const subtitle=this.txt('FOURFOLD',subtitleRect.x,subtitleRect.y,subtitleRect.w,subtitleRect.h,HOME_ART.subtitleSize*layout.textScale,HOME_COLORS.subtitle,true,scene.content);
-    subtitle.node.name='Home subtitle';subtitle.fontFamily='Georgia';subtitle.lineHeight=subtitleRect.h;subtitle.enableWrapText=false;
+    const titleRect=layout.title;
+    this.art('homeTitle',titleRect.x,titleRect.y,titleRect.w,titleRect.h,scene.content);
     entries.forEach((entry,i)=>{
       const rect=layout.buttons[i],art=layout.buttonArtwork[i],caption=layout.buttonLabels[i];
       const button=this.group('Home '+entry.source+' entry',rect.x,rect.y,rect.w,rect.h,parent);
@@ -1074,7 +1071,7 @@ export class FourfoldGame extends Component {
   private share(){
     const sdk=wxSDK();if(!sdk){this.toast('请使用浏览器的分享功能发送当前试玩链接');return;}
     const query=this.mode==='daily'?`mode=daily&day=${encodeURIComponent(this.key)}`:`mode=story&level=${encodeURIComponent(this.key)}`;
-    try{sdk.shareAppMessage({title:this.won?`我用了 ${this.moves} 步复原星图，你呢？`:'四格诡局｜来挑战同一关星图',query:query+(this.won?`&beat=${this.moves}`:'')});}catch{this.toast('当前微信环境不支持分享');}
+    try{sdk.shareAppMessage({title:this.won?`我用了 ${this.moves} 步复原星图，你呢？`:'星图有点乱｜来挑战同一关星图',query:query+(this.won?`&beat=${this.moves}`:'')});}catch{this.toast('当前微信环境不支持分享');}
   }
   private showRank(){this.rankSettings=false;this.modal='rank';this.hideBanner();this.draw();}
   private openRankSettings(){if(this.modal!=='rank')return;this.rankSettings=true;this.modal='settings';this.hideBanner();this.draw();}

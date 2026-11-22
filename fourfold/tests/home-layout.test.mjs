@@ -28,7 +28,6 @@ test('homepage retains a full portrait scene with three separate entries inside 
     else{centered++;near(hero.y,(height-hero.h)/2,'tall screens center the complete scene');}
     const localHero={x:0,y:0,w:hero.w,h:hero.h};
     inside(layout.title,localHero,'title remains within the sky');
-    inside(layout.subtitle,localHero,'subtitle remains within the sky');
     inside(layout.settings,hero,'settings remain within the scene');
     for(let i=0;i<keys.length;i++){
       const hit=layout.buttons[i],art=layout.buttonArtwork[i],label=layout.buttonLabels[i],[,,sw,sh]=HOME_UI.frames[keys[i]];
@@ -57,7 +56,7 @@ test('native homepage scales hit regions, artwork, captions and fonts with the s
     const native=plain(game.homeGeometry(390,height*scale));
     assert.equal(native.compact,web.compact);
     for(const name of ['contentH','textScale'])near(native[name]/scale,web[name],`scaled ${name}`);
-    for(const name of ['hero','image','title','subtitle','settings'])for(const axis of ['x','y','w','h'])near(native[name][axis]/scale,web[name][axis],`scaled ${name}.${axis}`);
+    for(const name of ['hero','image','title','settings'])for(const axis of ['x','y','w','h'])near(native[name][axis]/scale,web[name][axis],`scaled ${name}.${axis}`);
     for(const name of ['buttons','buttonArtwork','buttonLabels'])for(let i=0;i<3;i++)for(const axis of ['x','y','w','h'])near(native[name][i][axis]/scale,web[name][i][axis],`scaled ${name}[${i}].${axis}`);
     for(let i=0;i<3;i++)near(native.buttonFontSizes[i]/scale,web.buttonFontSizes[i],`scaled caption ${i}`);
   }

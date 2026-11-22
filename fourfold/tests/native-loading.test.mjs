@@ -93,18 +93,18 @@ test('successful resource loads clear their timer and cannot settle a second tim
   assert.equal(asset.adds,0);
 });
 
-test('native startup loads seven images with at most three active image requests',async()=>{
+test('native startup loads eight images with at most three active image requests',async()=>{
   const f=fixture(),loading=f.game.loadArt();
   assert.equal(f.requests.length,3,'metadata is loaded first');
   f.metadata();await flush();
   assert.equal(f.requests.filter(r=>r.type===f.ImageAsset).length,3);
   assert.equal(f.events.includes('game:start'),false);
   await f.finishImages();await loading;
-  assert.equal(f.requests.filter(r=>r.type===f.ImageAsset).length,7);
-  assert.equal(f.peakImages,3);assert.equal(f.game.loadProgress,7);
+  assert.equal(f.requests.filter(r=>r.type===f.ImageAsset).length,8);
+  assert.equal(f.peakImages,3);assert.equal(f.game.loadProgress,8);
   assert.equal(f.game.assetsReady,true);assert.equal(f.game.loading,false);
   assert.equal(f.events.filter(e=>e==='game:start').length,1);
-  assert.equal(f.textures.length,7);assert.equal(f.game.images.length,7);
+  assert.equal(f.textures.length,8);assert.equal(f.game.images.length,8);
   assert.equal(f.timers.size,0);assert.equal(f.game.pendingResourceLoads.size,0);
 });
 
@@ -125,8 +125,8 @@ test('a failed startup releases partial art and stale workers cannot write into 
   assert.equal(f.game.loadProgress,0);
   f.metadata();await flush();await f.finishImages();await retry;
   assert.equal(f.game.assetsReady,true);assert.equal(f.game.loadError,'');
-  assert.equal(f.game.images.length,7);assert.equal(f.game.loadProgress,7);
-  assert.equal(f.textures.filter(texture=>!texture.destroyed).length,7);
+  assert.equal(f.game.images.length,8);assert.equal(f.game.loadProgress,8);
+  assert.equal(f.textures.filter(texture=>!texture.destroyed).length,8);
   assert.equal(f.timers.size,0);
 });
 
