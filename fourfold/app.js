@@ -1,8 +1,8 @@
-import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.25';
-import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.25';
-import {HOME_ART,HOME_UI,HOME_COLORS,homeStoryLabel} from './cocos/assets/scripts/HomeScene.js?v=0.8.25';
-import {getTileTheme,buildThemeArtwork} from './cocos/assets/scripts/TileThemes.js?v=0.8.25';
-import {createGameAudio} from './audio.mjs?v=0.8.25';
+import {GOAL,SQUARES,rotate,isSolved,shortestPath,makePuzzle,todayCN,resultScore,honor,parseChallenge,hintLimit,isBetterResult} from './cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.26';
+import {TURN_DURATION_MS,TURN_KEYFRAME_COUNT,createTurnMotion,sampleTurn} from './cocos/assets/scripts/TurnMotion.js?v=0.8.26';
+import {HOME_ART,HOME_UI,HOME_COLORS,homeStoryLabel} from './cocos/assets/scripts/HomeScene.js?v=0.8.26';
+import {getTileTheme,buildThemeArtwork} from './cocos/assets/scripts/TileThemes.js?v=0.8.26';
+import {createGameAudio} from './audio.mjs?v=0.8.26';
 
 const el=id=>document.getElementById(id);
 const $={board:el('board'),anchors:el('anchors'),target:el('target'),moves:el('moves'),par:el('par'),clock:el('clock'),instruction:el('instruction'),difficulty:el('difficulty'),chapterCaption:el('chapterCaption'),puzzleTitle:el('puzzleTitle'),storyTab:el('storyTab'),dailyTab:el('dailyTab'),cwBtn:el('cwBtn'),ccwBtn:el('ccwBtn'),modal:el('modal'),toast:el('toast')};
@@ -421,8 +421,8 @@ async function spin(q){
   clearHintGuide();rotating=true;
   const epoch=++motionEpoch,nextBoard=rotate(board,q,dir),direction=dir,startAngle=knobAngles[q];
   const reduceMotion=!!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-  const duration=reduceMotion?120:TURN_DURATION_MS;
-  void gameAudio.playTurn(duration);
+  const duration=reduceMotion?240:TURN_DURATION_MS;
+  const turnSound=gameAudio.beginTurn();
   const offsets=reduceMotion?[0,.45,.55,1]:Array.from({length:TURN_KEYFRAME_COUNT},(_,i)=>i/(TURN_KEYFRAME_COUNT-1));
   const fadeAt=p=>p<=.45?1-p/.45:p<.55?0:(p-.55)/.45;
   const focusAt=p=>reduceMotion?Math.sin(Math.PI*p)*.45:sampleTurn(motion,0,p).focus;
@@ -463,9 +463,10 @@ async function spin(q){
   if(!completed){cancelRotation();render();return;}
   board=nextBoard;moves++;knobAngles[q]=(startAngle+direction*90)%360;
   for(const animation of activeAnimations)animation.cancel();
-  activeAnimations=[];rotating=false;gameAudio.stopTurn();clearTurnVisuals();
+  activeAnimations=[];rotating=false;clearTurnVisuals();
   render();
   if(isSolved(board))finish();
+  void gameAudio.finishTurn(turnSound);
 }
 
 function finish(){
@@ -621,7 +622,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelRota
 
 const ART_FILES=[HOME_ART.resource+'.webp',HOME_UI.resource+'.webp','ui-atlas.webp','daily-banner.webp','reference-daily.webp','reference-clean.webp','rank-scene.webp','result-panel.webp'];
 async function preloadTileArtwork(){
-  const response=await fetch(new URL('./cocos/assets/resources/art/referenceLayout.json?v=0.8.25',import.meta.url));
+  const response=await fetch(new URL('./cocos/assets/resources/art/referenceLayout.json?v=0.8.26',import.meta.url));
   if(!response.ok)throw new Error('tile artwork layout could not be loaded');
   const {tileArtwork:art}=await response.json();
   if(!art||!/^[-a-z0-9]+$/.test(art.resource)||art.fit!=='fill'||!Array.isArray(art.imageSize)||art.imageSize.length!==2||art.imageSize.some(v=>!Number.isFinite(v)||v<=0))throw new Error('invalid tile artwork layout');

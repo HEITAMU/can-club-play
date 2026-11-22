@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>四格诡局 · 音频验收</title>
+<style>
+  * { box-sizing: border-box; }
+  body { max-width: 680px; margin: 0 auto; padding: 28px 20px; color: #392b24; background: #fff8ed; font: 16px/1.6 system-ui, sans-serif; }
+  h1 { margin: 0 0 8px; font-size: 24px; }
+  p { margin: 8px 0 18px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; }
+  button { min-height: 44px; padding: 8px 14px; border: 1px solid #bda284; border-radius: 9px; color: inherit; background: #fff; font: inherit; cursor: pointer; }
+  button:focus-visible { outline: 3px solid #7954c2; outline-offset: 3px; }
+  #tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; width: 120px; height: 120px; margin: 32px auto; }
+  #tiles span { display: grid; place-items: center; border-radius: 9px; background: #6c527f; color: #fff6df; font-size: 24px; }
+  dl { display: grid; grid-template-columns: 1fr 1.2fr; gap: 8px; padding: 16px; border: 1px solid #dfcfb9; border-radius: 10px; background: #fff; }
+  dt, dd { margin: 0; }
+  output { font-variant-numeric: tabular-nums; }
+  #log { min-height: 130px; max-height: 260px; overflow: auto; padding: 12px; border-radius: 8px; background: #eee6db; white-space: pre-wrap; font: 13px/1.6 ui-monospace, monospace; }
+</style>
+<main>
+  <h1>四格诡局 · 音频验收</h1>
+  <p>点击后使用生产音频模块播放。旋转持续 2.4 秒，实际动画完成后才播放落位声。数值取自通往真实扬声器输出的分析节点；非零峰值表示浏览器输出链路有信号，听感需实际试听。</p>
+  <div class="controls">
+    <button id="button-preview" type="button">试听按钮</button>
+    <button id="turn-preview" type="button">旋转并落位</button>
+    <button id="cancel-preview" type="button">取消旋转</button>
+    <button id="sound-toggle" type="button" aria-pressed="true">音效开关：开</button>
+  </div>
+  <div id="tiles" aria-label="四格旋转演示"><span>1</span><span>2</span><span>3</span><span>4</span></div>
+  <dl>
+    <dt>AudioContext</dt><dd><output id="audio-state">尚未创建</output></dd>
+    <dt>当前动作</dt><dd><output id="phase">等待点击</output></dd>
+    <dt>按下窗口峰值</dt><dd><output id="press-peak">0.000000</output> <span id="press-window">未采样</span></dd>
+    <dt>落位窗口峰值</dt><dd><output id="seat-peak">0.000000</output> <span id="seat-window">未采样</span></dd>
+  </dl>
+  <pre id="log" aria-label="音频事件日志"></pre>
+</main>
+<script type="module">
+  import { createGameAudio } from '../audio.mjs?v=0.8.26';
+
+  const $ = id => document.getElementById(id);
+  const logs = [], windows = new Map();
+  let context, analyser, waveform, activeTurn = null, angle = 0, enabled = true, disposed = false;
+  function log(message) {
+    logs.push(`${(performance.now() / 1000).toFixed(3)}s ${message}`);
+    $('log').textContent = logs.slice(-18).join('\n');
+  }
+  function showContext() { $('audio-state').textContent = context?.state || '尚未创建'; }
+  function contextFactory() {
+    const Context = window.AudioContext || window.webkitAudioContext;
+    if (!Context) { log('浏览器不支持 AudioContext'); return null; }
+    context = new Context();
+    analyser = context.createAnalyser();
+    analyser.fftSize = 2048;
+    analyser.connect(context.destination);
+    waveform = new Float32Array(analyser.fftSize);
+    context.addEventListener('statechange', showContext);
+    showContext();
+    // Preserve the production API while measuring the same signal sent to the
+    // hardware destination. No fake source, fake clock, or muted audio branch.
+    return {
+      get state() { return context.state; },
+      get currentTime() { return context.currentTime; },
+      destination: analyser,
+      decodeAudioData: (data, success, failure) => context.decodeAudioData(data, success, failure),
+      resume: () => context.resume(),
+      suspend: () => context.suspend(),
+      close: () => context.close(),
+      createGain: () => context.createGain(),
+      createBufferSource: () => context.createBufferSource(),
+    };
+  }
+  const audio = createGameAudio({ contextFactory, isVisible: () => !document.hidden });
+  function measure(key, duration) {
+    windows.set(key, { peak: 0, until: performance.now() + duration });
+    $(`${key}-peak`).textContent = '0.000000';
+    $(`${key}-window`).textContent = '采样中';
+  }
+  function resetSeat() {
+    windows.delete('seat');
+    $('seat-peak').textContent = '0.000000';
+    $('seat-window').textContent = '未采样';
+  }
+  function frame(time) {
+    if (disposed) return;
+    let peak = 0;
+    if (analyser && context.state === 'running') {
+      analyser.getFloatTimeDomainData(waveform);
+      for (const sample of waveform) peak = Math.max(peak, Math.abs(sample));
+    }
+    for (const [key, window] of windows) {
+      window.peak = Math.max(window.peak, peak);
+      $(`${key}-peak`).textContent = window.peak.toFixed(6);
+      if (time >= window.until) {
+        $(`${key}-window`).textContent = '采样结束';
+        log(`${key === 'press' ? '按下' : '落位'}窗口峰值 ${window.peak.toFixed(6)}`);
+        windows.delete(key);
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  function cancelTurn(reason, suspend = true) {
+    const previous = activeTurn;
+    activeTurn = null;
+    previous?.animation.cancel();
+    audio.stopTurn();
+    if (suspend) audio.pause();
+    if (previous) log(`旋转取消：${reason}，不会播放落位声`);
+  }
+  for (const id of ['button-preview', 'turn-preview']) {
+    $(id).addEventListener('pointerdown', () => { void audio.unlock(); });
+  }
+  $('button-preview').addEventListener('click', async () => {
+    cancelTurn('试听按钮', false);
+    resetSeat();
+    measure('press', 430);
+    $('phase').textContent = '按钮按下';
+    log(`按钮播放请求：${await audio.playButton() ? '已启动' : '未播放'}`);
+  });
+  $('turn-preview').addEventListener('click', () => {
+    cancelTurn('新的旋转', false);
+    resetSeat();
+    measure('press', 430);
+    $('phase').textContent = '旋转中（2400 ms）';
+    const token = audio.beginTurn();
+    const nextAngle = angle + 90;
+    const animation = $('tiles').animate([
+      { transform: `rotate(${angle}deg) scale(1)` },
+      { transform: `rotate(${angle + 4}deg) scale(1.04)`, offset: .10 },
+      { transform: `rotate(${nextAngle}deg) scale(1.02)`, offset: .94 },
+      { transform: `rotate(${nextAngle}deg) scale(1)` },
+    ], { duration: 2400, easing: 'cubic-bezier(.25,.65,.25,1)', fill: 'forwards' });
+    const turn = activeTurn = { token, animation };
+    log(`旋转开始，按下触点 ${token ? '有效' : '静音'}`);
+    animation.finished.then(async () => {
+      if (activeTurn !== turn || document.hidden || disposed) return;
+      activeTurn = null;
+      angle = nextAngle;
+      $('tiles').style.transform = `rotate(${angle}deg)`;
+      animation.cancel();
+      $('phase').textContent = '旋转完成，落位';
+      measure('seat', 510);
+      log('WAAPI finished：请求落位声');
+      log(`落位播放请求：${await audio.finishTurn(token) ? '已启动' : '未播放'}`);
+    }).catch(() => {});
+  });
+  $('cancel-preview').addEventListener('click', () => {
+    cancelTurn('用户点击');
+    $('phase').textContent = '已取消 / 暂停音频';
+    log('已调用 stopTurn 和 pause');
+  });
+  $('sound-toggle').addEventListener('click', () => {
+    enabled = !enabled;
+    audio.setEnabled(enabled);
+    if (!enabled) cancelTurn('关闭音效');
+    $('sound-toggle').textContent = `音效开关：${enabled ? '开' : '关'}`;
+    $('sound-toggle').setAttribute('aria-pressed', String(enabled));
+    $('phase').textContent = enabled ? '音效开启，等待点击' : '音效关闭';
+    log(`音效${enabled ? '开启' : '关闭'}`);
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      cancelTurn('页面隐藏');
+      $('phase').textContent = '页面隐藏，已暂停';
+    }
+  });
+  window.addEventListener('pagehide', event => {
+    cancelTurn('离开页面');
+    if (!event.persisted) { disposed = true; audio.dispose(); }
+  });
+  audio.preload().then(results => log(results.every(Boolean) ? '素材预载完成，等待点击（未自动播放）' : '部分素材预载失败，点击时重试'));
+</script>
+</html>

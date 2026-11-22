@@ -3,14 +3,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>四格诡局 · 完整星图验收 0.8.25</title>
+<title>四格诡局 · 完整星图验收 0.8.26</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#17203b;color:#f6e2b4;font:15px/1.6 system-ui,sans-serif}main{display:flex;flex-wrap:wrap;align-items:flex-start;gap:22px;max-width:1070px;margin:auto;padding:22px}iframe{display:block;flex:none;width:390px;height:650px;border:0;border-radius:12px;background:#f4cf99;box-shadow:0 10px 35px #0005}section{flex:1;min-width:270px;max-width:520px}h1{font-size:23px;line-height:1.3;margin:0 0 12px}p{color:#d7cdb7;margin:12px 0}fieldset{border:1px solid #97805a;border-radius:12px;margin:16px 0;padding:13px}legend{padding:0 7px}label{display:flex;align-items:center;gap:9px;margin:10px 0}input{width:19px;height:19px;accent-color:#d9aa61}button{font:600 14px system-ui;color:#4d291c;background:#f6dfad;border:1px solid #c49b59;border-radius:8px;padding:10px 12px;cursor:pointer;margin:3px}fieldset:disabled{opacity:.6}output{display:block;padding:13px;border-radius:10px;background:#0e152a;white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.7 ui-monospace,monospace}.pass{color:#b2e0af}.fail{color:#ffb0a1}a{color:#f3c978}figure{margin:18px 0 0;max-width:343px}figcaption{color:#ddd1b7;font-size:13px;margin-bottom:7px}.reference-window{aspect-ratio:747 / 694;overflow:hidden;border:1px solid #647196;background:#19213e}.reference-window img{display:block;width:100%;height:100%;object-fit:fill}@media(max-width:460px){main{padding:8px;gap:18px}iframe{max-width:100%;border-radius:8px}}
 </style>
 <main>
-<iframe id="preview" title="真实第一关通关星图" width="390" height="650" src="../?mode=story&amp;level=1&amp;v=0.8.25"></iframe>
+<iframe id="preview" title="真实第一关通关星图" width="390" height="650" src="../?mode=story&amp;level=1&amp;v=0.8.26"></iframe>
 <section>
-<h1>完整星图验收 · 0.8.25</h1>
+<h1>完整星图验收 · 0.8.26</h1>
 <p>左边通过真实旋钮完成第一关，检查通关停图、完整原画欣赏，以及成绩详情关闭后仍留在本关。</p>
 <fieldset id="controls" disabled>
 <legend>观察完整画面</legend>
@@ -22,12 +22,12 @@
 <output id="report" role="status" aria-live="polite">正在载入第一关…</output>
 <figure><figcaption>同一张完整原图 · 与棋盘采用相同画布比例</figcaption><div class="reference-window"><img id="mural" alt="用于九格拼图的完整星图"></div></figure>
 <p>这里直接调用游戏里的真实按钮，不注入隐藏弹窗或装饰的样式。下一关只在玩家明确点击游戏内对应按钮时进入。</p>
-<p><a href="../?v=0.8.25">打开完整游戏</a> · <a href="board-underlay-preview.html?v=0.8.25">检查棋盘底板</a></p>
+<p><a href="../?v=0.8.26">打开完整游戏</a> · <a href="board-underlay-preview.html?v=0.8.26">检查棋盘底板</a></p>
 </section>
 </main>
 <script type="module">
-import {GOAL,makePuzzle,shortestPath,rotate} from '../cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.25';
-const VERSION='0.8.25',frame=document.querySelector('#preview'),controls=document.querySelector('#controls'),report=document.querySelector('#report');
+import {GOAL,makePuzzle,shortestPath,rotate} from '../cocos/assets/scripts/CoreHardWeb.js?story=linear18-v2&v=0.8.26';
+const VERSION='0.8.26',frame=document.querySelector('#preview'),controls=document.querySelector('#controls'),report=document.querySelector('#report');
 const mural=document.querySelector('#mural');
 let generation=0,verified=false,alignmentError=0,artworkPromise=null;
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));

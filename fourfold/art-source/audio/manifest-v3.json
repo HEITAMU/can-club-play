@@ -1,0 +1,85 @@
+{
+  "version": 3,
+  "source": "original deterministic local procedural foley; no recordings, external samples or model-generated audio",
+  "seeds": {
+    "ui-stone-press-v3": 482601,
+    "stone-seat-v3": 482602
+  },
+  "notes": "Separate short press and completion cues. No ongoing rotation friction. MP3 container duration includes padding; decoded frames are authoritative. Numeric checks do not establish perceived quality or device audibility.",
+  "sounds": [
+    {
+      "name": "ui-stone-press-v3",
+      "origin": "original deterministic procedural stone foley",
+      "sampleRate": 48000,
+      "channels": 1,
+      "decodedFrames": 11520,
+      "decodedDurationSeconds": 0.24,
+      "decodedPeakDbFS": -3.764,
+      "decodedRmsDbFS": -19.127,
+      "sha256": "7b897976f2db8d7b48bc19682dfadd52f9191a32befb4ff5aebaae28f6c3f08d",
+      "mp3Bytes": 6956,
+      "sourceMaster": "art-source/audio/ui-stone-press-v3.wav",
+      "web": "assets/audio/ui-stone-press-v3.mp3",
+      "native": "cocos/assets/resources/audio/ui-stone-press-v3.mp3",
+      "role": "knob/button press",
+      "energyPercentileTimeMs": {
+        "5": 14.562,
+        "50": 28.104,
+        "90": 58.833,
+        "95": 71.479,
+        "99": 94.042
+      },
+      "energyByTimeBinPercent": {
+        "0-30": 55.469,
+        "30-70": 39.133,
+        "70-130": 5.359,
+        "130-200": 0.039,
+        "200-240": 0.0
+      },
+      "first130msRmsDbFS": -16.466,
+      "mid300to3500HzRmsDbFS": -19.48,
+      "below300HzEnergyPercent": 5.693,
+      "estimated4xTruePeakDbFS": -3.737,
+      "first1msPeak": 1.2494738257373683e-06,
+      "last1msPeak": 0.0,
+      "boundaryStep": 1.55893275177732e-07
+    },
+    {
+      "name": "stone-seat-v3",
+      "origin": "original deterministic procedural stone foley",
+      "sampleRate": 48000,
+      "channels": 1,
+      "decodedFrames": 15360,
+      "decodedDurationSeconds": 0.32,
+      "decodedPeakDbFS": -3.767,
+      "decodedRmsDbFS": -19.569,
+      "sha256": "61e9d3f1b5e15d5b920f051c3f54bf8dcccac25174c520121ec3ee703f51752f",
+      "mp3Bytes": 9260,
+      "sourceMaster": "art-source/audio/stone-seat-v3.wav",
+      "web": "assets/audio/stone-seat-v3.mp3",
+      "native": "cocos/assets/resources/audio/stone-seat-v3.mp3",
+      "role": "rotation completed: stone seated",
+      "energyPercentileTimeMs": {
+        "5": 14.625,
+        "50": 34.292,
+        "90": 71.104,
+        "95": 83.771,
+        "99": 110.771
+      },
+      "energyByTimeBinPercent": {
+        "0-30": 44.405,
+        "30-70": 45.417,
+        "70-130": 9.877,
+        "130-200": 0.301,
+        "200-320": 0.0
+      },
+      "first130msRmsDbFS": -15.67,
+      "mid300to3500HzRmsDbFS": -20.308,
+      "below300HzEnergyPercent": 14.566,
+      "estimated4xTruePeakDbFS": -3.75,
+      "first1msPeak": 8.852941846271278e-07,
+      "last1msPeak": 0.0,
+      "boundaryStep": 5.4485507661183874e-08
+    }
+  ]
+}

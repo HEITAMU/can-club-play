@@ -1,8 +1,8 @@
 // Short sampled foley shared with the native build. No sound is queued behind
 // a slow download, a hidden page, a cancelled turn, or an old audio context.
 export const SOUND_FILES=Object.freeze({
-  button:new URL('./assets/audio/ui-stone-press-v2.mp3',import.meta.url).href,
-  turn:new URL('./assets/audio/stone-turn-v2.mp3',import.meta.url).href,
+  button:new URL('./assets/audio/ui-stone-press-v3.mp3',import.meta.url).href,
+  seat:new URL('./assets/audio/stone-seat-v3.mp3',import.meta.url).href,
 });
 
 export function createGameAudio({
@@ -12,8 +12,8 @@ export function createGameAudio({
   now=()=>globalThis.performance?.now?.()??Date.now(),
   isVisible=()=>true,
 }={}){
-  let context=null,disposed=false,resuming=null,suspending=null;
-  const raw=new Map(),decoded=new Map(),voices=new Map(),fading=new Set(),epochs={button:0,turn:0};
+  let context=null,disposed=false,resuming=null,suspending=null,activeTurn=null;
+  const raw=new Map(),decoded=new Map(),voices=new Map(),fading=new Set(),epochs={button:0,press:0,seat:0};
   const allowed=()=>enabled&&!disposed&&isVisible();
   const bytes=kind=>{
     if(!raw.has(kind)){
@@ -34,7 +34,12 @@ export function createGameAudio({
     if(!decoded.has(kind)){
       const request=bytes(kind),decoding=request.then(data=>{
         if(!data||disposed||context!==owner||owner.state==='closed')return null;
-        return owner.decodeAudioData(data.slice(0));
+        // One decode call supports both the Promise API and the older prefixed
+        // context's callbacks. Resolving twice is harmless; decoding twice is not.
+        return new Promise((resolve,reject)=>{
+          const result=owner.decodeAudioData(data.slice(0),resolve,reject);
+          result?.then(resolve,reject);
+        });
       }).catch(()=>{
         // A corrupt or interrupted response needs fresh bytes on a later gesture.
         if(raw.get(kind)===request)raw.delete(kind);
@@ -58,7 +63,7 @@ export function createGameAudio({
       // Decoding does not start playback. The context itself is created and
       // resumed only from a user gesture, including the first pointer down.
       for(const kind of Object.keys(SOUND_FILES))void buffer(kind);
-      if(context.state==='suspended'){
+      if(context.state==='suspended'||context.state==='interrupted'){
         if(!resuming)resuming=Promise.resolve(context.resume()).catch(()=>{}).finally(()=>{resuming=null;});
         await resuming;
       }
@@ -82,14 +87,18 @@ export function createGameAudio({
     if(immediate)release(voice);
     else{fading.add(voice);voice.source.onended=()=>release(voice);}
   }
-  function stopTurn(){epochs.turn++;stopVoice('turn');}
+  function stopTurn(){
+    activeTurn=null;
+    for(const channel of ['press','seat']){epochs[channel]++;stopVoice(channel);}
+  }
   function stopAll(){
-    epochs.button++;epochs.turn++;stopVoice('button',true);stopVoice('turn',true);
+    activeTurn=null;
+    for(const channel of Object.keys(epochs)){epochs[channel]++;stopVoice(channel,true);}
     // A context suspended during an 8ms cancellation fade must not replay that
     // fade on the next foreground gesture. Disconnect those retired voices too.
     for(const voice of [...fading]){try{voice.source.stop(context.currentTime);}catch{}release(voice);}
   }
-  async function play(channel,kind,durationMs){
+  async function play(channel,kind,durationMs,volume){
     if(!allowed())return false;
     const epoch=++epochs[channel],requestedAt=now();
     stopVoice(channel);
@@ -100,13 +109,11 @@ export function createGameAudio({
       // only a later gesture should retry, never a loop replaying an old action.
       const clip=await (pending||buffer(kind)),late=Math.max(0,now()-requestedAt);
       if(!clip||!allowed()||epochs[channel]!==epoch||context.state!=='running')return false;
-      // A delayed foley cue must never arrive after the visual action. Turns
-      // may join the sample at its current offset after a short decode delay.
-      if(late>(channel==='turn'?160:140))return false;
-      const total=Math.min(clip.duration,durationMs/1000),offset=channel==='turn'?late/1000:0;
-      const remaining=total-offset;if(remaining<.025)return false;
+      // These are contact sounds, so keep their attack intact. Never seek into
+      // the tail or replay an old contact after a slow download/resume.
+      if(late>140)return false;
+      const remaining=Math.min(clip.duration,durationMs/1000);if(remaining<.025)return false;
       const source=context.createBufferSource(),gain=context.createGain(),time=context.currentTime;
-      const volume=channel==='turn'?.82:.62;
       source.buffer=clip;source.connect(gain);gain.connect(context.destination);
       gain.gain.setValueAtTime(0,time);
       gain.gain.linearRampToValueAtTime(volume,time+Math.min(.006,remaining/4));
@@ -117,16 +124,26 @@ export function createGameAudio({
         if(voices.get(channel)===voice)voices.delete(channel);
         release(voice);
       };
-      source.start(time,offset,remaining);source.stop(time+remaining);
+      source.start(time,0,remaining);source.stop(time+remaining);
       return true;
     }catch{return false;}
   }
-  function playButton(){return play('button','button',320);}
-  function playTurn(durationMs=1200){
+  function playButton(){return play('button','button',260,.9);}
+  function beginTurn(){
+    stopTurn();
     epochs.button++;stopVoice('button');
-    // Reduced-motion transitions get a short stone contact, not a squeaky
-    // ten-times-speed rendition of the full slab movement.
-    return play('turn',durationMs<300?'button':'turn',Math.max(0,durationMs));
+    if(!allowed())return null;
+    const token=activeTurn={};
+    void play('press','button',260,1);
+    return token;
+  }
+  function finishTurn(token){
+    if(!token||token!==activeTurn)return Promise.resolve(false);
+    activeTurn=null;
+    epochs.press++;stopVoice('press');
+    // Only the caller that actually committed this animation can seat it.
+    // There is deliberately no timer that can fire after a cancelled move.
+    return play('seat','seat',360,1);
   }
   function setEnabled(value){enabled=!!value;if(!enabled)pause();return enabled;}
   function pause(){
@@ -134,5 +151,5 @@ export function createGameAudio({
     try{if(context&&!suspending)suspending=Promise.resolve(context.suspend()).catch(()=>{}).finally(()=>{suspending=null;});}catch{}
   }
   function dispose(){disposed=true;stopAll();try{context?.close()?.catch(()=>{});}catch{}context=null;decoded.clear();raw.clear();}
-  return {preload,unlock,playButton,playTurn,stopTurn,stopAll,setEnabled,pause,dispose};
+  return {preload,unlock,playButton,beginTurn,finishTurn,stopTurn,stopAll,setEnabled,pause,dispose};
 }
