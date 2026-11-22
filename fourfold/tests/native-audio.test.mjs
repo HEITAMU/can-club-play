@@ -47,7 +47,7 @@ function audioFixture(options={}){
 
 test('native optional tactile clips load independently and never replay a click missed during loading',async()=>{
   const f=audioFixture(),g=f.game,loading=g.prepareAudio();
-  assert.deepEqual(f.requests.map(request=>request.path),['audio/ui-tap-v5','audio/rotary-detent-v6','audio/stone-seat-v5']);
+  assert.deepEqual(f.requests.map(request=>request.path),['audio/ui-tap-v5','audio/rotary-detent-v7','audio/stone-seat-v5']);
   assert(f.channels.every(source=>source.playOnAwake===false&&source.loop===false));
   assert.equal(g.assetsReady,true);assert.equal(g.loading,false);
   const button=new f.NativeNode('Button');let actions=0;g.bindButton(button,()=>{actions++;});

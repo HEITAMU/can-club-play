@@ -16,7 +16,7 @@ const HINT_PULSE_SECONDS=2.2,HINT_PULSE_MIN=102;
 const AD_IDS={rewarded:'',banner:''}; // 接入时只填写微信公众平台提供的真实 adUnitId。
 const C={background:'#F8DEB7',surface:'#FFF1D6',gold:'#F5CB79',gold2:'#C88B4D',white:'#FFF4D7',muted:'#977253',dark:'#5B301F',edge:'#825037',night:'#1B2345',shadow:'#B27C50'};
 const ART_PATHS={home:'art/'+HOME_ART.resource,homeUI:'art/'+HOME_UI.resource,atlas:'art/ui-atlas',referenceOriginal:'art/reference-daily',referenceClean:'art/reference-clean',rankScene:'art/rank-scene',resultPanel:'art/result-panel'};
-const AUDIO_PATHS={ui:'audio/ui-tap-v5',press:'audio/rotary-detent-v6',seat:'audio/stone-seat-v5'};
+const AUDIO_PATHS={ui:'audio/ui-tap-v5',press:'audio/rotary-detent-v7',seat:'audio/stone-seat-v5'};
 const REQUIRED_FRAMES=['goldButton','creamButton','lavenderButton','stepsCard','timeCard','rotateKnob','settingsButton','backButton'];
 const at=()=>typeof performance!=='undefined'&&performance.now?performance.now():Date.now();
 const wxSDK=()=>typeof wx!=='undefined'?(wx as any):null;

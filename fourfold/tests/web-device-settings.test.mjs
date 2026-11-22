@@ -35,7 +35,7 @@ test('settings show executing app/audio build IDs independently of HTML and reta
   const before=audio.getDiagnostics();
   f.el('app').dataset.build='old-html';
   click(f,'settingsBtn');await flush();
-  assert.match(f.el('settingsBuild').textContent,/脚本 0\.8\.31 · 音频 0\.8\.31 · 页面 old-html/);
+  assert.match(f.el('settingsBuild').textContent,/脚本 0\.8\.32 · 音频 0\.8\.32 · 页面 old-html/);
   assert.equal(f.el('settingsBuild').classList.contains('settings-build-mismatch'),true);
   for(const cue of ['press','seat','test'])assert.deepEqual(audio.getDiagnostics().cues[cue],before.cues[cue],cue+' survives the settings button sound');
   assert.match(f.el('settingsAudioCues').textContent,/按下 已结束；落位 已结束/);

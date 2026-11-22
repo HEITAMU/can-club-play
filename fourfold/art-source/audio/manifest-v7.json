@@ -1,0 +1,26 @@
+{
+  "version": 7,
+  "source": "Original deterministic procedural rotary detent foley, not a recording. Only the knob changes.",
+  "sounds": [
+    {
+      "name": "rotary-detent-v7",
+      "origin": "original deterministic procedural stone foley",
+      "sampleRate": 48000,
+      "channels": 1,
+      "decodedFrames": 12000,
+      "decodedDurationSeconds": 0.25,
+      "decodedPeakDbFS": -5.893,
+      "decodedRmsDbFS": -23.301,
+      "sha256": "ff1a8bbaf98c4772d895db02ea4d3df34ce0ea4c04a4797e9bf3fdbc1d6e5922",
+      "mp3Bytes": 7532,
+      "sourceMaster": "art-source/audio/rotary-detent-v7.wav",
+      "web": "assets/audio/rotary-detent-v7.mp3",
+      "native": "cocos/assets/resources/audio/rotary-detent-v7.mp3",
+      "truePeakDbFS": -5.572580814361572,
+      "detentOnsetsMs": [
+        9,
+        131
+      ]
+    }
+  ]
+}
