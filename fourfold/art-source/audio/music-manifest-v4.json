@@ -1,0 +1,17 @@
+{
+  "title": "星夜漫步",
+  "bpm": 100,
+  "durationSeconds": 38.4,
+  "instruments": [
+    "sampled nylon guitar",
+    "sampled electric piano",
+    "sampled acoustic bass",
+    "light percussion"
+  ],
+  "renderer": "FluidSynth / TimGM6mb",
+  "masterLowPass": false,
+  "rmsDbFS": -24,
+  "peak": 0.4654042849933476,
+  "bytes": 769088,
+  "sha256": "884ca354d9606efd77e5d3a3d758d16a782d071277f8b15ed1a27c5b4de26987"
+}

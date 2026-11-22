@@ -210,7 +210,7 @@ test('native UI, knob and landing keep distinct clips and sources',async()=>{
 
 test('native music loads once, loops independently of effects and obeys visibility and teardown',async()=>{
  const f=audioFixture(),g=f.game;delete g.resumeMusic;g.soundEnabled=false;
- const pending=g.resumeMusic(true);assert.equal(f.requests.length,1);assert.equal(f.requests[0].path,'audio/starlight-groove-v3');
+ const pending=g.resumeMusic(true);assert.equal(f.requests.length,1);assert.equal(f.requests[0].path,'audio/starlight-sampled-v4');
  const clip=f.finish(f.requests[0]);await pending;const source=g.musicSource;
  assert(source.loop);assert.equal(source.playing,true);assert.equal(clip.refs,1);
  await g.resumeMusic(true);assert.equal(source.plays,1);assert.equal(f.requests.length,1);
